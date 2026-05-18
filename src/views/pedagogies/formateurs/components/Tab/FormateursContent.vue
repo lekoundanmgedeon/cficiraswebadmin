@@ -198,7 +198,7 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue';
-import ItemActions from '../Details/DetailItemv2.vue';
+import ItemActions from '../Details/ItemActions.vue';
 import Pagination from '@/components/shared/Pagination.vue';
 
 // Variables de contrôle d'état
