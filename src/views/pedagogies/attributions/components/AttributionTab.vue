@@ -133,7 +133,6 @@
 
 <script setup>
 import CoursMatieres from './Tab/CoursMatieres.vue';
-import EmploisDuTemps from './Tab/EmploisDuTemps.vue';
 import PresencesContent from './Tab/PresencesContent.vue';
 import ChargesHoraires from './Tab/ChargesHoraires.vue';
 import RapportsAcademiques from './Tab/RapportsAcademiques.vue';
