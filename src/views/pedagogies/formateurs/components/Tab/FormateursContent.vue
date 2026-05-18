@@ -6,7 +6,7 @@
         <h3 class="fw-bold mb-1">Répertoire des Formateurs</h3>
         <p class="text-muted small mb-0">
           <i class="bi bi-person-badge me-1"></i>
-          Total : <b>{{ store.formateurs.length }}</b> enseignants actifs.
+          Total : <b>{{ filteredFormateurs.length }}</b> enseignants trouvés.
         </p>
       </div>
 
@@ -42,12 +42,12 @@
                 <input
                   type="text"
                   class="form-control border-0"
-                  placeholder="Rechercher par nom, code, spécialité..."
+                  placeholder="Rechercher par nom, prénom ou spécialité..."
                   v-model="searchQuery"
                 />
               </div>
             </div>
-            <!-- Filtre Département / Spécialité -->
+            <!-- Filtre Département -->
             <div class="col-md-3">
               <select class="form-select border-0 shadow-sm" v-model="filterDepartement">
                 <option value="">Tous les départements</option>
@@ -92,8 +92,8 @@
               </thead>
 
               <tbody>
-                <!-- Loader -->
-                <tr v-if="store.loading">
+                <!-- Loader Simulé -->
+                <tr v-if="isLoading">
                   <td colspan="7" class="text-center py-5">
                     <div class="spinner-border text-primary spinner-border-sm me-2"></div>
                     Chargement de la base de données des formateurs...
@@ -102,6 +102,7 @@
 
                 <!-- Liste des formateurs -->
                 <tr
+                  v-else
                   v-for="(formateur, index) in paginatedFormateurs"
                   :key="formateur.id"
                   class="transition-all"
@@ -109,7 +110,6 @@
                   <td class="ps-4 text-muted small">{{ startIndex + index + 1 }}</td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <!-- Avatar dynamique basé sur les initiales -->
                       <div
                         class="avatar-circle me-3"
                         :class="
@@ -170,17 +170,11 @@
                 </tr>
 
                 <!-- Cas où la liste est vide -->
-                <tr v-if="!store.loading && paginatedFormateurs.length === 0">
+                <tr v-if="!isLoading && filteredFormateurs.length === 0">
                   <td colspan="7" class="text-center py-5">
                     <div class="py-4">
-                      <img
-                        src="/img/empty-box.svg"
-                        alt="Vide"
-                        width="100"
-                        class="mb-3 opacity-50"
-                      />
-                      <h6 class="text-muted">Aucun formateur trouvé</h6>
-                      <p class="small text-muted">Essayez de modifier vos filtres ou critères de recherche.</p>
+                      <h6 class="text-muted fw-bold">Aucun formateur trouvé</h6>
+                      <p class="small text-muted mb-0">Essayez de modifier vos filtres ou critères de recherche.</p>
                     </div>
                   </td>
                 </tr>
@@ -194,7 +188,7 @@
           <Pagination
             v-model="currentPage"
             :items-per-page="itemsPerPage"
-            :total-items="store.formateurs.length"
+            :total-items="filteredFormateurs.length"
           />
         </div>
       </div>
@@ -203,60 +197,84 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import ItemActions from '../Details/DetailItemv2.vue';
 import Pagination from '@/components/shared/Pagination.vue';
-import { useEnseignantStore } from '@/stores/pedagogieStore/enseignantStore'; // Assure-toi d'avoir ce store
 
-const store = useEnseignantStore();
-
-// États des filtres et pagination
+// Variables de contrôle d'état
+const isLoading = ref(true);
 const currentPage = ref(1);
-const itemsPerPage = ref(10);
+const itemsPerPage = ref(5); // Mis à 5 pour tester la pagination facilement
 const searchQuery = ref('');
 const filterDepartement = ref('');
 const filterContrat = ref('');
 
-// Listes fixes pour les filtres (Peut aussi venir du store)
-const departements = ref(['Informatique', 'Management', 'Sciences Spatiales', 'Langues']);
+const departements = ref(['Informatique', 'Management', 'Génie Civil', 'Langues']);
+
+// Données Factices (Mock Data)
+const mockFormateurs = ref([
+  { id: 1, nom: 'Dupont', prenom: 'Jean', code_enseignant: 'ENS-2024-001', contrat: 'Permanent', departement: 'Informatique', specialite: 'Développement Vue.js & Node.js', email: 'j.dupont@ecole.com', telephone: '+33 6 12 34 56 78', date_embauche: '12/09/2022' },
+  { id: 2, nom: 'Alami', prenom: 'Sanaa', code_enseignant: 'ENS-2023-042', contrat: 'Vacataire', departement: 'Management', specialite: 'Gestion de Projet & ERP', email: 's.alami@ecole.com', telephone: '+212 6 98 76 54 32', date_embauche: '05/01/2024' },
+  { id: 3, nom: 'Traoré', prenom: 'Moussa', code_enseignant: 'ENS-2021-105', contrat: 'Permanent', departement: 'Informatique', specialite: 'Architecture Cloud & DevOps', email: 'm.traore@ecole.com', telephone: '+221 77 123 45 67', date_embauche: '18/11/2021' },
+  { id: 4, nom: 'Muller', prenom: 'Charlotte', code_enseignant: 'ENS-2025-012', contrat: 'Permanent', departement: 'Langues', specialite: 'Anglais Professionnel', email: 'c.muller@ecole.com', telephone: '+33 7 89 45 12 23', date_embauche: '01/09/2025' },
+  { id: 5, nom: 'Rousseau', prenom: 'Pierre', code_enseignant: 'ENS-2024-089', contrat: 'Vacataire', departement: 'Génie Civil', specialite: 'RDM & Structures', email: 'p.rousseau@ecole.com', telephone: '+33 6 45 78 12 56', date_embauche: '15/02/2024' },
+  { id: 6, nom: 'Martin', prenom: 'Sophie', code_enseignant: 'ENS-2022-031', contrat: 'Permanent', departement: 'Management', specialite: 'Ressources Humaines', email: 's.martin@ecole.com', telephone: '+33 6 32 14 56 98', date_embauche: '01/09/2022' }
+]);
+
+// Logique de filtrage dynamique (Remplace les requêtes backend pendant le test)
+const filteredFormateurs = computed(() => {
+  return mockFormateurs.value.filter(formateur => {
+    const matchesSearch = 
+      formateur.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      formateur.prenom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      formateur.specialite.toLowerCase().includes(searchQuery.value.toLowerCase());
+      
+    const matchesDepartement = filterDepartement.value === '' || formateur.departement === filterDepartement.value;
+    const matchesContrat = filterContrat.value === '' || formateur.contrat === filterContrat.value;
+    
+    return matchesSearch && matchesDepartement && matchesContrat;
+  });
+});
 
 // Logique de Pagination
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
 const paginatedFormateurs = computed(() =>
-  store.formateurs.slice(startIndex.value, startIndex.value + itemsPerPage.value)
+  filteredFormateurs.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
 );
 
-// Actions mécaniques
+// Actions mécaniques de l'UI
 const resetFilters = () => {
   searchQuery.value = '';
   filterDepartement.value = '';
   filterContrat.value = '';
+  currentPage.value = 1;
 };
 
 const editFormateur = (formateur) => {
-  store.fetchFormateurById(formateur.id);
-  // Code pour déclencher l'ouverture de la modal d'édition
+  alert(`Édition du formateur : ${formateur.nom} ${formateur.prenom}`);
 };
 
 const confirmDelete = (formateur) => {
   if (confirm(`Voulez-vous vraiment retirer le formateur ${formateur.nom} ${formateur.prenom} ?`)) {
-    store.removeFormateur(formateur.id);
+    mockFormateurs.value = mockFormateurs.value.filter(f => f.id !== formateur.id);
   }
 };
 
-// Fonctions d'exports fictives demandées par l'UI
-const exportPDF = () => console.log('Export PDF Formateurs...');
-const exportCSV = () => console.log('Export CSV Formateurs...');
-const exportExcel = () => console.log('Export Excel Formateurs...');
-const printTable = () => window.print();
-
+// Simulation d'un chargement asynchrone au montage
 onMounted(() => {
-  store.fetchFormateurs();
+  setTimeout(() => {
+    isLoading.value = false;
+  }, 800); // Le tableau s'affiche après 800ms
 });
+
+// Fonctions d'exports factices
+const exportPDF = () => console.log('Mock Export PDF...');
+const exportCSV = () => console.log('Mock Export CSV...');
+const exportExcel = () => console.log('Mock Export Excel...');
+const printTable = () => window.print();
 </script>
 
 <style scoped>
-/* Avatars */
 .avatar-circle {
   width: 40px;
   height: 40px;
@@ -269,7 +287,7 @@ onMounted(() => {
   letter-spacing: -0.5px;
 }
 
-/* Couleurs Soft (Boutons, Badges & Avatars) */
+/* Couleurs Soft */
 .bg-soft-success {
   background-color: rgba(40, 167, 69, 0.12);
   color: #28a745;
@@ -279,7 +297,6 @@ onMounted(() => {
   color: #6f42c1;
 }
 
-/* Table styling */
 .table thead th {
   font-size: 11px;
   text-transform: uppercase;
@@ -297,15 +314,13 @@ onMounted(() => {
   background-color: #fcfdfe !important;
 }
 
-/* Buttons & Inputs */
 .btn-white {
   background: #fff;
   border: 1px solid #edf2f9;
 }
 .rounded-4 {
-  border-radius: 0.2rem !important; /* Calqué sur ton template */
+  border-radius: 0.2rem !important;
 }
-
 .transition-all {
   transition: all 0.3s ease;
 }
