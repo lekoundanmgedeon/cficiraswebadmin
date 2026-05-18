@@ -4,8 +4,8 @@
       <div class="d-flex justify-content-between flex-wrap">
         <div class="d-flex align-items-end flex-wrap">
           <div class="me-md-3 me-xl-5">
-            <h2>Gestion et attributions des modules</h2>
-            <p class="mb-md-0">Gestions des modules et ressources academiques des modules</p>
+            <h2> Gestions des crenaux horaires</h2>
+            <p class="mb-md-0">Gestion des formateurs et enseignant</p>
           </div>
           <div class="d-flex">
             <i class="mdi mdi-home text-muted hover-cursor"></i>
@@ -23,7 +23,7 @@
           <button type="button" class="btn btn-light bg-white btn-icon me-3 mt-2 mt-xl-0">
             <i class="mdi mdi-plus text-muted"></i>
           </button>
-          <button class="btn btn-primary mt-2 mt-xl-0">+ Ajouter un nouveau</button>
+          <button class="btn btn-primary mt-2 mt-xl-0">Generation de rapport</button>
         </div>
       </div>
     </div>

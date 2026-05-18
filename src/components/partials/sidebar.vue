@@ -340,13 +340,13 @@
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/emplois">Creneaux / Horaires</router-link>
+              <router-link class="nav-link" to="/crenaux-horaires">Creneaux / Horaires</router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/conges">Congés & remplacements</router-link>
+              <router-link class="nav-link" to="/conges-replacement">Congés & remplacements</router-link>
             </li>
             <li class="nav-item">
-              <router-link class="nav-link" to="/programmes">Programmes / Crédits</router-link>
+              <router-link class="nav-link" to="/programmes-credits">Programmes / Crédits</router-link>
             </li>
           </ul>
         </div>
