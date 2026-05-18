@@ -58,7 +58,8 @@ import Support from '../views/support/Support.vue';
 //Paramètres et configurations
 import Settings from '../views/settings/Settings.vue';
 //Formateurs et enseignants
-import Formateur from '../views/formateurs/Formateur.vue';
+import Formateur from '../views/pedagogies/formateurs/Enseignants.vue';
+import attributionCours from '@/views/pedagogies/attributions/AttributionCours.vue';
 //Administration et gestion
 import Admins from '../views/admin/Administration.vue';
 //Finances et paiements
@@ -113,6 +114,8 @@ const routes = [
       { path: '/supcours', name: 'Support', component: Support },
       { path: '/settings', name: 'Settings', component: Settings },
       { path: '/enseignants', name: 'Formateur', component: Formateur },
+      { path: '/attribution-cours', name: 'AttributionsCours', component: attributionCours },
+
       { path: '/administration', name: 'Administration', component: Admins },
       { path: '/paiements-finances', name: 'FinancePaiement', component: FinancePaiement },
       { path: '/factures-finances', name: 'FinanceFacture', component: FinanceFacture },

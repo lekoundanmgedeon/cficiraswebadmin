@@ -10,42 +10,33 @@
         </p>
       </div>
 
-        <div class="dropdown me-2">
-  <button
-    class="btn btn-outline-dark dropdown-toggle"
-    type="button"
-    data-bs-toggle="dropdown"
-  >
-    Exporter
-  </button>
+      <div class="dropdown me-2">
+        <button
+          class="btn btn-outline-dark dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+        >
+          Exporter
+        </button>
 
-  <ul class="dropdown-menu">
-    <li>
-      <button class="dropdown-item" @click="exportPDF">
-        Export PDF
-      </button>
-    </li>
+        <ul class="dropdown-menu">
+          <li>
+            <button class="dropdown-item" @click="exportPDF">Export PDF</button>
+          </li>
 
-    <li>
-      <button class="dropdown-item" @click="exportCSV">
-        Export CSV
-      </button>
-    </li>
+          <li>
+            <button class="dropdown-item" @click="exportCSV">Export CSV</button>
+          </li>
 
-    <li>
-      <button class="dropdown-item" @click="exportExcel">
-        Export Excel
-      </button>
-    </li>
+          <li>
+            <button class="dropdown-item" @click="exportExcel">Export Excel</button>
+          </li>
 
-    <li>
-      <button class="dropdown-item" @click="printTable">
-        Imprimer
-      </button>
-    </li>
-  </ul>
-</div>
-  
+          <li>
+            <button class="dropdown-item" @click="printTable">Imprimer</button>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <!-- Zone de Filtres "Flat Design" -->
@@ -58,11 +49,11 @@
                 <span class="input-group-text bg-white border-0">
                   <i class="mdi mdi-magnify text-primary"></i>
                 </span>
-                <input 
-                  type="text" 
-                  class="form-control border-0" 
-                  placeholder="Rechercher par nom, matricule..." 
-                  v-model="searchQuery" 
+                <input
+                  type="text"
+                  class="form-control border-0"
+                  placeholder="Rechercher par nom, matricule..."
+                  v-model="searchQuery"
                 />
               </div>
             </div>
@@ -117,31 +108,50 @@
                 </tr>
 
                 <!-- Liste -->
-                <tr v-for="(etudiant, index) in paginatedEtudiants" :key="etudiant.id" class="transition-all">
+                <tr
+                  v-for="(etudiant, index) in paginatedEtudiants"
+                  :key="etudiant.id"
+                  class="transition-all"
+                >
                   <td class="ps-4 text-muted small">{{ startIndex + index + 1 }}</td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <div 
-                        class="avatar-circle me-3" 
-                        :class="etudiant.sexe === 'M' ? 'bg-soft-info text-info' : 'bg-soft-warning text-warning'"
+                      <div
+                        class="avatar-circle me-3"
+                        :class="
+                          etudiant.sexe === 'M'
+                            ? 'bg-soft-info text-info'
+                            : 'bg-soft-warning text-warning'
+                        "
                       >
                         {{ etudiant.nom[0] }}{{ etudiant.prenom[0] }}
                       </div>
                       <div>
-                        <div class="fw-bold text-dark">{{ etudiant.nom }} {{ etudiant.prenom }}</div>
+                        <div class="fw-bold text-dark">
+                          {{ etudiant.nom }} {{ etudiant.prenom }}
+                        </div>
                         <small class="text-muted">Inscrit via Dossier Papier</small>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span class="badge bg-light text-primary border fw-bold">{{ etudiant.matricule }}</span>
+                    <span class="badge bg-light text-primary border fw-bold">{{
+                      etudiant.matricule
+                    }}</span>
                   </td>
                   <td class="text-center">
-                    <span 
-                      class="badge rounded-pill px-3 py-2" 
-                      :class="etudiant.sexe === 'M' ? 'bg-soft-info text-info' : 'bg-soft-warning text-warning'"
+                    <span
+                      class="badge rounded-pill px-3 py-2"
+                      :class="
+                        etudiant.sexe === 'M'
+                          ? 'bg-soft-info text-info'
+                          : 'bg-soft-warning text-warning'
+                      "
                     >
-                      <i class="mdi" :class="etudiant.sexe === 'M' ? 'mdi-gender-male' : 'mdi-gender-female'"></i>
+                      <i
+                        class="mdi"
+                        :class="etudiant.sexe === 'M' ? 'mdi-gender-male' : 'mdi-gender-female'"
+                      ></i>
                       {{ etudiant.sexe }}
                     </span>
                   </td>
@@ -168,7 +178,12 @@
                 <tr v-if="!store.loading && paginatedEtudiants.length === 0">
                   <td colspan="7" class="text-center py-5">
                     <div class="py-4">
-                      <img src="/img/empty-box.svg" alt="Vide" width="100" class="mb-3 opacity-50" />
+                      <img
+                        src="/img/empty-box.svg"
+                        alt="Vide"
+                        width="100"
+                        class="mb-3 opacity-50"
+                      />
                       <h6 class="text-muted">Aucun étudiant trouvé</h6>
                       <p class="small text-muted">Essayez de modifier vos critères de recherche.</p>
                     </div>
@@ -206,8 +221,14 @@
 }
 
 /* Couleurs Soft (Badge & Avatar) */
-.bg-soft-info { background-color: rgba(13, 202, 240, 0.12); color: #0dcaf0; }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.15); color: #997404; }
+.bg-soft-info {
+  background-color: rgba(13, 202, 240, 0.12);
+  color: #0dcaf0;
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #997404;
+}
 
 /* Table styling */
 .table thead th {

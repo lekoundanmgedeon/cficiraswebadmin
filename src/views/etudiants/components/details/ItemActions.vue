@@ -53,7 +53,9 @@
             />
           </div>
           <h4 class="mt-3 fw-bold text-dark">{{ item.nom }} {{ item.prenom }}</h4>
-          <span class="badge bg-soft-primary text-primary rounded-pill px-3">{{ item.matricule }}</span>
+          <span class="badge bg-soft-primary text-primary rounded-pill px-3">{{
+            item.matricule
+          }}</span>
         </div>
 
         <div class="modal-body-custom p-4">
@@ -74,7 +76,7 @@
                   <span class="text-muted small">Lieu:</span>
                   <span class="fw-semibold">{{ item.lieu_naissance }}</span>
                 </div>
-                <hr class="my-3 opacity-25">
+                <hr class="my-3 opacity-25" />
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted small">Téléphone:</span>
                   <span class="fw-bold text-primary">{{ item.telephone }}</span>
@@ -100,7 +102,9 @@
                 </div>
                 <div>
                   <label class="text-muted x-small d-block text-uppercase">Année Académique</label>
-                  <span class="badge bg-white text-dark shadow-sm">{{ item.annee_academique }}</span>
+                  <span class="badge bg-white text-dark shadow-sm">{{
+                    item.annee_academique
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -108,7 +112,10 @@
 
           <!-- Footer Modal -->
           <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
-            <span class="badge" :class="item.statut === 'Actif' ? 'bg-success' : 'bg-warning text-dark'">
+            <span
+              class="badge"
+              :class="item.statut === 'Actif' ? 'bg-success' : 'bg-warning text-dark'"
+            >
               Statut: {{ item.statut }}
             </span>
             <div class="d-flex gap-2">
@@ -128,7 +135,10 @@
 /* Modal Overlay moderne */
 .modal-backdrop-custom {
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   z-index: 1050;
@@ -164,9 +174,12 @@
 
 .btn-close-modal {
   position: absolute;
-  top: 15px; right: 15px;
-  border: none; background: none;
-  font-size: 1.5rem; color: #95aac9;
+  top: 15px;
+  right: 15px;
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  color: #95aac9;
   line-height: 1;
 }
 
@@ -174,17 +187,28 @@
   border: 1px solid #e3ebf6;
 }
 
-.x-small { font-size: 0.7rem; letter-spacing: 0.5px; }
+.x-small {
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+}
 
-.bg-soft-primary { background: rgba(75, 73, 172, 0.1); }
+.bg-soft-primary {
+  background: rgba(75, 73, 172, 0.1);
+}
 
 /* Animation simple */
 .animate-zoom {
   animation: zoomIn 0.2s ease-out;
 }
 @keyframes zoomIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* On garde vos styles de dropdown existants via Bootstrap */
@@ -220,4 +244,3 @@ const formatDate = (date) => {
   });
 };
 </script>
-

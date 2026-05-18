@@ -8,8 +8,11 @@
 
     <!-- Accordéon Principal (Cycles) -->
     <div class="accordion custom-robust-accordion" id="cyclesAccordion">
-      <div v-for="(cycle, cIndex) in cycles" :key="cycle.name" class="accordion-item mb-3 border shadow-sm">
-        
+      <div
+        v-for="(cycle, cIndex) in cycles"
+        :key="cycle.name"
+        class="accordion-item mb-3 border shadow-sm"
+      >
         <h2 class="accordion-header" :id="'heading' + cIndex">
           <button
             class="accordion-button collapsed py-3 px-4"
@@ -26,7 +29,9 @@
                 </div>
                 <div>
                   <span class="fw-bold text-dark fs-6">{{ cycle.name }}</span>
-                  <div class="text-muted x-small text-uppercase fw-semibold">Cycle Universitaire</div>
+                  <div class="text-muted x-small text-uppercase fw-semibold">
+                    Cycle Universitaire
+                  </div>
                 </div>
               </div>
               <span class="badge-count">{{ cycle.filieres?.length || 0 }} Filières</span>
@@ -41,12 +46,12 @@
           data-bs-parent="#cyclesAccordion"
         >
           <div class="accordion-body bg-light-subtle p-4">
-            
             <!-- Liste des Filières (Style Cartes Plates) -->
             <div class="row g-3">
               <div v-for="(filiere, fIndex) in cycle.filieres" :key="filiere.name" class="col-12">
-                <div class="filiere-card p-3 border-start border-primary border-4 bg-white shadow-sm">
-                  
+                <div
+                  class="filiere-card p-3 border-start border-primary border-4 bg-white shadow-sm"
+                >
                   <div class="d-flex justify-content-between align-items-start mb-3">
                     <h6 class="fw-bold text-dark mb-0">
                       <i class="mdi mdi-arrow-right-drop-circle-outline text-primary me-2"></i>
@@ -56,24 +61,26 @@
 
                   <!-- Grille des Niveaux -->
                   <div class="row g-2 ms-4">
-                    <div v-if="filiere.niveaux && filiere.niveaux.length" 
-                         v-for="niveau in filiere.niveaux" 
-                         :key="niveau.name" 
-                         class="col-md-4 col-lg-3">
+                    <div
+                      v-if="filiere.niveaux && filiere.niveaux.length"
+                      v-for="niveau in filiere.niveaux"
+                      :key="niveau.name"
+                      class="col-md-4 col-lg-3"
+                    >
                       <div class="niveau-pill d-flex justify-content-between align-items-center">
                         <span class="fw-medium text-dark">{{ niveau.name }}</span>
-                        <span class="student-count">{{ niveau.etudiants }} <i class="mdi mdi-account-group-outline"></i></span>
+                        <span class="student-count"
+                          >{{ niveau.etudiants }} <i class="mdi mdi-account-group-outline"></i
+                        ></span>
                       </div>
                     </div>
                     <div v-else class="col-12 text-muted small italic ps-2">
                       <i class="mdi mdi-information-outline me-1"></i> Aucun niveau configuré
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>

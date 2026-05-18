@@ -77,4 +77,3 @@ onMounted(() => {
   loadOrganisation();
 });
 </script>
-

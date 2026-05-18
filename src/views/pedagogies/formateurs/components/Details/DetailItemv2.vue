@@ -77,13 +77,16 @@
             <div class="col-md-6">
               <div class="contact-pill shadow-sm">
                 <i class="mdi mdi-email-outline text-primary"></i>
-                <span class="text-truncate">{{ item.email || 'Pas d\'email' }}</span>
+                <span class="text-truncate">{{ item.email || "Pas d'email" }}</span>
               </div>
             </div>
             <div class="col-md-6">
               <div class="contact-pill shadow-sm">
                 <i class="mdi mdi-phone-outline text-success"></i>
-                <span>{{ displayTel(item.tel1) }} {{ item.tel2 ? '/ ' + displayTel(item.tel2) : '' }}</span>
+                <span
+                  >{{ displayTel(item.tel1) }}
+                  {{ item.tel2 ? '/ ' + displayTel(item.tel2) : '' }}</span
+                >
               </div>
             </div>
           </div>
@@ -110,7 +113,9 @@
                   </div>
                   <div class="info-row border-0">
                     <span class="label">Situation</span>
-                    <span class="value text-primary fw-semibold">{{ item.matrimonial || 'N/A' }}</span>
+                    <span class="value text-primary fw-semibold">{{
+                      item.matrimonial || 'N/A'
+                    }}</span>
                   </div>
                 </div>
               </div>
@@ -140,8 +145,13 @@
         </div>
 
         <div class="modal-footer-custom p-3 border-top d-flex justify-content-end gap-2 bg-light">
-          <button class="btn btn-secondary btn-sm px-4 rounded-pill" @click="closeDetails">Fermer</button>
-          <button class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm" @click="$emit('edit', item)">
+          <button class="btn btn-secondary btn-sm px-4 rounded-pill" @click="closeDetails">
+            Fermer
+          </button>
+          <button
+            class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm"
+            @click="$emit('edit', item)"
+          >
             <i class="mdi mdi-pencil-outline me-1"></i> Éditer le profil
           </button>
         </div>
@@ -154,7 +164,10 @@
 /* Modal Structure */
 .modal-backdrop-custom {
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(5px);
   z-index: 1060;
@@ -177,7 +190,8 @@
   position: relative;
 }
 
-.trainer-img, .trainer-placeholder {
+.trainer-img,
+.trainer-placeholder {
   width: 90px;
   height: 90px;
   border-radius: 25px; /* Squircle style */
@@ -197,9 +211,12 @@
 
 .btn-close-modal {
   position: absolute;
-  top: 15px; right: 20px;
-  border: none; background: transparent;
-  font-size: 1.8rem; color: #94a3b8;
+  top: 15px;
+  right: 20px;
+  border: none;
+  background: transparent;
+  font-size: 1.8rem;
+  color: #94a3b8;
 }
 
 /* Contact Pills */
@@ -235,8 +252,13 @@
   font-size: 0.9rem;
 }
 
-.label { color: #64748b; }
-.value { color: #1e293b; font-weight: 500; }
+.label {
+  color: #64748b;
+}
+.value {
+  color: #1e293b;
+  font-weight: 500;
+}
 
 /* Expertise Card */
 .expertise-card {
@@ -246,18 +268,30 @@
   border-radius: 18px;
   box-shadow: 0 10px 20px rgba(75, 73, 172, 0.2);
 }
-.expertise-card .section-title-modern { color: rgba(255,255,255,0.7); }
+.expertise-card .section-title-modern {
+  color: rgba(255, 255, 255, 0.7);
+}
 
-.bg-soft-primary { background: rgba(75, 73, 172, 0.1); }
-.bg-soft-success { background: rgba(25, 135, 84, 0.1); }
+.bg-soft-primary {
+  background: rgba(75, 73, 172, 0.1);
+}
+.bg-soft-success {
+  background: rgba(25, 135, 84, 0.1);
+}
 
 /* Animation */
 .animate-zoom {
   animation: zoomIn 0.25s ease-out;
 }
 @keyframes zoomIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>
 
@@ -328,4 +362,3 @@ const getImageUrl = (photoPath) => {
   return `http://localhost:3500${photoPath}`; // Remplace cette URL par celle de ton backend
 };
 </script>
-

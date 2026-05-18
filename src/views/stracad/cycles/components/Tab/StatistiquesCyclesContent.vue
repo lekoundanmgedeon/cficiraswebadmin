@@ -9,57 +9,58 @@
 
     <div class="table-responsive card border-light">
       <table class="table align-middle mb-0 custom-table-robust">
-          <thead>
-            <tr>
-              <th class="ps-4">Code / Nom</th>
-              <th>Diplôme</th>
-              <th class="text-center">Filières</th>
-              <th class="text-center">Effectif</th>
-              <th class="text-center">Crédits</th>
-              <th class="text-end pe-4">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="filteredCycles.length === 0">
-              <td colspan="6" class="text-center py-5">
-                <div class="py-3">
-                  <i class="mdi mdi-folder-open-outline text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
-                  <p class="text-muted mt-2">Aucune donnée statistique disponible</p>
+        <thead>
+          <tr>
+            <th class="ps-4">Code / Nom</th>
+            <th>Diplôme</th>
+            <th class="text-center">Filières</th>
+            <th class="text-center">Effectif</th>
+            <th class="text-center">Crédits</th>
+            <th class="text-end pe-4">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="filteredCycles.length === 0">
+            <td colspan="6" class="text-center py-5">
+              <div class="py-3">
+                <i
+                  class="mdi mdi-folder-open-outline text-muted"
+                  style="font-size: 3rem; opacity: 0.3"
+                ></i>
+                <p class="text-muted mt-2">Aucune donnée statistique disponible</p>
+              </div>
+            </td>
+          </tr>
+          <tr v-for="cycle in filteredCycles" :key="cycle.id">
+            <td class="ps-4">
+              <div class="d-flex align-items-center">
+                <span class="code-tag-blue me-3">{{ cycle.code }}</span>
+                <div>
+                  <div class="fw-bold text-dark">{{ cycle.nom }}</div>
+                  <div class="x-small text-muted">{{ cycle.nomComplet }}</div>
                 </div>
-              </td>
-            </tr>
-            <tr v-for="cycle in filteredCycles" :key="cycle.id">
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                  <span class="code-tag-blue me-3">{{ cycle.code }}</span>
-                  <div>
-                    <div class="fw-bold text-dark">{{ cycle.nom }}</div>
-                    <div class="x-small text-muted">{{ cycle.nomComplet }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="text-muted small fw-medium">{{ cycle.diplome }}</span>
-              </td>
-              <td class="text-center">
-                <span class="fw-bold">{{ cycle.nombreFilieres }}</span>
-              </td>
-              <td class="text-center">
-                <span class="badge rounded-pill bg-light text-dark border px-3">
-                  {{ cycle.nombreEtudiants }}
-                </span>
-              </td>
-              <td class="text-center fw-semibold text-muted">
-                {{ cycle.creditsECTS }} ECTS
-              </td>
-              <td class="text-end pe-4">
-                <span :class="getStatutClass(cycle.statut)" class="status-pill-robust">
-                   {{ getStatutLabel(cycle.statut) }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </td>
+            <td>
+              <span class="text-muted small fw-medium">{{ cycle.diplome }}</span>
+            </td>
+            <td class="text-center">
+              <span class="fw-bold">{{ cycle.nombreFilieres }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge rounded-pill bg-light text-dark border px-3">
+                {{ cycle.nombreEtudiants }}
+              </span>
+            </td>
+            <td class="text-center fw-semibold text-muted">{{ cycle.creditsECTS }} ECTS</td>
+            <td class="text-end pe-4">
+              <span :class="getStatutClass(cycle.statut)" class="status-pill-robust">
+                {{ getStatutLabel(cycle.statut) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -313,7 +314,13 @@ const enregistrerCycle = () => {
   text-transform: uppercase;
 }
 
-.status-active { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+.status-active {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #d1fae5;
+}
 
-.x-small { font-size: 0.7rem; }
+.x-small {
+  font-size: 0.7rem;
+}
 </style>
