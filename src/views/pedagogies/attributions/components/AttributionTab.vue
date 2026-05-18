@@ -33,7 +33,7 @@
           class="nav-link"
           id="ressources-tab"
           data-bs-toggle="tab"
-          href="#ressources"
+          href="#ressourcesp"
           role="tab"
           aria-controls="ressources"
           aria-selected="false"
@@ -109,8 +109,8 @@
       </div>
 
       <!-- 8. Ressources pédagogiques -->
-      <div class="tab-pane fade" id="ressources" role="tabpanel" aria-labelledby="ressources-tab">
-        <RessourcesPedagogiques />
+      <div class="tab-pane fade" id="ressourcesp" role="tabpanel" aria-labelledby="ressources-tab">
+        <RessourcesPedagogiques/>
       </div>
 
       <!-- 10. Charges horaires -->
@@ -135,6 +135,7 @@
 import CoursMatieres from './Tab/CoursMatieres.vue';
 import PresencesContent from './Tab/PresencesContent.vue';
 import ChargesHoraires from './Tab/ChargesHoraires.vue';
+import RessourcesPedagogiques from './Tab/RessourcesPedagogiques.vue'
 import RapportsAcademiques from './Tab/RapportsAcademiques.vue';
 import ArchivesPedagogiques from './Tab/ArchivesPedagogiques.vue';
 </script>
