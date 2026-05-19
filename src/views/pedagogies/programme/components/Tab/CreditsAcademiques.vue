@@ -2,91 +2,81 @@
   <div class="row">
     <!-- Header de la section -->
     <div class="col-12 mb-4">
-      <h3 class="fw-bold mb-1">Saisie & Gestion des Notes</h3>
+      <h3 class="fw-bold mb-1">Configuration des Crédits Académiques (ECTS)</h3>
       <p class="text-muted small mb-0">
-        <i class="bi bi-journal-check me-1"></i>
-        Enregistrez les évaluations, saisissez les notes des étudiants et analysez les performances de la session.
+        <i class="bi bi-shield-lock-fill me-1"></i>
+        Définissez les règles de capitalisation, les plafonds de crédits par cycle et les conditions de transférabilité.
       </p>
     </div>
 
-    <!-- Contexte de l'évaluation & Sélection -->
-    <div class="col-12 mb-4">
-      <div class="card border-0 shadow-sm bg-light rounded-4">
-        <div class="card-body p-3">
-          <div class="row g-3 align-items-end">
-            <!-- Classe -->
-            <div class="col-md-3">
-              <label class="form-label small fw-semibold text-muted mb-1">Classe / Promotion</label>
-              <select class="form-select border-0 shadow-sm" v-model="session.classe" @change="loadStudents">
-                <option value="">Choisir une classe...</option>
-                <option v-for="c in mockClasses" :key="c" :value="c">{{ c }}</option>
-              </select>
-            </div>
-            <!-- Matière -->
-            <div class="col-md-3">
-              <label class="form-label small fw-semibold text-muted mb-1">Matière (Pondération)</label>
-              <select class="form-select border-0 shadow-sm" v-model="session.matiere" :disabled="!session.classe">
-                <option value="">Sélectionner l'élément...</option>
-                <option v-for="m in mockMatieres" :key="m.nom" :value="m">
-                  {{ m.nom }} (Coef. {{ m.coef }})
-                </option>
-              </select>
-            </div>
-            <!-- Type d'évaluation -->
-            <div class="col-md-3">
-              <label class="form-label small fw-semibold text-muted mb-1">Nature du Devoir</label>
-              <select class="form-select border-0 shadow-sm" v-model="session.typeDevoir" :disabled="!session.matiere">
-                <option value="Contrôle Continu">Contrôle Continu (CC)</option>
-                <option value="Examen Terminal">Examen Terminal (Partiel)</option>
-                <option value="Projet Académique">Projet Spécifique</option>
-              </select>
-            </div>
-            <!-- Bouton d'action -->
-            <div class="col-md-3">
-              <button 
-                class="btn btn-primary w-100 border-0 shadow-sm py-2" 
-                :disabled="!session.typeDevoir || mockStudentsList.length === 0"
-                @click="saveAllNotes"
-              >
-                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publier le Procès-Verbal
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Statistiques dynamiques de la session de saisie -->
-    <div class="col-12 mb-4" v-if="session.matiere && mockStudentsList.length > 0">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 text-center">
-            <span class="text-muted small fw-semibold text-uppercase">Moyenne de Session</span>
-            <h4 class="fw-bold mt-1 mb-0 text-primary">{{ statsSession.moyenne }} / 20</h4>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 text-center">
-            <span class="text-muted small fw-semibold text-uppercase">Note la plus haute</span>
-            <h4 class="fw-bold mt-1 mb-0 text-success">{{ statsSession.max }} / 20</h4>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 text-center">
-            <span class="text-muted small fw-semibold text-uppercase">Sous le seuil éliminatoire (&lt;{{ session.matiere.seuil }})</span>
-            <h4 class="fw-bold mt-1 mb-0 text-danger">{{ statsSession.alertes }} étudiant(s)</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Grille de saisie des notes -->
-    <div class="col-12">
-      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
-        <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+    <!-- Configuration des Règles Globales du Système ECTS -->
+    <div class="col-md-5 mb-4">
+      <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
           <h5 class="fw-bold text-dark mb-0">
-            <i class="bi bi-people-fill text-primary me-2"></i>Liste Nominative des Apprenants
+            <i class="bi bi-sliders text-primary me-2"></i>Réglementation des Cycles
           </h5>
+        </div>
+        <div class="card-body p-4">
+          <form @submit.prevent="updateCycleRules">
+            <!-- Sélection du Cycle -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted mb-1">Cycle d'Enseignement</label>
+              <select class="form-select bg-light border-0 shadow-sm" v-model="selectedCycle" @change="loadCycleConfig">
+                <option value="Licence">Licence (Bac +3)</option>
+                <option value="Master">Master (Bac +5)</option>
+                <option value="Doctorat">Doctorat (Bac +8)</option>
+              </select>
+            </div>
+
+            <!-- Volume d'ECTS total requis -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted mb-1">Total Crédits pour l'obtention du diplôme</label>
+              <div class="input-group bg-light rounded shadow-sm">
+                <input type="number" class="form-control bg-light border-0" v-model.number="cycleConfig.totalEcts" required />
+                <span class="input-group-text bg-light border-0 text-muted small">ECTS</span>
+              </div>
+            </div>
+
+            <!-- Règle de compensation semi-automatique -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted mb-1">Régime de Compensation des UE</label>
+              <div class="form-check form-switch mt-1">
+                <input class="form-check-input" type="checkbox" id="compensationSwitch" v-model="cycleConfig.compensationPermise">
+                <label class="form-check-label small text-secondary" for="compensationSwitch">
+                  Autoriser la compensation annuelle des crédits
+                </label>
+              </div>
+            </div>
+
+            <!-- Note seuil pour valider les ECTS unitairement -->
+            <div class="mb-4">
+              <label class="form-label small fw-semibold text-muted mb-1">Note d'attribution directe du crédit</label>
+              <div class="input-group bg-light rounded shadow-sm">
+                <input type="number" step="0.5" min="10" max="20" class="form-control bg-light border-0" v-model.number="cycleConfig.noteValidationDirecte" />
+                <span class="input-group-text bg-light border-0 text-muted small">/20</span>
+              </div>
+              <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                En dessous de cette note, les ECTS ne sont acquis que par compensation globale du jury.
+              </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 border-0 shadow-sm py-2">
+              <i class="bi bi-check-circle-fill me-1"></i> Enregistrer le protocole
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visualisation des Unités Capitalisables et Prélèvements d'Équivalences -->
+    <div class="col-md-7 mb-4">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-journal-bookmark-fill text-warning me-2"></i>Distribution des ECTS par Maquette
+          </h5>
+          <span class="badge bg-soft-primary text-primary fw-bold">Ref: LMD-MÉSR</span>
         </div>
 
         <div class="card-body p-0">
@@ -94,63 +84,43 @@
             <table class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
-                  <th class="ps-4 py-3" style="width: 15%;">Matricule</th>
-                  <th style="width: 30%;">Nom & Prénom</th>
-                  <th class="text-center" style="width: 20%;">Note Numérique (/20)</th>
-                  <th style="width: 35%;" class="pe-4">Observations / Appréciations du jury</th>
+                  <th class="ps-4 py-3">Code Unité (UE)</th>
+                  <th>Intitulé de l'Unité Pédagogique</th>
+                  <th class="text-center">Volume Horaire</th>
+                  <th class="text-center">Valeur ECTS</th>
+                  <th class="text-end pe-4">Statut</th>
                 </tr>
               </thead>
-
               <tbody>
-                <tr v-for="student in mockStudentsList" :key="student.matricule" class="transition-all">
-                  <!-- Matricule -->
-                  <td class="ps-4">
-                    <span class="badge bg-light text-dark border font-monospace">{{ student.matricule }}</span>
-                  </td>
-
-                  <!-- Nom de l'étudiant -->
-                  <td class="fw-bold text-dark">
-                    {{ student.nom }}
-                  </td>
-
-                  <!-- Champ de Saisie de Note -->
+                <tr v-for="ue in mockUeDistribution" :key="ue.code">
+                  <td class="ps-4 font-monospace fw-bold text-primary">{{ ue.code }}</td>
+                  <td class="fw-semibold text-dark">{{ ue.nom }}</td>
+                  <td class="text-center small text-muted">{{ ue.heures }} h</td>
                   <td class="text-center">
-                    <div class="input-group input-group-sm mx-auto shadow-sm rounded" style="width: 110px;">
-                      <input 
-                        type="number" 
-                        class="form-control text-center border-0 bg-light fw-bold" 
-                        v-model.number="student.note"
-                        min="0"
-                        max="20"
-                        step="0.25"
-                        placeholder="--"
-                        :class="isNoteEliminatoire(student.note) ? 'text-danger bg-soft-danger' : 'text-dark'"
-                      />
-                      <span class="input-group-text bg-light border-0 text-muted" style="font-size: 11px;">/20</span>
-                    </div>
+                    <span class="badge bg-soft-success text-success fw-bold px-3 py-1 rounded-pill">
+                      {{ ue.ects }} ECTS
+                    </span>
                   </td>
-
-                  <!-- Appréciation contextuelle -->
-                  <td class="pe-4">
-                    <input 
-                      type="text" 
-                      class="form-control form-control-sm border-0 bg-light" 
-                      placeholder="Ex: Excellent travail, à encourager..." 
-                      v-model="student.appreciation"
-                    />
-                  </td>
-                </tr>
-
-                <!-- Cas hors contexte de sélection -->
-                <tr v-if="mockStudentsList.length === 0">
-                  <td colspan="4" class="text-center py-5">
-                    <h6 class="text-muted fw-bold">En attente de ciblage pédagogique</h6>
-                    <p class="small text-muted mb-0">Sélectionnez une classe pour charger le registre des étudiants.</p>
+                  <td class="text-end pe-4">
+                    <span class="badge" :class="ue.obligatoire ? 'bg-light text-dark border' : 'bg-soft-secondary text-secondary'">
+                      {{ ue.obligatoire ? 'Obligatoire' : 'Optionnelle' }}
+                    </span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+
+          <!-- Note technique d'information ERP -->
+          <div class="p-3 bg-light border-top m-3 rounded">
+            <div class="d-flex">
+              <i class="bi bi-info-circle-fill text-primary me-2 fs-5"></i>
+              <p class="small text-muted mb-0">
+                <strong>Règle du Système :</strong> Les crédits ECTS sont définitifs et transférables d'un établissement à un autre. La modification de ces valeurs recalcule automatiquement les moyennes requises sur les PV de délibération des examens.
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -158,77 +128,47 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
-// Configuration de la session de notation
-const session = ref({
-  classe: '',
-  matiere: '',
-  typeDevoir: 'Contrôle Continu'
+// État du cycle sélectionné
+const selectedCycle = ref('Master');
+
+// Configuration réactive des règles du cycle
+const cycleConfig = ref({
+  totalEcts: 120,
+  compensationPermise: true,
+  noteValidationDirecte: 10.0
 });
 
-// Référentiels issus des maquettes précédentes
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management']);
-const mockMatieres = ref([
-  { nom: 'Conception orientée objet & Patterns', coef: 2, seuil: 8 },
-  { nom: 'Frameworks Modernes (Vue.js 3 & Node)', coef: 2, seuil: 7 },
-  { nom: 'Deep Learning & Vision par ordinateur', coef: 3, seuil: 10 }
+// Référentiel simulé des configurations par cycle
+const loadCycleConfig = () => {
+  if (selectedCycle.value === 'Licence') {
+    cycleConfig.value = { totalEcts: 180, compensationPermise: true, noteValidationDirecte: 10.0 };
+  } else if (selectedCycle.value === 'Master') {
+    cycleConfig.value = { totalEcts: 120, compensationPermise: true, noteValidationDirecte: 10.0 };
+  } else {
+    cycleConfig.value = { totalEcts: 180, compensationPermise: false, noteValidationDirecte: 12.0 };
+  }
+};
+
+// Distribution factice des ECTS pour alimenter l'interface graphique
+const mockUeDistribution = ref([
+  { code: 'UE-INF-101', nom: 'Génie Logiciel Avancé', heures: 60, ects: 8, obligatoire: true },
+  { code: 'UE-DATA-102', nom: 'Algorithmes de Machine Learning', heures: 45, ects: 6, obligatoire: true },
+  { code: 'UE-MNG-103', nom: 'Management de projet & Agilité', heures: 30, ects: 4, obligatoire: false },
+  { code: 'UE-LANG-104', nom: 'Anglais Professionnel & Technique', heures: 30, ects: 2, obligatoire: true }
 ]);
 
-// Liste d'étudiants réactive (vide par défaut, chargée au choix de la classe)
-const mockStudentsList = ref([]);
-
-const loadStudents = () => {
-  if (!session.value.classe) {
-    mockStudentsList.value = [];
-    return;
-  }
-  // Chargement simulé de la promotion
-  mockStudentsList.value = [
-    { matricule: '2026-M101', nom: 'Ndiaye Fatou', note: null, appreciation: '' },
-    { matricule: '2026-M102', nom: 'Camara Ibrahima', note: null, appreciation: '' },
-    { matricule: '2026-M103', nom: 'Sow Amadou', note: null, appreciation: '' },
-    { matricule: '2026-M104', nom: 'Diallo Diariou', note: null, appreciation: '' }
-  ];
-};
-
-// Vérification de la règle éliminatoire définie à l'étape précédente
-const isNoteEliminatoire = (note) => {
-  if (note === null || !session.value.matiere) return false;
-  return note < session.value.matiere.seuil;
-};
-
-// Calcul en temps réel des statistiques de la session de saisie
-const statsSession = computed(() => {
-  const notesValides = mockStudentsList.value.filter(s => s.note !== null && typeof s.note === 'number').map(s => s.note);
-  
-  if (notesValides.length === 0) {
-    return { moyenne: '0.00', max: '0.00', min: '0.00', alertes: 0 };
-  }
-
-  const total = notesValides.reduce((acc, curr) => acc + curr, 0);
-  const moy = total / notesValides.length;
-  const max = Math.max(...notesValides);
-  
-  // Compter le nombre de notes sous le seuil éliminatoire défini dans le programme
-  const alertes = mockStudentsList.value.filter(s => s.note !== null && isNoteEliminatoire(s.note)).length;
-
-  return {
-    moyenne: moy.toFixed(2),
-    max: max.toFixed(2),
-    alertes: alertes
-  };
-});
-
-// Publication définitive du PV de notes
-const saveAllNotes = () => {
-  alert(`Validation du PV de notes pour la classe [${session.value.classe}] en [${session.value.matiere.nom}].\nMoyenne générale calculée : ${statsSession.value.moyenne}/20.\nSauvegarde effectuée dans le registre central.`);
+const updateCycleRules = () => {
+  alert(`Les règles de crédit pour le cycle [${selectedCycle.value}] ont été mises à jour avec succès.\nNouveau barème de validation appliqué.`);
 };
 </script>
 
 <style scoped>
-/* Teintes et alertes Flat UI */
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.08) !important; }
+/* Teintes douces spécifiques pour une interface ERP propre */
+.bg-soft-primary { background-color: rgba(0, 123, 255, 0.08); color: #007bff; }
+.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
+.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.12); color: #6c757d; }
 
 .table th {
   font-size: 11px;
@@ -240,20 +180,13 @@ const saveAllNotes = () => {
 
 .table tbody tr {
   border-bottom: 1px solid #f8f9fa;
-  transition: background 0.2s;
-}
-.table tbody tr:hover {
-  background-color: #fcfdfe !important;
 }
 
-/* Alignement avec la ligne graphique unifiée de ton ERP (Flat, pas de rayons exagérés) */
+/* Ligne graphique stricte de l'application ERP (Flat design) */
 .rounded-4 {
   border-radius: 0.2rem !important;
 }
 .form-select, .form-control {
   font-size: 0.85rem;
-}
-.transition-all {
-  transition: all 0.2s ease;
 }
 </style>

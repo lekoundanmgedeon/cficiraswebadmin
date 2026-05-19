@@ -12,7 +12,7 @@
           aria-controls="programme"
           aria-selected="true"
         >
-          <i class="bi bi-journal-bookmark me-2"></i>Programme des cours
+          Programme des cours
         </a>
       </li>
       <li class="nav-item">
@@ -25,7 +25,7 @@
           aria-controls="credits"
           aria-selected="false"
         >
-          <i class="bi bi-award me-2"></i>Crédits académiques
+         Crédits académiques
         </a>
       </li>
       <li class="nav-item">
@@ -38,7 +38,7 @@
           aria-controls="ects"
           aria-selected="false"
         >
-          <i class="bi bi-mortarboard me-2"></i>Crédits ECTS
+          Crédits ECTS
         </a>
       </li>
       <li class="nav-item">
@@ -51,7 +51,7 @@
           aria-controls="resume"
           aria-selected="false"
         >
-          <i class="bi bi-clipboard-data me-2"></i>Résumé global
+          Résumé global
         </a>
       </li>
     </ul>

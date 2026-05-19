@@ -1,196 +1,166 @@
 <template>
   <div class="row">
-    <!-- Header de la section -->
     <div class="col-12 mb-4">
-      <h3 class="fw-bold mb-1">Bulletins & Documents Officiels</h3>
+      <h3 class="fw-bold mb-1">Résumé Global & Monitoring Académique</h3>
       <p class="text-muted small mb-0">
-        <i class="bi bi-file-earmark-pdf-fill me-1"></i>
-        Générez, prévisualisez et exportez les relevés de notes semestriels et les attestations de réussite certifiées.
+        <i class="bi bi-speedometer2 me-1"></i>
+        Vue d'ensemble stratégique des indicateurs de performance, de validation des ECTS et de progression des promotions.
       </p>
     </div>
 
-    <!-- Sélecteur de Promotion et Actions de Masse -->
     <div class="col-12 mb-4">
-      <div class="card border-0 shadow-sm bg-light rounded-4">
-        <div class="card-body p-3">
-          <div class="row g-3 align-items-center">
-            <!-- Choix de la classe -->
-            <div class="col-md-3">
-              <select class="form-select border-0 shadow-sm" v-model="selectedClasse" @change="loadPromotion">
-                <option value="">Sélectionner une promotion...</option>
-                <option v-for="c in mockClasses" :key="c" :value="c">{{ c }}</option>
-              </select>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 border-start border-primary border-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Apprenants Inscrits</span>
+                <h4 class="fw-bold mb-0 text-dark">1,240</h4>
+              </div>
+              <div class="bg-soft-primary p-2 rounded"><i class="bi bi-people text-primary fs-4"></i></div>
             </div>
-            <!-- Choix du document -->
-            <div class="col-md-3">
-              <select class="form-select border-0 shadow-sm" v-model="documentType" :disabled="!selectedClasse">
-                <option value="Relevé de Notes">Relevé de Notes (Semestriel)</option>
-                <option value="Attestation">Attestation de Réussite</option>
-              </select>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 border-start border-success border-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Taux de Réussite S1</span>
+                <h4 class="fw-bold mb-0 text-success">84.2 %</h4>
+              </div>
+              <div class="bg-soft-success p-2 rounded"><i class="bi bi-graph-up-arrow text-success fs-4"></i></div>
             </div>
-            <!-- Export groupé -->
-            <div class="col-md-6 text-md-end">
-              <button class="btn btn-primary border-0 shadow-sm px-3 py-2 text-white" :disabled="!selectedClasse" @click="exportBulkPDF">
-                <i class="bi bi-download me-1"></i> Télécharger les packages (PDF ZIP)
-              </button>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 border-start border-warning border-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Crédits ECTS Délivrés</span>
+                <h4 class="fw-bold mb-0 text-warning">37,200</h4>
+              </div>
+              <div class="bg-soft-warning p-2 rounded"><i class="bi bi-award text-warning fs-4"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm p-3 bg-white rounded-4 border-start border-danger border-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Taux de Présence</span>
+                <h4 class="fw-bold mb-0 text-danger">92.6 %</h4>
+              </div>
+              <div class="bg-soft-danger p-2 rounded"><i class="bi bi-calendar-check text-danger fs-4"></i></div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Corps principal : Liste à gauche, Aperçu du document à droite -->
-    <div class="col-md-4 mb-4" v-if="selectedClasse && students.length > 0">
-      <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
-        <div class="card-header bg-white border-0 pt-3 px-3 pb-2">
-          <h6 class="fw-bold text-muted small text-uppercase mb-0">Étudiants de la promotion</h6>
-        </div>
-        <div class="list-group list-group-flush">
-          <button 
-            v-for="student in students" 
-            :key="student.matricule"
-            type="button"
-            class="list-group-item list-group-item-action border-0 px-3 py-2 d-flex justify-content-between align-items-center text-start"
-            :class="activeStudent?.matricule === student.matricule ? 'bg-soft-primary fw-bold text-primary' : ''"
-            @click="selectStudent(student)"
-          >
-            <div>
-              <span class="d-block text-dark">{{ student.nom }}</span>
-              <small class="text-muted font-monospace" style="font-size: 11px;">{{ student.matricule }}</small>
-            </div>
-            <span class="badge rounded-pill text-xs" :class="student.statut === 'Admis' ? 'bg-soft-success text-success' : 'bg-soft-danger text-danger'">
-              {{ student.moyenne }}
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Zone d'Aperçu du Bulletin (Template Officiel) -->
-    <div class="col-md-8 mb-4" v-if="activeStudent && selectedClasse">
-      <div class="card border-0 shadow-sm rounded-4 bg-white p-4 position-relative">
-        
-        <!-- Outils d'édition unitaire (Flottants) -->
-        <div class="position-absolute top-0 end-0 mt-3 me-3">
-          <button class="btn btn-light btn-sm border shadow-sm me-2" @click="printSingleDocument">
-            <i class="bi bi-printer-fill me-1"></i> Imprimer
-          </button>
+    <div class="col-lg-8 mb-4">
+      <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-columns-gap text-primary me-2"></i>Performances Comparées par Promotion
+          </h5>
+          <span class="text-xs text-muted font-monospace">Mise à jour : En direct</span>
         </div>
 
-        <!-- Début du gabarit du document académique officiel -->
-        <div class="document-print-area p-2 text-dark font-monospace" id="bulletin-template">
-          
-          <!-- Entête Institutionnelle -->
-          <div class="row border-bottom pb-3 mb-4 text-uppercase text-center text-md-start">
-            <div class="col-md-8">
-              <h5 class="fw-bold mb-0">École Supérieure de Technologie et de Management</h5>
-              <small class="text-muted text-xs">République du Sénégal — Ministère de l'Enseignement Supérieur</small>
-            </div>
-            <div class="col-md-4 text-md-end mt-2 mt-md-0">
-              <div class="fw-bold border p-2 text-center text-xs bg-light">RELEVÉ DE NOTES</div>
-            </div>
-          </div>
-
-          <!-- Métadonnées Étudiant & Année -->
-          <div class="row g-2 small mb-4 bg-light p-3 rounded">
-            <div class="col-6">
-              <div><strong>Nom & Prénom :</strong> {{ activeStudent.nom }}</div>
-              <div><strong>Matricule :</strong> {{ activeStudent.matricule }}</div>
-              <div><strong>Inscrit en :</strong> {{ selectedClasse }}</div>
-            </div>
-            <div class="col-6 text-end">
-              <div><strong>Année Académique :</strong> 2025 / 2026</div>
-              <div><strong>Période :</strong> Semestre 1</div>
-              <div><strong>Session :</strong> Normale (Délibérée)</div>
-            </div>
-          </div>
-
-          <!-- Structure des notes par UE -->
-          <div class="table-responsive mb-4">
-            <table class="table table-bordered table-sm align-middle text-xs text-center">
-              <thead class="table-secondary">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+              <thead class="bg-light text-secondary small">
                 <tr>
-                  <th class="text-start ps-2" style="width: 45%;">Unités d'Enseignement & Matières</th>
-                  <th style="width: 15%;">Note /20</th>
-                  <th style="width: 15%;">Coeff.</th>
-                  <th style="width: 15%;">Crédits</th>
-                  <th style="width: 10%;">Résultat</th>
+                  <th class="ps-4 py-3 text-start">Filière / Classe</th>
+                  <th>Moyenne Classe</th>
+                  <th>ECTS Validés (%)</th>
+                  <th>Taux d'Admission</th>
+                  <th class="text-end pe-4">Alerte Jury</th>
                 </tr>
               </thead>
               <tbody>
-                <!-- Bloc UE 1 -->
-                <tr class="fw-bold table-light text-start">
-                  <td colspan="5" class="ps-2 text-primary">UE-INF-1 : Génie Logiciel & Outils de Dev</td>
-                </tr>
-                <tr>
-                  <td class="text-start ps-3 text-muted">Frameworks Modernes (Vue.js 3 & Node)</td>
-                  <td>{{ activeStudent.n1 }}</td>
-                  <td>2.0</td>
-                  <td>4.0</td>
-                  <td class="fw-bold">{{ activeStudent.n1 >= 10 ? 'V' : 'NV' }}</td>
-                </tr>
-                <tr>
-                  <td class="text-start ps-3 text-muted">Conception orientée objet & Patterns</td>
-                  <td>{{ activeStudent.n2 }}</td>
-                  <td>2.0</td>
-                  <td>4.0</td>
-                  <td class="fw-bold">{{ activeStudent.n2 >= 10 ? 'V' : 'NV' }}</td>
-                </tr>
-
-                <!-- Bloc UE 2 -->
-                <tr class="fw-bold table-light text-start">
-                  <td colspan="5" class="ps-2 text-primary">UE-DATA-2 : Data Science & Intelligence Artificielle</td>
-                </tr>
-                <tr>
-                  <td class="text-start ps-3 text-muted">Deep Learning & Vision par ordinateur</td>
-                  <td>{{ activeStudent.n3 }}</td>
-                  <td>3.0</td>
-                  <td>6.0</td>
-                  <td class="fw-bold">{{ activeStudent.n3 >= 10 ? 'V' : 'NV' }}</td>
+                <tr v-for="row in mockPromotionSummary" :key="row.classe">
+                  <td class="ps-4 text-startfw-semibold text-dark text-start">
+                    <div class="fw-bold">{{ row.classe }}</div>
+                    <small class="text-muted">{{ row.effectif }} apprenants</small>
+                  </td>
+                  <td class="fw-bold text-secondary">{{ row.moyenneGlobal }} / 20</td>
+                  <td>
+                    <div class="d-flex align-items-center justify-content-center">
+                      <span class="me-2 small font-monospace">{{ row.pctEctsAcquis }}%</span>
+                      <div class="progress" style="width: 60px; height: 5px; background-color: #f0f2f5;">
+                        <div class="progress-bar bg-primary" :style="{ width: row.pctEctsAcquis + '%' }"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge px-2 py-1 rounded" :class="row.tauxAdmis >= 80 ? 'bg-soft-success text-success' : 'bg-soft-warning text-warning'">
+                      {{ row.tauxAdmis }}% admis
+                    </span>
+                  </td>
+                  <td class="text-end pe-4">
+                    <span v-if="row.alertes > 0" class="badge bg-soft-danger text-danger fw-bold">
+                      <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ row.alertes }} Dossiers bloqués
+                    </span>
+                    <span v-else class="badge bg-light text-muted border">Clôturé</span>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          <!-- Synthèse Finale et Décision Statutaire -->
-          <div class="row g-3 align-items-center small pt-2 border-top">
-            <div class="col-7">
-              <table class="table table-sm table-borderless mb-0 bg-light rounded text-xs">
-                <tr>
-                  <td class="fw-bold ps-2">Moyenne Générale Pondérée :</td>
-                  <td class="fw-bold text-primary">{{ activeStudent.moyenne }} / 20</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold ps-2">Total Crédits Capitalisés :</td>
-                  <td class="fw-bold text-success">{{ activeStudent.statut === 'Admis' ? '14.0 / 14.0 ECTS' : 'En attente' }}</td>
-                </tr>
-              </table>
-            </div>
-            <div class="col-5 text-end">
-              <div class="small fw-bold mb-1 text-muted">DÉCISION DU JURY :</div>
-              <span class="badge p-2 uppercase fw-bold border" :class="activeStudent.statut === 'Admis' ? 'border-success text-success bg-soft-success' : 'border-danger text-danger bg-soft-danger'">
-                {{ activeStudent.statut === 'Admis' ? 'ADMIS(E)' : 'AJOURNÉ(E) / RATTRAPAGE' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Pied de page / Signatures -->
-          <div class="row mt-5 pt-4 text-center text-xs text-muted">
-            <div class="col-6">Fait à Dakar, le 19 Mai 2026</div>
-            <div class="col-6 fw-bold text-dark text-decoration-underline">Le Directeur des Études et des Examens</div>
-          </div>
-
         </div>
-        <!-- Fin du gabarit -->
-
       </div>
     </div>
 
-    <!-- Hors contexte de sélection -->
-    <div class="col-12 py-5 text-center text-muted" v-else>
-      <i class="bi bi-file-earmark-text display-4 text-light d-block mb-3"></i>
-      <h6 class="fw-bold">Aucun dossier à l'écran</h6>
-      <p class="small mb-0">Sélectionnez une promotion pédagogique pour charger et éditer les documents officiels.</p>
+    <div class="col-lg-4 mb-4">
+      <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="bi bi-activity text-warning me-2"></i>Santé de la Session
+          </h5>
+        </div>
+        <div class="card-body p-4 pt-2">
+          <p class="text-muted small mb-4">Analyse répartie des décisions d'attribution de crédits à l'échelle de l'école.</p>
+          
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+              <span>Parcours sans faute (60 ECTS acquis)</span>
+              <span class="text-dark">72%</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 8px; background-color: #f0f2f5;">
+              <div class="progress-bar bg-success rounded-pill" style="width: 72%"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+              <span>Passages conditionnels (Dette de crédits)</span>
+              <span class="text-dark">16%</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 8px; background-color: #f0f2f5;">
+              <div class="progress-bar bg-warning rounded-pill" style="width: 16%"></div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+              <span>Ajournements & Redoublants</span>
+              <span class="text-dark">12%</span>
+            </div>
+            <div class="progress rounded-pill" style="height: 8px; background-color: #f0f2f5;">
+              <div class="progress-bar bg-danger rounded-pill" style="width: 12%"></div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-light rounded text-xs text-muted border-0">
+            <h6 class="fw-bold text-dark mb-1 small"><i class="bi bi-info-circle-fill text-primary me-1"></i> Consolidation des données</h6>
+            Ce résumé global compile dynamiquement les informations issues des délibérations. Toute modification sur les maquettes pédagogiques invalide le cache et recalcule la synthèse.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -198,79 +168,41 @@
 <script setup>
 import { ref } from 'vue';
 
-// États
-const selectedClasse = ref('');
-const documentType = ref('Relevé de Notes');
-const students = ref([]);
-const activeStudent = ref(null);
-
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management']);
-
-// Chargement de la promotion (Données issues de la délibération précédente)
-const loadPromotion = () => {
-  if (!selectedClasse.value) {
-    students.value = [];
-    activeStudent.value = null;
-    return;
-  }
-
-  students.value = [
-    { matricule: '2026-M101', nom: 'Ndiaye Fatou', n1: 14.5, n2: 12, n3: 15, moyenne: 14.07, statut: 'Admis' },
-    { matricule: '2026-M102', nom: 'Camara Ibrahima', n1: 8.0, n2: 11, n3: 9.5, moyenne: 9.50, statut: 'Rattrapage' },
-    { matricule: '2026-M103', nom: 'Sow Amadou', n1: 16.0, n2: 14.5, n3: 13.5, moyenne: 14.50, statut: 'Admis' },
-    { matricule: '2026-M104', nom: 'Diallo Diariou', n1: 11.0, n2: 7.5, n3: 12, moyenne: 10.43, statut: 'Rattrapage' }
-  ];
-
-  // Sélection automatique du premier de la liste
-  activeStudent.value = students.value[0];
-};
-
-const selectStudent = (student) => {
-  activeStudent.value = student;
-};
-
-// Actions d'impression et d'exports
-const printSingleDocument = () => {
-  window.print();
-};
-
-const exportBulkPDF = () => {
-  alert(`Génération du package ZIP contenant les ${students.value.length} bulletins de la promotion [${selectedClasse.value}] au format PDF standardisé.`);
-};
+// Données consolidées de synthèse académique globale
+const mockPromotionSummary = ref([
+  { classe: 'Master 1 Informatique', effectif: 45, moyenneGlobal: 13.45, pctEctsAcquis: 88, tauxAdmis: 82, alertes: 2 },
+  { classe: 'Master 2 Informatique', effectif: 38, moyenneGlobal: 14.12, pctEctsAcquis: 94, tauxAdmis: 91, alertes: 0 },
+  { classe: 'Licence 3 Management', effectif: 110, moyenneGlobal: 11.20, pctEctsAcquis: 76, tauxAdmis: 70, alertes: 7 },
+  { classe: 'Licence 2 Génie Civil', effectif: 64, moyenneGlobal: 12.05, pctEctsAcquis: 82, tauxAdmis: 78, alertes: 1 }
+]);
 </script>
 
 <style scoped>
-/* Couleurs softs Flat UI */
+/* Palettes d'accents Flat & Douces */
 .bg-soft-primary { background-color: rgba(0, 123, 255, 0.08); }
 .bg-soft-success { background-color: rgba(40, 167, 69, 0.1); }
+.bg-soft-warning { background-color: rgba(255, 193, 7, 0.12); }
 .bg-soft-danger { background-color: rgba(220, 53, 69, 0.08); }
 
 .text-xs { font-size: 11px !important; }
 
-/* Feuille de style typographique stricte imitant un document officiel en format brut */
-.document-print-area {
-  background: #fff;
-  line-height: 1.5;
-  letter-spacing: -0.2px;
+.table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #6c757d;
+  border: none;
 }
 
-.table-bordered th, .table-bordered td {
-  border: 1px solid #dee2e6 !important;
+.table tbody tr {
+  border-bottom: 1px solid #f8f9fa;
 }
 
-/* Alignement avec la charte graphique rigoureuse de l'application ERP (Flat design) */
+/* Ligne graphique stricte de l'ERP */
 .rounded-4 {
   border-radius: 0.2rem !important;
 }
-.form-select, .btn {
-  font-size: 0.85rem;
-}
-.list-group-item {
-  cursor: pointer;
-  font-size: 0.85rem;
-  border-bottom: 1px solid #f8f9fa !important;
-}
-.list-group-item:hover {
-  background-color: #f8f9fa;
+.progress {
+  box-shadow: none;
 }
 </style>
