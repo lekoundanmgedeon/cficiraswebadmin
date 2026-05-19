@@ -55,7 +55,7 @@
 
             <!-- 3. Options Additionnelles (Cases à cocher) -->
             <div class="mb-4">
-              <label class="form-label text-xs fw-bold text-secondary text-uppercase mb-2">Options d'affichage</label>
+              <label class="form-label text-xs fw-bold text-secondary text-uppercase mb-2">Options d'affichages</label>
               
               <!-- Section Centrée des Options d'Affichage -->
                 <div class="mb-4 d-flex flex-column align-items-center text-center">              
