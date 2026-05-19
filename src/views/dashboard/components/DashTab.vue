@@ -52,11 +52,11 @@
       <li class="nav-item">
         <a
           class="nav-link"
-          id="purchases-tab"
+          id="rapports-tab"
           data-bs-toggle="tab"
-          href="#purchases"
+          href="#rapports"
           role="tab"
-          aria-controls="purchases"
+          aria-controls="rapports"
           aria-selected="false"
           >Rapports</a
         >
@@ -80,7 +80,7 @@
       <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
         <DashCycles />
       </div>
-      <div class="tab-pane fade" id="purchases" role="tabpanel" aria-labelledby="purchases-tab">
+      <div class="tab-pane fade" id="rapports" role="tabpanel" aria-labelledby="rapports-tab">
         <DashRapport />
       </div>
     </div>
