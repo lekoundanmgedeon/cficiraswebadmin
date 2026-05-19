@@ -45,6 +45,20 @@
           Bilans Financiers
         </a>
       </li>
+
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          id="simulations-tab"
+          data-bs-toggle="tab"
+          href="#simulations"
+          role="tab"
+          aria-controls="simulations"
+          aria-selected="false"
+        >
+          Simulations & Projections
+        </a>
+      </li>
       <!-- Assistant IA -->
       <li class="nav-item">
         <a
@@ -81,6 +95,11 @@
       <div class="tab-pane fade" id="bilans" role="tabpanel" aria-labelledby="bilans-tab">
         <RapportBilans />
       </div>
+
+      <!-- Simulations & Projections -->
+      <div class="tab-pane fade" id="simulations" role="tabpanel" aria-labelledby="simulations-tab">
+        <RapportSimulations />
+      </div>
       <!-- Assistant IA -->
       <div class="tab-pane fade" id="assistant" role="tabpanel" aria-labelledby="assistant-tab">
         <AssistantIA />
@@ -93,6 +112,7 @@
 import RapportPaiements from './Tab/RapportPaiements.vue';
 import RapportFactures from './Tab/RapportFactures.vue';
 import RapportBilans from './Tab/RapportBilans.vue';
+import RapportSimulations from './Tab/RapportSimulations.vue';
 import AssistantIA from './Tab/AssistantIA.vue';
 </script>
 
