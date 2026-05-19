@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Saisie & Gestion des Notes</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-journal-check me-1"></i>
-        Enregistrez les évaluations, saisissez les notes des étudiants et analysez les performances de la session.
+        Enregistrez les évaluations, saisissez les notes des étudiants et analysez les performances
+        de la session.
       </p>
     </div>
 
@@ -17,15 +18,25 @@
             <!-- Classe -->
             <div class="col-md-3">
               <label class="form-label small fw-semibold text-muted mb-1">Classe / Promotion</label>
-              <select class="form-select border-0 shadow-sm" v-model="session.classe" @change="loadStudents">
+              <select
+                class="form-select border-0 shadow-sm"
+                v-model="session.classe"
+                @change="loadStudents"
+              >
                 <option value="">Choisir une classe...</option>
                 <option v-for="c in mockClasses" :key="c" :value="c">{{ c }}</option>
               </select>
             </div>
             <!-- Matière -->
             <div class="col-md-3">
-              <label class="form-label small fw-semibold text-muted mb-1">Matière (Pondération)</label>
-              <select class="form-select border-0 shadow-sm" v-model="session.matiere" :disabled="!session.classe">
+              <label class="form-label small fw-semibold text-muted mb-1"
+                >Matière (Pondération)</label
+              >
+              <select
+                class="form-select border-0 shadow-sm"
+                v-model="session.matiere"
+                :disabled="!session.classe"
+              >
                 <option value="">Sélectionner l'élément...</option>
                 <option v-for="m in mockMatieres" :key="m.nom" :value="m">
                   {{ m.nom }} (Coef. {{ m.coef }})
@@ -35,7 +46,11 @@
             <!-- Type d'évaluation -->
             <div class="col-md-3">
               <label class="form-label small fw-semibold text-muted mb-1">Nature du Devoir</label>
-              <select class="form-select border-0 shadow-sm" v-model="session.typeDevoir" :disabled="!session.matiere">
+              <select
+                class="form-select border-0 shadow-sm"
+                v-model="session.typeDevoir"
+                :disabled="!session.matiere"
+              >
                 <option value="Contrôle Continu">Contrôle Continu (CC)</option>
                 <option value="Examen Terminal">Examen Terminal (Partiel)</option>
                 <option value="Projet Académique">Projet Spécifique</option>
@@ -43,8 +58,8 @@
             </div>
             <!-- Bouton d'action -->
             <div class="col-md-3">
-              <button 
-                class="btn btn-primary w-100 border-0 shadow-sm py-2" 
+              <button
+                class="btn btn-primary w-100 border-0 shadow-sm py-2"
                 :disabled="!session.typeDevoir || mockStudentsList.length === 0"
                 @click="saveAllNotes"
               >
@@ -73,7 +88,9 @@
         </div>
         <div class="col-md-4">
           <div class="card border-0 shadow-sm p-3 bg-white rounded-4 text-center">
-            <span class="text-muted small fw-semibold text-uppercase">Sous le seuil éliminatoire (&lt;{{ session.matiere.seuil }})</span>
+            <span class="text-muted small fw-semibold text-uppercase"
+              >Sous le seuil éliminatoire (&lt;{{ session.matiere.seuil }})</span
+            >
             <h4 class="fw-bold mt-1 mb-0 text-danger">{{ statsSession.alertes }} étudiant(s)</h4>
           </div>
         </div>
@@ -94,18 +111,24 @@
             <table class="table table-hover align-middle mb-0">
               <thead class="bg-light">
                 <tr>
-                  <th class="ps-4 py-3" style="width: 15%;">Matricule</th>
-                  <th style="width: 30%;">Nom & Prénom</th>
-                  <th class="text-center" style="width: 20%;">Note Numérique (/20)</th>
-                  <th style="width: 35%;" class="pe-4">Observations / Appréciations du jury</th>
+                  <th class="ps-4 py-3" style="width: 15%">Matricule</th>
+                  <th style="width: 30%">Nom & Prénom</th>
+                  <th class="text-center" style="width: 20%">Note Numérique (/20)</th>
+                  <th style="width: 35%" class="pe-4">Observations / Appréciations du jury</th>
                 </tr>
               </thead>
 
               <tbody>
-                <tr v-for="student in mockStudentsList" :key="student.matricule" class="transition-all">
+                <tr
+                  v-for="student in mockStudentsList"
+                  :key="student.matricule"
+                  class="transition-all"
+                >
                   <!-- Matricule -->
                   <td class="ps-4">
-                    <span class="badge bg-light text-dark border font-monospace">{{ student.matricule }}</span>
+                    <span class="badge bg-light text-dark border font-monospace">{{
+                      student.matricule
+                    }}</span>
                   </td>
 
                   <!-- Nom de l'étudiant -->
@@ -115,27 +138,38 @@
 
                   <!-- Champ de Saisie de Note -->
                   <td class="text-center">
-                    <div class="input-group input-group-sm mx-auto shadow-sm rounded" style="width: 110px;">
-                      <input 
-                        type="number" 
-                        class="form-control text-center border-0 bg-light fw-bold" 
+                    <div
+                      class="input-group input-group-sm mx-auto shadow-sm rounded"
+                      style="width: 110px"
+                    >
+                      <input
+                        type="number"
+                        class="form-control text-center border-0 bg-light fw-bold"
                         v-model.number="student.note"
                         min="0"
                         max="20"
                         step="0.25"
                         placeholder="--"
-                        :class="isNoteEliminatoire(student.note) ? 'text-danger bg-soft-danger' : 'text-dark'"
+                        :class="
+                          isNoteEliminatoire(student.note)
+                            ? 'text-danger bg-soft-danger'
+                            : 'text-dark'
+                        "
                       />
-                      <span class="input-group-text bg-light border-0 text-muted" style="font-size: 11px;">/20</span>
+                      <span
+                        class="input-group-text bg-light border-0 text-muted"
+                        style="font-size: 11px"
+                        >/20</span
+                      >
                     </div>
                   </td>
 
                   <!-- Appréciation contextuelle -->
                   <td class="pe-4">
-                    <input 
-                      type="text" 
-                      class="form-control form-control-sm border-0 bg-light" 
-                      placeholder="Ex: Excellent travail, à encourager..." 
+                    <input
+                      type="text"
+                      class="form-control form-control-sm border-0 bg-light"
+                      placeholder="Ex: Excellent travail, à encourager..."
                       v-model="student.appreciation"
                     />
                   </td>
@@ -145,7 +179,9 @@
                 <tr v-if="mockStudentsList.length === 0">
                   <td colspan="4" class="text-center py-5">
                     <h6 class="text-muted fw-bold">En attente de ciblage pédagogique</h6>
-                    <p class="small text-muted mb-0">Sélectionnez une classe pour charger le registre des étudiants.</p>
+                    <p class="small text-muted mb-0">
+                      Sélectionnez une classe pour charger le registre des étudiants.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -164,7 +200,7 @@ import { ref, computed } from 'vue';
 const session = ref({
   classe: '',
   matiere: '',
-  typeDevoir: 'Contrôle Continu'
+  typeDevoir: 'Contrôle Continu',
 });
 
 // Référentiels issus des maquettes précédentes
@@ -172,7 +208,7 @@ const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management
 const mockMatieres = ref([
   { nom: 'Conception orientée objet & Patterns', coef: 2, seuil: 8 },
   { nom: 'Frameworks Modernes (Vue.js 3 & Node)', coef: 2, seuil: 7 },
-  { nom: 'Deep Learning & Vision par ordinateur', coef: 3, seuil: 10 }
+  { nom: 'Deep Learning & Vision par ordinateur', coef: 3, seuil: 10 },
 ]);
 
 // Liste d'étudiants réactive (vide par défaut, chargée au choix de la classe)
@@ -188,7 +224,7 @@ const loadStudents = () => {
     { matricule: '2026-M101', nom: 'Ndiaye Fatou', note: null, appreciation: '' },
     { matricule: '2026-M102', nom: 'Camara Ibrahima', note: null, appreciation: '' },
     { matricule: '2026-M103', nom: 'Sow Amadou', note: null, appreciation: '' },
-    { matricule: '2026-M104', nom: 'Diallo Diariou', note: null, appreciation: '' }
+    { matricule: '2026-M104', nom: 'Diallo Diariou', note: null, appreciation: '' },
   ];
 };
 
@@ -200,8 +236,10 @@ const isNoteEliminatoire = (note) => {
 
 // Calcul en temps réel des statistiques de la session de saisie
 const statsSession = computed(() => {
-  const notesValides = mockStudentsList.value.filter(s => s.note !== null && typeof s.note === 'number').map(s => s.note);
-  
+  const notesValides = mockStudentsList.value
+    .filter((s) => s.note !== null && typeof s.note === 'number')
+    .map((s) => s.note);
+
   if (notesValides.length === 0) {
     return { moyenne: '0.00', max: '0.00', min: '0.00', alertes: 0 };
   }
@@ -209,26 +247,32 @@ const statsSession = computed(() => {
   const total = notesValides.reduce((acc, curr) => acc + curr, 0);
   const moy = total / notesValides.length;
   const max = Math.max(...notesValides);
-  
+
   // Compter le nombre de notes sous le seuil éliminatoire défini dans le programme
-  const alertes = mockStudentsList.value.filter(s => s.note !== null && isNoteEliminatoire(s.note)).length;
+  const alertes = mockStudentsList.value.filter(
+    (s) => s.note !== null && isNoteEliminatoire(s.note)
+  ).length;
 
   return {
     moyenne: moy.toFixed(2),
     max: max.toFixed(2),
-    alertes: alertes
+    alertes: alertes,
   };
 });
 
 // Publication définitive du PV de notes
 const saveAllNotes = () => {
-  alert(`Validation du PV de notes pour la classe [${session.value.classe}] en [${session.value.matiere.nom}].\nMoyenne générale calculée : ${statsSession.value.moyenne}/20.\nSauvegarde effectuée dans le registre central.`);
+  alert(
+    `Validation du PV de notes pour la classe [${session.value.classe}] en [${session.value.matiere.nom}].\nMoyenne générale calculée : ${statsSession.value.moyenne}/20.\nSauvegarde effectuée dans le registre central.`
+  );
 };
 </script>
 
 <style scoped>
 /* Teintes et alertes Flat UI */
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.08) !important; }
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.08) !important;
+}
 
 .table th {
   font-size: 11px;
@@ -250,7 +294,8 @@ const saveAllNotes = () => {
 .rounded-4 {
   border-radius: 0.2rem !important;
 }
-.form-select, .form-control {
+.form-select,
+.form-control {
   font-size: 0.85rem;
 }
 .transition-all {

@@ -58,6 +58,20 @@
           Statistiques
         </a>
       </li>
+      <!-- Assistant AI -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          id="assistant-ai-tab"
+          data-bs-toggle="tab"
+          href="#assistant-ai"
+          role="tab"
+          aria-controls="assistant-ai"
+          aria-selected="false"
+        >
+          Assistant AI
+        </a>
+      </li>
     </ul>
 
     <div class="tab-content p-4">
@@ -95,6 +109,16 @@
       >
         <StatistiquesSemestresContent />
       </div>
+
+      <!-- Assistant AI -->
+      <div
+        class="tab-pane fade"
+        id="assistant-ai"
+        role="tabpanel"
+        aria-labelledby="assistant-ai-tab"
+      >
+        <AssistantAIContent />
+      </div>
     </div>
   </div>
 </template>
@@ -103,4 +127,5 @@ import SemestresContent from './Tab/SemestresContent.vue';
 import NiveauxContent from './Tab/NiveauxContent.vue';
 import OrganisationSemestresContent from './Tab/OrganisationSemestresContent.vue';
 import StatistiquesSemestresContent from './Tab/StatistiquesSemestresContent.vue';
+import AssistantAIContent from './Tab/AssistantAIContent.vue';
 </script>

@@ -12,7 +12,8 @@
 
       <!-- Action d'export global -->
       <button @click="exportGlobalAudit" class="btn btn-sm btn-dark border-0 shadow-sm py-2 px-3">
-        <i class="bi bi-file-earmark-pdf-fill me-1 text-danger"></i> Exporter le Rapport d'Audit (.PDF)
+        <i class="bi bi-file-earmark-pdf-fill me-1 text-danger"></i> Exporter le Rapport d'Audit
+        (.PDF)
       </button>
     </div>
 
@@ -22,7 +23,10 @@
         <h5 class="fw-bold text-dark mb-1">
           <i class="bi bi-clock-history text-danger me-2"></i>Balance Âgée des Créances
         </h5>
-        <p class="text-muted text-xs mb-0">Répartition des sommes facturées non encaissées par ancienneté de dépassement de la date d'échéance.</p>
+        <p class="text-muted text-xs mb-0">
+          Répartition des sommes facturées non encaissées par ancienneté de dépassement de la date
+          d'échéance.
+        </p>
       </div>
 
       <div class="card-body p-4 pt-2">
@@ -31,8 +35,12 @@
           <div class="col-md-3">
             <div class="p-3 rounded bg-light border-start border-3 border-success">
               <span class="text-muted small fw-semibold d-block mb-1">Saines (-30 jours)</span>
-              <h5 class="fw-bold text-dark font-monospace mb-1">{{ formatPrice(balanceAgee.saines) }}</h5>
-              <div class="text-xs text-success"><i class="bi bi-shield-check me-1"></i>Risque faible</div>
+              <h5 class="fw-bold text-dark font-monospace mb-1">
+                {{ formatPrice(balanceAgee.saines) }}
+              </h5>
+              <div class="text-xs text-success">
+                <i class="bi bi-shield-check me-1"></i>Risque faible
+              </div>
             </div>
           </div>
 
@@ -40,17 +48,27 @@
           <div class="col-md-3">
             <div class="p-3 rounded bg-light border-start border-3 border-warning">
               <span class="text-muted small fw-semibold d-block mb-1">Retard Modéré (30-60 j)</span>
-              <h5 class="fw-bold text-warning font-monospace mb-1">{{ formatPrice(balanceAgee.modere) }}</h5>
-              <div class="text-xs text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Relance requise</div>
+              <h5 class="fw-bold text-warning font-monospace mb-1">
+                {{ formatPrice(balanceAgee.modere) }}
+              </h5>
+              <div class="text-xs text-warning">
+                <i class="bi bi-exclamation-triangle me-1"></i>Relance requise
+              </div>
             </div>
           </div>
 
           <!-- En retard 60-90 Jours -->
           <div class="col-md-3">
             <div class="p-3 rounded bg-light border-start border-3 border-orange">
-              <span class="text-muted small fw-semibold d-block mb-1">Retard Critique (60-90 j)</span>
-              <h5 class="fw-bold text-orange font-monospace mb-1">{{ formatPrice(balanceAgee.critique) }}</h5>
-              <div class="text-xs text-orange"><i class="bi bi-telephone-outbound me-1"></i>Relance directe</div>
+              <span class="text-muted small fw-semibold d-block mb-1"
+                >Retard Critique (60-90 j)</span
+              >
+              <h5 class="fw-bold text-orange font-monospace mb-1">
+                {{ formatPrice(balanceAgee.critique) }}
+              </h5>
+              <div class="text-xs text-orange">
+                <i class="bi bi-telephone-outbound me-1"></i>Relance directe
+              </div>
             </div>
           </div>
 
@@ -58,8 +76,12 @@
           <div class="col-md-3">
             <div class="p-3 rounded bg-light border-start border-3 border-danger">
               <span class="text-muted small fw-semibold d-block mb-1">Contentieux (+90 jours)</span>
-              <h5 class="fw-bold text-danger font-monospace mb-1">{{ formatPrice(balanceAgee.contentieux) }}</h5>
-              <div class="text-xs text-danger"><i class="bi bi-slash-circle me-1"></i>Blocage académique</div>
+              <h5 class="fw-bold text-danger font-monospace mb-1">
+                {{ formatPrice(balanceAgee.contentieux) }}
+              </h5>
+              <div class="text-xs text-danger">
+                <i class="bi bi-slash-circle me-1"></i>Blocage académique
+              </div>
             </div>
           </div>
         </div>
@@ -70,7 +92,8 @@
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
       <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
         <h5 class="fw-bold text-dark mb-0">
-          <i class="bi bi-list-ol text-primary me-2"></i>Top 5 des Plus Grands Restes à Recouvrer Individuels
+          <i class="bi bi-list-ol text-primary me-2"></i>Top 5 des Plus Grands Restes à Recouvrer
+          Individuels
         </h5>
       </div>
 
@@ -102,13 +125,20 @@
                 <!-- Facturé -->
                 <td class="font-monospace text-muted small">{{ formatPrice(row.total) }}</td>
                 <!-- Réglé -->
-                <td class="font-monospace text-success fw-semibold small">{{ formatPrice(row.regle) }}</td>
+                <td class="font-monospace text-success fw-semibold small">
+                  {{ formatPrice(row.regle) }}
+                </td>
                 <!-- Solde restant -->
-                <td class="font-monospace fw-bold text-danger">{{ formatPrice(row.total - row.regle) }}</td>
+                <td class="font-monospace fw-bold text-danger">
+                  {{ formatPrice(row.total - row.regle) }}
+                </td>
                 <!-- Niveau d'alerte risque -->
                 <td class="text-end pe-4">
                   <span class="badge px-2 py-1 rounded" :class="getRiskBadgeClass(row.joursRetard)">
-                    <i class="bi bi-circle-fill me-1" style="font-size: 6px;"></i> +{{ row.joursRetard }} jours de retard
+                    <i class="bi bi-circle-fill me-1" style="font-size: 6px"></i> +{{
+                      row.joursRetard
+                    }}
+                    jours de retard
                   </span>
                 </td>
               </tr>
@@ -125,19 +155,59 @@ import { ref } from 'vue';
 
 // Répartition analytique temporelle des impayés (Balance Âgée)
 const balanceAgee = ref({
-  saines: 1850000,      // Factures récentes non échues
-  modere: 750000,       // Échéance dépassée de 30-60j
-  critique: 450000,     // Échéance dépassée de 60-90j
-  contentieux: 150000   // Échéance dépassée de +90j
+  saines: 1850000, // Factures récentes non échues
+  modere: 750000, // Échéance dépassée de 30-60j
+  critique: 450000, // Échéance dépassée de 60-90j
+  contentieux: 150000, // Échéance dépassée de +90j
 });
 
 // Top des dossiers nécessitant un arbitrage immédiat
 const debiteursTop = ref([
-  { matricule: 'ETU-2026-003', nom: 'Modou Fall', filiere: 'Informatique', classe: 'M1-JV', total: 450000, regle: 0, joursRetard: 95 },
-  { matricule: 'ETU-2026-114', nom: 'Ibrahima Diallo', filiere: 'Génie Civil', classe: 'L3-B', total: 600000, regle: 200000, joursRetard: 64 },
-  { matricule: 'ETU-2026-001', nom: 'Amath Sarr', filiere: 'Informatique', classe: 'L1-A', total: 500000, regle: 350000, joursRetard: 42 },
-  { matricule: 'ETU-2026-088', nom: 'Amy Ndiaye', filiere: 'Management', classe: 'M2-FI', total: 750000, regle: 600000, joursRetard: 35 },
-  { matricule: 'ETU-2026-204', nom: 'Oumar Sy', filiere: 'Droit', classe: 'L2-A', total: 300000, regle: 150000, joursRetard: 12 }
+  {
+    matricule: 'ETU-2026-003',
+    nom: 'Modou Fall',
+    filiere: 'Informatique',
+    classe: 'M1-JV',
+    total: 450000,
+    regle: 0,
+    joursRetard: 95,
+  },
+  {
+    matricule: 'ETU-2026-114',
+    nom: 'Ibrahima Diallo',
+    filiere: 'Génie Civil',
+    classe: 'L3-B',
+    total: 600000,
+    regle: 200000,
+    joursRetard: 64,
+  },
+  {
+    matricule: 'ETU-2026-001',
+    nom: 'Amath Sarr',
+    filiere: 'Informatique',
+    classe: 'L1-A',
+    total: 500000,
+    regle: 350000,
+    joursRetard: 42,
+  },
+  {
+    matricule: 'ETU-2026-088',
+    nom: 'Amy Ndiaye',
+    filiere: 'Management',
+    classe: 'M2-FI',
+    total: 750000,
+    regle: 600000,
+    joursRetard: 35,
+  },
+  {
+    matricule: 'ETU-2026-204',
+    nom: 'Oumar Sy',
+    filiere: 'Droit',
+    classe: 'L2-A',
+    total: 300000,
+    regle: 150000,
+    joursRetard: 12,
+  },
 ]);
 
 const formatPrice = (val) => {
@@ -153,22 +223,38 @@ const getRiskBadgeClass = (jours) => {
 };
 
 const exportGlobalAudit = () => {
-  alert("Génération du rapport d'audit général des créances.\nCalcul des provisions pour dépréciation inclus.");
+  alert(
+    "Génération du rapport d'audit général des créances.\nCalcul des provisions pour dépréciation inclus."
+  );
 };
 </script>
 
 <style scoped>
 /* Nuances Flat UI & Classes d'alerte de l'ERP */
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.15); }
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.08); }
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+}
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.08);
+}
 
 /* Nuance Orange intermédiaire pour le retard 60-90j */
-.bg-soft-orange { background-color: rgba(255, 123, 0, 0.1); }
-.text-orange { color: #ff7b00 !important; }
-.border-orange { border-color: #ff7b00 !important; }
+.bg-soft-orange {
+  background-color: rgba(255, 123, 0, 0.1);
+}
+.text-orange {
+  color: #ff7b00 !important;
+}
+.border-orange {
+  border-color: #ff7b00 !important;
+}
 
-.text-xs { font-size: 11px !important; }
+.text-xs {
+  font-size: 11px !important;
+}
 
 .table th {
   font-size: 11px;

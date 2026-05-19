@@ -23,7 +23,12 @@
               <!-- Sélection de la Classe / Cohorte -->
               <div class="col-md-2">
                 <label class="form-label small fw-semibold text-muted">Classe Cible</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="form.classe" @change="handleClasseChange" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="form.classe"
+                  @change="handleClasseChange"
+                  required
+                >
                   <option value="">Choisir la classe</option>
                   <option v-for="c in mockClasses" :key="c" :value="c">{{ c }}</option>
                 </select>
@@ -32,7 +37,11 @@
               <!-- Sélection de la Matière (Filtrée ou globale) -->
               <div class="col-md-4">
                 <label class="form-label small fw-semibold text-muted">Matière à assigner</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="form.matiereId" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="form.matiereId"
+                  required
+                >
                   <option value="">Sélectionner la matière</option>
                   <option v-for="m in mockMatieres" :key="m.id" :value="m.id">
                     [{{ getModuleCode(m.parentId) }}] {{ m.nom }}
@@ -43,7 +52,11 @@
               <!-- Sélection du Formateur -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-muted">Formateur Référent</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="form.formateurId" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="form.formateurId"
+                  required
+                >
                   <option value="">Attribuer à un enseignant</option>
                   <option v-for="f in mockFormateurs" :key="f.id" :value="f.id">
                     {{ f.nom }} {{ f.prenom }} ({{ f.contrat }})
@@ -54,10 +67,10 @@
               <!-- Volume Horaire Dédié -->
               <div class="col-md-1">
                 <label class="form-label small fw-semibold text-muted">Heures</label>
-                <input 
-                  type="number" 
-                  class="form-control bg-light border-0 shadow-sm" 
-                  placeholder="Ex: 30" 
+                <input
+                  type="number"
+                  class="form-control bg-light border-0 shadow-sm"
+                  placeholder="Ex: 30"
                   v-model.number="form.heures"
                   min="1"
                   required
@@ -113,7 +126,6 @@
 
               <tbody>
                 <tr v-for="assign in filteredAssignments" :key="assign.id" class="transition-all">
-                  
                   <!-- Classe Cible -->
                   <td class="ps-4">
                     <span class="badge bg-light text-primary border px-3 py-2 fw-bold">
@@ -125,7 +137,10 @@
                   <td>
                     <div class="fw-bold text-dark">{{ getMatiereName(assign.matiereId) }}</div>
                     <small class="text-muted">
-                      Rattaché à : <span class="fw-semibold text-secondary">{{ getModuleNameByMatiere(assign.matiereId) }}</span>
+                      Rattaché à :
+                      <span class="fw-semibold text-secondary">{{
+                        getModuleNameByMatiere(assign.matiereId)
+                      }}</span>
                     </small>
                   </td>
 
@@ -136,8 +151,12 @@
                         {{ getFormateurInitials(assign.formateurId) }}
                       </div>
                       <div>
-                        <div class="fw-semibold text-dark">{{ getFormateurName(assign.formateurId) }}</div>
-                        <small class="text-muted" style="font-size: 11px;">{{ getFormateurContrat(assign.formateurId) }}</small>
+                        <div class="fw-semibold text-dark">
+                          {{ getFormateurName(assign.formateurId) }}
+                        </div>
+                        <small class="text-muted" style="font-size: 11px">{{
+                          getFormateurContrat(assign.formateurId)
+                        }}</small>
                       </div>
                     </div>
                   </td>
@@ -149,15 +168,22 @@
 
                   <!-- Statut de synchronisation -->
                   <td class="text-center">
-                    <span class="badge rounded-pill px-3 py-1 bg-soft-success text-success" style="font-size: 11px;">
-                      <i class="bi bi-circle-fill me-1" style="font-size: 5px; vertical-align: middle;"></i> Actif
+                    <span
+                      class="badge rounded-pill px-3 py-1 bg-soft-success text-success"
+                      style="font-size: 11px"
+                    >
+                      <i
+                        class="bi bi-circle-fill me-1"
+                        style="font-size: 5px; vertical-align: middle"
+                      ></i>
+                      Actif
                     </span>
                   </td>
 
                   <!-- Désassignation -->
                   <td class="text-end pe-4">
-                    <button 
-                      class="btn btn-link text-danger p-0 border-0" 
+                    <button
+                      class="btn btn-link text-danger p-0 border-0"
                       title="Retirer le formateur de ce cours"
                       @click="removeAssignment(assign.id)"
                     >
@@ -169,8 +195,12 @@
                 <!-- Liste filtrée vide -->
                 <tr v-if="filteredAssignments.length === 0">
                   <td colspan="6" class="text-center py-5">
-                    <h6 class="text-muted fw-bold">Aucune assignation ne correspond à vos critères</h6>
-                    <p class="small text-muted mb-0">Utilisez le formulaire ci-dessus pour planifier un cours.</p>
+                    <h6 class="text-muted fw-bold">
+                      Aucune assignation ne correspond à vos critères
+                    </h6>
+                    <p class="small text-muted mb-0">
+                      Utilisez le formulaire ci-dessus pour planifier un cours.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -192,7 +222,7 @@ const form = ref({
   classe: '',
   matiereId: '',
   formateurId: '',
-  heures: null
+  heures: null,
 });
 
 // Liste des classes
@@ -202,70 +232,70 @@ const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management
 const mockModules = ref([
   { id: 1, code: 'UE-INF-1', nom: 'Génie Logiciel & Outils de Dev' },
   { id: 2, code: 'UE-DATA-2', nom: 'Data Science & Intelligence Artificielle' },
-  { id: 3, code: 'UE-MNG-1', nom: 'Management & RH' }
+  { id: 3, code: 'UE-MNG-1', nom: 'Management & RH' },
 ]);
 
 // Base de données des Matières
 const mockMatieres = ref([
   { id: 101, parentId: 1, nom: 'Conception orientée objet & Patterns' },
   { id: 102, parentId: 1, nom: 'Frameworks Modernes (Vue.js 3 & Node)' },
-  { id: 103, parentId: 2, nom: 'Bases de l\'apprentissage automatique (ML)' },
+  { id: 103, parentId: 2, nom: "Bases de l'apprentissage automatique (ML)" },
   { id: 104, parentId: 2, nom: 'Deep Learning & Vision par ordinateur' },
-  { id: 105, parentId: 3, nom: 'Méthodologies Agiles & Scrum Master' }
+  { id: 105, parentId: 3, nom: 'Méthodologies Agiles & Scrum Master' },
 ]);
 
 // Liste des Formateurs disponibles
 const mockFormateurs = ref([
   { id: 201, nom: 'Dupont', prenom: 'Jean', contrat: 'Permanent' },
   { id: 202, nom: 'Alami', prenom: 'Sanaa', contrat: 'Vacataire' },
-  { id: 203, nom: 'Traoré', prenom: 'Moussa', contrat: 'Permanent' }
+  { id: 203, nom: 'Traoré', prenom: 'Moussa', contrat: 'Permanent' },
 ]);
 
 // Table de liaison (Assignations) : relie une Classe + une Matière -> à un Formateur
 const mockAssignments = ref([
   { id: 1, classe: 'Master 1 Info', matiereId: 101, formateurId: 201, heures: 45 },
   { id: 2, classe: 'Master 1 Info', matiereId: 102, formateurId: 203, heures: 40 },
-  { id: 3, classe: 'Master 2 Info', matiereId: 104, formateurId: 202, heures: 35 }
+  { id: 3, classe: 'Master 2 Info', matiereId: 104, formateurId: 202, heures: 35 },
 ]);
 
 // --- Méthodes utilitaires de correspondance des Données ---
 const getModuleCode = (parentId) => {
-  const mod = mockModules.value.find(m => m.id === parentId);
+  const mod = mockModules.value.find((m) => m.id === parentId);
   return mod ? mod.code : 'UE';
 };
 
 const getMatiereName = (id) => {
-  const mat = mockMatieres.value.find(m => m.id === id);
+  const mat = mockMatieres.value.find((m) => m.id === id);
   return mat ? mat.nom : 'Matière inconnue';
 };
 
 const getModuleNameByMatiere = (matiereId) => {
-  const mat = mockMatieres.value.find(m => m.id === matiereId);
+  const mat = mockMatieres.value.find((m) => m.id === matiereId);
   if (mat) {
-    const mod = mockModules.value.find(m => m.id === mat.parentId);
+    const mod = mockModules.value.find((m) => m.id === mat.parentId);
     return mod ? mod.nom : 'Module Inconnu';
   }
   return 'Module Inconnu';
 };
 
 const getFormateurName = (id) => {
-  const f = mockFormateurs.value.find(prof => prof.id === id);
+  const f = mockFormateurs.value.find((prof) => prof.id === id);
   return f ? `${f.nom} ${f.prenom}` : 'Non assigné';
 };
 
 const getFormateurInitials = (id) => {
-  const f = mockFormateurs.value.find(prof => prof.id === id);
+  const f = mockFormateurs.value.find((prof) => prof.id === id);
   return f ? `${f.nom[0]}${f.prenom[0]}` : '??';
 };
 
 const getFormateurContrat = (id) => {
-  const f = mockFormateurs.value.find(prof => prof.id === id);
+  const f = mockFormateurs.value.find((prof) => prof.id === id);
   return f ? f.contrat : '';
 };
 
 // --- Filtrage en temps réel ---
 const filteredAssignments = computed(() => {
-  return mockAssignments.value.filter(assign => {
+  return mockAssignments.value.filter((assign) => {
     const term = searchQuery.value.toLowerCase();
     const matName = getMatiereName(assign.matiereId).toLowerCase();
     const profName = getFormateurName(assign.formateurId).toLowerCase();
@@ -282,7 +312,7 @@ const handleAssign = () => {
     classe: form.value.classe,
     matiereId: Number(form.value.matiereId),
     formateurId: Number(form.value.formateurId),
-    heures: form.value.heures
+    heures: form.value.heures,
   });
 
   // Reset partiel (on garde la classe sélectionnée pour enchaîner les saisies rapidement)
@@ -293,7 +323,7 @@ const handleAssign = () => {
 
 const removeAssignment = (id) => {
   if (confirm('Voulez-vous rompre le lien entre ce formateur et ce cours ?')) {
-    mockAssignments.value = mockAssignments.value.filter(item => item.id !== id);
+    mockAssignments.value = mockAssignments.value.filter((item) => item.id !== id);
   }
 };
 </script>
@@ -312,8 +342,14 @@ const removeAssignment = (id) => {
 }
 
 /* Couleurs douces (Soft Thèmes) */
-.bg-soft-primary { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
+.bg-soft-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
 
 .table th {
   font-size: 11px;
@@ -334,7 +370,8 @@ const removeAssignment = (id) => {
 .rounded-4 {
   border-radius: 0.2rem !important; /* Maintien de ton identité graphique ERP */
 }
-.form-select, .form-control {
+.form-select,
+.form-control {
   font-size: 0.9rem;
   padding: 10px 12px;
 }

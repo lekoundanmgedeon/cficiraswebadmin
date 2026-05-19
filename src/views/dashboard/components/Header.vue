@@ -23,11 +23,11 @@
           <button type="button" class="btn btn-light bg-white btn-icon me-3 mt-2 mt-xl-0">
             <i class="mdi mdi-plus text-muted"></i>
           </button>
-          
+
           <!-- BRANCHEMENT EFFECTUÉ ICI -->
-          <button 
-            class="btn btn-primary mt-2 mt-xl-0" 
-            data-bs-toggle="modal" 
+          <button
+            class="btn btn-primary mt-2 mt-xl-0"
+            data-bs-toggle="modal"
             data-bs-target="#modalGenerationRapport"
           >
             Générer un rapport

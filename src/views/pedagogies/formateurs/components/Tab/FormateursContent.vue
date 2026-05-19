@@ -124,7 +124,9 @@
                         <div class="fw-bold text-dark">
                           {{ formateur.nom }} {{ formateur.prenom }}
                         </div>
-                        <small class="text-muted">Inscrit depuis le {{ formateur.date_embauche }}</small>
+                        <small class="text-muted"
+                          >Inscrit depuis le {{ formateur.date_embauche }}</small
+                        >
                       </div>
                     </div>
                   </td>
@@ -174,7 +176,9 @@
                   <td colspan="7" class="text-center py-5">
                     <div class="py-4">
                       <h6 class="text-muted fw-bold">Aucun formateur trouvé</h6>
-                      <p class="small text-muted mb-0">Essayez de modifier vos filtres ou critères de recherche.</p>
+                      <p class="small text-muted mb-0">
+                        Essayez de modifier vos filtres ou critères de recherche.
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -213,25 +217,92 @@ const departements = ref(['Informatique', 'Management', 'Génie Civil', 'Langues
 
 // Données Factices (Mock Data)
 const mockFormateurs = ref([
-  { id: 1, nom: 'Dupont', prenom: 'Jean', code_enseignant: 'ENS-2024-001', contrat: 'Permanent', departement: 'Informatique', specialite: 'Développement Vue.js & Node.js', email: 'j.dupont@ecole.com', telephone: '+33 6 12 34 56 78', date_embauche: '12/09/2022' },
-  { id: 2, nom: 'Alami', prenom: 'Sanaa', code_enseignant: 'ENS-2023-042', contrat: 'Vacataire', departement: 'Management', specialite: 'Gestion de Projet & ERP', email: 's.alami@ecole.com', telephone: '+212 6 98 76 54 32', date_embauche: '05/01/2024' },
-  { id: 3, nom: 'Traoré', prenom: 'Moussa', code_enseignant: 'ENS-2021-105', contrat: 'Permanent', departement: 'Informatique', specialite: 'Architecture Cloud & DevOps', email: 'm.traore@ecole.com', telephone: '+221 77 123 45 67', date_embauche: '18/11/2021' },
-  { id: 4, nom: 'Muller', prenom: 'Charlotte', code_enseignant: 'ENS-2025-012', contrat: 'Permanent', departement: 'Langues', specialite: 'Anglais Professionnel', email: 'c.muller@ecole.com', telephone: '+33 7 89 45 12 23', date_embauche: '01/09/2025' },
-  { id: 5, nom: 'Rousseau', prenom: 'Pierre', code_enseignant: 'ENS-2024-089', contrat: 'Vacataire', departement: 'Génie Civil', specialite: 'RDM & Structures', email: 'p.rousseau@ecole.com', telephone: '+33 6 45 78 12 56', date_embauche: '15/02/2024' },
-  { id: 6, nom: 'Martin', prenom: 'Sophie', code_enseignant: 'ENS-2022-031', contrat: 'Permanent', departement: 'Management', specialite: 'Ressources Humaines', email: 's.martin@ecole.com', telephone: '+33 6 32 14 56 98', date_embauche: '01/09/2022' }
+  {
+    id: 1,
+    nom: 'Dupont',
+    prenom: 'Jean',
+    code_enseignant: 'ENS-2024-001',
+    contrat: 'Permanent',
+    departement: 'Informatique',
+    specialite: 'Développement Vue.js & Node.js',
+    email: 'j.dupont@ecole.com',
+    telephone: '+33 6 12 34 56 78',
+    date_embauche: '12/09/2022',
+  },
+  {
+    id: 2,
+    nom: 'Alami',
+    prenom: 'Sanaa',
+    code_enseignant: 'ENS-2023-042',
+    contrat: 'Vacataire',
+    departement: 'Management',
+    specialite: 'Gestion de Projet & ERP',
+    email: 's.alami@ecole.com',
+    telephone: '+212 6 98 76 54 32',
+    date_embauche: '05/01/2024',
+  },
+  {
+    id: 3,
+    nom: 'Traoré',
+    prenom: 'Moussa',
+    code_enseignant: 'ENS-2021-105',
+    contrat: 'Permanent',
+    departement: 'Informatique',
+    specialite: 'Architecture Cloud & DevOps',
+    email: 'm.traore@ecole.com',
+    telephone: '+221 77 123 45 67',
+    date_embauche: '18/11/2021',
+  },
+  {
+    id: 4,
+    nom: 'Muller',
+    prenom: 'Charlotte',
+    code_enseignant: 'ENS-2025-012',
+    contrat: 'Permanent',
+    departement: 'Langues',
+    specialite: 'Anglais Professionnel',
+    email: 'c.muller@ecole.com',
+    telephone: '+33 7 89 45 12 23',
+    date_embauche: '01/09/2025',
+  },
+  {
+    id: 5,
+    nom: 'Rousseau',
+    prenom: 'Pierre',
+    code_enseignant: 'ENS-2024-089',
+    contrat: 'Vacataire',
+    departement: 'Génie Civil',
+    specialite: 'RDM & Structures',
+    email: 'p.rousseau@ecole.com',
+    telephone: '+33 6 45 78 12 56',
+    date_embauche: '15/02/2024',
+  },
+  {
+    id: 6,
+    nom: 'Martin',
+    prenom: 'Sophie',
+    code_enseignant: 'ENS-2022-031',
+    contrat: 'Permanent',
+    departement: 'Management',
+    specialite: 'Ressources Humaines',
+    email: 's.martin@ecole.com',
+    telephone: '+33 6 32 14 56 98',
+    date_embauche: '01/09/2022',
+  },
 ]);
 
 // Logique de filtrage dynamique (Remplace les requêtes backend pendant le test)
 const filteredFormateurs = computed(() => {
-  return mockFormateurs.value.filter(formateur => {
-    const matchesSearch = 
+  return mockFormateurs.value.filter((formateur) => {
+    const matchesSearch =
       formateur.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       formateur.prenom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       formateur.specialite.toLowerCase().includes(searchQuery.value.toLowerCase());
-      
-    const matchesDepartement = filterDepartement.value === '' || formateur.departement === filterDepartement.value;
+
+    const matchesDepartement =
+      filterDepartement.value === '' || formateur.departement === filterDepartement.value;
     const matchesContrat = filterContrat.value === '' || formateur.contrat === filterContrat.value;
-    
+
     return matchesSearch && matchesDepartement && matchesContrat;
   });
 });
@@ -256,7 +327,7 @@ const editFormateur = (formateur) => {
 
 const confirmDelete = (formateur) => {
   if (confirm(`Voulez-vous vraiment retirer le formateur ${formateur.nom} ${formateur.prenom} ?`)) {
-    mockFormateurs.value = mockFormateurs.value.filter(f => f.id !== formateur.id);
+    mockFormateurs.value = mockFormateurs.value.filter((f) => f.id !== formateur.id);
   }
 };
 

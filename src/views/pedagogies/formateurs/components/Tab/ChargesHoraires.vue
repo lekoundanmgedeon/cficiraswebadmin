@@ -57,7 +57,7 @@
                 <tr>
                   <th class="ps-4 py-3">Formateur</th>
                   <th>Statut / Contrat</th>
-                  <th style="width: 25%;">Taux d'Occupation</th>
+                  <th style="width: 25%">Taux d'Occupation</th>
                   <th class="text-center">Heures Assignées</th>
                   <th class="text-center">Quota Max</th>
                   <th class="text-center">Heures Sup.</th>
@@ -90,10 +90,10 @@
                   <!-- Jauge de progression / Taux d'occupation -->
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="progress flex-grow-1 bg-light rounded-pill" style="height: 6px;">
-                        <div 
-                          class="progress-bar rounded-pill" 
-                          role="progressbar" 
+                      <div class="progress flex-grow-1 bg-light rounded-pill" style="height: 6px">
+                        <div
+                          class="progress-bar rounded-pill"
+                          role="progressbar"
                           :style="{ width: Math.min(getPercentage(charge), 100) + '%' }"
                           :class="getProgressBarClass(charge)"
                         ></div>
@@ -114,8 +114,8 @@
 
                   <!-- Calcul des Heures Sup / Reste -->
                   <td class="text-center">
-                    <span 
-                      v-if="charge.heuresAssignees > charge.quotaMax" 
+                    <span
+                      v-if="charge.heuresAssignees > charge.quotaMax"
                       class="text-danger fw-bold"
                     >
                       +{{ charge.heuresAssignees - charge.quotaMax }} h
@@ -137,7 +137,9 @@
                 <tr v-if="filteredCharges.length === 0">
                   <td colspan="7" class="text-center py-5">
                     <h6 class="text-muted fw-bold">Aucun formateur trouvé</h6>
-                    <p class="small text-muted mb-0">Modifiez vos filtres ou vos termes de recherche.</p>
+                    <p class="small text-muted mb-0">
+                      Modifiez vos filtres ou vos termes de recherche.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -157,10 +159,42 @@ const filterContrat = ref('');
 
 // Jeu de données simulant la charge horaire globale annuelle ou semestrielle
 const mockCharges = ref([
-  { id: 1, nom: 'Dupont', prenom: 'Jean', matricule: 'FOR-101', contrat: 'Permanent', heuresAssignees: 165, quotaMax: 160 },
-  { id: 2, nom: 'Alami', prenom: 'Sanaa', matricule: 'FOR-102', contrat: 'Vacataire', heuresAssignees: 45, quotaMax: 90 },
-  { id: 3, nom: 'Traoré', prenom: 'Moussa', matricule: 'FOR-103', contrat: 'Permanent', heuresAssignees: 158, quotaMax: 160 },
-  { id: 4, nom: 'Muller', prenom: 'Charlotte', matricule: 'FOR-104', contrat: 'Permanent', heuresAssignees: 110, quotaMax: 160 }
+  {
+    id: 1,
+    nom: 'Dupont',
+    prenom: 'Jean',
+    matricule: 'FOR-101',
+    contrat: 'Permanent',
+    heuresAssignees: 165,
+    quotaMax: 160,
+  },
+  {
+    id: 2,
+    nom: 'Alami',
+    prenom: 'Sanaa',
+    matricule: 'FOR-102',
+    contrat: 'Vacataire',
+    heuresAssignees: 45,
+    quotaMax: 90,
+  },
+  {
+    id: 3,
+    nom: 'Traoré',
+    prenom: 'Moussa',
+    matricule: 'FOR-103',
+    contrat: 'Permanent',
+    heuresAssignees: 158,
+    quotaMax: 160,
+  },
+  {
+    id: 4,
+    nom: 'Muller',
+    prenom: 'Charlotte',
+    matricule: 'FOR-104',
+    contrat: 'Permanent',
+    heuresAssignees: 110,
+    quotaMax: 160,
+  },
 ]);
 
 // Logique de calcul du pourcentage d'heures effectuées
@@ -170,12 +204,12 @@ const getPercentage = (charge) => {
 
 // Logique de filtrage
 const filteredCharges = computed(() => {
-  return mockCharges.value.filter(charge => {
-    const matchesSearch = 
+  return mockCharges.value.filter((charge) => {
+    const matchesSearch =
       charge.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       charge.prenom.toLowerCase().includes(searchQuery.value.toLowerCase());
     const matchesContrat = filterContrat.value === '' || charge.contrat === filterContrat.value;
-    
+
     return matchesSearch && matchesContrat;
   });
 });
@@ -189,10 +223,10 @@ const resetFilters = () => {
 // Choix de la couleur de la barre de progression selon le taux d'occupation
 const getProgressBarClass = (charge) => {
   const pct = getPercentage(charge);
-  if (pct > 100) return 'bg-danger';      // Surcharge / Heures sup
-  if (pct >= 85) return 'bg-success';     // Charge idéale optimale
-  if (pct >= 50) return 'bg-warning';     // Légère sous-charge
-  return 'bg-secondary';                  // Forte sous-charge
+  if (pct > 100) return 'bg-danger'; // Surcharge / Heures sup
+  if (pct >= 85) return 'bg-success'; // Charge idéale optimale
+  if (pct >= 50) return 'bg-warning'; // Légère sous-charge
+  return 'bg-secondary'; // Forte sous-charge
 };
 
 // Choix des labels et styles de badges d'état
@@ -226,13 +260,30 @@ const getStatusBadgeClass = (charge) => {
 }
 
 /* Couleurs douces pour badges d'état */
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.15); color: #997404; }
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
-.bg-soft-primary { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #997404;
+}
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
+.bg-soft-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
 
-.text-warning-dark { color: #997404; }
+.text-warning-dark {
+  color: #997404;
+}
 
 .table th {
   font-size: 11px;

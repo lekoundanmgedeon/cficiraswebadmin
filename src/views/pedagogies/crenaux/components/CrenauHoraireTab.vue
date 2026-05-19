@@ -57,7 +57,7 @@
           aria-controls="td"
           aria-selected="false"
         >
-        Archives
+          Archives
         </a>
       </li>
     </ul>
@@ -65,13 +65,18 @@
     <!-- Contenu des Onglets -->
     <div class="tab-content p-4">
       <!-- 1. Créneaux & Horaires -->
-      <div class="tab-pane fade show active" id="creneaux-horaires" role="tabpanel" aria-labelledby="creneaux-tab">
+      <div
+        class="tab-pane fade show active"
+        id="creneaux-horaires"
+        role="tabpanel"
+        aria-labelledby="creneaux-tab"
+      >
         <CreneauxHoraires />
       </div>
 
       <!-- 2. Emploi du temps -->
       <div class="tab-pane fade" id="emplois-temps" role="tabpanel" aria-labelledby="edt-tab">
-        <EmploisDuTemps/>
+        <EmploisDuTemps />
       </div>
 
       <!-- 3. TP -->

@@ -2,61 +2,71 @@
   <div class="assistant-ia-container">
     <!-- Header de la section -->
     <div class="col-12 mb-4">
-      <h3 class="fw-bold mb-1">Copilote Financier IA</h3>
+      <h3 class="fw-bold mb-1">Copilote Académique IA</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-cpu-fill text-primary me-1"></i>
-        Interrogez votre assistant pour extraire des analyses de trésorerie, prédire les risques de
-        défaut ou rédiger des relances automatiques.
+        Pilotez votre structure globale : analysez la répartition par cycles, le suivi des
+        semestres, les ouvertures de filières et les effectifs des classes.
       </p>
     </div>
 
     <div class="row g-3">
-      <!-- Zone des Raccourcis Prompt Flash (Analyse Rapide) -->
+      <!-- Zone des Raccourcis Prompt Flash (Analyse Structurelle) -->
       <div class="col-md-4">
         <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100">
           <h6 class="fw-bold text-dark mb-3 small text-uppercase text-secondary tracking-wider">
-            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Requêtes Fréquentes
+            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Analyses de la Structure
           </h6>
 
           <div class="d-grid gap-2">
             <button
               @click="
-                askShortcut('Quelles sont les prévisions de trésorerie pour le mois prochain ?')
-              "
-              class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
-            >
-              <i class="bi bi-graph-up me-2 text-primary"></i> Prévisions de trésorerie
-            </button>
-            <button
-              @click="askShortcut('Liste-moi les 3 classes avec le plus fort taux d\'impayés.')"
-              class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
-            >
-              <i class="bi bi-exclamation-octagon me-2 text-danger"></i> Top des classes débitrices
-            </button>
-            <button
-              @click="askShortcut('Rédige un modèle de relance par SMS pour retard de scolarité.')"
-              class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
-            >
-              <i class="bi bi-chat-left-dots me-2 text-success"></i> Rédiger un SMS de relance
-            </button>
-            <button
-              @click="
                 askShortcut(
-                  'Analyse l\'impact financier si on augmente le taux des vacations de 5%'
+                  'Fais-moi un récapitulatif des effectifs par Cycle pour l\'année académique en cours.'
                 )
               "
               class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
             >
-              <i class="bi bi-calculator me-2 text-info"></i> Simulation d'impact charges
+              <i class="bi bi-layers-half me-2 text-primary"></i> Répartition par Cycle
+            </button>
+            <button
+              @click="
+                askShortcut(
+                  'Quelles sont les filières actives au Semestre 1 par rapport au Semestre 2 ?'
+                )
+              "
+              class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
+            >
+              <i class="bi bi-calendar-range me-2 text-danger"></i> Comparatif des Semestres
+            </button>
+            <button
+              @click="
+                askShortcut(
+                  'Combien de classes sont actuellement rattachées à la filière Informatique ?'
+                )
+              "
+              class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
+            >
+              <i class="bi bi-door-open me-2 text-success"></i> Classes par Filière
+            </button>
+            <button
+              @click="
+                askShortcut(
+                  'Génère le rapport de transition pour le changement d\'Année Académique.'
+                )
+              "
+              class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt"
+            >
+              <i class="bi bi-arrow-repeat me-2 text-info"></i> Transition Année Académique
             </button>
           </div>
 
           <div class="mt-4 p-3 bg-soft-primary rounded text-xs text-muted">
             <span class="fw-bold text-primary d-block mb-1"
-              ><i class="bi bi-shield-check me-1"></i>IA Contextuelle</span
+              ><i class="bi bi-shield-check me-1"></i>Cartographie Scolaire</span
             >
-            Cet assistant est branché sur vos registres de paiement, de facturation et d'honoraires
-            de l'année 2026.
+            L'assistant synchronise en temps réel les arborescences de l'année 2026, de
+            l'inscription au découpage des crédits.
           </div>
         </div>
       </div>
@@ -108,7 +118,7 @@
                 <i class="bi bi-cpu text-primary small animate-pulse"></i>
               </div>
               <div class="p-3 rounded-4 bg-light text-muted text-sm italic">
-                Analyse des registres financiers en cours...
+                Analyse de l'arborescence et de la structure académique...
               </div>
             </div>
           </div>
@@ -124,7 +134,7 @@
                 type="text"
                 :disabled="isTyping"
                 class="form-control border-0 py-2 px-3 text-dark shadow-none"
-                placeholder="Posez une question financière sur votre établissement..."
+                placeholder="Posez une question sur les cycles, filières, classes ou semestres..."
               />
               <button
                 type="submit"
@@ -152,7 +162,7 @@ const messages = ref([
   {
     role: 'assistant',
     content:
-      "Bonjour ! Je suis votre copilote financier. Je peux analyser vos encaissements, auditer les restes à recouvrer ou calculer la rentabilité de vos filières. Que souhaitez-vous vérifier aujourd'hui ?",
+      "Bonjour ! Je suis votre copilote académique. Je maîtrise l'organisation de votre établissement : des années académiques aux structures de vos classes, filières, semestres et cycles. Que souhaitez-vous analyser aujourd'hui ?",
   },
 ]);
 
@@ -164,43 +174,41 @@ const scrollToBottom = async () => {
 };
 
 const sendMessage = () => {
-  if (!userInput.value.trim() || isTyping.value) return;
+  const queryCleaned = userInput.value.trim();
+  if (!queryCleaned || isTyping.value) return;
 
-  const userQuery = userInput.value;
-  messages.value.push({ role: 'user', content: userQuery });
+  messages.value.push({ role: 'user', content: queryCleaned });
   userInput.value = '';
   scrollToBottom();
 
-  // Simulation de la réponse de l'IA orientée vers la finance de l'ERP
   isTyping.value = true;
+
   setTimeout(() => {
     let aiResponse =
-      "Je n'ai pas pu compiler les données pour cette requête spécifique. Pouvez-vous reformuler ?";
+      "Je n'ai pas pu identifier de correspondance structurelle pour cette demande. Pouvez-vous spécifier s'il s'agit d'un cycle, d'une filière ou d'un semestre particulier ?";
+    const searchStr = queryCleaned.toLowerCase();
 
-    if (
-      userQuery.toLowerCase().includes('prévision') ||
-      userQuery.toLowerCase().includes('trésorerie')
-    ) {
+    // Logique de simulation axée sur la structure académique
+    if (searchStr.includes('cycle') || searchStr.includes('répartition')) {
       aiResponse =
-        "Sur la base des échéances de facturation programmées et du taux moyen de recouvrement actuel (82.1%), les prévisions d'encaissement pour le mois prochain s'élèvent à 8 450 000 FCFA. Les charges estimées pour les honoraires formateurs restent stables à 2 800 000 FCFA, dégageant un solde net positif prévisionnel de +5 650 000 FCFA.";
+        "Pour l'Année Académique 2025-2026, la répartition de vos effectifs par cycle s'établit comme suit :\n\n• Cycle Licence : 1 240 étudiants (72% de la structure globale)\n• Cycle Master : 380 étudiants (22%)\n• Cycle Doctoral : 105 étudiants (6%)\n\nLe cycle Licence enregistre une croissance de +4.2% tirée par les filières technologiques.";
     } else if (
-      userQuery.toLowerCase().includes('classe') ||
-      userQuery.toLowerCase().includes('taux')
+      searchStr.includes('semestre') ||
+      searchStr.includes('s1') ||
+      searchStr.includes('s2')
     ) {
       aiResponse =
-        "Après analyse du grand livre, voici le top 3 des promotions affichant les retards de paiement les plus critiques :\n\n1. Sciences Juridiques & Droit (L2-A) - 55% d'impayés\n2. Génie Civil & Architecture (L3-B) - 32% d'impayés\n3. Informatique (M1-JV) - 18% d'impayés\n\nJe vous conseille de lancer une campagne de relance ciblée sur la filière Droit.";
+        "Analyse du calendrier des cours :\nAu Semestre 1, 42 filières sont actives pour un total de 184 unités d'enseignement dispensées. Pour le Semestre 2, la planification prévoit l'ouverture de 3 filières de spécialisation supplémentaires en Master, ce qui portera le total à 45 filières opérationnelles.";
+    } else if (searchStr.includes('filière') || searchStr.includes('classe')) {
+      aiResponse =
+        "La filière 'Informatique' comprend actuellement 8 classes actives réparties sur les deux cycles fondamentaux :\n\n- Premier Cycle (Licence) : L1-A, L1-B, L2-A, L3-Cyber\n- Second Cycle (Master) : M1-Dev, M1-Data, M2-IA, M2-Réseau\n\nL'effectif moyen par classe dans cette filière est de 32 étudiants, respectant les seuils structurels fixés.";
     } else if (
-      userQuery.toLowerCase().includes('sms') ||
-      userQuery.toLowerCase().includes('relance')
+      searchStr.includes('année') ||
+      searchStr.includes('transition') ||
+      searchStr.includes('académique')
     ) {
       aiResponse =
-        'Voici une proposition de modèle de relance SMS court et conforme :\n\n"Rappel Scolarité : Bonjour [Prénom], le solde de vos frais d\'études pour le terme actuel présente un reliquat. Nous vous prions de régulariser votre situation auprès de la caisse ou via Mobile Money avant le 25 du mois. Cordialement, le Service Comptabilité."';
-    } else if (
-      userQuery.toLowerCase().includes('impact') ||
-      userQuery.toLowerCase().includes('vacation')
-    ) {
-      aiResponse =
-        "Le volume d'heures actuel sur le trimestre est de 95 heures pour une charge brute de 11 450 000 FCFA. Une hausse de 5% du taux horaire général représenterait un surcoût immédiat de +572 500 FCFA sur la masse salariale des vacataires, faisant passer le ratio charges/produits de 31.6% à 33.2%.";
+        "Préparation de la transition vers la nouvelle Année Académique :\nLes maquettes pédagogiques, les filières existantes et l'arborescence des cycles ont été dupliquées avec succès pour préparer le prochain exercice. 12 classes du cycle Licence changeront automatiquement de niveau dès la validation des délibérations du second semestre.";
     }
 
     messages.value.push({ role: 'assistant', content: aiResponse });
@@ -209,7 +217,6 @@ const sendMessage = () => {
   }, 1200);
 };
 
-// Déclencheur depuis les boutons de raccourcis rapides
 const askShortcut = (text) => {
   userInput.value = text;
   sendMessage();
@@ -233,7 +240,6 @@ const askShortcut = (text) => {
   white-space: pre-wrap;
 }
 
-/* Effet hover discret sur les invites rapides */
 .btn-prompt {
   transition: all 0.2s ease-in-out;
 }
@@ -243,7 +249,6 @@ const askShortcut = (text) => {
   transform: translateX(4px);
 }
 
-/* Animation pouls pour le chargement */
 @keyframes pulse {
   0%,
   100% {
@@ -257,7 +262,6 @@ const askShortcut = (text) => {
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Ligne graphique stricte de l'ERP */
 .rounded-4 {
   border-radius: 0.2rem !important;
 }

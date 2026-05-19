@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Archives Historiques</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-archive-fill me-1"></i>
-        Consultez et récupérez les données pédagogiques et administratives des années académiques clôturées.
+        Consultez et récupérez les données pédagogiques et administratives des années académiques
+        clôturées.
       </p>
     </div>
 
@@ -56,10 +57,11 @@
       <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
           <h5 class="fw-bold text-dark mb-0">
-            <i class="bi bi-folder2-open text-warning me-2"></i>Dossiers sécurisés — {{ selectedAnnee }}
+            <i class="bi bi-folder2-open text-warning me-2"></i>Dossiers sécurisés —
+            {{ selectedAnnee }}
           </h5>
         </div>
-        
+
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -105,18 +107,26 @@
                   <!-- Statut (Lecture seule immuable) -->
                   <td class="text-center">
                     <span class="badge rounded-pill bg-soft-secondary text-secondary px-3 py-1">
-                      <i class="bi bi-lock-fill me-1" style="font-size: 10px;"></i> Lecture seule
+                      <i class="bi bi-lock-fill me-1" style="font-size: 10px"></i> Lecture seule
                     </span>
                   </td>
 
                   <!-- Actions d'extraction -->
                   <td class="text-end pe-4">
                     <!-- Consulter en ligne -->
-                    <button class="btn btn-link text-primary p-0 me-3" title="Consulter l'historique" @click="viewArchive(archive.nom)">
+                    <button
+                      class="btn btn-link text-primary p-0 me-3"
+                      title="Consulter l'historique"
+                      @click="viewArchive(archive.nom)"
+                    >
                       <i class="bi bi-eye fs-5"></i>
                     </button>
                     <!-- Télécharger le ZIP de l'année -->
-                    <button class="btn btn-link text-success p-0" title="Télécharger l'intégrale (ZIP)" @click="downloadArchive(archive.nom)">
+                    <button
+                      class="btn btn-link text-success p-0"
+                      title="Télécharger l'intégrale (ZIP)"
+                      @click="downloadArchive(archive.nom)"
+                    >
                       <i class="bi bi-download fs-5"></i>
                     </button>
                   </td>
@@ -126,7 +136,9 @@
                 <tr v-if="filteredArchives.length === 0">
                   <td colspan="6" class="text-center py-5">
                     <h6 class="text-muted fw-bold">Aucune archive ne correspond à ces filtres</h6>
-                    <p class="small text-muted mb-0">Modifiez la catégorie ou l'année sélectionnée en haut de page.</p>
+                    <p class="small text-muted mb-0">
+                      Modifiez la catégorie ou l'année sélectionnée en haut de page.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -149,22 +161,63 @@ const searchQuery = ref('');
 // Données fictives d'archives sur plusieurs cycles passés
 const mockArchives = ref([
   // Données pour l'année 2024-2025
-  { id: 1, annee: '2024-2025', nom: 'PV_Notes_Finales_Toutes_Promotions', categorie: 'Notes & Procès-verbaux', reference: 'ARC-24-PV', dateCloture: '15/07/2025', taille: '14.5 Mo' },
-  { id: 2, annee: '2024-2025', nom: 'Registres_Inscriptions_Etudiants', categorie: 'Étudiants & Classes', reference: 'ARC-24-REG', dateCloture: '30/09/2024', taille: '4.2 Mo' },
-  { id: 3, annee: '2024-2025', nom: 'Supports_Cours_Et_Ressources_Master', categorie: 'Supports de Cours', reference: 'ARC-24-PEDAG', dateCloture: '20/07/2025', taille: '148.0 Mo' },
-  
+  {
+    id: 1,
+    annee: '2024-2025',
+    nom: 'PV_Notes_Finales_Toutes_Promotions',
+    categorie: 'Notes & Procès-verbaux',
+    reference: 'ARC-24-PV',
+    dateCloture: '15/07/2025',
+    taille: '14.5 Mo',
+  },
+  {
+    id: 2,
+    annee: '2024-2025',
+    nom: 'Registres_Inscriptions_Etudiants',
+    categorie: 'Étudiants & Classes',
+    reference: 'ARC-24-REG',
+    dateCloture: '30/09/2024',
+    taille: '4.2 Mo',
+  },
+  {
+    id: 3,
+    annee: '2024-2025',
+    nom: 'Supports_Cours_Et_Ressources_Master',
+    categorie: 'Supports de Cours',
+    reference: 'ARC-24-PEDAG',
+    dateCloture: '20/07/2025',
+    taille: '148.0 Mo',
+  },
+
   // Données pour l'année 2023-2024
-  { id: 4, annee: '2023-2024', nom: 'Historique_Emplois_Du_Temps_Et_Assignations', categorie: 'Assignations & Contrats', reference: 'ARC-23-PROP', dateCloture: '30/06/2024', taille: '2.8 Mo' },
-  { id: 5, annee: '2023-2024', nom: 'PV_Deliberations_Jury_2024', categorie: 'Notes & Procès-verbaux', reference: 'ARC-23-PV', dateCloture: '12/07/2024', taille: '11.1 Mo' }
+  {
+    id: 4,
+    annee: '2023-2024',
+    nom: 'Historique_Emplois_Du_Temps_Et_Assignations',
+    categorie: 'Assignations & Contrats',
+    reference: 'ARC-23-PROP',
+    dateCloture: '30/06/2024',
+    taille: '2.8 Mo',
+  },
+  {
+    id: 5,
+    annee: '2023-2024',
+    nom: 'PV_Deliberations_Jury_2024',
+    categorie: 'Notes & Procès-verbaux',
+    reference: 'ARC-23-PV',
+    dateCloture: '12/07/2024',
+    taille: '11.1 Mo',
+  },
 ]);
 
 // Filtrage intelligent combiné
 const filteredArchives = computed(() => {
-  return mockArchives.value.filter(arc => {
+  return mockArchives.value.filter((arc) => {
     const matchesAnnee = arc.annee === selectedAnnee.value;
-    const matchesCategorie = filterCategorie.value === '' || arc.categorie === filterCategorie.value;
+    const matchesCategorie =
+      filterCategorie.value === '' || arc.categorie === filterCategorie.value;
     const matchesSearch = arc.nom.toLowerCase().includes(searchQuery.value.toLowerCase());
-    
+
     return matchesAnnee && matchesCategorie && matchesSearch;
   });
 });
@@ -190,8 +243,14 @@ const downloadArchive = (name) => {
 }
 
 /* Couleurs douces thématiques */
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.12); color: #ffc107; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.12);
+  color: #ffc107;
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
 
 .table th {
   font-size: 11px;

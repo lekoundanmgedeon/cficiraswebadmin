@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Rapports & Analyses</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-bar-chart-line-fill me-1"></i>
-        Consultez les statistiques d'assiduité, de performance globale et exportez les bilans pédagogiques.
+        Consultez les statistiques d'assiduité, de performance globale et exportez les bilans
+        pédagogiques.
       </p>
     </div>
 
@@ -61,9 +62,11 @@
           <div class="card border-0 shadow-sm p-3 rounded-4 bg-white">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <h6 class="text-muted fw-semibold small text-uppercase mb-1">Exécution des Heures</h6>
+                <h6 class="text-muted fw-semibold small text-uppercase mb-1">
+                  Exécution des Heures
+                </h6>
                 <h3 class="fw-bold text-dark mb-0">87.4%</h3>
-                <small class="text-success fw-medium" style="font-size: 11px;">
+                <small class="text-success fw-medium" style="font-size: 11px">
                   <i class="bi bi-caret-up-fill me-1"></i>378h sur 432h prévues
                 </small>
               </div>
@@ -81,7 +84,7 @@
               <div>
                 <h6 class="text-muted fw-semibold small text-uppercase mb-1">Moyenne Générale</h6>
                 <h3 class="fw-bold text-dark mb-0">13.42 / 20</h3>
-                <small class="text-muted" style="font-size: 11px;">
+                <small class="text-muted" style="font-size: 11px">
                   Basé sur les évaluations validées
                 </small>
               </div>
@@ -99,7 +102,7 @@
               <div>
                 <h6 class="text-muted fw-semibold small text-uppercase mb-1">Taux d'Absentéisme</h6>
                 <h3 class="fw-bold text-dark mb-0">4.1%</h3>
-                <small class="text-danger fw-medium" style="font-size: 11px;">
+                <small class="text-danger fw-medium" style="font-size: 11px">
                   <i class="bi bi-exclamation-triangle-fill me-1"></i>12 alertes critiques
                 </small>
               </div>
@@ -115,13 +118,15 @@
     <!-- Section Documents & Listes des Rapports Prêts à l'Export -->
     <div class="col-12">
       <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+        <div
+          class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center"
+        >
           <h5 class="fw-bold text-dark mb-0">Documents de Synthèse Disponibles</h5>
           <span class="badge bg-light text-secondary border px-3 py-2 fw-semibold">
             Filtre actif : {{ filters.periode }}
           </span>
         </div>
-        
+
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -141,7 +146,10 @@
                   <!-- Nom du rapport -->
                   <td class="ps-4">
                     <div class="d-flex align-items-center">
-                      <div class="report-icon-box me-3 rounded-3" :class="getFormatColor(report.format)">
+                      <div
+                        class="report-icon-box me-3 rounded-3"
+                        :class="getFormatColor(report.format)"
+                      >
                         <i class="bi" :class="getFormatIcon(report.format)"></i>
                       </div>
                       <div>
@@ -153,7 +161,9 @@
 
                   <!-- Classe concernée -->
                   <td>
-                    <span class="badge bg-light text-dark border px-2 py-1">{{ report.classe }}</span>
+                    <span class="badge bg-light text-dark border px-2 py-1">{{
+                      report.classe
+                    }}</span>
                   </td>
 
                   <!-- Date de génération -->
@@ -161,7 +171,10 @@
 
                   <!-- Badge format -->
                   <td>
-                    <span class="fw-bold text-uppercase small px-2 py-1 rounded" :class="getFormatBadgeClass(report.format)">
+                    <span
+                      class="fw-bold text-uppercase small px-2 py-1 rounded"
+                      :class="getFormatBadgeClass(report.format)"
+                    >
                       {{ report.format }}
                     </span>
                   </td>
@@ -171,7 +184,7 @@
 
                   <!-- Actions d'export direct -->
                   <td class="text-end pe-4">
-                    <button 
+                    <button
                       class="btn btn-light btn-sm border-0 shadow-sm px-3 rounded-pill"
                       @click="downloadReport(report.titre)"
                     >
@@ -195,20 +208,54 @@ import { ref } from 'vue';
 const filters = ref({
   periode: 'Semestre 2',
   classe: 'Toutes',
-  type: 'Global'
+  type: 'Global',
 });
 
 // Liste de rapports pré-générés ou dynamiques (Mock Data)
 const mockReports = ref([
-  { id: 1, titre: 'Bilan_Assiduite_Global_S2.pdf', description: 'Rapport complet des absences justifiées et injustifiées.', classe: 'Toutes les classes', dateGen: '18/05/2026', format: 'pdf', taille: '2.4 Mo' },
-  { id: 2, titre: 'Suivi_Charges_Horaires_Formateurs.xlsx', description: 'Tableau de synthèse des volumes horaires effectués vs quotas contractuels.', classe: 'Équipe Enseignante', dateGen: '17/05/2026', format: 'excel', taille: '1.1 Mo' },
-  { id: 3, titre: 'Proces_Verbal_Notes_M1_Info.pdf', description: 'Synthèse des moyennes générales et classement pour le Master 1.', classe: 'Master 1 Info', dateGen: '15/05/2026', format: 'pdf', taille: '4.8 Mo' },
-  { id: 4, titre: 'Statistiques_Espace_Pedagogique.csv', description: 'Taux de téléchargement et d\'usage des fichiers par les étudiants.', classe: 'Toutes les classes', dateGen: '10/05/2026', format: 'csv', taille: '420 Ko' }
+  {
+    id: 1,
+    titre: 'Bilan_Assiduite_Global_S2.pdf',
+    description: 'Rapport complet des absences justifiées et injustifiées.',
+    classe: 'Toutes les classes',
+    dateGen: '18/05/2026',
+    format: 'pdf',
+    taille: '2.4 Mo',
+  },
+  {
+    id: 2,
+    titre: 'Suivi_Charges_Horaires_Formateurs.xlsx',
+    description: 'Tableau de synthèse des volumes horaires effectués vs quotas contractuels.',
+    classe: 'Équipe Enseignante',
+    dateGen: '17/05/2026',
+    format: 'excel',
+    taille: '1.1 Mo',
+  },
+  {
+    id: 3,
+    titre: 'Proces_Verbal_Notes_M1_Info.pdf',
+    description: 'Synthèse des moyennes générales et classement pour le Master 1.',
+    classe: 'Master 1 Info',
+    dateGen: '15/05/2026',
+    format: 'pdf',
+    taille: '4.8 Mo',
+  },
+  {
+    id: 4,
+    titre: 'Statistiques_Espace_Pedagogique.csv',
+    description: "Taux de téléchargement et d'usage des fichiers par les étudiants.",
+    classe: 'Toutes les classes',
+    dateGen: '10/05/2026',
+    format: 'csv',
+    taille: '420 Ko',
+  },
 ]);
 
 // Actions de simulation
 const refreshReport = () => {
-  alert(`Génération du rapport d'analyse pour la sélection : ${filters.value.classe} (${filters.value.periode})`);
+  alert(
+    `Génération du rapport d'analyse pour la sélection : ${filters.value.classe} (${filters.value.periode})`
+  );
 };
 
 const downloadReport = (title) => {
@@ -218,28 +265,40 @@ const downloadReport = (title) => {
 // Formattage visuel des icônes de fichiers selon le type d'export
 const getFormatIcon = (format) => {
   switch (format) {
-    case 'pdf': return 'bi-filetype-pdf';
-    case 'excel': return 'bi-filetype-xlsx';
-    case 'csv': return 'bi-filetype-csv';
-    default: return 'bi-file-earmark-bar-graph';
+    case 'pdf':
+      return 'bi-filetype-pdf';
+    case 'excel':
+      return 'bi-filetype-xlsx';
+    case 'csv':
+      return 'bi-filetype-csv';
+    default:
+      return 'bi-file-earmark-bar-graph';
   }
 };
 
 const getFormatColor = (format) => {
   switch (format) {
-    case 'pdf': return 'bg-soft-danger text-danger';
-    case 'excel': return 'bg-soft-success text-success';
-    case 'csv': return 'bg-soft-primary text-primary';
-    default: return 'bg-light text-secondary';
+    case 'pdf':
+      return 'bg-soft-danger text-danger';
+    case 'excel':
+      return 'bg-soft-success text-success';
+    case 'csv':
+      return 'bg-soft-primary text-primary';
+    default:
+      return 'bg-light text-secondary';
   }
 };
 
 const getFormatBadgeClass = (format) => {
   switch (format) {
-    case 'pdf': return 'bg-danger text-white';
-    case 'excel': return 'bg-success text-white';
-    case 'csv': return 'bg-primary text-white';
-    default: return 'bg-secondary text-white';
+    case 'pdf':
+      return 'bg-danger text-white';
+    case 'excel':
+      return 'bg-success text-white';
+    case 'csv':
+      return 'bg-primary text-white';
+    default:
+      return 'bg-secondary text-white';
   }
 };
 </script>
@@ -264,9 +323,18 @@ const getFormatBadgeClass = (format) => {
 }
 
 /* Palettes douces (Soft styles) */
-.bg-soft-primary { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+.bg-soft-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
 
 .table th {
   font-size: 11px;
@@ -288,7 +356,8 @@ const getFormatBadgeClass = (format) => {
 .rounded-4 {
   border-radius: 0.2rem !important;
 }
-.form-select, .form-label {
+.form-select,
+.form-label {
   font-size: 0.85rem;
 }
 .transition-all {

@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Gestion des Modules & Matières</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-journal-bookmark-fill me-1"></i>
-        Structurez le programme pédagogique : créez les modules d'enseignement (UE) et les matières associées.
+        Structurez le programme pédagogique : créez les modules d'enseignement (UE) et les matières
+        associées.
       </p>
     </div>
 
@@ -23,7 +24,11 @@
               <!-- Type de composant (Module ou Matière) -->
               <div class="col-md-2">
                 <label class="form-label small fw-semibold text-muted">Type</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="form.type" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="form.type"
+                  required
+                >
                   <option value="Module">Module (UE)</option>
                   <option value="Matière">Matière (Matière isolée)</option>
                 </select>
@@ -32,10 +37,10 @@
               <!-- Libellé / Nom -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-muted">Nom du composant</label>
-                <input 
-                  type="text" 
-                  class="form-control bg-light border-0 shadow-sm" 
-                  placeholder="Ex: Développement Web" 
+                <input
+                  type="text"
+                  class="form-control bg-light border-0 shadow-sm"
+                  placeholder="Ex: Développement Web"
                   v-model="form.nom"
                   required
                 />
@@ -43,10 +48,12 @@
 
               <!-- Rattachement à un module (uniquement si c'est une matière) -->
               <div class="col-md-3">
-                <label class="form-label small fw-semibold text-muted">Module Parent (Pour Matière)</label>
-                <select 
-                  class="form-select bg-light border-0 shadow-sm" 
-                  v-model="form.parentId" 
+                <label class="form-label small fw-semibold text-muted"
+                  >Module Parent (Pour Matière)</label
+                >
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="form.parentId"
                   :disabled="form.type === 'Module'"
                   :required="form.type === 'Matière'"
                 >
@@ -60,21 +67,21 @@
               <!-- Coefficients / Crédits -->
               <div class="col-md-1">
                 <label class="form-label small fw-semibold text-muted">Coef.</label>
-                <input 
-                  type="number" 
-                  class="form-control bg-light border-0 shadow-sm" 
-                  v-model.number="form.coefficient" 
-                  min="1" 
+                <input
+                  type="number"
+                  class="form-control bg-light border-0 shadow-sm"
+                  v-model.number="form.coefficient"
+                  min="1"
                   required
                 />
               </div>
 
               <div class="col-md-1">
                 <label class="form-label small fw-semibold text-muted">ECTS</label>
-                <input 
-                  type="number" 
-                  class="form-control bg-light border-0 shadow-sm" 
-                  v-model.number="form.ects" 
+                <input
+                  type="number"
+                  class="form-control bg-light border-0 shadow-sm"
+                  v-model.number="form.ects"
                   min="0"
                 />
               </div>
@@ -108,9 +115,15 @@
 
     <!-- Liste structurée des Modules (Arborescence Flat) -->
     <div class="col-12">
-      <div v-for="module in filteredModules" :key="module.id" class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden">
+      <div
+        v-for="module in filteredModules"
+        :key="module.id"
+        class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden"
+      >
         <!-- Ligne d'entête du Module (UE) -->
-        <div class="card-header bg-white border-0 p-3 d-flex justify-content-between align-items-center border-bottom-soft">
+        <div
+          class="card-header bg-white border-0 p-3 d-flex justify-content-between align-items-center border-bottom-soft"
+        >
           <div class="d-flex align-items-center">
             <div class="module-badge bg-soft-primary text-primary me-3 fw-bold rounded-3">
               {{ module.code }}
@@ -120,11 +133,17 @@
               <small class="text-muted">Module d'Enseignement Principal</small>
             </div>
           </div>
-          
+
           <div class="d-flex align-items-center">
-            <span class="badge bg-light text-dark border me-3">Total Coef: {{ module.coefficient }}</span>
+            <span class="badge bg-light text-dark border me-3"
+              >Total Coef: {{ module.coefficient }}</span
+            >
             <span class="badge bg-light text-primary border me-3">{{ module.ects }} ECTS</span>
-            <button class="btn btn-link text-danger p-0 border-0" title="Supprimer le module" @click="deleteModule(module.id)">
+            <button
+              class="btn btn-link text-danger p-0 border-0"
+              title="Supprimer le module"
+              @click="deleteModule(module.id)"
+            >
               <i class="bi bi-trash3 fs-5"></i>
             </button>
           </div>
@@ -137,7 +156,7 @@
               <tbody>
                 <tr v-for="matiere in getMatieresForModule(module.id)" :key="matiere.id">
                   <!-- Retrait visuel pour l'arborescence -->
-                  <td class="ps-5" style="width: 50%;">
+                  <td class="ps-5" style="width: 50%">
                     <div class="d-flex align-items-center">
                       <i class="bi bi-arrow-return-right text-muted me-3"></i>
                       <div>
@@ -145,7 +164,7 @@
                       </div>
                     </div>
                   </td>
-                  
+
                   <!-- Coefficient de la matière -->
                   <td>
                     <small class="text-muted">Coefficient : </small>
@@ -160,12 +179,18 @@
 
                   <!-- Statut / Type -->
                   <td class="text-center">
-                    <span class="badge bg-soft-secondary text-secondary rounded-pill px-3">Matière Étoile</span>
+                    <span class="badge bg-soft-secondary text-secondary rounded-pill px-3"
+                      >Matière Étoile</span
+                    >
                   </td>
 
                   <!-- Actions sur la matière -->
                   <td class="text-end pe-4">
-                    <button class="btn btn-link text-danger p-0 border-0" title="Supprimer la matière" @click="deleteMatiere(matiere.id)">
+                    <button
+                      class="btn btn-link text-danger p-0 border-0"
+                      title="Supprimer la matière"
+                      @click="deleteMatiere(matiere.id)"
+                    >
                       <i class="bi bi-x-circle fs-5"></i>
                     </button>
                   </td>
@@ -174,7 +199,8 @@
                 <!-- Si aucune matière n'est présente dans ce module -->
                 <tr v-if="getMatieresForModule(module.id).length === 0">
                   <td class="ps-5 text-muted small py-3">
-                    <i class="bi bi-info-circle me-1"></i> Aucune matière isolée n'est rattachée à ce module pour le moment.
+                    <i class="bi bi-info-circle me-1"></i> Aucune matière isolée n'est rattachée à
+                    ce module pour le moment.
                   </td>
                 </tr>
               </tbody>
@@ -184,9 +210,14 @@
       </div>
 
       <!-- Cas où aucun module ne correspond à la recherche -->
-      <div v-if="filteredModules.length === 0" class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+      <div
+        v-if="filteredModules.length === 0"
+        class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white"
+      >
         <h6 class="text-muted fw-bold">Aucun élément pédagogique trouvé</h6>
-        <p class="small text-muted mb-0">Modifiez vos filtres ou créez une nouvelle unité en utilisant le formulaire ci-dessus.</p>
+        <p class="small text-muted mb-0">
+          Modifiez vos filtres ou créez une nouvelle unité en utilisant le formulaire ci-dessus.
+        </p>
       </div>
     </div>
   </div>
@@ -204,39 +235,60 @@ const form = ref({
   nom: '',
   parentId: '',
   coefficient: 1,
-  ects: 4
+  ects: 4,
 });
 
 // Liste fictive des Modules globaux (UE)
 const mockModules = ref([
   { id: 1, code: 'UE-INF-1', nom: 'Génie Logiciel & Outils de Dev', coefficient: 4, ects: 8 },
-  { id: 2, code: 'UE-DATA-2', nom: 'Data Science & Intelligence Artificielle', coefficient: 5, ects: 10 },
-  { id: 3, code: 'UE-MNG-1', nom: 'Management, Management de projet & RH', coefficient: 3, ects: 6 }
+  {
+    id: 2,
+    code: 'UE-DATA-2',
+    nom: 'Data Science & Intelligence Artificielle',
+    coefficient: 5,
+    ects: 10,
+  },
+  {
+    id: 3,
+    code: 'UE-MNG-1',
+    nom: 'Management, Management de projet & RH',
+    coefficient: 3,
+    ects: 6,
+  },
 ]);
 
 // Liste fictive des matières interconnectées
 const mockMatieres = ref([
   { id: 101, parentId: 1, nom: 'Conception orientée objet & Patterns', coefficient: 2, ects: 4 },
   { id: 102, parentId: 1, nom: 'Frameworks Modernes (Vue.js 3 & Node)', coefficient: 2, ects: 4 },
-  { id: 103, parentId: 2, nom: 'Bases de l\'apprentissage automatique (ML)', coefficient: 3, ects: 5 },
+  {
+    id: 103,
+    parentId: 2,
+    nom: "Bases de l'apprentissage automatique (ML)",
+    coefficient: 3,
+    ects: 5,
+  },
   { id: 104, parentId: 2, nom: 'Deep Learning & Vision par ordinateur', coefficient: 2, ects: 5 },
-  { id: 105, parentId: 3, nom: 'Méthodologies Agiles & Scrum Master', coefficient: 3, ects: 6 }
+  { id: 105, parentId: 3, nom: 'Méthodologies Agiles & Scrum Master', coefficient: 3, ects: 6 },
 ]);
 
 // Récupère uniquement les matières associées à un ID de module précis
 const getMatieresForModule = (moduleId) => {
-  return mockMatieres.value.filter(m => m.parentId === moduleId);
+  return mockMatieres.value.filter((m) => m.parentId === moduleId);
 };
 
 // Logique de filtrage en cascade (si la recherche cible un module ou une de ses matières)
 const filteredModules = computed(() => {
-  return mockModules.value.filter(mod => {
+  return mockModules.value.filter((mod) => {
     const term = searchQuery.value.toLowerCase();
-    const matchModule = mod.nom.toLowerCase().includes(term) || mod.code.toLowerCase().includes(term);
-    
+    const matchModule =
+      mod.nom.toLowerCase().includes(term) || mod.code.toLowerCase().includes(term);
+
     // Vérifie si une des matières à l'intérieur correspond aussi
-    const matchMatiere = getMatieresForModule(mod.id).some(mat => mat.nom.toLowerCase().includes(term));
-    
+    const matchMatiere = getMatieresForModule(mod.id).some((mat) =>
+      mat.nom.toLowerCase().includes(term)
+    );
+
     return matchModule || matchMatiere;
   });
 });
@@ -251,7 +303,7 @@ const handleCreate = () => {
       code: `UE-NEW-${newId}`,
       nom: form.value.nom,
       coefficient: form.value.coefficient,
-      ects: form.value.ects || 0
+      ects: form.value.ects || 0,
     });
   } else {
     // Ajout d'une matière
@@ -260,7 +312,7 @@ const handleCreate = () => {
       parentId: Number(form.value.parentId),
       nom: form.value.nom,
       coefficient: form.value.coefficient,
-      ects: form.value.ects || null
+      ects: form.value.ects || null,
     });
   }
 
@@ -272,15 +324,19 @@ const handleCreate = () => {
 
 // Suppressions sécurisées
 const deleteModule = (id) => {
-  if (confirm('Attention : Supprimer ce module supprimera également toutes les matières rattachées. Continuer ?')) {
-    mockModules.value = mockModules.value.filter(m => m.id !== id);
-    mockMatieres.value = mockMatieres.value.filter(mat => mat.parentId !== id);
+  if (
+    confirm(
+      'Attention : Supprimer ce module supprimera également toutes les matières rattachées. Continuer ?'
+    )
+  ) {
+    mockModules.value = mockModules.value.filter((m) => m.id !== id);
+    mockMatieres.value = mockMatieres.value.filter((mat) => mat.parentId !== id);
   }
 };
 
 const deleteMatiere = (id) => {
   if (confirm('Voulez-vous retirer cette matière du module sélectionné ?')) {
-    mockMatieres.value = mockMatieres.value.filter(mat => mat.id !== id);
+    mockMatieres.value = mockMatieres.value.filter((mat) => mat.id !== id);
   }
 };
 </script>
@@ -313,13 +369,20 @@ const deleteMatiere = (id) => {
 }
 
 /* Thématiques Couleurs Soft */
-.bg-soft-primary { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.bg-soft-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
 
 .rounded-4 {
   border-radius: 0.2rem !important;
 }
-.form-select, .form-control {
+.form-select,
+.form-control {
   font-size: 0.9rem;
   padding: 10px 12px;
 }

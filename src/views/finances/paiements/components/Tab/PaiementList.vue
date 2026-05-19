@@ -77,21 +77,39 @@
             </thead>
             <tbody>
               <tr v-for="paiement in filteredPaiements" :key="paiement.id">
-                <td class="ps-4 text-start font-monospace fw-bold text-primary">{{ paiement.matricule }}</td>
-                <td class="text-start fw-semibold text-dark">{{ paiement.nom }} {{ paiement.prenom }}</td>
+                <td class="ps-4 text-start font-monospace fw-bold text-primary">
+                  {{ paiement.matricule }}
+                </td>
+                <td class="text-start fw-semibold text-dark">
+                  {{ paiement.nom }} {{ paiement.prenom }}
+                </td>
                 <td class="fw-bold">{{ formatCurrency(paiement.montant) }}</td>
                 <td>
                   <span class="badge bg-light text-dark border">{{ paiement.type }}</span>
                 </td>
                 <td>
-                  <span class="badge px-2 py-1 rounded-pill fw-bold" :class="paiement.statut === 'Payé' ? 'bg-soft-success text-success' : 'bg-soft-warning text-warning'">
-                    <i class="bi me-1" :class="paiement.statut === 'Payé' ? 'bi-check-circle-fill' : 'bi-clock-history'"></i>
+                  <span
+                    class="badge px-2 py-1 rounded-pill fw-bold"
+                    :class="
+                      paiement.statut === 'Payé'
+                        ? 'bg-soft-success text-success'
+                        : 'bg-soft-warning text-warning'
+                    "
+                  >
+                    <i
+                      class="bi me-1"
+                      :class="
+                        paiement.statut === 'Payé' ? 'bi-check-circle-fill' : 'bi-clock-history'
+                      "
+                    ></i>
                     {{ paiement.statut }}
                   </span>
                 </td>
                 <td class="small text-muted">{{ paiement.date }}</td>
                 <td>
-                  <span class="small font-monospace bg-light px-2 py-1 rounded">{{ paiement.mode }}</span>
+                  <span class="small font-monospace bg-light px-2 py-1 rounded">{{
+                    paiement.mode
+                  }}</span>
                 </td>
                 <td class="text-end pe-4">
                   <button
@@ -106,7 +124,9 @@
 
               <!-- Ligne de Résumé Financier (Cumul dynamique) -->
               <tr v-if="filteredPaiements.length > 0" class="table-light border-top fw-bold">
-                <td colspan="2" class="ps-4 text-start py-3 text-uppercase text-muted small">Total Collecté Filtré :</td>
+                <td colspan="2" class="ps-4 text-start py-3 text-uppercase text-muted small">
+                  Total Collecté Filtré :
+                </td>
                 <td class="text-primary fs-6">{{ formatCurrency(totalFiltré) }}</td>
                 <td colspan="5"></td>
               </tr>
@@ -130,8 +150,18 @@
 import { ref, computed } from 'vue';
 
 const moisListe = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
 ];
 
 const cycles = ['Licence', 'Master', 'Doctorat'];
@@ -141,7 +171,7 @@ const classes = ['L1-A', 'L1-B', 'M1-JV', 'M2-FI'];
 const filters = ref({
   cycle: '',
   filiere: '',
-  mois: '', 
+  mois: '',
   classe: '',
 });
 
@@ -179,8 +209,8 @@ const paiements = ref([
 // Logique de filtrage adaptative
 const filteredPaiements = computed(() => {
   return paiements.value.filter((p) => {
-    const partieDate = p.date.split('/'); 
-    const moisPaiement = parseInt(partieDate[1]); 
+    const partieDate = p.date.split('/');
+    const moisPaiement = parseInt(partieDate[1]);
 
     return (
       (filters.value.cycle === '' || p.cycle === filters.value.cycle) &&
@@ -201,18 +231,26 @@ const formatCurrency = (value) => {
 };
 
 const generateReceipt = (p) => {
-  alert(`Édition du reçu officiel de caisse pour : ${p.prenom} ${p.nom}\nFormat A5 standardisé prêt.`);
+  alert(
+    `Édition du reçu officiel de caisse pour : ${p.prenom} ${p.nom}\nFormat A5 standardisé prêt.`
+  );
 };
 
 const exportData = (format) => {
-  alert(`Préparation du fichier d'export au format [.${format.toUpperCase()}] basé sur la sélection actuelle.`);
+  alert(
+    `Préparation du fichier d'export au format [.${format.toUpperCase()}] basé sur la sélection actuelle.`
+  );
 };
 </script>
 
 <style scoped>
 /* Nuances de couleurs douces / Flat Design */
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.15); }
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+}
 
 .table th {
   font-size: 11px;

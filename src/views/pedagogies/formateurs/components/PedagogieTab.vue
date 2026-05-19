@@ -1,7 +1,6 @@
 <template>
   <div>
     <ul class="nav nav-tabs px-4" role="tablist">
-
       <!-- Formateurs -->
       <li class="nav-item">
         <a
@@ -99,7 +98,12 @@
         <FormateursContent />
       </div>
 
-      <div class="tab-pane fade" id="assignations" role="tabpanel" aria-labelledby="assignations-tab">
+      <div
+        class="tab-pane fade"
+        id="assignations"
+        role="tabpanel"
+        aria-labelledby="assignations-tab"
+      >
         <AssignationsContent />
       </div>
 
@@ -118,16 +122,15 @@
       <div class="tab-pane fade" id="archives" role="tabpanel" aria-labelledby="archives-tab">
         <ArchivesPedagogiques />
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
-import FormateursContent from './Tab/FormateursContent.vue'
-import AssignationsContent from './Tab/AssignationsContent.vue'
-import SuiviPedagogique from './Tab/SuiviPedagogique.vue'
-import ChargesHoraires from './Tab/ChargesHoraires.vue'
-import RapportsAcademiques from './Tab/RapportsAcademiques.vue'
-import ArchivesPedagogiques from './Tab/ArchivesPedagogiques.vue'
+import FormateursContent from './Tab/FormateursContent.vue';
+import AssignationsContent from './Tab/AssignationsContent.vue';
+import SuiviPedagogique from './Tab/SuiviPedagogique.vue';
+import ChargesHoraires from './Tab/ChargesHoraires.vue';
+import RapportsAcademiques from './Tab/RapportsAcademiques.vue';
+import ArchivesPedagogiques from './Tab/ArchivesPedagogiques.vue';
 </script>

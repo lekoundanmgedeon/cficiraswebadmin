@@ -11,7 +11,7 @@
 
     <!-- Zone de Téléversement Rapide (Drag & Drop) -->
     <div class="col-12 mb-4">
-      <div 
+      <div
         class="card border-0 shadow-sm drag-drop-area rounded-4 p-5 text-center"
         :class="{ 'drag-over': isDragging }"
         @dragover.prevent="isDragging = true"
@@ -20,19 +20,15 @@
         @click="triggerFileInput"
       >
         <!-- Input invisible mais fonctionnel au clic -->
-        <input 
-          type="file" 
-          ref="fileInput" 
-          class="d-none" 
-          @change="handleFileSelect" 
-          multiple
-        />
-        
+        <input type="file" ref="fileInput" class="d-none" @change="handleFileSelect" multiple />
+
         <div class="py-3">
           <i class="bi bi-cloud-arrow-up-fill text-primary display-4 mb-3 d-block"></i>
           <h5 class="fw-bold text-dark mb-1">Glissez-déposez vos fichiers ici</h5>
           <p class="text-muted small mb-3">ou cliquez pour parcourir vos documents locaux</p>
-          <span class="badge bg-light text-muted border px-3 py-2">PDF, DOCX, PPTX, ZIP, MP4 (Max. 50 Mo)</span>
+          <span class="badge bg-light text-muted border px-3 py-2"
+            >PDF, DOCX, PPTX, ZIP, MP4 (Max. 50 Mo)</span
+          >
         </div>
       </div>
     </div>
@@ -102,11 +98,7 @@
               </thead>
 
               <tbody>
-                <tr 
-                  v-for="resource in filteredResources" 
-                  :key="resource.id"
-                  class="transition-all"
-                >
+                <tr v-for="resource in filteredResources" :key="resource.id" class="transition-all">
                   <!-- Icône du format de fichier -->
                   <td class="ps-4">
                     <span class="badge p-2 rounded-3" :class="getFileBadgeClass(resource.format)">
@@ -117,7 +109,10 @@
                   <!-- Nom et catégorie du fichier -->
                   <td>
                     <div class="fw-bold text-dark">{{ resource.nom }}</div>
-                    <span class="badge bg-soft-secondary text-secondary mt-1 px-2 py-1" style="font-size: 10px;">
+                    <span
+                      class="badge bg-soft-secondary text-secondary mt-1 px-2 py-1"
+                      style="font-size: 10px"
+                    >
                       {{ resource.type }}
                     </span>
                   </td>
@@ -147,7 +142,11 @@
                       <i class="bi bi-download fs-5"></i>
                     </button>
                     <!-- Bouton Supprimer -->
-                    <button class="btn btn-link text-danger p-0" title="Supprimer" @click="deleteResource(resource.id)">
+                    <button
+                      class="btn btn-link text-danger p-0"
+                      title="Supprimer"
+                      @click="deleteResource(resource.id)"
+                    >
                       <i class="bi bi-trash3 fs-5"></i>
                     </button>
                   </td>
@@ -157,7 +156,9 @@
                 <tr v-if="filteredResources.length === 0">
                   <td colspan="6" class="text-center py-5">
                     <h6 class="text-muted fw-bold">Aucune ressource trouvée</h6>
-                    <p class="small text-muted mb-0">Glissez un fichier dans la zone supérieure pour enrichir l'espace.</p>
+                    <p class="small text-muted mb-0">
+                      Glissez un fichier dans la zone supérieure pour enrichir l'espace.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -184,21 +185,66 @@ const mockMatieres = ref([
   'Algorithmique & Structures de Données',
   'Architecture des Systèmes Cloud',
   'Marketing Digital & Stratégie',
-  'Anglais des Affaires'
+  'Anglais des Affaires',
 ]);
 
 // Liste de données factices
 const mockResources = ref([
-  { id: 1, nom: 'Support_Cours_VueJS_Introduction.pdf', type: 'Cours', format: 'pdf', matiere: 'Algorithmique & Structures de Données', classe: 'Master 1 Info', taille: '4.2 Mo', date_ajout: '14/05/2026' },
-  { id: 2, nom: 'Enonce_TD3_Recursivite_Avancee.docx', type: 'TD', format: 'word', matiere: 'Algorithmique & Structures de Données', classe: 'Master 1 Info', taille: '1.1 Mo', date_ajout: '15/05/2026' },
-  { id: 3, nom: 'Architecture_AWS_Deploy_Prod.pptx', type: 'Cours', format: 'powerpoint', matiere: 'Architecture des Systèmes Cloud', classe: 'Master 2 Info', taille: '12.8 Mo', date_ajout: '10/05/2026' },
-  { id: 4, nom: 'Video_Tuto_Configuration_Docker.mp4', type: 'Vidéo', format: 'video', matiere: 'Architecture des Systèmes Cloud', classe: 'Master 2 Info', taille: '34.0 Mo', date_ajout: '12/05/2026' },
-  { id: 5, nom: 'Archive_Sujets_Examens_2025.zip', type: 'Corrigé', format: 'zip', matiere: 'Marketing Digital & Stratégie', classe: 'Licence 3 Management', taille: '8.5 Mo', date_ajout: '01/05/2026' }
+  {
+    id: 1,
+    nom: 'Support_Cours_VueJS_Introduction.pdf',
+    type: 'Cours',
+    format: 'pdf',
+    matiere: 'Algorithmique & Structures de Données',
+    classe: 'Master 1 Info',
+    taille: '4.2 Mo',
+    date_ajout: '14/05/2026',
+  },
+  {
+    id: 2,
+    nom: 'Enonce_TD3_Recursivite_Avancee.docx',
+    type: 'TD',
+    format: 'word',
+    matiere: 'Algorithmique & Structures de Données',
+    classe: 'Master 1 Info',
+    taille: '1.1 Mo',
+    date_ajout: '15/05/2026',
+  },
+  {
+    id: 3,
+    nom: 'Architecture_AWS_Deploy_Prod.pptx',
+    type: 'Cours',
+    format: 'powerpoint',
+    matiere: 'Architecture des Systèmes Cloud',
+    classe: 'Master 2 Info',
+    taille: '12.8 Mo',
+    date_ajout: '10/05/2026',
+  },
+  {
+    id: 4,
+    nom: 'Video_Tuto_Configuration_Docker.mp4',
+    type: 'Vidéo',
+    format: 'video',
+    matiere: 'Architecture des Systèmes Cloud',
+    classe: 'Master 2 Info',
+    taille: '34.0 Mo',
+    date_ajout: '12/05/2026',
+  },
+  {
+    id: 5,
+    nom: 'Archive_Sujets_Examens_2025.zip',
+    type: 'Corrigé',
+    format: 'zip',
+    matiere: 'Marketing Digital & Stratégie',
+    classe: 'Licence 3 Management',
+    taille: '8.5 Mo',
+    date_ajout: '01/05/2026',
+  },
 ]);
 
 // Filtrage intelligent
 const filteredResources = computed(() => {
-  return mockResources.value.filter(res => {
+  return mockResources.value.filter((res) => {
     const matchesSearch = res.nom.toLowerCase().includes(searchQuery.value.toLowerCase());
     const matchesMatiere = filterMatiere.value === '' || res.matiere === filterMatiere.value;
     const matchesType = filterType.value === '' || res.type === filterType.value;
@@ -225,7 +271,7 @@ const processUploadedFiles = (files) => {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const extension = file.name.split('.').pop().toLowerCase();
-    
+
     mockResources.value.unshift({
       id: Date.now() + i,
       nom: file.name,
@@ -234,7 +280,7 @@ const processUploadedFiles = (files) => {
       matiere: filterMatiere.value || 'Algorithmique & Structures de Données',
       classe: 'Générique',
       taille: (file.size / (1024 * 1024)).toFixed(1) + ' Mo',
-      date_ajout: new Date().toLocaleDateString('fr-FR')
+      date_ajout: new Date().toLocaleDateString('fr-FR'),
     });
   }
 };
@@ -242,23 +288,35 @@ const processUploadedFiles = (files) => {
 // Helpers graphiques pour adapter les icônes selon l'extension
 const getFileIcon = (format) => {
   switch (format) {
-    case 'pdf': return 'bi-file-earmark-pdf';
-    case 'word': return 'bi-file-earmark-word';
-    case 'powerpoint': return 'bi-file-earmark-slides';
-    case 'video': return 'bi-file-earmark-play';
-    case 'zip': return 'bi-file-earmark-zip';
-    default: return 'bi-file-earmark-text';
+    case 'pdf':
+      return 'bi-file-earmark-pdf';
+    case 'word':
+      return 'bi-file-earmark-word';
+    case 'powerpoint':
+      return 'bi-file-earmark-slides';
+    case 'video':
+      return 'bi-file-earmark-play';
+    case 'zip':
+      return 'bi-file-earmark-zip';
+    default:
+      return 'bi-file-earmark-text';
   }
 };
 
 const getFileBadgeClass = (format) => {
   switch (format) {
-    case 'pdf': return 'bg-soft-danger text-danger';
-    case 'word': return 'bg-soft-primary text-primary';
-    case 'powerpoint': return 'bg-soft-warning text-warning';
-    case 'video': return 'bg-soft-success text-success';
-    case 'zip': return 'bg-soft-purple text-purple';
-    default: return 'bg-soft-secondary text-secondary';
+    case 'pdf':
+      return 'bg-soft-danger text-danger';
+    case 'word':
+      return 'bg-soft-primary text-primary';
+    case 'powerpoint':
+      return 'bg-soft-warning text-warning';
+    case 'video':
+      return 'bg-soft-success text-success';
+    case 'zip':
+      return 'bg-soft-purple text-purple';
+    default:
+      return 'bg-soft-secondary text-secondary';
   }
 };
 
@@ -270,7 +328,7 @@ const resetFilters = () => {
 
 const deleteResource = (id) => {
   if (confirm('Supprimer définitivement ce document de la bibliothèque pédagogique ?')) {
-    mockResources.value = mockResources.value.filter(res => res.id !== id);
+    mockResources.value = mockResources.value.filter((res) => res.id !== id);
   }
 };
 </script>
@@ -283,19 +341,38 @@ const deleteResource = (id) => {
   cursor: pointer;
   transition: all 0.25s ease-in-out;
 }
-.drag-drop-area:hover, .drag-drop-area.drag-over {
+.drag-drop-area:hover,
+.drag-drop-area.drag-over {
   background: #f1f7ff;
   border-color: #0056b3;
   transform: translateY(-2px);
 }
 
 /* Couleurs Soft Thématiques */
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
-.bg-soft-primary { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.12); color: #b58105; }
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
-.bg-soft-purple { background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+.bg-soft-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.12);
+  color: #b58105;
+}
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+.bg-soft-purple {
+  background-color: rgba(111, 66, 193, 0.1);
+  color: #6f42c1;
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
 
 .table th {
   font-size: 11px;

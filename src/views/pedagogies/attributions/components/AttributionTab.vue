@@ -84,12 +84,22 @@
     <!-- Contenu des Onglets -->
     <div class="tab-content p-4">
       <!-- 1. Cours & Matières -->
-      <div class="tab-pane fade show active" id="cours-matieres" role="tabpanel" aria-labelledby="cours-tab">
+      <div
+        class="tab-pane fade show active"
+        id="cours-matieres"
+        role="tabpanel"
+        aria-labelledby="cours-tab"
+      >
         <CoursMatieres />
       </div>
 
       <!-- 2. Assignations -->
-      <div class="tab-pane fade" id="assignations" role="tabpanel" aria-labelledby="assignations-tab">
+      <div
+        class="tab-pane fade"
+        id="assignations"
+        role="tabpanel"
+        aria-labelledby="assignations-tab"
+      >
         <AssignationsContent />
       </div>
 
@@ -99,7 +109,12 @@
       </div>
 
       <!-- 4. Ressources pédagogiques -->
-      <div class="tab-pane fade" id="ressources-pedagogiques" role="tabpanel" aria-labelledby="ressources-tab">
+      <div
+        class="tab-pane fade"
+        id="ressources-pedagogiques"
+        role="tabpanel"
+        aria-labelledby="ressources-tab"
+      >
         <RessourcesPedagogiques />
       </div>
 

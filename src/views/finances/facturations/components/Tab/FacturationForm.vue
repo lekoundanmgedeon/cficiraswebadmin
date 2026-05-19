@@ -9,21 +9,34 @@
           Suivi des vacations, taux horaires et émoluments des corps enseignants par période.
         </p>
       </div>
-      
+
       <!-- Outils de filtrage de période & d'import -->
       <div class="d-flex gap-2">
         <div class="btn-group shadow-sm" role="group">
-          <input type="radio" v-model="viewType" value="mois" class="btn-check" id="v-mois" checked />
+          <input
+            type="radio"
+            v-model="viewType"
+            value="mois"
+            class="btn-check"
+            id="v-mois"
+            checked
+          />
           <label class="btn btn-sm btn-white border px-3" for="v-mois">Mensuel</label>
 
           <input type="radio" v-model="viewType" value="trimestre" class="btn-check" id="v-trim" />
-          <label class="btn btn-sm btn-white border border-start-0 border-end-0 px-3" for="v-trim">Trimestriel</label>
+          <label class="btn btn-sm btn-white border border-start-0 border-end-0 px-3" for="v-trim"
+            >Trimestriel</label
+          >
 
           <input type="radio" v-model="viewType" value="annuel" class="btn-check" id="v-ann" />
           <label class="btn btn-sm btn-white border px-3" for="v-ann">Annuel</label>
         </div>
 
-        <button class="btn btn-primary btn-sm border-0 shadow-sm" data-bs-toggle="modal" data-bs-target="#importFormateurModal">
+        <button
+          class="btn btn-primary btn-sm border-0 shadow-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#importFormateurModal"
+        >
           <i class="bi bi-upload me-1"></i> Charger Liste (CSV/Excel)
         </button>
       </div>
@@ -32,14 +45,24 @@
     <!-- Section KPI Flash -->
     <div class="row mb-4 g-3">
       <div class="col-md-6">
-        <div class="card bg-white border-0 shadow-sm p-3 border-start border-primary border-3 rounded-4">
-          <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Honoraires ({{ viewLabel }})</span>
-          <h4 class="fw-bold text-primary font-monospace mb-0">{{ formatPrice(totalHonoraires) }}</h4>
+        <div
+          class="card bg-white border-0 shadow-sm p-3 border-start border-primary border-3 rounded-4"
+        >
+          <span class="text-muted small fw-semibold text-uppercase d-block mb-1"
+            >Total Honoraires ({{ viewLabel }})</span
+          >
+          <h4 class="fw-bold text-primary font-monospace mb-0">
+            {{ formatPrice(totalHonoraires) }}
+          </h4>
         </div>
       </div>
       <div class="col-md-6">
-        <div class="card bg-white border-0 shadow-sm p-3 border-start border-secondary border-3 rounded-4">
-          <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Nombre de Formateurs Actifs</span>
+        <div
+          class="card bg-white border-0 shadow-sm p-3 border-start border-secondary border-3 rounded-4"
+        >
+          <span class="text-muted small fw-semibold text-uppercase d-block mb-1"
+            >Nombre de Formateurs Actifs</span
+          >
           <h4 class="fw-bold text-dark mb-0">{{ honoraires.length }} vacataires</h4>
         </div>
       </div>
@@ -71,9 +94,14 @@
                   <span class="badge bg-light text-dark border">{{ item.heures }} h</span>
                 </td>
                 <td class="font-monospace text-muted">{{ formatPrice(item.taux) }}</td>
-                <td class="fw-bold text-success font-monospace">{{ formatPrice(item.heures * item.taux) }}</td>
+                <td class="fw-bold text-success font-monospace">
+                  {{ formatPrice(item.heures * item.taux) }}
+                </td>
                 <td class="text-end pe-4">
-                  <button class="btn btn-sm btn-white border shadow-sm text-secondary px-3" @click="viewFiche(item)">
+                  <button
+                    class="btn btn-sm btn-white border shadow-sm text-secondary px-3"
+                    @click="viewFiche(item)"
+                  >
                     <i class="bi bi-file-earmark-text me-1"></i> Fiche
                   </button>
                 </td>
@@ -95,17 +123,34 @@
           <div class="modal-body px-4 text-center">
             <div class="upload-zone p-5 border-dashed rounded mb-3 bg-light position-relative">
               <i class="bi bi-file-earmark-spreadsheet text-success display-4 d-block mb-2"></i>
-              <p class="small text-secondary mb-3">Glissez votre fichier ici ou cliquez pour parcourir</p>
-              <input type="file" @change="handleFileChange" class="form-control form-control-sm border-0 shadow-sm" accept=".xlsx, .csv" />
+              <p class="small text-secondary mb-3">
+                Glissez votre fichier ici ou cliquez pour parcourir
+              </p>
+              <input
+                type="file"
+                @change="handleFileChange"
+                class="form-control form-control-sm border-0 shadow-sm"
+                accept=".xlsx, .csv"
+              />
             </div>
             <div class="text-start p-3 bg-light rounded text-xs">
-              <span class="fw-bold text-dark uppercase d-block mb-1"><i class="bi bi-info-circle text-primary me-1"></i> Format requis :</span>
-              <code class="text-dark font-monospace">matricule, nom, prenom, heures_faites, taux_horaire, mois</code>
+              <span class="fw-bold text-dark uppercase d-block mb-1"
+                ><i class="bi bi-info-circle text-primary me-1"></i> Format requis :</span
+              >
+              <code class="text-dark font-monospace"
+                >matricule, nom, prenom, heures_faites, taux_horaire, mois</code
+              >
             </div>
           </div>
           <div class="modal-footer border-0 pb-4 px-4 pt-2">
-            <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Annuler</button>
-            <button type="button" class="btn btn-sm btn-primary border-0 px-3 shadow-sm" @click="processImport">
+            <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">
+              Annuler
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary border-0 px-3 shadow-sm"
+              @click="processImport"
+            >
               Lancer l'importation
             </button>
           </div>
@@ -177,7 +222,9 @@ const viewFiche = (item) => {
 </script>
 
 <style scoped>
-.text-xs { font-size: 11px !important; }
+.text-xs {
+  font-size: 11px !important;
+}
 
 .table th {
   font-size: 11px;

@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Rapport de Performance des Paiements</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-bar-chart-line-fill me-1"></i>
-        Visualisation analytique des flux de trésorerie, répartition des modes de règlement et historique des encaissements.
+        Visualisation analytique des flux de trésorerie, répartition des modes de règlement et
+        historique des encaissements.
       </p>
     </div>
 
@@ -17,7 +18,7 @@
           <h6 class="fw-bold text-dark mb-3 small text-uppercase text-secondary tracking-wider">
             <i class="bi bi-pie-chart text-primary me-2"></i>Modes de Règlement
           </h6>
-          <div class="chart-container position-relative m-auto" style="height:220px; width:100%">
+          <div class="chart-container position-relative m-auto" style="height: 220px; width: 100%">
             <canvas id="chartModePaiement"></canvas>
           </div>
         </div>
@@ -29,7 +30,7 @@
           <h6 class="fw-bold text-dark mb-3 small text-uppercase text-secondary tracking-wider">
             <i class="bi bi-graph-up-arrow text-success me-2"></i>Volume des Encaissements Mensuels
           </h6>
-          <div class="chart-container position-relative" style="height:220px; width:100%">
+          <div class="chart-container position-relative" style="height: 220px; width: 100%">
             <canvas id="chartMontants"></canvas>
           </div>
         </div>
@@ -59,21 +60,39 @@
             </thead>
             <tbody>
               <tr v-for="paiement in paiements" :key="paiement.id">
-                <td class="ps-4 text-start font-monospace fw-bold text-primary">{{ paiement.matricule }}</td>
-                <td class="text-start fw-semibold text-dark">{{ paiement.nom }} {{ paiement.prenom }}</td>
+                <td class="ps-4 text-start font-monospace fw-bold text-primary">
+                  {{ paiement.matricule }}
+                </td>
+                <td class="text-start fw-semibold text-dark">
+                  {{ paiement.nom }} {{ paiement.prenom }}
+                </td>
                 <td class="fw-bold font-monospace">{{ formatCurrency(paiement.montant) }}</td>
                 <td>
                   <span class="badge bg-light text-dark border">{{ paiement.type }}</span>
                 </td>
                 <td>
-                  <span class="badge px-3 py-1 rounded-pill fw-bold" :class="paiement.statut === 'Payé' ? 'bg-soft-success text-success' : 'bg-soft-warning text-warning'">
-                    <i class="bi me-1" :class="paiement.statut === 'Payé' ? 'bi-check-circle-fill' : 'bi-clock-history'"></i>
+                  <span
+                    class="badge px-3 py-1 rounded-pill fw-bold"
+                    :class="
+                      paiement.statut === 'Payé'
+                        ? 'bg-soft-success text-success'
+                        : 'bg-soft-warning text-warning'
+                    "
+                  >
+                    <i
+                      class="bi me-1"
+                      :class="
+                        paiement.statut === 'Payé' ? 'bi-check-circle-fill' : 'bi-clock-history'
+                      "
+                    ></i>
                     {{ paiement.statut }}
                   </span>
                 </td>
                 <td class="small text-muted font-monospace">{{ formatDate(paiement.date) }}</td>
                 <td class="text-end pe-4">
-                  <span class="small font-monospace bg-light px-2 py-1 rounded text-secondary">{{ paiement.mode }}</span>
+                  <span class="small font-monospace bg-light px-2 py-1 rounded text-secondary">{{
+                    paiement.mode
+                  }}</span>
                 </td>
               </tr>
               <tr v-if="paiements.length === 0">
@@ -160,9 +179,9 @@ onMounted(() => {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-        }
-      }
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        },
+      },
     });
   }
 
@@ -186,7 +205,7 @@ onMounted(() => {
             data: Object.values(moisCounts),
             backgroundColor: 'rgba(40, 167, 69, 0.85)',
             borderRadius: 4,
-            barThickness: 25
+            barThickness: 25,
           },
         ],
       },
@@ -196,9 +215,9 @@ onMounted(() => {
         plugins: { legend: { display: false } },
         scales: {
           y: { grid: { display: true, drawBorder: false }, ticks: { font: { size: 10 } } },
-          x: { grid: { display: false } }
-        }
-      }
+          x: { grid: { display: false } },
+        },
+      },
     });
   }
 });
@@ -221,11 +240,19 @@ const formatDate = (dateStr) => {
 
 <style scoped>
 /* Teintes douces Flat Design */
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.15); }
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+}
 
-.tracking-wider { letter-spacing: 0.5px; }
-.text-xs { font-size: 11px !important; }
+.tracking-wider {
+  letter-spacing: 0.5px;
+}
+.text-xs {
+  font-size: 11px !important;
+}
 
 .table th {
   font-size: 11px;

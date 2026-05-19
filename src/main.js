@@ -5,7 +5,7 @@ import 'vue3-toastify/dist/index.css';
 // Import de Bootstrap (si ce n'est pas déjà fait)
 
 // Import des icônes Bootstrap
-import 'bootstrap-icons/font/bootstrap-icons.css'
+import 'bootstrap-icons/font/bootstrap-icons.css';
 //Integration antd vue3-toastify
 import { Table, Tabs } from 'ant-design-vue';
 import router from './routes';

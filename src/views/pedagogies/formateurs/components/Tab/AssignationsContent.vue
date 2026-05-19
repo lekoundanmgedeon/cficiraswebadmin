@@ -23,7 +23,11 @@
               <!-- Sélection du Formateur -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-muted">Formateur</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="newAssignment.formateurId" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="newAssignment.formateurId"
+                  required
+                >
                   <option value="">Sélectionner un enseignant</option>
                   <option v-for="f in mockFormateurs" :key="f.id" :value="f.id">
                     {{ f.nom }} {{ f.prenom }}
@@ -34,7 +38,11 @@
               <!-- Sélection du Cours / Matière -->
               <div class="col-md-3">
                 <label class="form-label small fw-semibold text-muted">Cours / Matière</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="newAssignment.matiere" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="newAssignment.matiere"
+                  required
+                >
                   <option value="">Sélectionner la matière</option>
                   <option v-for="m in mockMatieres" :key="m" :value="m">{{ m }}</option>
                 </select>
@@ -43,7 +51,11 @@
               <!-- Sélection de la Classe / Cohorte -->
               <div class="col-md-2">
                 <label class="form-label small fw-semibold text-muted">Classe</label>
-                <select class="form-select bg-light border-0 shadow-sm" v-model="newAssignment.classe" required>
+                <select
+                  class="form-select bg-light border-0 shadow-sm"
+                  v-model="newAssignment.classe"
+                  required
+                >
                   <option value="">Sélectionner la classe</option>
                   <option v-for="c in mockClasses" :key="c" :value="c">{{ c }}</option>
                 </select>
@@ -51,11 +63,13 @@
 
               <!-- Volume Horaire Dédié -->
               <div class="col-md-2">
-                <label class="form-label small fw-semibold text-muted">Volume Horaire (Heures)</label>
-                <input 
-                  type="number" 
-                  class="form-control bg-light border-0 shadow-sm" 
-                  placeholder="Ex: 45" 
+                <label class="form-label small fw-semibold text-muted"
+                  >Volume Horaire (Heures)</label
+                >
+                <input
+                  type="number"
+                  class="form-control bg-light border-0 shadow-sm"
+                  placeholder="Ex: 45"
                   v-model.number="newAssignment.heures"
                   min="1"
                   required
@@ -125,7 +139,9 @@
                         <div class="fw-bold text-dark">
                           {{ getFormateurName(assignment.formateurId) }}
                         </div>
-                        <small class="text-muted">{{ getFormateurContrat(assignment.formateurId) }}</small>
+                        <small class="text-muted">{{
+                          getFormateurContrat(assignment.formateurId)
+                        }}</small>
                       </div>
                     </div>
                   </td>
@@ -145,21 +161,24 @@
                   <!-- Heures -->
                   <td class="text-center">
                     <span class="fw-bold text-primary">{{ assignment.heures }} h</span>
-                    <small class="text-muted d-block" style="font-size: 10px;">Semestriel</small>
+                    <small class="text-muted d-block" style="font-size: 10px">Semestriel</small>
                   </td>
 
                   <!-- Statut de l'assignation (Actif/Planifié) -->
                   <td class="text-center">
                     <span class="badge rounded-pill px-3 py-2 bg-soft-success text-success">
-                      <i class="bi bi-circle-fill me-1" style="font-size: 6px; vertical-align: middle;"></i>
+                      <i
+                        class="bi bi-circle-fill me-1"
+                        style="font-size: 6px; vertical-align: middle"
+                      ></i>
                       Validé
                     </span>
                   </td>
 
                   <!-- Bouton de suppression de la liaison -->
                   <td class="text-end pe-4">
-                    <button 
-                      class="btn btn-link text-danger p-0 border-0" 
+                    <button
+                      class="btn btn-link text-danger p-0 border-0"
                       title="Supprimer l'assignation"
                       @click="removeAssignment(assignment.id)"
                     >
@@ -171,8 +190,12 @@
                 <!-- Liste vide -->
                 <tr v-if="filteredAssignments.length === 0">
                   <td colspan="6" class="text-center py-5">
-                    <h6 class="text-muted fw-bold">Aucune assignation ne correspond à vos critères</h6>
-                    <p class="small text-muted mb-0">Utilisez le formulaire ci-dessus pour lier un enseignant à un cours.</p>
+                    <h6 class="text-muted fw-bold">
+                      Aucune assignation ne correspond à vos critères
+                    </h6>
+                    <p class="small text-muted mb-0">
+                      Utilisez le formulaire ci-dessus pour lier un enseignant à un cours.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -192,7 +215,7 @@ const mockFormateurs = ref([
   { id: 101, nom: 'Dupont', prenom: 'Jean', contrat: 'Permanent' },
   { id: 102, nom: 'Alami', prenom: 'Sanaa', contrat: 'Vacataire' },
   { id: 103, nom: 'Traoré', prenom: 'Moussa', contrat: 'Permanent' },
-  { id: 104, nom: 'Muller', prenom: 'Charlotte', contrat: 'Permanent' }
+  { id: 104, nom: 'Muller', prenom: 'Charlotte', contrat: 'Permanent' },
 ]);
 
 const mockMatieres = ref([
@@ -200,17 +223,46 @@ const mockMatieres = ref([
   'Architecture des Systèmes Cloud',
   'Marketing Digital & Stratégie',
   'Anglais des Affaires',
-  'Management Agile'
+  'Management Agile',
 ]);
 
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management', 'Licence 2 Marketing']);
+const mockClasses = ref([
+  'Master 1 Info',
+  'Master 2 Info',
+  'Licence 3 Management',
+  'Licence 2 Marketing',
+]);
 
 // Liste active des assignations (Mock Data de base)
 const mockAssignments = ref([
-  { id: 1, formateurId: 101, matiere: 'Algorithmique & Structures de Données', classe: 'Master 1 Info', heures: 42 },
-  { id: 2, formateurId: 103, matiere: 'Architecture des Systèmes Cloud', classe: 'Master 2 Info', heures: 60 },
-  { id: 3, formateurId: 102, matiere: 'Marketing Digital & Stratégie', classe: 'Licence 3 Management', heures: 30 },
-  { id: 4, formateurId: 104, matiere: 'Anglais des Affaires', classe: 'Licence 2 Marketing', heures: 24 }
+  {
+    id: 1,
+    formateurId: 101,
+    matiere: 'Algorithmique & Structures de Données',
+    classe: 'Master 1 Info',
+    heures: 42,
+  },
+  {
+    id: 2,
+    formateurId: 103,
+    matiere: 'Architecture des Systèmes Cloud',
+    classe: 'Master 2 Info',
+    heures: 60,
+  },
+  {
+    id: 3,
+    formateurId: 102,
+    matiere: 'Marketing Digital & Stratégie',
+    classe: 'Licence 3 Management',
+    heures: 30,
+  },
+  {
+    id: 4,
+    formateurId: 104,
+    matiere: 'Anglais des Affaires',
+    classe: 'Licence 2 Marketing',
+    heures: 24,
+  },
 ]);
 
 // État du formulaire et recherche
@@ -219,28 +271,28 @@ const newAssignment = ref({
   formateurId: '',
   matiere: '',
   classe: '',
-  heures: null
+  heures: null,
 });
 
 // Fonctions utilitaires pour récupérer les infos des formateurs liés
 const getFormateurName = (id) => {
-  const f = mockFormateurs.value.find(prof => prof.id === id);
+  const f = mockFormateurs.value.find((prof) => prof.id === id);
   return f ? `${f.nom} ${f.prenom}` : 'Inconnu';
 };
 
 const getFormateurInitials = (id) => {
-  const f = mockFormateurs.value.find(prof => prof.id === id);
+  const f = mockFormateurs.value.find((prof) => prof.id === id);
   return f ? `${f.nom[0]}${f.prenom[0]}` : '??';
 };
 
 const getFormateurContrat = (id) => {
-  const f = mockFormateurs.value.find(prof => prof.id === id);
+  const f = mockFormateurs.value.find((prof) => prof.id === id);
   return f ? f.contrat : '';
 };
 
 // Logique de filtrage en temps réel
 const filteredAssignments = computed(() => {
-  return mockAssignments.value.filter(assign => {
+  return mockAssignments.value.filter((assign) => {
     const term = searchQuery.value.toLowerCase();
     const profName = getFormateurName(assign.formateurId).toLowerCase();
     return (
@@ -258,7 +310,7 @@ const handleAssign = () => {
     formateurId: Number(newAssignment.value.formateurId),
     matiere: newAssignment.value.matiere,
     classe: newAssignment.value.classe,
-    heures: newAssignment.value.heures
+    heures: newAssignment.value.heures,
   });
 
   // Reset du formulaire
@@ -268,7 +320,7 @@ const handleAssign = () => {
 // Action : Retirer une assignation
 const removeAssignment = (id) => {
   if (confirm('Voulez-vous vraiment annuler cette assignation de cours ?')) {
-    mockAssignments.value = mockAssignments.value.filter(item => item.id !== id);
+    mockAssignments.value = mockAssignments.value.filter((item) => item.id !== id);
   }
 };
 </script>
@@ -317,7 +369,8 @@ const removeAssignment = (id) => {
 .rounded-4 {
   border-radius: 0.2rem !important; /* Harmonisation avec le reste de ton ERP */
 }
-.form-select, .form-control {
+.form-select,
+.form-control {
   font-size: 0.9rem;
   padding: 10px 12px;
 }

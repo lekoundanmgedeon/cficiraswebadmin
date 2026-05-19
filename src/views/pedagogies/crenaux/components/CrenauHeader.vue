@@ -4,7 +4,7 @@
       <div class="d-flex justify-content-between flex-wrap">
         <div class="d-flex align-items-end flex-wrap">
           <div class="me-md-3 me-xl-5">
-            <h2> Gestions des crenaux horaires</h2>
+            <h2>Gestions des crenaux horaires</h2>
             <p class="mb-md-0">Gestion des formateurs et enseignant</p>
           </div>
           <div class="d-flex">

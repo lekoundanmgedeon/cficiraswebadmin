@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Délibérations & Jury du Semestre</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-shield-check me-1"></i>
-        Consultez le Procès-Verbal global, validez l'attribution des ECTS et clôturez officiellement la session.
+        Consultez le Procès-Verbal global, validez l'attribution des ECTS et clôturez officiellement
+        la session.
       </p>
     </div>
 
@@ -16,24 +17,40 @@
           <div class="row g-3 align-items-center">
             <!-- Sélection de la promotion -->
             <div class="col-md-3">
-              <select class="form-select border-0 shadow-sm" v-model="selectedClasse" @change="processDeliberation">
+              <select
+                class="form-select border-0 shadow-sm"
+                v-model="selectedClasse"
+                @change="processDeliberation"
+              >
                 <option value="">Sélectionner une promotion...</option>
                 <option v-for="c in mockClasses" :key="c" :value="c">{{ c }}</option>
               </select>
             </div>
             <!-- Sélection du semestre -->
             <div class="col-md-3">
-              <select class="form-select border-0 shadow-sm" v-model="selectedSemestre" :disabled="!selectedClasse">
+              <select
+                class="form-select border-0 shadow-sm"
+                v-model="selectedSemestre"
+                :disabled="!selectedClasse"
+              >
                 <option value="Semestre 1">Semestre 1</option>
                 <option value="Semestre 2">Semestre 2</option>
               </select>
             </div>
             <!-- Actions de clôture -->
             <div class="col-md-6 text-md-end">
-              <button class="btn btn-warning border-0 shadow-sm px-3 py-2 me-2 text-dark fw-bold" :disabled="!selectedClasse" @click="cloturerSemestre">
+              <button
+                class="btn btn-warning border-0 shadow-sm px-3 py-2 me-2 text-dark fw-bold"
+                :disabled="!selectedClasse"
+                @click="cloturerSemestre"
+              >
                 <i class="bi bi-lock-fill me-1"></i> Clôturer & Verrouiller le Semestre
               </button>
-              <button class="btn btn-white btn-sm border shadow-sm py-2" :disabled="!selectedClasse" @click="processDeliberation">
+              <button
+                class="btn btn-white btn-sm border shadow-sm py-2"
+                :disabled="!selectedClasse"
+                @click="processDeliberation"
+              >
                 <i class="bi bi-arrow-clockwise"></i>
               </button>
             </div>
@@ -47,7 +64,9 @@
       <div class="row g-3">
         <div class="col-md-3">
           <div class="card border-0 shadow-sm p-3 bg-white rounded-4 text-center">
-            <span class="text-muted small fw-semibold text-uppercase">Taux d'Admission Directe</span>
+            <span class="text-muted small fw-semibold text-uppercase"
+              >Taux d'Admission Directe</span
+            >
             <h4 class="fw-bold mt-1 mb-0 text-success">{{ statsJury.tauxReussite }}%</h4>
           </div>
         </div>
@@ -59,7 +78,9 @@
         </div>
         <div class="col-md-3">
           <div class="card border-0 shadow-sm p-3 bg-white rounded-4 text-center">
-            <span class="text-muted small fw-semibold text-uppercase">Convoqués aux Rattrapages</span>
+            <span class="text-muted small fw-semibold text-uppercase"
+              >Convoqués aux Rattrapages</span
+            >
             <h4 class="fw-bold mt-1 mb-0 text-warning">{{ statsJury.rattrapages }} étudiant(s)</h4>
           </div>
         </div>
@@ -86,18 +107,22 @@
             <table class="table table-hover align-middle mb-0 text-center">
               <thead class="bg-light text-secondary small uppercase-th">
                 <tr>
-                  <th class="ps-4 py-3 text-start" style="width: 25%;">Étudiant</th>
+                  <th class="ps-4 py-3 text-start" style="width: 25%">Étudiant</th>
                   <th>Matière 1 (Vue/Node)</th>
                   <th>Matière 2 (OOP)</th>
                   <th>Matière 3 (Deep L.)</th>
                   <th class="fw-bold text-dark">Moy. Générale</th>
                   <th>Crédits ECTS</th>
-                  <th class="text-end pe-4" style="width: 15%;">Décision du Jury</th>
+                  <th class="text-end pe-4" style="width: 15%">Décision du Jury</th>
                 </tr>
               </thead>
 
               <tbody>
-                <tr v-for="student in studentsResults" :key="student.matricule" class="transition-all">
+                <tr
+                  v-for="student in studentsResults"
+                  :key="student.matricule"
+                  class="transition-all"
+                >
                   <!-- Identité de l'apprenant -->
                   <td class="ps-4 text-start">
                     <div class="fw-bold text-dark">{{ student.nom }}</div>
@@ -105,9 +130,15 @@
                   </td>
 
                   <!-- Notes par Matières -->
-                  <td :class="student.n1 < 7 ? 'text-danger fw-bold bg-soft-danger' : ''">{{ student.n1 }}</td>
-                  <td :class="student.n2 < 8 ? 'text-danger fw-bold bg-soft-danger' : ''">{{ student.n2 }}</td>
-                  <td :class="student.n3 < 10 ? 'text-danger fw-bold bg-soft-danger' : ''">{{ student.n3 }}</td>
+                  <td :class="student.n1 < 7 ? 'text-danger fw-bold bg-soft-danger' : ''">
+                    {{ student.n1 }}
+                  </td>
+                  <td :class="student.n2 < 8 ? 'text-danger fw-bold bg-soft-danger' : ''">
+                    {{ student.n2 }}
+                  </td>
+                  <td :class="student.n3 < 10 ? 'text-danger fw-bold bg-soft-danger' : ''">
+                    {{ student.n3 }}
+                  </td>
 
                   <!-- Moyenne Pondérée Calculée -->
                   <td class="fw-bold text-primary bg-light">
@@ -116,14 +147,24 @@
 
                   <!-- ECTS Capitalisés -->
                   <td>
-                    <span class="badge rounded-pill fw-bold" :class="student.ects === 14 ? 'bg-soft-success text-success' : 'bg-soft-secondary text-secondary'">
+                    <span
+                      class="badge rounded-pill fw-bold"
+                      :class="
+                        student.ects === 14
+                          ? 'bg-soft-success text-success'
+                          : 'bg-soft-secondary text-secondary'
+                      "
+                    >
                       {{ student.ects }} / 14
                     </span>
                   </td>
 
                   <!-- Décision Statutaire Automatique -->
                   <td class="text-end pe-4">
-                    <span class="badge px-3 py-1 fw-bold rounded-pill" :class="getStatusClass(student.decision)">
+                    <span
+                      class="badge px-3 py-1 fw-bold rounded-pill"
+                      :class="getStatusClass(student.decision)"
+                    >
                       {{ student.decision }}
                     </span>
                   </td>
@@ -133,7 +174,9 @@
                 <tr v-if="studentsResults.length === 0">
                   <td colspan="7" class="text-center py-5">
                     <h6 class="text-muted fw-bold">Aucun PV généré</h6>
-                    <p class="small text-muted mb-0">Veuillez cibler une promotion pour lancer les calculs de pondération du jury.</p>
+                    <p class="small text-muted mb-0">
+                      Veuillez cibler une promotion pour lancer les calculs de pondération du jury.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -167,13 +210,13 @@ const processDeliberation = () => {
     { matricule: '2026-M101', nom: 'Ndiaye Fatou', n1: 14.5, n2: 12, n3: 15 },
     { matricule: '2026-M102', nom: 'Camara Ibrahima', n1: 8, n2: 11, n3: 9.5 }, // Échoue à M3 (seuil éliminatoire à 10)
     { matricule: '2026-M103', nom: 'Sow Amadou', n1: 16, n2: 14.5, n3: 13.5 },
-    { matricule: '2026-M104', nom: 'Diallo Diariou', n1: 11, n2: 7.5, n3: 12 } // Note éliminatoire à M2 (< 8)
+    { matricule: '2026-M104', nom: 'Diallo Diariou', n1: 11, n2: 7.5, n3: 12 }, // Note éliminatoire à M2 (< 8)
   ];
 
   // Application dynamique des règles de validation de l'ERP
-  studentsResults.value = rawNotes.map(student => {
+  studentsResults.value = rawNotes.map((student) => {
     // Calcul de la moyenne pondérée
-    const totalPoints = (student.n1 * 2) + (student.n2 * 2) + (student.n3 * 3);
+    const totalPoints = student.n1 * 2 + student.n2 * 2 + student.n3 * 3;
     const moyenneCalculee = (totalPoints / 7).toFixed(2);
 
     // Vérification des barrières éliminatoires définies dans la maquette
@@ -194,7 +237,7 @@ const processDeliberation = () => {
       ...student,
       moyenne: parseFloat(moyenneCalculee),
       ects: ectsAttribues,
-      decision: decision
+      decision: decision,
     };
   });
 };
@@ -203,13 +246,13 @@ const processDeliberation = () => {
 const statsJury = computed(() => {
   if (studentsResults.value.length === 0) return {};
 
-  const admisCount = studentsResults.value.filter(s => s.decision === 'Admis').length;
+  const admisCount = studentsResults.value.filter((s) => s.decision === 'Admis').length;
   const taux = Math.round((admisCount / studentsResults.value.length) * 100);
-  
+
   const totalMoy = studentsResults.value.reduce((acc, curr) => acc + curr.moyenne, 0);
   const moyPromo = (totalMoy / studentsResults.value.length).toFixed(2);
-  
-  const rattrapages = studentsResults.value.filter(s => s.decision !== 'Admis').length;
+
+  const rattrapages = studentsResults.value.filter((s) => s.decision !== 'Admis').length;
 
   // Recherche du Major de promo
   const majorStudent = [...studentsResults.value].sort((a, b) => b.moyenne - a.moyenne)[0];
@@ -218,7 +261,7 @@ const statsJury = computed(() => {
     tauxReussite: taux,
     moyenneGenerale: moyPromo,
     rattrapages: rattrapages,
-    major: `${majorStudent.nom} (${majorStudent.moyenne}/20)`
+    major: `${majorStudent.nom} (${majorStudent.moyenne}/20)`,
   };
 });
 
@@ -230,16 +273,30 @@ const getStatusClass = (decision) => {
 };
 
 const cloturerSemestre = () => {
-  alert(`[CLÔTURE DU JURY] Le ${selectedSemestre.value} de la promotion [${selectedClasse.value}] est officiellement verrouillé.\nLes moyennes sont figées et les bulletins sont prêts pour impression.`);
+  alert(
+    `[CLÔTURE DU JURY] Le ${selectedSemestre.value} de la promotion [${selectedClasse.value}] est officiellement verrouillé.\nLes moyennes sont figées et les bulletins sont prêts pour impression.`
+  );
 };
 </script>
 
 <style scoped>
 /* Couleurs douces de l'identité ERP */
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.12); color: #ffc107; }
-.bg-soft-danger { background-color: rgba(220, 53, 69, 0.08); color: #dc3545; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.12);
+  color: #ffc107;
+}
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.08);
+  color: #dc3545;
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
 
 .uppercase-th th {
   font-size: 11px;

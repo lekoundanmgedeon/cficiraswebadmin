@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Archives des Emplois du Temps</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-archive-fill me-1"></i>
-        Consultez l'historique complet et immuable des plannings et des séances de cours des années académiques clôturées.
+        Consultez l'historique complet et immuable des plannings et des séances de cours des années
+        académiques clôturées.
       </p>
     </div>
 
@@ -56,7 +57,8 @@
       <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
         <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
           <h5 class="fw-bold text-dark mb-0">
-            <i class="bi bi-clock-history text-warning me-2"></i>Registre des Séances Clôturées — {{ selectedAnnee }}
+            <i class="bi bi-clock-history text-warning me-2"></i>Registre des Séances Clôturées —
+            {{ selectedAnnee }}
           </h5>
         </div>
 
@@ -86,7 +88,9 @@
 
                   <!-- Classe historique -->
                   <td>
-                    <span class="badge bg-light text-secondary border px-2 py-1 fw-bold">{{ slot.classe }}</span>
+                    <span class="badge bg-light text-secondary border px-2 py-1 fw-bold">{{
+                      slot.classe
+                    }}</span>
                   </td>
 
                   <!-- Matière -->
@@ -108,7 +112,10 @@
 
                   <!-- Statut de l'archive (Présence/Émargements) -->
                   <td class="text-end pe-4">
-                    <span class="badge bg-soft-success text-success rounded-pill px-3 py-1" style="font-size: 11px;">
+                    <span
+                      class="badge bg-soft-success text-success rounded-pill px-3 py-1"
+                      style="font-size: 11px"
+                    >
                       <i class="bi bi-check-all me-1"></i> Émargé (100%)
                     </span>
                   </td>
@@ -118,7 +125,9 @@
                 <tr v-if="filteredArchives.length === 0">
                   <td colspan="6" class="text-center py-5">
                     <h6 class="text-muted fw-bold mb-1">Aucune archive correspondante</h6>
-                    <p class="small text-muted mb-0">Modifiez le mot-clé ou changez l'année historique ciblée.</p>
+                    <p class="small text-muted mb-0">
+                      Modifiez le mot-clé ou changez l'année historique ciblée.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -140,21 +149,61 @@ const searchQuery = ref('');
 // Base de données historique des séances (Mock Data)
 const mockScheduleArchives = ref([
   // Données de l'année 2024-2025
-  { id: 5001, annee: '2024-2025', date: '2025-02-10', heureDebut: '08:30', heureFin: '11:30', classe: 'Master 1 Info', matiere: 'Algorithmique et Complexité', formateur: 'Dupont Jean', salle: 'Amphi B' },
-  { id: 5002, annee: '2024-2025', date: '2025-02-12', heureDebut: '13:30', heureFin: '16:30', classe: 'Master 1 Info', matiere: 'Bases de Données NoSQL', formateur: 'Traoré Moussa', salle: 'Salle 102 (Labo)' },
-  { id: 5003, annee: '2024-2025', date: '2025-03-04', heureDebut: '17:00', heureFin: '20:00', classe: 'Licence 3 Management', matiere: 'Gestion de Projet Traditionnelle', formateur: 'Alami Sanaa', salle: 'Salle 204' },
-  
+  {
+    id: 5001,
+    annee: '2024-2025',
+    date: '2025-02-10',
+    heureDebut: '08:30',
+    heureFin: '11:30',
+    classe: 'Master 1 Info',
+    matiere: 'Algorithmique et Complexité',
+    formateur: 'Dupont Jean',
+    salle: 'Amphi B',
+  },
+  {
+    id: 5002,
+    annee: '2024-2025',
+    date: '2025-02-12',
+    heureDebut: '13:30',
+    heureFin: '16:30',
+    classe: 'Master 1 Info',
+    matiere: 'Bases de Données NoSQL',
+    formateur: 'Traoré Moussa',
+    salle: 'Salle 102 (Labo)',
+  },
+  {
+    id: 5003,
+    annee: '2024-2025',
+    date: '2025-03-04',
+    heureDebut: '17:00',
+    heureFin: '20:00',
+    classe: 'Licence 3 Management',
+    matiere: 'Gestion de Projet Traditionnelle',
+    formateur: 'Alami Sanaa',
+    salle: 'Salle 204',
+  },
+
   // Données de l'année 2023-2024
-  { id: 6001, annee: '2023-2024', date: '2024-01-15', heureDebut: '09:00', heureFin: '12:00', classe: 'Master 2 Info', matiere: 'Systèmes Distribués & Cloud', formateur: 'Traoré Moussa', salle: 'Amphi A' }
+  {
+    id: 6001,
+    annee: '2023-2024',
+    date: '2024-01-15',
+    heureDebut: '09:00',
+    heureFin: '12:00',
+    classe: 'Master 2 Info',
+    matiere: 'Systèmes Distribués & Cloud',
+    formateur: 'Traoré Moussa',
+    salle: 'Amphi A',
+  },
 ]);
 
 // Filtrage combiné : Année historique sélectionnée + recherche par mot-clé (Classe, Matière, Formateur ou Salle)
 const filteredArchives = computed(() => {
-  return mockScheduleArchives.value.filter(slot => {
+  return mockScheduleArchives.value.filter((slot) => {
     const matchAnnee = slot.annee === selectedAnnee.value;
-    
+
     const term = searchQuery.value.toLowerCase();
-    const matchTerm = 
+    const matchTerm =
       slot.classe.toLowerCase().includes(term) ||
       slot.matiere.toLowerCase().includes(term) ||
       slot.formateur.toLowerCase().includes(term) ||
@@ -168,15 +217,29 @@ const filteredArchives = computed(() => {
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 };
 </script>
 
 <style scoped>
 /* Teintes douces pour respecter ton Flat Design */
-.bg-soft-warning { background-color: rgba(255, 193, 7, 0.12); color: #ffc107; }
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
-.bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.12);
+  color: #ffc107;
+}
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
 
 .table th {
   font-size: 11px;
@@ -198,7 +261,8 @@ const formatDate = (dateStr) => {
 .rounded-4 {
   border-radius: 0.2rem !important;
 }
-.form-select, .form-control {
+.form-select,
+.form-control {
   font-size: 0.85rem;
   padding: 8px 12px;
 }

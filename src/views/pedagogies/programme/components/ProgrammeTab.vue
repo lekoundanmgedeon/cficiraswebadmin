@@ -25,7 +25,7 @@
           aria-controls="credits"
           aria-selected="false"
         >
-         Crédits académiques
+          Crédits académiques
         </a>
       </li>
       <li class="nav-item">
@@ -59,7 +59,12 @@
     <!-- Contenu des onglets -->
     <div class="tab-content p-4">
       <!-- 1. Programme des cours -->
-      <div class="tab-pane fade show active" id="programme" role="tabpanel" aria-labelledby="programme-tab">
+      <div
+        class="tab-pane fade show active"
+        id="programme"
+        role="tabpanel"
+        aria-labelledby="programme-tab"
+      >
         <ProgrammeCours />
       </div>
 

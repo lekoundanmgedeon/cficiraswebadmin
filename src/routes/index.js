@@ -60,7 +60,7 @@ import Settings from '../views/settings/Settings.vue';
 //Formateurs et enseignants
 import Formateur from '../views/pedagogies/formateurs/Enseignants.vue';
 import attributionCours from '@/views/pedagogies/attributions/AttributionCours.vue';
-import CrenauxHorraire from '@/views/pedagogies/crenaux/CrenauHoraire.vue'; 
+import CrenauxHorraire from '@/views/pedagogies/crenaux/CrenauHoraire.vue';
 import ProgrammeCredits from '@/views/pedagogies/programme/ProgrammeCredit.vue';
 //Administration et gestion
 import Admins from '../views/admin/Administration.vue';

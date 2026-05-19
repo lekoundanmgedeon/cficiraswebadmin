@@ -5,7 +5,8 @@
       <h3 class="fw-bold mb-1">Suivi des Charges Horaires</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-hourglass-split me-1"></i>
-        Suivez l'état d'avancement des cours, les heures consommées et le reliquat par matière et par classe.
+        Suivez l'état d'avancement des cours, les heures consommées et le reliquat par matière et
+        par classe.
       </p>
     </div>
 
@@ -58,18 +59,17 @@
                   <th class="text-center">Quota Total</th>
                   <th class="text-center">Effectué (Consommé)</th>
                   <th class="text-center">Restant</th>
-                  <th style="width: 25%;">Progression</th>
+                  <th style="width: 25%">Progression</th>
                   <th class="text-end pe-4">Alerte</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr v-for="item in filteredCharges" :key="item.id" class="transition-all">
-                  
                   <!-- Libellé matière et Classe -->
                   <td class="ps-4">
                     <div class="fw-bold text-dark">{{ item.matiere }}</div>
-                    <span class="badge bg-light text-secondary border mt-1" style="font-size: 10px;">
+                    <span class="badge bg-light text-secondary border mt-1" style="font-size: 10px">
                       {{ item.classe }}
                     </span>
                   </td>
@@ -80,9 +80,7 @@
                   </td>
 
                   <!-- Volume global prévu -->
-                  <td class="text-center fw-semibold text-dark">
-                    {{ item.quota }} h
-                  </td>
+                  <td class="text-center fw-semibold text-dark">{{ item.quota }} h</td>
 
                   <!-- Heures consommées -->
                   <td class="text-center">
@@ -93,8 +91,8 @@
 
                   <!-- Heures restantes -->
                   <td class="text-center">
-                    <span 
-                      class="fw-bold" 
+                    <span
+                      class="fw-bold"
                       :class="item.quota - item.effectue === 0 ? 'text-muted' : 'text-danger'"
                     >
                       {{ item.quota - item.effectue }} h
@@ -104,15 +102,15 @@
                   <!-- Jauge de progression graphique (Flat UI) -->
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="progress flex-grow-1 bg-light rounded-pill" style="height: 6px;">
-                        <div 
-                          class="progress-bar rounded-pill" 
+                      <div class="progress flex-grow-1 bg-light rounded-pill" style="height: 6px">
+                        <div
+                          class="progress-bar rounded-pill"
                           :class="getProgressColor(item.effectue, item.quota)"
-                          role="progressbar" 
+                          role="progressbar"
                           :style="{ width: calculatePercentage(item.effectue, item.quota) + '%' }"
                         ></div>
                       </div>
-                      <span class="ms-2 small fw-bold text-muted" style="font-size: 11px;">
+                      <span class="ms-2 small fw-bold text-muted" style="font-size: 11px">
                         {{ calculatePercentage(item.effectue, item.quota) }}%
                       </span>
                     </div>
@@ -120,17 +118,17 @@
 
                   <!-- Indicateur d'état critique -->
                   <td class="text-end pe-4">
-                    <span v-if="calculatePercentage(item.effectue, item.quota) >= 100" class="badge bg-success text-white">
+                    <span
+                      v-if="calculatePercentage(item.effectue, item.quota) >= 100"
+                      class="badge bg-success text-white"
+                    >
                       Clôturé
                     </span>
                     <span v-else-if="item.effectue === 0" class="badge bg-warning text-dark">
                       Non démarré
                     </span>
-                    <span v-else class="badge bg-light text-dark border">
-                      En cours
-                    </span>
+                    <span v-else class="badge bg-light text-dark border"> En cours </span>
                   </td>
-
                 </tr>
               </tbody>
             </table>
@@ -150,11 +148,46 @@ const statusFilter = ref('Tous');
 
 // Données de suivi (Mock data croisant Classes, Matières et Emplois du temps passés)
 const mockCharges = ref([
-  { id: 1, classe: 'Master 1 Info', matiere: 'Conception orientée objet & Patterns', formateur: 'Dupont Jean', quota: 45, effectue: 30 },
-  { id: 2, classe: 'Master 1 Info', matiere: 'Frameworks Modernes (Vue.js 3 & Node)', formateur: 'Traoré Moussa', quota: 40, effectue: 40 },
-  { id: 3, classe: 'Master 2 Info', matiere: 'Deep Learning & Vision par ordinateur', formateur: 'Alami Sanaa', quota: 35, effectue: 12 },
-  { id: 4, classe: 'Licence 3 Management', matiere: 'Méthodologies Agiles & Scrum Master', formateur: 'Dupont Jean', quota: 30, effectue: 0 },
-  { id: 5, classe: 'Master 1 Info', matiere: 'Bases de l\'apprentissage automatique (ML)', formateur: 'Alami Sanaa', quota: 50, effectue: 48 }
+  {
+    id: 1,
+    classe: 'Master 1 Info',
+    matiere: 'Conception orientée objet & Patterns',
+    formateur: 'Dupont Jean',
+    quota: 45,
+    effectue: 30,
+  },
+  {
+    id: 2,
+    classe: 'Master 1 Info',
+    matiere: 'Frameworks Modernes (Vue.js 3 & Node)',
+    formateur: 'Traoré Moussa',
+    quota: 40,
+    effectue: 40,
+  },
+  {
+    id: 3,
+    classe: 'Master 2 Info',
+    matiere: 'Deep Learning & Vision par ordinateur',
+    formateur: 'Alami Sanaa',
+    quota: 35,
+    effectue: 12,
+  },
+  {
+    id: 4,
+    classe: 'Licence 3 Management',
+    matiere: 'Méthodologies Agiles & Scrum Master',
+    formateur: 'Dupont Jean',
+    quota: 30,
+    effectue: 0,
+  },
+  {
+    id: 5,
+    classe: 'Master 1 Info',
+    matiere: "Bases de l'apprentissage automatique (ML)",
+    formateur: 'Alami Sanaa',
+    quota: 50,
+    effectue: 48,
+  },
 ]);
 
 // Logique de calcul du pourcentage d'exécution
@@ -167,15 +200,15 @@ const calculatePercentage = (effectue, quota) => {
 const getProgressColor = (effectue, quota) => {
   const pct = calculatePercentage(effectue, quota);
   if (pct >= 100) return 'bg-success'; // Terminé
-  if (pct < 20) return 'bg-warning';   // Alerte / Peu avancé
-  return 'bg-primary';                 // Rythme normal
+  if (pct < 20) return 'bg-warning'; // Alerte / Peu avancé
+  return 'bg-primary'; // Rythme normal
 };
 
 // Filtrage combiné (Classe + Statut d'avancement)
 const filteredCharges = computed(() => {
-  return mockCharges.value.filter(item => {
+  return mockCharges.value.filter((item) => {
     const matchClasse = selectedClasse.value === 'Toutes' || item.classe === selectedClasse.value;
-    
+
     const pct = calculatePercentage(item.effectue, item.quota);
     let matchStatus = true;
     if (statusFilter.value === 'En cours') matchStatus = pct > 0 && pct < 100;
@@ -189,8 +222,14 @@ const filteredCharges = computed(() => {
 
 <style scoped>
 /* Teintes douces pour les badges */
-.bg-soft-primary { background-color: rgba(0, 123, 255, 0.1); color: #007bff; }
-.bg-soft-success { background-color: rgba(40, 167, 69, 0.12); color: #28a745; }
+.bg-soft-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+.bg-soft-success {
+  background-color: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+}
 
 .table th {
   font-size: 11px;
