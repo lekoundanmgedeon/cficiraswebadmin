@@ -42,7 +42,7 @@
           aria-controls="tp"
           aria-selected="false"
         >
-          Travaux Pratiques (TP)
+          Rapports
         </a>
       </li>
 
@@ -57,7 +57,7 @@
           aria-controls="td"
           aria-selected="false"
         >
-        Travaux Dirigés (TD)
+        Archives
         </a>
       </li>
     </ul>

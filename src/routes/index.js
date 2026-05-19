@@ -60,7 +60,8 @@ import Settings from '../views/settings/Settings.vue';
 //Formateurs et enseignants
 import Formateur from '../views/pedagogies/formateurs/Enseignants.vue';
 import attributionCours from '@/views/pedagogies/attributions/AttributionCours.vue';
-import CrenauxHorraire from '@/views/pedagogies/crenaux/CrenauHoraire.vue'
+import CrenauxHorraire from '@/views/pedagogies/crenaux/CrenauHoraire.vue'; 
+import ProgrammeCredits from '@/views/pedagogies/programme/ProgrammeCredit.vue';
 //Administration et gestion
 import Admins from '../views/admin/Administration.vue';
 //Finances et paiements
@@ -117,6 +118,8 @@ const routes = [
       { path: '/enseignants', name: 'Formateur', component: Formateur },
       { path: '/attribution-cours', name: 'AttributionsCours', component: attributionCours },
       { path: '/crenaux-horaires', name: 'CrenauxHoraire', component: CrenauxHorraire },
+      { path: '/programmes-credits', name: 'ProgramesCredits', component: ProgrammeCredits },
+
       { path: '/administration', name: 'Administration', component: Admins },
       { path: '/paiements-finances', name: 'FinancePaiement', component: FinancePaiement },
       { path: '/factures-finances', name: 'FinanceFacture', component: FinanceFacture },
