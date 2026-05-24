@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import {
   getAnneesAcademiques,
+  getCurrentAnnee,
+  getAnneeById,
+  getAnneeStats,
+  exportAnneeData,
+  activateAnnee,
   createAnneeAcademique,
   updateAnneeAcademique,
   deleteAnneeAcademique,
@@ -8,7 +13,7 @@ import {
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
-// Helpers pour gérer le cache
+// Helpers cache
 function setCache(key, data) {
   localStorage.setItem(
     key,
@@ -35,6 +40,8 @@ export const useAnneeStore = defineStore('anneeStore', {
   state: () => ({
     anneesAcademiques: [],
     anneeAcademique: null,
+    stats: null,
+    meta: null,
     loading: false,
   }),
 
@@ -49,11 +56,84 @@ export const useAnneeStore = defineStore('anneeStore', {
           this.anneesAcademiques = cached;
         } else {
           const response = await getAnneesAcademiques();
-          this.anneesAcademiques = response;
-          setCache('anneesAcademiques', response);
+          this.anneesAcademiques = response.data; // <-- important
+          this.meta = response.meta;
+          setCache('anneesAcademiques', response.data);
         }
       } catch (error) {
         messageStore.notifyError('Erreur lors de la récupération des données.');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Récupérer l'année académique courante
+    async fetchCurrentAnnee() {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getCurrentAnnee();
+        this.anneeAcademique = response.data;
+      } catch (error) {
+        messageStore.notifyError('Erreur lors de la récupération de l’année courante.');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Récupérer une année académique par ID
+    async fetchAnneeById(id) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getAnneeById(id);
+        this.anneeAcademique = response.data;
+      } catch (error) {
+        messageStore.notifyError('Erreur lors de la récupération de l’année.');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Récupérer les statistiques d’une année académique
+    async fetchAnneeStats(id) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getAnneeStats(id);
+        this.stats = response.data;
+      } catch (error) {
+        messageStore.notifyError('Erreur lors de la récupération des statistiques.');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Exporter les données d’une année académique
+    async exportAnnee(id) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await exportAnneeData(id);
+        messageStore.notifySuccess('Exportation réussie.');
+        return response.data; // utile si tu veux déclencher un téléchargement
+      } catch (error) {
+        messageStore.notifyError('Erreur lors de l’exportation.');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Activer une année académique
+    async activateAnnee(id) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        await activateAnnee(id);
+        messageStore.notifySuccess('Année académique activée avec succès.');
+        await this.fetchAnneesAcademiques();
+      } catch (error) {
+        messageStore.notifyError('Erreur lors de l’activation.');
       } finally {
         this.loading = false;
       }
