@@ -1,14 +1,34 @@
 import { defineStore } from 'pinia';
 import {
+  createEvaluation,
   getEvaluations,
   getEvaluationById,
-  createEvaluation,
   updateEvaluation,
   deleteEvaluation,
-} from '@/api/evaluations/evaluationApi';
+} from '@/api/academique/academiqueApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
+import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
-export const useEvalStore = defineStore('evalStore', {
+// Helpers cache
+function setCache(key, data) {
+  localStorage.setItem(
+    key,
+    JSON.stringify({ data, timestamp: Date.now() })
+  );
+}
+
+function getCache(key, ttl = 5 * 60 * 1000) {
+  const cached = localStorage.getItem(key);
+  if (!cached) return null;
+  const parsed = JSON.parse(cached);
+  if (Date.now() - parsed.timestamp > ttl) {
+    localStorage.removeItem(key);
+    return null;
+  }
+  return parsed.data;
+}
+
+export const useEvaluationStore = defineStore('evaluationStore', {
   state: () => ({
     evaluations: [],
     evaluation: null,
@@ -18,12 +38,19 @@ export const useEvalStore = defineStore('evalStore', {
   actions: {
     // Récupérer toutes les évaluations
     async fetchEvaluations() {
+      const messageStore = useMessageStore();
       this.loading = true;
       try {
-        const response = await getEvaluations();
-        this.evaluations = response.data;
+        const cached = getCache('evaluations');
+        if (cached) {
+          this.evaluations = cached;
+        } else {
+          const response = await getEvaluations();
+          this.evaluations = response.data;
+          setCache('evaluations', response.data);
+        }
       } catch (error) {
-        useMessageStore().addError('Erreur lors de la récupération des évaluations.');
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des évaluations.'));
       } finally {
         this.loading = false;
       }
@@ -31,40 +58,45 @@ export const useEvalStore = defineStore('evalStore', {
 
     // Récupérer une évaluation par ID
     async fetchEvaluationById(id) {
+      const messageStore = useMessageStore();
       this.loading = true;
       try {
         const response = await getEvaluationById(id);
         this.evaluation = response.data;
       } catch (error) {
-        useMessageStore().addError("Erreur lors de la récupération de l'évaluation.");
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’évaluation.'));
       } finally {
         this.loading = false;
       }
     },
 
-    // Ajouter une nouvelle évaluation
+    // Créer une évaluation
     async addEvaluation(data) {
+      const messageStore = useMessageStore();
       this.loading = true;
       try {
         await createEvaluation(data);
-        useMessageStore().addSuccess('Évaluation créée avec succès.');
-        this.fetchEvaluations();
+        messageStore.notifySuccess('Évaluation créée avec succès.');
+        localStorage.removeItem('evaluations');
+        await this.fetchEvaluations();
       } catch (error) {
-        useMessageStore().addError("Erreur lors de la création de l'évaluation.");
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de l’évaluation.'));
       } finally {
         this.loading = false;
       }
     },
 
-    // Modifier une évaluation existante
+    // Modifier une évaluation
     async editEvaluation(id, data) {
+      const messageStore = useMessageStore();
       this.loading = true;
       try {
         await updateEvaluation(id, data);
-        useMessageStore().addSuccess('Évaluation mise à jour avec succès.');
-        this.fetchEvaluations();
+        messageStore.notifySuccess('Évaluation mise à jour avec succès.');
+        localStorage.removeItem('evaluations');
+        await this.fetchEvaluations();
       } catch (error) {
-        useMessageStore().addError("Erreur lors de la mise à jour de l'évaluation.");
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de l’évaluation.'));
       } finally {
         this.loading = false;
       }
@@ -72,13 +104,15 @@ export const useEvalStore = defineStore('evalStore', {
 
     // Supprimer une évaluation
     async removeEvaluation(id) {
+      const messageStore = useMessageStore();
       this.loading = true;
       try {
         await deleteEvaluation(id);
-        useMessageStore().addSuccess('Évaluation supprimée avec succès.');
-        this.fetchEvaluations();
+        messageStore.notifySuccess('Évaluation supprimée avec succès.');
+        localStorage.removeItem('evaluations');
+        await this.fetchEvaluations();
       } catch (error) {
-        useMessageStore().addError("Erreur lors de la suppression de l'évaluation.");
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression de l’évaluation.'));
       } finally {
         this.loading = false;
       }

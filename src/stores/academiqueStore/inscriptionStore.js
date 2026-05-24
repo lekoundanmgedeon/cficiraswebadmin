@@ -2,31 +2,27 @@ import { defineStore } from 'pinia';
 import {
   getInscriptions,
   getInscriptionById,
-  importInscriptions,
   createInscription,
   updateInscription,
-  deleteInscription,
+  changeInscriptionStatus,
+  importNouveauxEtudiants,
+  importReinscriptions,
+  importTuteurs,
 } from '@/api/academique/academiqueApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
-/* =====================
-   Helpers cache
-===================== */
+// Helpers cache
 function setCache(key, data) {
   localStorage.setItem(
     key,
-    JSON.stringify({
-      data,
-      timestamp: Date.now(),
-    })
+    JSON.stringify({ data, timestamp: Date.now() })
   );
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
   const cached = localStorage.getItem(key);
   if (!cached) return null;
-
   const parsed = JSON.parse(cached);
   if (Date.now() - parsed.timestamp > ttl) {
     localStorage.removeItem(key);
@@ -40,7 +36,6 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
     inscriptions: [],
     inscription: null,
     loading: false,
-    importing: false,
   }),
 
   actions: {
@@ -58,9 +53,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
           setCache('inscriptions', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, 'Erreur lors de la récupération des inscriptions.')
-        );
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des inscriptions.'));
       } finally {
         this.loading = false;
       }
@@ -74,15 +67,13 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         const response = await getInscriptionById(id);
         this.inscription = response.data;
       } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, "Erreur lors de la récupération de l'inscription.")
-        );
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’inscription.'));
       } finally {
         this.loading = false;
       }
     },
 
-    // Ajouter une nouvelle inscription
+    // Créer une inscription
     async addInscription(data) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -92,15 +83,13 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         localStorage.removeItem('inscriptions');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, "Erreur lors de la création de l'inscription.")
-        );
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de l’inscription.'));
       } finally {
         this.loading = false;
       }
     },
 
-    // Modifier une inscription existante
+    // Modifier une inscription
     async editInscription(id, data) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -110,56 +99,66 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         localStorage.removeItem('inscriptions');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, "Erreur lors de la mise à jour de l'inscription.")
-        );
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de l’inscription.'));
       } finally {
         this.loading = false;
       }
     },
 
-    /**
-     * Importer des inscriptions via un fichier CSV/Excel
-     */
-    async uploadInscriptions(fichier) {
+    // Changer le statut d’une inscription
+    async changeStatus(id, data) {
       const messageStore = useMessageStore();
-      this.importing = true;
       this.loading = true;
-
       try {
-        // Idéalement, récupérez ceci depuis votre store d'authentification
-        const gestionnaireId = 1;
-
-        const response = await importInscriptions(fichier, gestionnaireId);
-
-        messageStore.notifySuccess(response.message || 'Importation réussie.');
-        localStorage.removeItem('inscriptions');
-
-        await this.fetchInscriptions();
-        return response;
+        await changeInscriptionStatus(id, data);
+        messageStore.notifySuccess('Statut de l’inscription modifié avec succès.');
+        await this.fetchInscriptionById(id);
       } catch (error) {
-        const msg = extractErrorMessage(error, "Erreur lors de l'importation du fichier.");
-        messageStore.notifyError(msg);
-        throw error;
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du changement de statut.'));
       } finally {
-        this.importing = false;
         this.loading = false;
       }
     },
 
-    // Supprimer une inscription
-    async removeInscription(id) {
+    // Importer nouveaux étudiants
+    async importEtudiants(file) {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
-        await deleteInscription(id);
-        messageStore.notifySuccess('Inscription supprimée avec succès.');
-        localStorage.removeItem('inscriptions');
+        await importNouveauxEtudiants(file);
+        messageStore.notifySuccess('Import des nouveaux étudiants réussi.');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, "Erreur lors de la suppression de l'inscription.")
-        );
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des étudiants.'));
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Importer réinscriptions
+    async importReinscriptions(file) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        await importReinscriptions(file);
+        messageStore.notifySuccess('Import des réinscriptions réussi.');
+        await this.fetchInscriptions();
+      } catch (error) {
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des réinscriptions.'));
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Importer tuteurs
+    async importTuteurs(file) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        await importTuteurs(file);
+        messageStore.notifySuccess('Import des tuteurs réussi.');
+      } catch (error) {
+        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des tuteurs.'));
       } finally {
         this.loading = false;
       }

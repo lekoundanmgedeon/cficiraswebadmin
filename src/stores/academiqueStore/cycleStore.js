@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import {
   getCycles,
-  getCycleFiliere,
-  getOrganisation,
+  getCycleById,
+  getCycleFilieres,
+  getCycleDistributionStats,
   createCycle,
   updateCycle,
   deleteCycle,
@@ -10,7 +11,7 @@ import {
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
-// Helpers pour gérer le cache
+// Helpers cache
 function setCache(key, data) {
   localStorage.setItem(
     key,
@@ -36,7 +37,9 @@ function getCache(key, ttl = 5 * 60 * 1000) {
 export const useCycleStore = defineStore('cycleStore', {
   state: () => ({
     cycles: [],
-    Filierecycles: [],
+    cycle: null,
+    filieres: [],
+    stats: null,
     loading: false,
   }),
 
@@ -51,8 +54,8 @@ export const useCycleStore = defineStore('cycleStore', {
           this.cycles = cached;
         } else {
           const response = await getCycles();
-          this.cycles = response;
-          setCache('cycles', response);
+          this.cycles = response.data; // <-- important
+          setCache('cycles', response.data);
         }
       } catch (error) {
         messageStore.notifyError(
@@ -63,19 +66,29 @@ export const useCycleStore = defineStore('cycleStore', {
       }
     },
 
-    // Récupérer les cycles par filière
-    async fetchFiliereCycle() {
+    // Récupérer un cycle par ID
+    async fetchCycleById(id) {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
-        const cached = getCache('filiereCycles');
-        if (cached) {
-          this.Filierecycles = cached;
-        } else {
-          const response = await getCycleFiliere();
-          this.Filierecycles = response?.[0]?.data?.cycles ?? [];
-          setCache('filiereCycles', this.Filierecycles);
-        }
+        const response = await getCycleById(id);
+        this.cycle = response.data;
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Échec lors du chargement du cycle.')
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Récupérer les filières d’un cycle
+    async fetchCycleFilieres(id) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getCycleFilieres(id);
+        this.filieres = response.data;
       } catch (error) {
         messageStore.notifyError(
           extractErrorMessage(error, 'Échec lors du chargement des filières.')
@@ -85,15 +98,16 @@ export const useCycleStore = defineStore('cycleStore', {
       }
     },
 
-    async fetchOrganisation() {
+    // Récupérer les statistiques de distribution des cycles
+    async fetchCycleDistributionStats() {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
-        const response = await getOrganisation();
-        return response;
+        const response = await getCycleDistributionStats();
+        this.stats = response.data;
       } catch (error) {
         messageStore.notifyError(
-          extractErrorMessage(error, "Échec lors du chargement de l'organisation.")
+          extractErrorMessage(error, 'Échec lors du chargement des statistiques.')
         );
       } finally {
         this.loading = false;
@@ -108,7 +122,6 @@ export const useCycleStore = defineStore('cycleStore', {
         await createCycle(data);
         messageStore.notifySuccess('Cycle créé avec succès.');
         localStorage.removeItem('cycles');
-        localStorage.removeItem('filiereCycles'); // On invalide aussi le cache lié
         await this.fetchCycles();
       } catch (error) {
         messageStore.notifyError(
@@ -127,7 +140,6 @@ export const useCycleStore = defineStore('cycleStore', {
         await updateCycle(id, data);
         messageStore.notifySuccess('Cycle mis à jour avec succès.');
         localStorage.removeItem('cycles');
-        localStorage.removeItem('filiereCycles');
         await this.fetchCycles();
       } catch (error) {
         messageStore.notifyError(
@@ -146,7 +158,6 @@ export const useCycleStore = defineStore('cycleStore', {
         await deleteCycle(id);
         messageStore.notifySuccess('Cycle supprimé avec succès.');
         localStorage.removeItem('cycles');
-        localStorage.removeItem('filiereCycles');
         await this.fetchCycles();
       } catch (error) {
         messageStore.notifyError(

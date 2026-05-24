@@ -1,17 +1,26 @@
-import serviceApi from '../config/serviceApi';
+import buildService from '../config/serviceApi';
+import { evaluationApi } from '../config/apiClients';
 
-// API pour gérer les notes
-export const getNotes = () => serviceApi.get('/notes');
-export const getNoteById = (id) => serviceApi.get(`/notes/${id}`);
-export const createNote = (data) => serviceApi.post('/notes', data);
-export const updateNote = (id, data) => serviceApi.put(`/notes/${id}`, data);
-export const deleteNote = (id) => serviceApi.delete(`/notes/${id}`);
+const noteService = buildService(evaluationApi);
 
-// API pour récupérer les notes par étudiant
-export const getNotesByEtudiant = (etudiantId) => serviceApi.get(`/etudiant/${etudiantId}/notes`);
 
-// API pour récupérer les notes par classe
-export const getNotesByClasse = (classeId) => serviceApi.get(`/classe/${classeId}/notes`);
+// Voir la grille de notes d'une évaluation
+export const getNotesByEvaluation = (evaluationId) =>
+  noteService.get(`/evaluations/${evaluationId}/notes`);
 
-// API pour récupérer les notes par examen
-export const getNotesByExamen = (examenId) => serviceApi.get(`/examens/${examenId}/notes`);
+// Publier les notes d'une évaluation
+export const publierNotesEvaluation = (evaluationId) =>
+  noteService.patch(`/evaluations/${evaluationId}/notes/publier`);
+
+// --- Routes axées sur l'Étudiant ---
+// Voir les notes d'un étudiant (avec semestreId en Query Params)
+export const getNotesByEtudiant = (etudiantId, semestreId) =>
+  noteService.get(`/etudiants/${etudiantId}/notes`, {
+    params: { semestreId },
+  });
+
+// --- Routes axées sur la Note elle-même ---
+// Mettre à jour une note spécifique
+export const updateNote = (id, data) =>
+  noteService.put(`/notes/${id}`, data);
+

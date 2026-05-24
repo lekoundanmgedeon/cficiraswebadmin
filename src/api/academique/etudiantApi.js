@@ -2,38 +2,22 @@ import buildService from '../config/serviceApi';
 import { academiqueApi } from '../config/apiClients';
 
 const etudiantService = buildService(academiqueApi);
+const etudiantFormService = buildService(academiqueFormApi);
 
 // API pour gérer les étudiants
-export const getEtudiants = () => etudiantService.get('/etudiants/');
-export const getEtudiantById = (id) => etudiantService.get(`/etudiants/${id}`);
-export const createEtudiant = (data) => etudiantService.post('/etudiant', data);
-export const updateEtudiant = (id, data) => etudiantService.put(`/etudiants/${id}`, data);
-export const deleteEtudiant = (id) => etudiantService.delete(`/etudiants/${id}`);
+export const createEtudiant = (data) => etudiantService.post('/etudiants', data);
 
-// API pour les résultats spécifiques à un étudiant
-export const getResultatsByEtudiant = (etudiantId) =>
-  etudiantService.get(`/etudiants/${etudiantId}/resultats`);
+export const addTuteurToEtudiant = (etudiantId, data) =>
+  etudiantFormService.post(`/etudiants/${etudiantId}/tuteurs`, data);
 
-// API pour les notes spécifiques à un étudiant
-export const getNotesByEtudiant = (etudiantId) =>
-  etudiantService.get(`/etudiants/${etudiantId}/notes`);
+export const uploadPhotoEtudiant = (etudiantId, file) => {
+  const formData = new FormData();
+  formData.append('photo', file);
+  return etudiantFormService.post(`/etudiants/${etudiantId}/photo`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
 
-// API pour la moyenne spécifique à un étudiant
-export const getMoyenneByEtudiant = (etudiantId) =>
-  etudiantService.get(`/etudiants/${etudiantId}/moyenne`);
+export const getParcoursAcademique = (id) =>
+  etudiantService.get(`/etudiants/${id}/parcours`);
 
-// API pour les évaluations spécifiques à un étudiant
-export const getEvaluationsByEtudiant = (etudiantId) =>
-  etudiantService.get(`/etudiants/${etudiantId}/evaluations`);
-export const createEvaluationForEtudiant = (etudiantId, data) =>
-  etudiantService.post(`/etudiants/${etudiantId}/evaluations`, data);
-export const updateEvaluationForEtudiant = (etudiantId, evaluationId, data) =>
-  etudiantService.put(`/etudiants/${etudiantId}/evaluations/${evaluationId}`, data);
-export const deleteEvaluationForEtudiant = (etudiantId, evaluationId) =>
-  etudiantService.delete(`/etudiants/${etudiantId}/evaluations/${evaluationId}`);
-
-// Route pour lister les étudiants par classe, filière et année académique
-export const getEtudiantsByClasseFiliereAnnee = (classeId, filiereId, anneeAcademiqueId) =>
-  etudiantService.get(
-    `/etudiants/classe/${classeId}/filiere/${filiereId}/annee/${anneeAcademiqueId}`
-  );
