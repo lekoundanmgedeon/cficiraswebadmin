@@ -16,6 +16,8 @@ const routes = [
   {
     path: '/',
     component: DefaultLayout,
+    linkActiveClass: 'active',       
+    linkExactActiveClass: 'active',
     meta: { requiresAuth: true },
     children: [
       ...structureRoutes,
@@ -32,8 +34,6 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  linkActiveClass: 'active',       
-  linkExactActiveClass: 'active',
 });
 
 export default router;

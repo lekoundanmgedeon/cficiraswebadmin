@@ -1,7 +1,7 @@
 <template>
   <div class="row">
     <h4>Liste des années académiques</h4>
-    <p>Vous pouvez consulter les détails de chaque examen en cliquant sur le lien correspondant.</p>
+    <p>Vous pouvez consulter les détails de chaque année académique en cliquant sur le lien correspondant.</p>
 
     <div class="table-responsive">
       <table class="table table-striped">
@@ -12,19 +12,21 @@
             <th>Début</th>
             <th>Fin</th>
             <th>Statut</th>
+            <th>Active</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           <!-- Vérifie si la liste est vide -->
           <tr v-if="annees.length === 0">
-            <td colspan="6" class="text-center py-4">
+            <td colspan="7" class="text-center py-4">
               <div class="d-flex flex-column align-items-center">
                 <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" />
                 <div class="text-pr">Aucune donnée</div>
               </div>
             </td>
           </tr>
+
           <!-- Boucle sur les années -->
           <tr v-for="(annee, index) in annees" :key="annee.id">
             <td>{{ index + 1 }}</td>
@@ -32,14 +34,19 @@
             <td>{{ formatDate(annee.date_debut) }}</td>
             <td>{{ formatDate(annee.date_fin) }}</td>
             <td>
-              <span :class="mapStatut(annee.est_actif).class">
-                {{ mapStatut(annee.est_actif).label }}
+              <span :class="mapStatut(annee.statut).class">
+                {{ mapStatut(annee.statut).label }}
+              </span>
+            </td>
+            <td>
+              <span :class="annee.est_active ? 'badge bg-success' : 'badge bg-secondary'">
+                {{ annee.est_active ? 'Actif' : 'Inactif' }}
               </span>
             </td>
             <td>
               <ItemActions
                 :item="annee"
-                anneeRoute="/edition-concours/"
+                anneeRoute="/edition-annee/"
                 :showAdd="false"
                 @edit="editAnnee"
                 @delete="confirmDelete"
@@ -53,7 +60,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
 import ItemActions from '../details/ItemActions.vue';
@@ -73,6 +80,7 @@ onMounted(async () => {
     messageStore.error('Erreur lors du chargement des années académiques');
   }
 });
+
 // Méthodes de formatage
 const formatDate = (date) => {
   if (!date) return '-';
@@ -82,13 +90,23 @@ const formatDate = (date) => {
     year: 'numeric',
   });
 };
-// Fonction de mapping
-const mapStatut = (estActif) => {
-  return {
-    label: estActif ? 'True' : 'False',
-    class: estActif ? 'badge bg-success' : 'badge bg-secondary',
-  };
+
+// Fonction de mapping pour statut
+const mapStatut = (statut) => {
+  switch (statut) {
+    case 'OUVERTE':
+      return { label: 'Ouverte', class: 'badge bg-success' };
+    case 'PLANIFIEE':
+      return { label: 'Planifiée', class: 'badge bg-warning' };
+    case 'CLOTUREE':
+      return { label: 'Clôturée', class: 'badge bg-danger' };
+    default:
+      return { label: statut || '-', class: 'badge bg-secondary' };
+  }
 };
+
+// Edition
+const currentAnnee = ref(null);
 
 const editAnnee = (annee) => {
   currentAnnee.value = { ...annee }; // clone pour éviter mutation directe
@@ -96,11 +114,19 @@ const editAnnee = (annee) => {
   modal.show();
 };
 
+// Sauvegarde
 const saveAnnee = async () => {
   if (currentAnnee.value.id) {
-    await anneeStore.updateAnnee(currentAnnee.value);
+    await anneeStore.editAnneeAcademique(currentAnnee.value.id, currentAnnee.value);
   } else {
-    await anneeStore.addAnnee(currentAnnee.value);
+    await anneeStore.addAnneeAcademique(currentAnnee.value);
+  }
+};
+
+// Suppression
+const confirmDelete = async (annee) => {
+  if (confirm(`Voulez-vous vraiment supprimer l'année ${annee.code} ?`)) {
+    await anneeStore.removeAnneeAcademique(annee.id);
   }
 };
 </script>

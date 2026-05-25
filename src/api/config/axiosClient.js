@@ -4,7 +4,7 @@ import axios from 'axios';
 // config/axiosClient.js
 export const createApiClient = (prefix = '', useJson = true) => {
   const instance = axios.create({
-    baseURL: `${import.meta.env.VITE_API_URL}/api/v1${prefix}`,
+    baseURL: `${import.meta.env.VITE_API_URL}/api${prefix}`,
     // On garde un objet vide si useJson est false
     headers: useJson ? { 'Content-Type': 'application/json' } : {},
   });
