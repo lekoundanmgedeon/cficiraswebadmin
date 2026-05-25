@@ -8,72 +8,72 @@
     </div>
 
     <div class="col-12">
-      <div class="table-responsive">
-        <table class="table table-striped align-middle">
-          <thead>
+      <div class="table-responsive card border-0 shadow-sm">
+        <table class="table align-middle mb-0 table-hover">
+          <thead class="table-light">
             <tr>
-              <th>#</th>
+              <th class="ps-3">#</th>
               <th>Code</th>
               <th>Filière</th>
-              <th>Cycle</th>
               <th>Niveau</th>
-              <th>Capacité max</th>
-              <th></th>
+              <th class="text-center">Émarge / Capacité max</th>
+              <th class="text-end pe-3">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            <!-- Chargement -->
             <tr v-if="loading">
-              <td colspan="7" class="text-center py-4">Chargement des classes...</td>
-            </tr>
-
-            <!-- Données paginées -->
-            <tr v-for="(classe, index) in paginatedClasses" :key="classe.classe_id">
-              <td>{{ startIndex + index + 1 }}</td>
-              <td>{{ classe.classe_code }}</td>
-              <td>{{ classe.filiere_designation }}</td>
-              <td>{{ classe.cycle_designation }}</td>
-              <td>
-                <span class="badge bg-secondary">{{ classe.niveau_code }}</span>
-              </td>
-              <td>
-                <span class="badge bg-success">{{ classe.classe_capacite }}</span>
-              </td>
-              <td>
-                <ItemActions
-                  :item="classe"
-                  concourRoute="/edition-concours/"
-                  :showAdd="false"
-                  @edit="editClasse"
-                  @delete="confirmDelete"
-                />
+              <td colspan="6" class="text-center py-5">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <span class="text-muted">Chargement des classes...</span>
               </td>
             </tr>
 
-            <!-- Vide -->
-            <tr v-if="!loading && classes.length === 0">
-              <td colspan="7" class="text-center py-4">
+            <tr v-else-if="paginatedClasses.length > 0" v-for="(classe, index) in paginatedClasses" :key="classe.id">
+  <td class="ps-3 text-muted">{{ startIndex + index + 1 }}</td>
+  <td><strong class="text-dark">{{ classe.code }}</strong></td>
+  <td>{{ classe.filiere_nom }}</td>
+  <td>
+    <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">{{ classe.niveau_code }}</span>
+  </td>
+  <td class="text-center">
+    <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-semibold">
+      {{ classe.nb_etudiants }} / {{ classe.capacite_max }}
+    </span>
+  </td>
+  <td class="text-end pe-3">
+    <ItemActions
+      :item="classe"
+      concourRoute="/edition-concours/"
+      :showAdd="false"
+      @edit="editClasse"
+      @delete="confirmDelete"
+    />
+  </td>
+</tr>
+
+            <tr v-else>
+              <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center">
                   <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" width="80" />
-                  <div class="text-muted">Aucune classe enregistrée</div>
+                  <div class="text-muted small">Aucune classe enregistrée</div>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Pagination -->
-        <Pagination
-          v-model="currentPage"
-          :items-per-page="itemsPerPage"
-          :total-items="classes.length"
-        />
+        <div class="p-3 border-top bg-light-subtle" v-if="classes.length > 0">
+          <Pagination
+            v-model="currentPage"
+            :items-per-page="itemsPerPage"
+            :total-items="classes.length"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
@@ -82,13 +82,13 @@ import ItemActions from '../details/ItemActions.vue';
 const classeStore = useClasseStore();
 
 /* =====================
-   États pagination
+    États pagination
 ===================== */
 const currentPage = ref(1);
-const itemsPerPage = ref(10); // par défaut 5
+const itemsPerPage = ref(10);
 
 /* =====================
-   Computed
+    Computed
 ===================== */
 const loading = computed(() => classeStore.loading);
 
@@ -101,7 +101,7 @@ const paginatedClasses = computed(() =>
 );
 
 /* =====================
-   Actions
+    Actions
 ===================== */
 const editClasse = (classe) => {
   console.log('Édition de la classe :', classe);
@@ -112,9 +112,10 @@ const confirmDelete = (classe) => {
 };
 
 /* =====================
-   Lifecycle
+    Lifecycle
 ===================== */
-onMounted(() => {
-  classeStore.fetchClassesDetails();
+onMounted(async () => {
+  // CORRECTION: Utilisation du bon nom d'action défini dans ton store
+  await classeStore.fetchClasses(); 
 });
 </script>

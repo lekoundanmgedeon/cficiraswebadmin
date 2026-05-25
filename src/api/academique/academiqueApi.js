@@ -22,7 +22,7 @@ export const deleteAnneeAcademique = (id) => academiqueService.delete(`/annees/$
 export const getClasses = () => academiqueService.get('/classes');
 export const getClasseById = (id) => academiqueService.get(`/classes/${id}`);
 
-export const getClassesOrganisationTree = () => academiqueService.get('/classes/organisation/arbre');
+export const getClassesOrganisationTree = () => academiqueService.get('/classes/stats/organisations');
 export const getGlobalInfrastructureKPIs = () => academiqueService.get('/classes/analytics/dashboard-global');
 
 export const getClassesByNiveau = (niveauId) => academiqueService.get(`/classes/niveau/${niveauId}`);

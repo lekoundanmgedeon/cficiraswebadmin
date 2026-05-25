@@ -1,84 +1,144 @@
 <template>
-  <div class="row">
-    <div class="col-12 mb-2">
-      <h4>Statistiques des classes</h4>
-      <p class="text-muted">Indicateurs globaux liés aux classes et à l’activité académique.</p>
-    </div>
+  <div class="row g-3 mb-4">
+    <template v-if="loading">
+      <div v-for="i in 4" :key="i" class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm p-3">
+          <div class="d-flex align-items-center placeholder-glow">
+            <div class="placeholder rounded-circle bg-secondary me-3" style="width: 48px; height: 48px;"></div>
+            <div class="w-100">
+              <div class="placeholder col-4 mb-2" style="height: 12px;"></div>
+              <div class="placeholder col-7" style="height: 24px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
 
-    <div class="col-12">
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped mb-5">
-          <thead>
-            <tr>
-              <th>Cycles au total</th>
-              <th>Cycles actifs</th>
-              <th>Filières associées</th>
-              <th>Étudiants inscrits</th>
-              <th>Notes saisies</th>
-            </tr>
-          </thead>
+    <template v-else-if="stats">
+      <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 card-kpi">
+          <div class="card-body d-flex align-items-center">
+            <div class="icon-shape bg-primary-subtle text-primary rounded-circle me-3">
+              <i class="mdi mdi-google-classroom fs-3"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Total Classes</span>
+              <h3 class="mb-0 mt-1 fw-bold text-dark">{{ stats.total_classes }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <tbody>
-            <!-- Chargement -->
-            <tr v-if="loading">
-              <td colspan="5" class="text-center py-4">Chargement des statistiques...</td>
-            </tr>
+      <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 card-kpi">
+          <div class="card-body d-flex align-items-center">
+            <div class="icon-shape bg-info-subtle text-info rounded-circle me-3">
+              <i class="mdi mdi-account-group fs-3"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Capacité Globale</span>
+              <h3 class="mb-0 mt-1 fw-bold text-dark">{{ stats.capacite_totale_etablissement }} <small class="fs-6 text-muted">places</small></h3>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Données -->
-            <tr v-if="!loading && stats">
-              <td class="text-center fw-bold">{{ stats.cyclesTotal }}</td>
-              <td class="text-center fw-bold">{{ stats.cyclesActifs }}</td>
-              <td class="text-center fw-bold">{{ stats.filieresAssociees }}</td>
-              <td class="text-center fw-bold">{{ stats.etudiantsInscrits }}</td>
-              <td class="text-center fw-bold">{{ stats.notesSaisies }}</td>
-            </tr>
+      <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 card-kpi">
+          <div class="card-body d-flex align-items-center">
+            <div class="icon-shape bg-success-subtle text-success rounded-circle me-3">
+              <i class="mdi mdi-school fs-3"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Étudiants Inscrits</span>
+              <h3 class="mb-0 mt-1 fw-bold text-dark">{{ stats.total_etudiants_inscrits }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Vide -->
-            <tr v-if="!loading && !stats">
-              <td colspan="5" class="text-center py-4">
-                <div class="d-flex flex-column align-items-center">
-                  <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" width="80" />
-                  <div class="text-muted">Aucune donnée statistique disponible</div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 card-kpi">
+          <div class="card-body d-flex align-items-center">
+            <div class="icon-shape bg-warning-subtle text-warning rounded-circle me-3">
+              <i class="mdi mdi-seat-passenger fs-3"></i>
+            </div>
+            <div>
+              <span class="text-muted small text-uppercase fw-semibold">Places Disponibles</span>
+              <h3 class="mb-0 mt-1 fw-bold text-dark">{{ stats.places_disponibles_globales }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 mt-3">
+      <div class="card border-0 shadow-sm p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-semibold text-muted small text-uppercase">Taux d'occupation général</span>
+          <span class="badge bg-primary">{{ tauxOccupation }}%</span>
+        </div>
+        <div class="progress" style="height: 12px;">
+          <div 
+            class="progress-bar progress-bar-striped progress-bar-animated" 
+            role="progressbar" 
+            :style="{ width: tauxOccupation + '%' }"
+            :class="tauxOccupation > 90 ? 'bg-danger' : 'bg-success'"
+          ></div>
+        </div>
+        <small class="text-muted mt-2 d-block">
+          {{ stats.total_etudiants_inscrits }} places occupées sur un total de {{ stats.capacite_totale_etablissement }}
+        </small>
       </div>
     </div>
+    </template>
   </div>
 </template>
+
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 
-/* =====================
-   États
-===================== */
-const loading = ref(false);
-const stats = ref(null);
+const classeStore = useClasseStore();
 
-/* =====================
-   Méthodes
-===================== */
-const fetchStatistiquesClasses = async () => {
-  loading.value = true;
+onMounted(async () => {
+  await classeStore.fetchAnalytics();
+});
 
-  // Simulation API (agrégats globaux)
-  stats.value = {
-    cyclesTotal: 3,
-    cyclesActifs: 2,
-    filieresAssociees: 5,
-    etudiantsInscrits: 340,
-    notesSaisies: 1280,
-  };
+const loading = computed(() => classeStore.loading);
+const stats = computed(() => classeStore.analytics);
 
-  loading.value = false;
-};
+// ---- NOUVEAUX CALCULS DYNAMIQUES ----
 
-/* =====================
-   Lifecycle
-===================== */
-onMounted(() => {
-  fetchStatistiquesClasses();
+const tauxOccupation = computed(() => {
+  if (!stats.value) return 0;
+  const inscrits = parseInt(stats.value.total_etudiants_inscrits, 10);
+  const capacite = parseInt(stats.value.capacite_totale_etablissement, 10);
+  return capacite > 0 ? ((inscrits / capacite) * 100).toFixed(2) : 0;
+});
+
+const moyenneEtudiantsParClasse = computed(() => {
+  if (!stats.value) return 0;
+  const inscrits = parseInt(stats.value.total_etudiants_inscrits, 10);
+  const classes = parseInt(stats.value.total_classes, 10);
+  return classes > 0 ? (inscrits / classes).toFixed(1) : 0;
 });
 </script>
+
+<style scoped>
+.icon-shape {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-kpi {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+}
+</style>
