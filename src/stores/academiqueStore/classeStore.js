@@ -39,6 +39,7 @@ function getCache(key, ttl = 5 * 60 * 1000) {
 export const useClasseStore = defineStore('classeStore', {
   state: () => ({
     classes: [],
+    classesNiveau: [],
     classe: null,
     organisationTree: null,
     analytics: null,
@@ -117,7 +118,7 @@ export const useClasseStore = defineStore('classeStore', {
       this.loading = true;
       try {
         const response = await getClassesByNiveau(niveauId);
-        this.classes = response.data;
+        this.classesNiveau = response.data;
       } catch (error) {
         messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des classes par niveau.'));
       } finally {
