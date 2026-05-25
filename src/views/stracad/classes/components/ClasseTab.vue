@@ -30,6 +30,20 @@
           Niveaux
         </a>
       </li>
+      <!-- Onglet filiere -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          id="filieres-tab"
+          data-bs-toggle="tab"
+          href="#filieres"
+          role="tab"
+          aria-controls="filieres"
+          aria-selected="false"
+        >
+          Filières
+        </a>
+      </li>
 
       <!-- Onglet Organisation -->
       <li class="nav-item">
@@ -78,6 +92,11 @@
         <NiveauxContent />
       </div>
 
+      <!-- Filières -->
+      <div class="tab-pane fade" id="filieres" role="tabpanel" aria-labelledby="filieres-tab">
+        <FilieresContent />
+      </div>
+
       <!-- Organisation -->
       <div
         class="tab-pane fade"
@@ -105,4 +124,5 @@ import ClassesContent from './Tab/ClassesContent.vue';
 import NiveauxContent from './Tab/NiveauxContent.vue';
 import OrganisationClassesContent from './Tab/OrganisationClassesContent.vue';
 import StatistiquesClassesContent from './Tab/StatistiquesClassesContent.vue';
+import FilieresContent from './Tab/FilieresContent.vue';
 </script>
