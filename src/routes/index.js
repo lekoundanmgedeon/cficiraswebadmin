@@ -42,15 +42,8 @@ import RapportExamens from '../views/examens/rapports/RapportExamens.vue'; // Ra
 //Gestion des concours
 import EditionConcours from '../views/concours/editions/Edition.vue';
 import RapportConcours from '../views/concours/resultats/RapportConcours.vue';
-import DetailsConcours from '../views/concours/editions/components/details/Details.vue';
-import ResultatsDetails from '../views/concours/editions/components/details/Details.vue'; // Résultats des concours
-//Notes et résultats
-import ResultatsConcours from '../views/concours/resultats/RapportConcours.vue'; // Résultats des concours
-
-//Paiements et finances
 
 import Notes from '../views/notes/Notes.vue'; // Page des notes
-import appNotes from '../views/notes/addNotes/main/notev1.vue';
 //Parcours et filières
 import Parcours from '../views/parcours/DossierAcademique.vue';
 // Cours et supports
@@ -81,7 +74,6 @@ const routes = [
   { path: '/auth/register', name: 'Register', component: Register, meta: { public: true } },
   { path: '/auth/new-password', name: 'NewPassword', component: Login, meta: { public: true } },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound, meta: { public: true } },
-  { path: '/addNotes', name: 'appNotes', component: appNotes },
   // Routes qui utilisent le layout global DefaultLayout
   {
     path: '/',
@@ -139,10 +131,6 @@ const routes = [
       },
       { path: '/edition-concours', name: 'InscriptionConcours', component: EditionConcours },
       { path: '/rapport-concours', name: 'RapportConcours', component: RapportConcours },
-      { path: '/resultats-concours', name: 'ResultatsConcours', component: ResultatsConcours },
-      { path: '/edition-concours/edit/:id', name: 'EditionConcours', component: DetailsConcours },
-      { path: '/resultats-concours/:id', name: 'ResultatsDetails', component: ResultatsDetails },
-
       { path: '/planification-examens', name: 'Planification', component: Plannification },
       { path: '/calendrier-examens', name: 'CalendrierExamens', component: Calendrier },
       { path: '/salles-horaires', name: 'SallesExamens', component: Salles },

@@ -54,17 +54,45 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useConcourStore } from '@/stores/gestionStores/concourStore';
+import { ref } from 'vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
-import dayjs from 'dayjs'; // ici c'est pour gerer les formats des dates
+import dayjs from 'dayjs';
 
-const concourStore = useConcourStore();
+// =========================
+// MOCK LOADING
+// =========================
+const loading = ref(false);
 
-onMounted(() => {
-  concourStore.fetchResultatsPubliee();
-});
+// =========================
+// MOCK PUBLICATIONS
+// =========================
+const publication = ref([
+  {
+    id: 1,
+    designation: 'Concours Informatique 2026',
+    date_publication: '2026-05-20',
+    statut: 'validé',
+    concours_id: 101,
+  },
+  {
+    id: 2,
+    designation: 'Concours Réseaux',
+    date_publication: '2026-05-18',
+    statut: 'en attente',
+    concours_id: 102,
+  },
+  {
+    id: 3,
+    designation: 'Concours Télécom',
+    date_publication: null,
+    statut: 'rejeté',
+    concours_id: 103,
+  },
+]);
 
+// =========================
+// FORMAT DATE
+// =========================
 const formatDate = (date) => {
   return date ? dayjs(date).format('DD/MM/YYYY') : 'Non spécifiée';
 };

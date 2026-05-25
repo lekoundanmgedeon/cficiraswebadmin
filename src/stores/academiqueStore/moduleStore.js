@@ -7,7 +7,7 @@ import {
   createModule,
   updateModule,
   deleteModule,
-} from '@/api/academique/academiqueApi';
+} from '@/api/academique/moduleApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 

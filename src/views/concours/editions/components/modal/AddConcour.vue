@@ -90,58 +90,85 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useConcourStore } from '@/stores/gestionStores/concourStore';
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
+import { ref } from 'vue';
 
-const concourStore = useConcourStore();
-const anneeStore = useAnneeStore();
-
+// =========================
+// LOADING
+// =========================
 const loading = ref(false);
-const anneesAcademiques = ref([]);
 
+// =========================
+// MOCK ANNEES ACADEMIQUES
+// =========================
+const anneesAcademiques = ref([
+  {
+    id: 1,
+    code: '2025-2026',
+  },
+  {
+    id: 2,
+    code: '2026-2027',
+  },
+  {
+    id: 3,
+    code: '2027-2028',
+  },
+]);
+
+// =========================
+// FORM DATA
+// =========================
 const form = ref({
   designation: '',
   type_concours: '',
   date_debut: '',
   date_fin: '',
-  date_limite_dossier: '',
-  annee_academique_id: '',
+  date_limite_inscription: '',
+  annee_id: '',
   statut: '',
   description: '',
 });
 
-// Charger les années académiques au montage du composant
-onMounted(async () => {
-  try {
-    await anneeStore.fetchAnneesAcademiques();
-    anneesAcademiques.value = anneeStore.anneesAcademiques;
-  } catch (error) {
-    console.error('Erreur lors du chargement des années académiques', error);
-  }
-});
-
+// =========================
+// SUBMIT
+// =========================
 async function submitConcour() {
   loading.value = true;
+
   try {
-    await concourStore.addConcours(form.value);
-    // Réinitialiser le formulaire après succès
+    // simulation API
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    console.log('Concours enregistré :', form.value);
+
+    alert('Concours ajouté avec succès');
+
+    // reset form
     form.value = {
       designation: '',
       type_concours: '',
       date_debut: '',
       date_fin: '',
-      date_limite_dossier: '',
-      annee_academique_id: '',
+      date_limite_inscription: '',
+      annee_id: '',
       statut: '',
       description: '',
     };
 
-    // Fermer le modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
-    modal.hide();
+    // close modal bootstrap
+    const modalElement = document.getElementById('exampleModal');
+
+    if (modalElement) {
+      const modal =
+        bootstrap.Modal.getInstance(modalElement) ||
+        new bootstrap.Modal(modalElement);
+
+      modal.hide();
+    }
   } catch (error) {
     console.error("Erreur lors de l'ajout du concours", error);
+
+    alert('Erreur lors de l’enregistrement');
   } finally {
     loading.value = false;
   }

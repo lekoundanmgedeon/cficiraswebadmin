@@ -1,127 +1,66 @@
-<template>
-  <div class="tab-content">
-    <!-- Tableau des examens -->
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>session</th>
-            <th>planifiéé le</th>
-            <th>filiere</th>
-            <th>classes</th>
-            <th>statut</th>
-            <th>actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(plan, index) in filteredPlan" :key="index.id">
-            <td>{{ plan.code_session }}</td>
-            <td>{{ formatDate(plan.examen_date_planification) }}</td>
-            <td>{{ plan.designation_filiere }}</td>
-            <td>{{ plan.classe_nom }}</td>
-            <td>
-              <span class="badge" :class="getStatusClass(plan.examen_statut)">
-                {{ getStatusLabel(plan.examen_statut) }}
-              </span>
-            </td>
-            <td>
-              <div class="d-flex gap-2">
-                <RouterLink
-                  :to="{
-                    name: 'Calendrier',
-                    params: { id: plan.classe_id, semestreId: plan.semestre_id },
-                  }"
-                  class="btn btn-sm btn-outline-primary"
-                >
-                  <i class="mdi mdi-pencil"></i>
-                </RouterLink>
-
-                <RouterLink :to="`/examens/planning/${plan.id}`">
-                  <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(plan)">
-                    <i class="mdi mdi-delete"></i>
-                  </button>
-                </RouterLink>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="filteredPlan.length === 0">
-            <td colspan="8" class="text-center py-5 text-muted">Aucune planification trouvée</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="d-flex justify-content-between align-items-center mt-3">
-      <div class="text-muted">
-        Affichage de
-        {{ filteredPlan.length }}
-        éléments
-      </div>
-      <nav aria-label="Page navigation">
-        <ul class="pagination pagination-sm">
-          <li class="page-item disabled">
-            <a class="page-link" href="#" tabindex="-1">Précédent</a>
-          </li>
-          <li class="page-item active">
-            <a class="page-link" href="#">1</a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#">2</a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#">3</a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#">Suivant</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</template>
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { getExamenByPlanning } from '@/api/evaluations/evaluationApi';
-import { useRoute } from 'vue-router';
-const route = useRoute();
+import { ref, computed } from 'vue';
 
-// Données principales
-const planningData = ref([]);
-const loading = ref(false);
+// =======================
+// MOCK DATA
+// =======================
+const planningData = ref([
+  {
+    id: 1,
+    code_session: 'SESSION-001',
+    examen_date_planification: '2026-05-20',
+    designation_filiere: 'Informatique',
+    classe_nom: 'L1 Génie Logiciel',
+    examen_statut: 'planifiée',
+    classe_id: 10,
+    semestre_id: 1,
+  },
+  {
+    id: 2,
+    code_session: 'SESSION-002',
+    examen_date_planification: '2026-05-22',
+    designation_filiere: 'Réseaux',
+    classe_nom: 'L2 Réseaux',
+    examen_statut: 'en_attente',
+    classe_id: 11,
+    semestre_id: 2,
+  },
+  {
+    id: 3,
+    code_session: 'SESSION-003',
+    examen_date_planification: '2026-05-25',
+    designation_filiere: 'Télécom',
+    classe_nom: 'L3 Télécom',
+    examen_statut: 'terminé',
+    classe_id: 12,
+    semestre_id: 1,
+  },
+]);
 
-// États UI
+// =======================
+// UI STATES
+// =======================
 const activeTab = ref('all');
 const searchQuery = ref('');
 const showFilters = ref(false);
 const showModal = ref(false);
 const currentExam = ref(null);
 
-// Filtres
+// =======================
+// FILTERS
+// =======================
 const filters = ref({
   session_code: '',
   Date: '',
   endDate: '',
 });
 
-// Récupération des données depuis l’API
-const fetchPlanning = async () => {
-  loading.value = true;
-  try {
-    const response = await getExamenByPlanning();
-    planningData.value = response;
-    console.log('Planning récupéré :', planningData.value);
-  } catch (error) {
-    console.error('Erreur lors de la récupération des sessions :', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-// Filtrage des données
+// =======================
+// FILTERED DATA
+// =======================
 const filteredPlan = computed(() => {
   return planningData.value.filter((exam) => {
-    // Recherche par matière
+    // Recherche par classe
     if (
       searchQuery.value &&
       exam.classe_nom &&
@@ -130,16 +69,13 @@ const filteredPlan = computed(() => {
       return false;
     }
 
-    // Filtres supplémentaires
-    if (filters.value.session && exam.sessionId !== filters.value.session) return false;
-    if (filters.value.startDate && exam.date < filters.value.startDate) return false;
-    if (filters.value.endDate && exam.date > filters.value.endDate) return false;
-
     return true;
   });
 });
 
-// Méthodes
+// =======================
+// METHODS
+// =======================
 const toggleFilters = () => {
   showFilters.value = !showFilters.value;
 };
@@ -149,7 +85,7 @@ const applyFilters = () => {
 };
 
 const refreshData = () => {
-  fetchPlanning();
+  console.log('Refresh mock data');
 };
 
 const openAddModal = () => {
@@ -163,8 +99,8 @@ const editExam = (exam) => {
 };
 
 const confirmDelete = (exam) => {
-  if (confirm(`Supprimer la planification pour ${exam.matiere || 'cet examen'} ?`)) {
-    // À compléter : logique de suppression
+  if (confirm(`Supprimer la planification pour ${exam.classe_nom} ?`)) {
+    planningData.value = planningData.value.filter((item) => item.id !== exam.id);
   }
 };
 
@@ -174,10 +110,19 @@ const closeModal = () => {
 
 const saveExam = (examData) => {
   if (examData.id) {
-    // Mise à jour
+    // update
+    const index = planningData.value.findIndex((item) => item.id === examData.id);
+
+    if (index !== -1) {
+      planningData.value[index] = examData;
+    }
   } else {
-    // Ajout
+    // add
+    examData.id = Date.now();
+
+    planningData.value.push(examData);
   }
+
   closeModal();
 };
 
@@ -192,24 +137,16 @@ const getStatusClass = (status) => {
     annulé: 'bg-danger',
     terminé: 'bg-success',
   };
+
   return classes[status] || 'bg-light text-dark';
 };
+
 const getStatusLabel = (status) => {
   if (status === 'planifiée') return 'Planifiée';
   if (status === 'en_attente') return 'En attente';
   if (status === 'annulé') return 'Annulé';
   if (status === 'terminé') return 'Terminé';
+
   return status;
 };
-
-onMounted(async () => {
-  const id = route.params.id;
-  const semestreId = route.params.semestreId;
-  try {
-    const response = await getExamenByPlanning(id, semestreId);
-    planningData.value = response;
-  } catch (error) {
-    console.error('Erreur lors du chargement du module :', error);
-  }
-});
 </script>

@@ -4,7 +4,7 @@ import {
   addTuteurToEtudiant,
   uploadPhotoEtudiant,
   getParcoursAcademique,
-} from '@/api/academique/academiqueApi';
+} from '@/api/academique/etudiantApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
