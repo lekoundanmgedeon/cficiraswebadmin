@@ -1,317 +1,318 @@
 <template>
   <div class="semester-stats-container">
-    <!-- En-tête de page -->
     <div class="row mb-4">
       <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
           <h3 class="fw-bold text-dark mb-1">Analytique & Statistiques Semestrielles</h3>
           <p class="text-muted text-sm mb-0">
-            Aperçu des indicateurs de performance, volume d'heures global et suivi de l'assiduité
-            par cycle académique.
+            Aperçu des indicateurs de performance, volume d'heures global et suivi de l'assiduité par cycle académique.
           </p>
         </div>
 
-        <!-- Filtre global de période académique -->
         <div class="d-flex align-items-center gap-2">
           <label class="text-xs text-muted text-uppercase fw-bold mb-0">Année :</label>
           <select
             v-model="selectedPeriod"
             class="form-select text-sm bg-white border border-secondary-subtle py-1.5 px-3 shadow-none style-select"
+            :disabled="loading"
           >
-            <option value="2025-2026">2025-2026 (En cours)</option>
-            <option value="2024-2025">2024-2025</option>
+            <option 
+              v-for="option in dynamicOptions" 
+              :key="option.value" 
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- ÉTAPE 1 : CARTES DES INDICATEURS CLÉS (KPI CARDS) -->
-    <div class="row g-3 mb-4">
-      <!-- KPI 1 : Total Heures de Cours -->
-      <div class="col-xl-3 col-sm-6">
-        <div
-          class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-primary"
-        >
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
-                >Volume Horaire global</span
-              >
-              <h3 class="fw-bold text-dark mb-0 font-monospace">
-                1,240 <small class="fs-6 text-muted">H</small>
-              </h3>
-            </div>
-            <div class="kpi-icon-wrapper bg-soft-primary text-primary">
-              <i class="mdi mdi-clock-outline"></i>
-            </div>
-          </div>
-          <div class="mt-2 text-xs text-muted">
-            <span class="text-success fw-bold"><i class="mdi mdi-arrow-up"></i> +4.2%</span> par
-            rapport à l'an passé
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI 2 : Moyenne de Présence -->
-      <div class="col-xl-3 col-sm-6">
-        <div
-          class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-success"
-        >
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
-                >Taux d'Assiduité Global</span
-              >
-              <h3 class="fw-bold text-success mb-0 font-monospace">
-                92.4 <small class="fs-6">%</small>
-              </h3>
-            </div>
-            <div class="kpi-icon-wrapper bg-soft-success text-success">
-              <i class="mdi mdi-account-check-outline"></i>
-            </div>
-          </div>
-          <div class="mt-2 text-xs text-muted">
-            Seuil de tolérance fixé à <span class="fw-bold">85%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI 3 : Total Enseignants Actifs -->
-      <div class="col-xl-3 col-sm-6">
-        <div
-          class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-info"
-        >
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
-                >Corps Enseignant</span
-              >
-              <h3 class="fw-bold text-dark mb-0 font-monospace">
-                48 <small class="fs-6 text-muted">Prof.</small>
-              </h3>
-            </div>
-            <div class="kpi-icon-wrapper bg-soft-info text-info">
-              <i class="mdi mdi-tie"></i>
-            </div>
-          </div>
-          <div class="mt-2 text-xs text-muted">
-            Moyenne de <span class="fw-bold">2.4 UE</span> par intervenant
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI 4 : Total UE enregistrées -->
-      <div class="col-xl-3 col-sm-6">
-        <div
-          class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-warning"
-        >
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
-                >Unités d'Enseignement</span
-              >
-              <h3 class="fw-bold text-dark mb-0 font-monospace">
-                116 <small class="fs-6 text-muted">UE</small>
-              </h3>
-            </div>
-            <div class="kpi-icon-wrapper bg-soft-warning text-warning">
-              <i class="mdi mdi-book-open-variant"></i>
-            </div>
-          </div>
-          <div class="mt-2 text-xs text-muted">
-            <span class="fw-bold text-dark">100%</span> configurées sur la plateforme
-          </div>
-        </div>
-      </div>
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted text-sm mt-2">Calcul des métriques en cours...</p>
     </div>
 
-    <!-- ÉTAPE 2 : MATRICE DE RÉPARTITION PAR SEMESTRE -->
-    <div class="row g-4">
-      <!-- Tableau de performance et de charge des semestres actifs -->
-      <div class="col-xl-8">
-        <div class="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold text-dark mb-0">Charge d'Enseignement par Semestre</h5>
-            <span class="badge bg-light text-secondary border font-monospace text-xs px-2.5 py-1.5"
-              >Vue d'ensemble analytique</span
-            >
+    <template v-else-if="analyticsData">
+      <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-primary">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Volume Horaire global</span>
+                <h3 class="fw-bold text-dark mb-0 font-monospace">
+                  {{ formatNumber(analyticsData.kpis?.volume_horaire_global) }} <small class="fs-6 text-muted">H</small>
+                </h3>
+              </div>
+              <div class="kpi-icon-wrapper bg-soft-primary text-primary">
+                <i class="mdi mdi-clock-outline"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+              Heures cumulées sur la période
+            </div>
           </div>
+        </div>
 
-          <div class="table-responsive">
-            <table class="table align-middle text-center mb-0">
-              <thead class="table-light-header text-secondary">
-                <tr>
-                  <th class="text-start ps-3" style="width: 15%">Semestre</th>
-                  <th class="text-start" style="width: 25%">Filière cible</th>
-                  <th style="width: 15%">Nombre d'UE</th>
-                  <th style="width: 15%">Volume total</th>
-                  <th style="width: 15%">Moy. Validation</th>
-                  <th class="text-end pe-3" style="width: 15%">Alerte Équipe</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="stat in semesterStats" :key="stat.id" class="stats-row">
-                  <!-- Semestre -->
-                  <td class="text-start ps-3 font-monospace fw-bold text-primary">
-                    {{ stat.code }}
-                  </td>
+        <div class="col-xl-3 col-sm-6">
+          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-success">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Taux d'Assiduité Global</span>
+                <h3 class="fw-bold text-success mb-0 font-monospace">
+                  {{ analyticsData.kpis?.taux_assiduite_global || '0' }} <small class="fs-6">%</small>
+                </h3>
+              </div>
+              <div class="kpi-icon-wrapper bg-soft-success text-success">
+                <i class="mdi mdi-account-check-outline"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+              Seuil de tolérance fixé à <span class="fw-bold">85%</span>
+            </div>
+          </div>
+        </div>
 
-                  <!-- Filiere et Niveau -->
-                  <td class="text-start">
-                    <div class="fw-bold text-dark text-truncate" style="max-width: 180px">
-                      {{ stat.filiere }}
-                    </div>
-                    <small class="text-xs text-muted">{{ stat.niveau }}</small>
-                  </td>
+        <div class="col-xl-3 col-sm-6">
+          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-info">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Corps Enseignant</span>
+                <h3 class="fw-bold text-dark mb-0 font-monospace">
+                  {{ analyticsData.kpis?.corps_enseignant_total || 0 }} <small class="fs-6 text-muted">Prof.</small>
+                </h3>
+              </div>
+              <div class="kpi-icon-wrapper bg-soft-info text-info">
+                <i class="mdi mdi-tie"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+              Intervenants déployés
+            </div>
+          </div>
+        </div>
 
-                  <!-- Nb UE -->
-                  <td class="font-monospace fw-bold text-secondary">
-                    {{ stat.nbUes }}
-                  </td>
-
-                  <!-- Vol Horaire -->
-                  <td class="font-monospace text-dark fw-bold">{{ stat.totalHeures }} h</td>
-
-                  <!-- Note moyenne estimée ou passée -->
-                  <td class="font-monospace">
-                    <span class="fw-bold text-dark">{{ stat.moyenneGenerale }}</span
-                    ><span class="text-muted text-xs">/20</span>
-                  </td>
-
-                  <!-- État de la Maquette (Alerte visuelle si sous-dimensionnée) -->
-                  <td class="text-end pe-3">
-                    <span
-                      class="badge text-xs px-2.5 py-1.5 rounded-pill font-semibold"
-                      :class="
-                        stat.statutMaquette === 'Conforme'
-                          ? 'bg-soft-success text-success'
-                          : 'bg-soft-danger text-danger'
-                      "
-                    >
-                      {{ stat.statutMaquette }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="col-xl-3 col-sm-6">
+          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-warning">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Unités d'Enseignement</span>
+                <h3 class="fw-bold text-dark mb-0 font-monospace">
+                  {{ analyticsData.kpis?.total_ues || 0 }} <small class="fs-6 text-muted">UE</small>
+                </h3>
+              </div>
+              <div class="kpi-icon-wrapper bg-soft-warning text-warning">
+                <i class="mdi mdi-book-open-variant"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xs text-muted">
+              Planifiées au catalogue
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- COLONNE DROITE : DISTRIBUTION DES HEURES PAR TYPOLOGIE D'UE -->
-      <div class="col-xl-4">
-        <div class="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
-          <h5 class="fw-bold text-dark mb-1">Typologie des Enseignements</h5>
-          <p class="text-muted text-xs mb-4">
-            Répartition en volume d'heures par type d'unité pédagogique.
-          </p>
-
-          <div class="d-flex flex-column gap-3.5">
-            <!-- Type 1 : Fondamental -->
-            <div>
-              <div class="d-flex justify-content-between align-items-center text-sm mb-1.5">
-                <span class="text-dark fw-bold"
-                  ><i class="mdi mdi-circle text-primary me-2 text-xs"></i>Cours Fondamentaux</span
-                >
-                <span class="text-muted font-monospace text-xs">744 H (60%)</span>
-              </div>
-              <div class="custom-mini-bar-bg">
-                <div class="custom-mini-bar-fill bg-primary" style="width: 60%"></div>
-              </div>
+      <div class="row g-4">
+        <div class="col-xl-8">
+          <div class="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold text-dark mb-0">Charge d'Enseignement par Semestre</h5>
+              <span class="badge bg-light text-secondary border font-monospace text-xs px-2.5 py-1.5">Vue d'ensemble analytique</span>
             </div>
 
-            <!-- Type 2 : Optionnel / Spécialisation -->
-            <div>
-              <div class="d-flex justify-content-between align-items-center text-sm mb-1.5">
-                <span class="text-dark fw-bold"
-                  ><i class="mdi mdi-circle text-info me-2 text-xs"></i>Options & Spécialités</span
-                >
-                <span class="text-muted font-monospace text-xs">372 H (30%)</span>
-              </div>
-              <div class="custom-mini-bar-bg">
-                <div class="custom-mini-bar-fill bg-info" style="width: 30%"></div>
-              </div>
-            </div>
+            <div class="table-responsive">
+              <table class="table align-middle text-center mb-0">
+                <thead class="table-light-header text-secondary">
+                  <tr>
+                    <th class="text-start ps-3" style="width: 15%">Semestre</th>
+                    <th class="text-start" style="width: 25%">Filière cible</th>
+                    <th style="width: 15%">Nombre d'UE</th>
+                    <th style="width: 15%">Volume total</th>
+                    <th style="width: 15%">Moy. Validation</th>
+                    <th class="text-end pe-3" style="width: 15%">Alerte Équipe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="stat in analyticsData.matrix" :key="stat.semestre_id" class="stats-row">
+                    <td class="text-start ps-3 font-monospace fw-bold text-primary">
+                      {{ stat.semestre_code }}
+                    </td>
 
-            <!-- Type 3 : Transversal -->
-            <div>
-              <div class="d-flex justify-content-between align-items-center text-sm mb-1.5">
-                <span class="text-dark fw-bold"
-                  ><i class="mdi mdi-circle text-warning me-2 text-xs"></i>Outils &
-                  Transversaux</span
-                >
-                <span class="text-muted font-monospace text-xs">124 H (10%)</span>
-              </div>
-              <div class="custom-mini-bar-bg">
-                <div class="custom-mini-bar-fill bg-warning" style="width: 10%"></div>
-              </div>
+                    <td class="text-start">
+                      <div class="fw-bold text-dark text-truncate" style="max-width: 180px" :title="stat.filiere">
+                        {{ stat.filiere }}
+                      </div>
+                      <small class="text-xs text-muted">{{ stat.niveau }}</small>
+                    </td>
+
+                    <td class="font-monospace fw-bold text-secondary">
+                      {{ stat.nb_ues }}
+                    </td>
+
+                    <td class="font-monospace text-dark fw-bold">{{ stat.total_heures }} h</td>
+
+                    <td class="font-monospace">
+                      <span class="fw-bold text-dark">{{ stat.moyenne_generale || '-' }}</span>
+                      <span v-if="stat.moyenne_generale" class="text-muted text-xs">/20</span>
+                    </td>
+
+                    <td class="text-end pe-3">
+                      <span
+                        class="badge text-xs px-2.5 py-1.5 rounded-pill font-semibold"
+                        :class="stat.statut_maquette === 'Conforme' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'"
+                      >
+                        {{ stat.statut_maquette || 'Inconnu' }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr v-if="!analyticsData.matrix || analyticsData.matrix.length === 0">
+                    <td colspan="6" class="text-center py-4 text-muted small">Aucune donnée matricielle disponible</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
 
-          <!-- Note d'audit de bas de carte -->
-          <div
-            class="mt-4 pt-3 border-top bg-light-subtle rounded p-2.5 text-xs text-muted d-flex align-items-start gap-2"
-          >
-            <i class="mdi mdi-information-outline text-primary mt-0.5 fs-6"></i>
-            <span
-              >La répartition actuelle respecte parfaitement les quotas directeurs préconisés par le
-              ministère (LMD).</span
-            >
+        <div class="col-xl-4">
+          <div class="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
+            <h5 class="fw-bold text-dark mb-1">Typologie des Enseignements</h5>
+            <p class="text-muted text-xs mb-4">
+              Répartition en volume d'heures par type d'unité pédagogique.
+            </p>
+
+            <div class="d-flex flex-column gap-4">
+              <div v-for="(type, i) in analyticsData.typology" :key="i">
+                <div class="d-flex justify-content-between align-items-center text-sm mb-1.5">
+                  <span class="text-dark fw-bold">
+                    <i class="mdi mdi-circle me-2 text-xs" :class="getTypologyColorClass(i)"></i>
+                    Volume Groupe {{ i + 1 }}
+                  </span>
+                  <span class="text-muted font-monospace text-xs">
+                    {{ type.volume_heures }} H ({{ type.pourcentage }}%)
+                  </span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div 
+                    class="progress-bar" 
+                    :class="getTypologyBgClass(i)" 
+                    role="progressbar" 
+                    :style="{ width: type.pourcentage + '%' }"
+                    :aria-valuenow="type.pourcentage" 
+                    aria-valuemin="0" 
+                    aria-valuemax="100"
+                  ></div>
+                </div>
+              </div>
+              
+              <div v-if="!analyticsData.typology || analyticsData.typology.length === 0" class="text-center text-muted small py-3">
+                Aucune donnée de typologie
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top bg-light-subtle rounded p-2.5 text-xs text-muted d-flex align-items-start gap-2">
+              <i class="mdi mdi-information-outline text-primary mt-0.5 fs-6"></i>
+              <span>
+                {{ analyticsData.llm_summary || "Les indicateurs reflètent la ventilation actuelle des maquettes de formation configurées pour cette session académique." }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useSemestreStore } from '@/stores/academiqueStore/semestreStore';
 
-const selectedPeriod = ref('2025-2026');
+/* ========================================================
+    Store Pinia
+======================================================== */
+const semestreStore = useSemestreStore();
 
-// Mock data analytique consolidé pour l'affichage statistique
-const semesterStats = ref([
-  {
-    id: 1,
-    code: 'SEM-1',
-    niveau: 'Licence 1',
-    filiere: 'Informatique de Gestion',
-    nbUes: 4,
-    totalHeures: 162,
-    moyenneGenerale: '13.45',
-    statutMaquette: 'Conforme',
-  },
-  {
-    id: 2,
-    code: 'SEM-2',
-    niveau: 'Licence 1',
-    filiere: 'Informatique de Gestion',
-    nbUes: 3,
-    totalHeures: 112,
-    moyenneGenerale: '12.80',
-    statutMaquette: 'Heures < Minimum',
-  },
-  {
-    id: 3,
-    code: 'SEM-1',
-    niveau: 'Master 1',
-    filiere: 'Génie Logiciel & DevOps',
-    nbUes: 5,
-    totalHeures: 240,
-    moyenneGenerale: '14.10',
-    statutMaquette: 'Conforme',
-  },
-  {
-    id: 4,
-    code: 'SEM-1',
-    niveau: 'Master 1',
-    filiere: 'Data Science & IA',
-    nbUes: 4,
-    totalHeures: 180,
-    moyenneGenerale: '11.95',
-    statutMaquette: 'Conforme',
-  },
-]);
+// Filtre d'année locale
+/**
+ * Génère dynamiquement la période académique courante (ex: "2025-2026")
+ * sur la base de la date d'aujourd'hui.
+ */
+const getDynamicAcademicPeriod = () => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0 = Janvier, 8 = Septembre
+
+  // Si on est en septembre ou après, l'année académique commence cette année
+  // Sinon (de janvier à août), on est dans la seconde moitié de l'année commencée l'an passé
+  if (currentMonth >= 8) {
+    return `${currentYear}-${currentYear + 1}`;
+  } else {
+    return `${currentYear - 1}-${currentYear}`;
+  }
+};
+
+// Le ref est initialisé de manière totalement dynamique !
+const selectedPeriod = ref(getDynamicAcademicPeriod());
+
+// Génération dynamique des options du select (Année en cours + l'année précédente pour l'historique)
+const dynamicOptions = computed(() => {
+  const current = getDynamicAcademicPeriod();
+  const [startYear, endYear] = current.split('-').map(Number);
+  
+  const previous = `${startYear - 1}-${startYear}`;
+  
+  return [
+    { value: current, label: `${current} (En cours)` },
+    { value: previous, label: previous }
+  ];
+});
+
+/* ========================================================
+    Computed State (Connecté à l'API)
+======================================================== */
+const loading = computed(() => semestreStore.loading);
+const analyticsData = computed(() => semestreStore.analytics);
+
+/* ========================================================
+    Méthodes de requêtes & Formatage
+======================================================== */
+const loadDashboardStats = async () => {
+  try {
+    // On passe la période choisie en paramètre si ton action ou ton API le gère.
+    // Si fetchAnalytics() ne prend pas de paramètre, il consomme par défaut l'URL de base.
+    await semestreStore.fetchAnalytics(selectedPeriod.value);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des analytics :", error);
+  }
+};
+
+const formatNumber = (num) => {
+  if (!num) return '0';
+  return new Intl.NumberFormat('fr-FR').format(num);
+};
+
+// Couleurs alternées pour les types d'enseignements
+const getTypologyColorClass = (index) => {
+  const classes = ['text-primary', 'text-info', 'text-warning', 'text-danger'];
+  return classes[index % classes.length];
+};
+
+const getTypologyBgClass = (index) => {
+  const classes = ['bg-primary', 'bg-info', 'bg-warning', 'bg-danger'];
+  return classes[index % classes.length];
+};
+
+/* ========================================================
+    Watchers & Lifecycle
+======================================================== */
+// Recharge les données de l'API dès que l'utilisateur bascule d'année
+watch(selectedPeriod, () => {
+  loadDashboardStats();
+});
+
+onMounted(() => {
+  loadDashboardStats();
+});
 </script>
 
 <style scoped>

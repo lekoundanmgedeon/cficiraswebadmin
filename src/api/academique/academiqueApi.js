@@ -85,8 +85,11 @@ export const getSemestresByAnnee = (anneeId) =>
   academiqueService.get(`/semestres/annee/${anneeId}`);
 
 export const getSemestresOrganisation = () => academiqueService.get('/semestres/stats/organisations');
-export const getSemestreAnalytics = () => academiqueService.get('/semestres/analytics/dashboard');
 
+// On injecte directement la période dans l'URL grâce aux littéraux de gabarits (template literals)
+export const getSemestreAnalytics = (period) => {
+  return academiqueService.get(`/semestres/analytics/dashboard?period=${period}`);
+};
 export const createSemestre = (data) => academiqueService.post('/semestres', data);
 export const updateSemestre = (id, data) => academiqueService.put(`/semestres/${id}`, data);
 export const deleteSemestre = (id) => academiqueService.delete(`/semestres/${id}`);

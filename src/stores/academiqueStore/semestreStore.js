@@ -128,11 +128,11 @@ export const useSemestreStore = defineStore('semestreStore', {
     },
 
     // Analytics des semestres
-    async fetchAnalytics() {
+    async fetchAnalytics(period) {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
-        const response = await getSemestreAnalytics();
+        const response = await getSemestreAnalytics(period);
         this.analytics = response.data;
       } catch (error) {
         messageStore.notifyError(
