@@ -6,7 +6,7 @@
         <h3 class="fw-bold mb-1">Répertoire des Étudiants</h3>
         <p class="text-muted small mb-0">
           <i class="mdi mdi-account-group-outline me-1"></i>
-          Total : <b>{{ store.etudiants.length }}</b> étudiants inscrits cette année.
+          Total : <b>{{ etudiants.length }}</b> étudiants inscrits cette année.
         </p>
       </div>
 
@@ -100,7 +100,7 @@
 
               <tbody>
                 <!-- Loader -->
-                <tr v-if="store.loading">
+                <tr v-if="loading">
                   <td colspan="7" class="text-center py-5">
                     <div class="spinner-border text-primary spinner-border-sm me-2"></div>
                     Chargement de la base de données...
@@ -175,7 +175,7 @@
                 </tr>
 
                 <!-- Vide -->
-                <tr v-if="!store.loading && paginatedEtudiants.length === 0">
+                <tr v-if="!loading && paginatedEtudiants.length === 0">
                   <td colspan="7" class="text-center py-5">
                     <div class="py-4">
                       <img
@@ -198,13 +198,241 @@
           <Pagination
             v-model="currentPage"
             :items-per-page="itemsPerPage"
-            :total-items="store.etudiants.length"
+            :total-items="etudiants.length"
           />
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { computed, ref } from 'vue';
+import ItemActions from '../details/ItemActions.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+
+// =========================
+// MOCK ETUDIANTS
+// =========================
+const etudiants = ref([
+  {
+    id: 1,
+    nom: 'Diop',
+    prenom: 'Moussa',
+    matricule: 'ETU001',
+    email: 'moussa.diop@example.com',
+    telephone: '770000001',
+    filiere: 'Informatique',
+  },
+  {
+    id: 2,
+    nom: 'Fall',
+    prenom: 'Aminata',
+    matricule: 'ETU002',
+    email: 'aminata.fall@example.com',
+    telephone: '770000002',
+    filiere: 'Réseaux',
+  },
+  {
+    id: 3,
+    nom: 'Ndiaye',
+    prenom: 'Cheikh',
+    matricule: 'ETU003',
+    email: 'cheikh.ndiaye@example.com',
+    telephone: '770000003',
+    filiere: 'Télécom',
+  },
+  {
+    id: 4,
+    nom: 'Ba',
+    prenom: 'Fatou',
+    matricule: 'ETU004',
+    email: 'fatou.ba@example.com',
+    telephone: '770000004',
+    filiere: 'Gestion',
+  },
+  {
+    id: 5,
+    nom: 'Sow',
+    prenom: 'Ibrahima',
+    matricule: 'ETU005',
+    email: 'ibrahima.sow@example.com',
+    telephone: '770000005',
+    filiere: 'Marketing',
+  },
+  {
+    id: 6,
+    nom: 'Seck',
+    prenom: 'Mariama',
+    matricule: 'ETU006',
+    email: 'mariama.seck@example.com',
+    telephone: '770000006',
+    filiere: 'Comptabilité',
+  },
+  {
+    id: 7,
+    nom: 'Kane',
+    prenom: 'Omar',
+    matricule: 'ETU007',
+    email: 'omar.kane@example.com',
+    telephone: '770000007',
+    filiere: 'Droit',
+  },
+  {
+    id: 8,
+    nom: 'Diallo',
+    prenom: 'Awa',
+    matricule: 'ETU008',
+    email: 'awa.diallo@example.com',
+    telephone: '770000008',
+    filiere: 'Finance',
+  },
+  {
+    id: 9,
+    nom: 'Sy',
+    prenom: 'Mamadou',
+    matricule: 'ETU009',
+    email: 'mamadou.sy@example.com',
+    telephone: '770000009',
+    filiere: 'Informatique',
+  },
+  {
+    id: 10,
+    nom: 'Camara',
+    prenom: 'Khadija',
+    matricule: 'ETU010',
+    email: 'khadija.camara@example.com',
+    telephone: '770000010',
+    filiere: 'Réseaux',
+  },
+  {
+    id: 11,
+    nom: 'Lo',
+    prenom: 'Seynabou',
+    matricule: 'ETU011',
+    email: 'seynabou.lo@example.com',
+    telephone: '770000011',
+    filiere: 'Télécom',
+  },
+  {
+    id: 12,
+    nom: 'Gueye',
+    prenom: 'Alioune',
+    matricule: 'ETU012',
+    email: 'alioune.gueye@example.com',
+    telephone: '770000012',
+    filiere: 'Gestion',
+  },
+  {
+    id: 13,
+    nom: 'Cissé',
+    prenom: 'Rokhaya',
+    matricule: 'ETU013',
+    email: 'rokhaya.cisse@example.com',
+    telephone: '770000013',
+    filiere: 'Marketing',
+  },
+  {
+    id: 14,
+    nom: 'Faye',
+    prenom: 'Serigne',
+    matricule: 'ETU014',
+    email: 'serigne.faye@example.com',
+    telephone: '770000014',
+    filiere: 'Comptabilité',
+  },
+  {
+    id: 15,
+    nom: 'Thiam',
+    prenom: 'Astou',
+    matricule: 'ETU015',
+    email: 'astou.thiam@example.com',
+    telephone: '770000015',
+    filiere: 'Finance',
+  },
+  {
+    id: 16,
+    nom: 'Mbaye',
+    prenom: 'Lamine',
+    matricule: 'ETU016',
+    email: 'lamine.mbaye@example.com',
+    telephone: '770000016',
+    filiere: 'Droit',
+  },
+  {
+    id: 17,
+    nom: 'Niang',
+    prenom: 'Adama',
+    matricule: 'ETU017',
+    email: 'adama.niang@example.com',
+    telephone: '770000017',
+    filiere: 'Informatique',
+  },
+  {
+    id: 18,
+    nom: 'Toure',
+    prenom: 'Binta',
+    matricule: 'ETU018',
+    email: 'binta.toure@example.com',
+    telephone: '770000018',
+    filiere: 'Télécom',
+  },
+  {
+    id: 19,
+    nom: 'Sarr',
+    prenom: 'Modou',
+    matricule: 'ETU019',
+    email: 'modou.sarr@example.com',
+    telephone: '770000019',
+    filiere: 'Gestion',
+  },
+  {
+    id: 20,
+    nom: 'Ka',
+    prenom: 'Ndeye',
+    matricule: 'ETU020',
+    email: 'ndeye.ka@example.com',
+    telephone: '770000020',
+    filiere: 'Réseaux',
+  },
+]);
+
+// =========================
+// PAGINATION
+// =========================
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+const startIndex = computed(
+  () => (currentPage.value - 1) * itemsPerPage.value,
+);
+
+const paginatedEtudiants = computed(() =>
+  etudiants.value.slice(
+    startIndex.value,
+    startIndex.value + itemsPerPage.value,
+  ),
+);
+
+// =========================
+// ACTIONS
+// =========================
+const editEtudiant = (etudiant) => {
+  console.log('Edit étudiant :', etudiant);
+};
+
+const confirmDelete = (etudiant) => {
+  if (
+    confirm(
+      `Voulez-vous vraiment supprimer ${etudiant.nom} ${etudiant.prenom} ?`,
+    )
+  ) {
+    etudiants.value = etudiants.value.filter(
+      (item) => item.id !== etudiant.id,
+    );
+  }
+};
+</script>
 
 <style scoped>
 /* Avatars */
@@ -261,38 +489,3 @@
   transition: all 0.3s ease;
 }
 </style>
-
-<script setup>
-import { computed, onMounted, ref } from 'vue';
-import ItemActions from '../details/ItemActions.vue';
-import Pagination from '@/components/shared/Pagination.vue';
-import { useEtudiantStore } from '@/stores/etudiants/etudiantStore';
-
-const store = useEtudiantStore();
-console.log('data :', store.etudiants);
-
-// Pagination
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
-const paginatedEtudiants = computed(() =>
-  store.etudiants.slice(startIndex.value, startIndex.value + itemsPerPage.value)
-);
-
-// Actions
-const editEtudiant = (etudiant) => {
-  store.fetchEtudiantById(etudiant.id);
-  // ouvrir modal édition par exemple
-};
-const confirmDelete = (etudiant) => {
-  if (confirm(`Voulez-vous vraiment supprimer ${etudiant.nom} ${etudiant.prenom} ?`)) {
-    store.removeEtudiant(etudiant.id);
-  }
-};
-
-// Charger les étudiants au montage
-onMounted(() => {
-  store.fetchEtudiants();
-});
-</script>
