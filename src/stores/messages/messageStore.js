@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { toast } from 'vue3-toastify';
+import { extractErrorMessage } from './useErrorMessage'; // Ajuste le chemin si nécessaire
 import 'vue3-toastify/dist/index.css';
 
 const defaultOptions = {
@@ -17,11 +18,16 @@ export const useMessageStore = defineStore('messageStore', {
   }),
 
   actions: {
-    addMessage(message, type = 'success') {
+    /**
+     * Méthode pivot centrale pour enregistrer et afficher le toast
+     * @private
+     */
+    _addMessage(message, type = 'success') {
       const newMessage = {
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         message,
         type,
+        timestamp: new Date(),
       };
       this.messages.push(newMessage);
 
@@ -37,13 +43,33 @@ export const useMessageStore = defineStore('messageStore', {
       if (toastFunc) {
         toastFunc(message, defaultOptions);
       } else {
-        // fallback neutre
-        toast(message, {
-          ...defaultOptions,
-          type: 'default',
-        });
+        toast(message, { ...defaultOptions, type: 'default' });
       }
     },
+
+    /**
+     * Gère aussi bien une string brute qu'un objet d'erreur Axios complet.
+     */
+    notifyError(errorOrMessage, fallback = 'Une erreur est survenue.') {
+      const finalMessage = typeof errorOrMessage === 'string'
+        ? errorOrMessage
+        : extractErrorMessage(errorOrMessage, fallback);
+
+      this._addMessage(finalMessage, 'error');
+    },
+
+    notifySuccess(message) {
+      this._addMessage(message, 'success');
+    },
+
+    notifyInfo(message) {
+      this._addMessage(message, 'info');
+    },
+
+    notifyWarning(message) {
+      this._addMessage(message, 'warning');
+    },
+
     clearMessages() {
       this.messages = [];
     },

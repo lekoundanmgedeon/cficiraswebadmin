@@ -1,30 +1,38 @@
-// /composables/useErrorMessage.js
+/**
+ * Extrait un message d'erreur lisible à partir d'une exception backend.
+ * @param {Object|Error} error - L'objet d'erreur intercepté.
+ * @param {string} fallback - Le message par défaut si rien n'est extrait.
+ * @returns {string} Le message d'erreur harmonisé.
+ */
 export function extractErrorMessage(error, fallback = 'Une erreur est survenue.') {
   if (!error) return fallback;
 
-  // Axios : erreur avec réponse du serveur
-  if (error.response) {
+  // Axios : réponse du serveur
+  if (error.response?.data) {
     const data = error.response.data;
 
-    // Réponse texte brute
     if (typeof data === 'string') return data;
 
-    // ✅ Priorité à 'error' (détail technique), sinon 'message' (message général)
-    if (data?.error && data?.message) {
-      return `${data.message} : ${data.error}`;
+    // Structure de ton backend : data.message + data.error.message
+    if (data.message && data.error?.message) {
+      return `${data.message} (${data.error.message})`;
     }
-    if (data?.error) return data.error;
-    if (data?.message) return data.message;
 
-    if (data?.errors) {
+    if (data.message) return data.message;
+    if (data.error?.message) return data.error.message;
+    if (data.error && typeof data.error === 'string') return data.error;
+
+    if (data.errors) {
       const first = Object.values(data.errors)[0];
       return Array.isArray(first) ? first[0] : first;
     }
 
-    return `Erreur ${error.response.status}`;
+    if (error.response.status) {
+      return `Erreur serveur (Code: ${error.response.status})`;
+    }
   }
 
-  // Axios : requête envoyée mais pas de réponse (timeout, réseau)
+  // Axios : pas de réponse réseau
   if (error.request) {
     return 'Impossible de se connecter au serveur.';
   }
