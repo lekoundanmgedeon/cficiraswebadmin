@@ -1,13 +1,11 @@
 <template>
   <div class="semester-organization-container">
-    <!-- Section En-tête : Titre et Actions de Configuration -->
     <div class="row mb-4">
       <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
           <h3 class="fw-bold text-dark mb-1">Architecture des Maquettes & Semestres</h3>
           <p class="text-muted text-sm mb-0">
-            Gestion des volumes de crédits, répartition des Unités d'Enseignement (UE) et statuts
-            d'activation.
+            Gestion des volumes de crédits, répartition des Unités d'Enseignement (UE) et statuts d'activation.
           </p>
         </div>
 
@@ -19,7 +17,6 @@
       </div>
     </div>
 
-    <!-- Barre de Filtres Avancés -->
     <div class="row mb-4">
       <div class="col-12">
         <div class="card border-0 shadow-sm bg-white rounded-4">
@@ -27,9 +24,9 @@
             <div class="row g-2 align-items-center">
               <div class="col-md-4">
                 <div class="input-group">
-                  <span class="input-group-text bg-light border-0 text-muted"
-                    ><i class="mdi mdi-magnify"></i
-                  ></span>
+                  <span class="input-group-text bg-light border-0 text-muted">
+                    <i class="mdi mdi-magnify"></i>
+                  </span>
                   <input
                     v-model="filterQuery"
                     type="text"
@@ -58,9 +55,9 @@
                 </select>
               </div>
               <div class="col-md-2 text-md-end">
-                <span class="text-xs text-muted font-monospace"
-                  >{{ filteredSemestres.length }} Semestre(s)</span
-                >
+                <span class="text-xs text-muted font-monospace fw-bold">
+                  {{ filteredSemestres.length }} Semestre(s)
+                </span>
               </div>
             </div>
           </div>
@@ -68,16 +65,13 @@
       </div>
     </div>
 
-    <!-- Loader de chargement -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status"></div>
       <p class="text-muted text-sm mt-2">Génération de la cartographie pédagogique...</p>
     </div>
 
-    <!-- VUE PROFONDE : Regroupement par Niveau d'étude -->
     <div v-else-if="groupedSemestres.length > 0" class="row g-4">
       <div v-for="group in groupedSemestres" :key="group.niveau" class="col-12">
-        <!-- Séparateur / Titre du Niveau -->
         <div class="d-flex align-items-center mb-3">
           <h5 class="fw-bold text-secondary mb-0 text-uppercase tracking-wider fs-6 me-3">
             <i class="mdi mdi-school text-primary me-1"></i> {{ group.niveau }}
@@ -85,7 +79,6 @@
           <div class="flex-grow-1 border-bottom border-2 border-light"></div>
         </div>
 
-        <!-- Grille de Cartes de Semestres -->
         <div class="row g-3">
           <div v-for="semestre in group.items" :key="semestre.id" class="col-xl-6">
             <div
@@ -93,13 +86,11 @@
               :class="semestre.actif ? 'border-primary' : 'border-secondary'"
             >
               <div class="card-body p-4">
-                <!-- Ligne Supérieure : Code, Filière et Statut -->
                 <div class="d-flex justify-content-between align-items-start mb-3">
                   <div>
-                    <span
-                      class="badge bg-soft-primary text-primary font-monospace px-2 py-1.5 fw-bold fs-6 me-2"
-                      >{{ semestre.code }}</span
-                    >
+                    <span class="badge bg-primary-subtle text-primary font-monospace px-2 py-1.5 fw-bold fs-6 me-2">
+                      {{ semestre.code }}
+                    </span>
                     <strong class="text-dark fs-6">{{ semestre.filiere }}</strong>
                     <div class="text-xs text-muted font-monospace mt-1">
                       Période : {{ semestre.periode }}
@@ -107,42 +98,30 @@
                   </div>
                   <span
                     class="badge px-2.5 py-1.5 rounded-pill text-xs font-semibold"
-                    :class="
-                      semestre.actif
-                        ? 'bg-soft-success text-success'
-                        : 'bg-soft-secondary text-secondary'
-                    "
+                    :class="semestre.actif ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'"
                   >
-                    {{ semestre.actif ? 'Actif' : 'Inactif' }}
+                    {{ semestre.actif ? 'Semestre Activé' : 'Semestre Inactivé' }}
                   </span>
                 </div>
 
-                <!-- Volume des Crédits ECTS (Affichage textuel direct) -->
-                <div
-                  class="mb-3 py-2 px-3 bg-light-subtle rounded border d-flex justify-content-between align-items-center text-sm"
-                >
-                  <span class="text-secondary"
-                    ><i class="mdi mdi-star-circle-outline me-1"></i> Valeur totale des crédits
-                    :</span
-                  >
-                  <strong
-                    :class="semestre.credits >= 30 ? 'text-success' : 'text-dark'"
-                    class="font-monospace fs-6"
-                  >
+                <div class="mb-3 py-2 px-3 bg-light-subtle rounded border d-flex justify-content-between align-items-center text-sm">
+                  <span class="text-secondary">
+                    <i class="mdi mdi-star-circle-outline me-1"></i> Valeur totale des crédits :
+                  </span>
+                  <strong :class="semestre.credits >= 30 ? 'text-success' : 'text-dark'" class="font-monospace fs-6">
                     {{ semestre.credits }} ECTS
                   </strong>
                 </div>
 
-                <!-- Liste des UE associées sous forme de puces -->
                 <div>
                   <div class="text-xs text-secondary text-uppercase fw-bold mb-2 tracking-wider">
-                    Unités d'Enseignement validées
+                    Unités d'Enseignement validées ({{ semestre.ues?.length || 0 }})
                   </div>
-                  <div class="d-flex flex-wrap gap-1.5">
+                  <div class="d-flex flex-wrap gap-2">
                     <span
                       v-for="(ue, idx) in semestre.ues"
                       :key="idx"
-                      class="badge-ue-advanced"
+                      class="badge bg-light text-dark border rounded px-2 py-1 text-xs"
                       v-html="highlightText(ue)"
                     ></span>
                   </div>
@@ -154,7 +133,6 @@
       </div>
     </div>
 
-    <!-- Aucun résultat -->
     <div v-else class="col-12 text-center py-5">
       <i class="mdi mdi-filter-remove-outline fs-1 text-muted d-block mb-2"></i>
       <h5 class="text-secondary fw-bold">Aucune correspondance trouvée</h5>
@@ -165,24 +143,39 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useSemestreStore } from '@/stores/academiqueStore/semestreStore';
 
-const loading = ref(false);
-const semestres = ref([]);
+/* ========================================================
+    Initialisation du Store Pinia
+======================================================== */
+const semestreStore = useSemestreStore();
+
+// Filtres locaux
 const filterQuery = ref('');
 const filterFiliere = ref('');
 const filterStatut = ref('tous');
 
+/* ========================================================
+    Données Réactives (Computed connectés au Store)
+======================================================== */
+const loading = computed(() => semestreStore.loading);
+const rawSemestres = computed(() => semestreStore.organisation || []);
+
+// Extraction dynamique des filières uniques présentes pour alimenter le select
 const uniqueFilieres = computed(() => {
-  return [...new Set(semestres.value.map((s) => s.filiere))];
+  return [...new Set(rawSemestres.value.map((s) => s.filiere).filter(Boolean))];
 });
 
+// Filtrage logique des semestres
 const filteredSemestres = computed(() => {
-  return semestres.value.filter((s) => {
+  return rawSemestres.value.filter((s) => {
     const matchesSearch =
-      s.code.toLowerCase().includes(filterQuery.value.toLowerCase()) ||
-      s.ues.some((ue) => ue.toLowerCase().includes(filterQuery.value.toLowerCase())) ||
-      s.filiere.toLowerCase().includes(filterQuery.value.toLowerCase());
+      (s.code || '').toLowerCase().includes(filterQuery.value.toLowerCase()) ||
+      (s.filiere || '').toLowerCase().includes(filterQuery.value.toLowerCase()) ||
+      (s.ues || []).some((ue) => ue.toLowerCase().includes(filterQuery.value.toLowerCase()));
+      
     const matchesFiliere = filterFiliere.value === '' || s.filiere === filterFiliere.value;
+    
     const matchesStatut =
       filterStatut.value === 'tous' ||
       (filterStatut.value === 'actif' && s.actif) ||
@@ -192,13 +185,15 @@ const filteredSemestres = computed(() => {
   });
 });
 
+// Groupement par niveau d'étude
 const SnowyGroup = (items) => {
   const groups = {};
   items.forEach((item) => {
-    if (!groups[item.niveau]) {
-      groups[item.niveau] = [];
+    const key = item.niveau || 'Niveau Non Défini';
+    if (!groups[key]) {
+      groups[key] = [];
     }
-    groups[item.niveau].push(item);
+    groups[key].push(item);
   });
   return Object.keys(groups).map((key) => ({ niveau: key, items: groups[key] }));
 };
@@ -207,71 +202,26 @@ const groupedSemestres = computed(() => {
   return SnowyGroup(filteredSemestres.value);
 });
 
+// Mise en surbrillance (Highlight) des textes cherchés
 const highlightText = (text) => {
   if (!filterQuery.value) return text;
   const regex = new RegExp(`(${filterQuery.value})`, 'gi');
   return text.replace(regex, '<mark class="bg-warning-subtle text-dark p-0">$1</mark>');
 };
 
-const fetchOrganisationSemestres = async () => {
-  loading.value = true;
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  semestres.value = [
-    {
-      id: 1,
-      code: 'SEM-1',
-      designation: 'Semestre 1',
-      niveau: 'Licence 1 (Tronc Commun)',
-      filiere: 'Informatique',
-      credits: 30,
-      ues: ['Mathématiques Algébriques', 'Informatique Générale', 'Anglais Technique'],
-      periode: '2025-2026',
-      actif: true,
-    },
-    {
-      id: 2,
-      code: 'SEM-2',
-      designation: 'Semestre 2',
-      niveau: 'Licence 1 (Tronc Commun)',
-      filiere: 'Informatique',
-      credits: 26,
-      ues: ['Algorithmique Procédurale', 'Bases de Données Relationnelles', 'Physique Quantique'],
-      periode: '2025-2026',
-      actif: true,
-    },
-    {
-      id: 3,
-      code: 'SEM-1',
-      designation: 'Semestre 1',
-      niveau: 'Master 1 Spécialisé',
-      filiere: 'Data Science',
-      credits: 30,
-      ues: [
-        'Statistiques Inférentielles',
-        'Machine Learning Foundations',
-        'Python Avancé & Big Data',
-      ],
-      periode: '2025-2026',
-      actif: false,
-    },
-    {
-      id: 4,
-      code: 'SEM-1',
-      designation: 'Semestre 1',
-      niveau: 'Master 1 Spécialisé',
-      filiere: 'Génie Logiciel',
-      credits: 30,
-      ues: ['Modélisation UML/SGBD', 'DevOps & CI/CD', 'Architectures Microservices'],
-      periode: '2025-2026',
-      actif: true,
-    },
-  ];
-  loading.value = false;
+/* ========================================================
+    Actions Utilitaires
+======================================================== */
+const ouvrirModalCreation = () => {
+  console.log("Ouverture du module de configuration de semestre");
 };
 
-onMounted(() => {
-  fetchOrganisationSemestres();
+/* ========================================================
+    Cycle de vie (Appel de la bonne action du Store)
+======================================================== */
+onMounted(async () => {
+  // Déclenche l'appel API natif défini dans ton store
+  await semestreStore.fetchOrganisation();
 });
 </script>
 

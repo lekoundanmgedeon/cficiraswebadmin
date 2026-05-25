@@ -84,7 +84,7 @@ export const getActiveSemestres = () => academiqueService.get('/semestres/couran
 export const getSemestresByAnnee = (anneeId) =>
   academiqueService.get(`/semestres/annee/${anneeId}`);
 
-export const getSemestresOrganisation = () => academiqueService.get('/semestres/organisation');
+export const getSemestresOrganisation = () => academiqueService.get('/semestres/stats/organisations');
 export const getSemestreAnalytics = () => academiqueService.get('/semestres/analytics/dashboard');
 
 export const createSemestre = (data) => academiqueService.post('/semestres', data);
