@@ -28,19 +28,6 @@
       <li class="nav-item">
         <a
           class="nav-link"
-          id="statistiques-tab"
-          data-bs-toggle="tab"
-          href="#statistiques"
-          role="tab"
-          aria-controls="statistiques"
-          aria-selected="false"
-        >
-          Statistiques
-        </a>
-      </li>
-      <li class="nav-item">
-        <a
-          class="nav-link"
           id="historique-tab"
           data-bs-toggle="tab"
           href="#historique"
@@ -82,7 +69,6 @@
 <script setup>
 import editionsAnneesContent from './Tab/editionsContent.vue';
 import resultasContent from './Tab/resultasContent.vue';
-import StatistiquesContent from './Tab/StatistiquesContent.vue';
 import HistoriqueContent from './Tab/HistoriqueContent.vue';
 </script>
 

@@ -10,7 +10,7 @@
           role="tab"
           aria-controls="overview"
           aria-selected="true"
-          >Resultats</a
+          >Statistiques</a
         >
       </li>
       <li class="nav-item">
