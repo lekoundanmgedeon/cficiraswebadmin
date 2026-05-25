@@ -16,10 +16,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -58,7 +55,9 @@ export const useSemestreStore = defineStore('semestreStore', {
           setCache('semestres', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des semestres.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des semestres.')
+        );
       } finally {
         this.loading = false;
       }
@@ -72,7 +71,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         const response = await getSemestreById(id);
         this.semestre = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du semestre.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du semestre.')
+        );
       } finally {
         this.loading = false;
       }
@@ -86,7 +87,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         const response = await getActiveSemestres();
         this.activeSemestres = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des semestres actifs.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des semestres actifs.')
+        );
       } finally {
         this.loading = false;
       }
@@ -100,7 +103,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         const response = await getSemestresByAnnee(anneeId);
         this.semestres = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des semestres par année.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des semestres par année.')
+        );
       } finally {
         this.loading = false;
       }
@@ -114,7 +119,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         const response = await getSemestresOrganisation();
         this.organisation = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’organisation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de l’organisation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -128,7 +135,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         const response = await getSemestreAnalytics();
         this.analytics = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des analytics.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des analytics.')
+        );
       } finally {
         this.loading = false;
       }
@@ -143,7 +152,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         messageStore.notifySuccess('Statut du semestre modifié avec succès.');
         await this.fetchSemestreById(id);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du changement de statut.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du changement de statut.')
+        );
       } finally {
         this.loading = false;
       }
@@ -159,7 +170,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         localStorage.removeItem('semestres');
         await this.fetchSemestres();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création du semestre.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création du semestre.')
+        );
       } finally {
         this.loading = false;
       }
@@ -174,7 +187,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         localStorage.removeItem('semestres');
         await this.fetchSemestres();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour du semestre.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour du semestre.')
+        );
       } finally {
         this.loading = false;
       }
@@ -189,7 +204,9 @@ export const useSemestreStore = defineStore('semestreStore', {
         localStorage.removeItem('semestres');
         await this.fetchSemestres();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression du semestre.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression du semestre.')
+        );
       } finally {
         this.loading = false;
       }

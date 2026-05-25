@@ -159,9 +159,7 @@ async function submitConcour() {
     const modalElement = document.getElementById('exampleModal');
 
     if (modalElement) {
-      const modal =
-        bootstrap.Modal.getInstance(modalElement) ||
-        new bootstrap.Modal(modalElement);
+      const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
 
       modal.hide();
     }

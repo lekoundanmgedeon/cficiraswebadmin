@@ -104,15 +104,15 @@
 
                 <!-- Stats rapides -->
                 <div class="col-md-2 text-muted small border-start px-3">
-                    <div>
-                      <i class="mdi mdi-account-group me-1"></i> 
-                      {{ annee.nb_etudiants }} {{ annee.nb_etudiants > 1 ? 'Étudiants' : 'Étudiant' }}
-                    </div>
-                    <div>
-                      <i class="mdi mdi-school me-1"></i> 
-                      {{ annee.nb_classes }} {{ annee.nb_classes > 1 ? 'Classes' : 'Classe' }}
-                    </div>
+                  <div>
+                    <i class="mdi mdi-account-group me-1"></i>
+                    {{ annee.nb_etudiants }} {{ annee.nb_etudiants > 1 ? 'Étudiants' : 'Étudiant' }}
                   </div>
+                  <div>
+                    <i class="mdi mdi-school me-1"></i>
+                    {{ annee.nb_classes }} {{ annee.nb_classes > 1 ? 'Classes' : 'Classe' }}
+                  </div>
+                </div>
 
                 <!-- Actions -->
                 <div class="col-md-2 text-end">
@@ -146,7 +146,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 // Importe ton store Pinia (ajuste le chemin selon ton projet)
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore'; 
+import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
 
 // Initialisation du store
 const anneeStore = useAnneeStore();
@@ -170,10 +170,10 @@ const anneesFiltrees = computed(() => {
   return annees.value.filter((a) => {
     // 1. Filtre par zone de texte (Code)
     const matchesSearch = a.code.toLowerCase().includes(searchQuery.value.toLowerCase());
-    
+
     // 2. Filtre par Statut
     const matchesStatut = !filterStatut.value || a.statut === filterStatut.value;
-    
+
     // 3. Filtre par Période (Current vs Previous)
     let matchesPeriode = true;
     if (filterPeriode.value === 'current') {
@@ -211,21 +211,21 @@ const getStatusBadgeClass = (statut) => {
   return map[statut] || 'bg-light text-dark';
 };
 
-const formatStatut = (s) => s ? s.replace('_', ' ').toUpperCase() : '';
+const formatStatut = (s) => (s ? s.replace('_', ' ').toUpperCase() : '');
 
 // Calcul intelligent du pourcentage de progression
 const calculateProgress = (annee) => {
   if (annee.statut === 'terminee' || annee.statut === 'archivee') return 100;
   if (annee.statut === 'en_preparation') return 0;
-  
+
   // Si active, calcul basé sur le temps réel écoulé
   const debut = new Date(annee.debut);
   const fin = new Date(annee.fin);
   const maintenant = new Date();
-  
+
   if (maintenant < debut) return 0;
   if (maintenant > fin) return 100;
-  
+
   const total = fin - debut;
   const actuel = maintenant - debut;
   return Math.round((actuel / total) * 100);

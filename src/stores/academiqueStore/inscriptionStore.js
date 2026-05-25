@@ -14,10 +14,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -53,7 +50,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
           setCache('inscriptions', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des inscriptions.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des inscriptions.')
+        );
       } finally {
         this.loading = false;
       }
@@ -67,7 +66,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         const response = await getInscriptionById(id);
         this.inscription = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’inscription.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de l’inscription.')
+        );
       } finally {
         this.loading = false;
       }
@@ -83,7 +84,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         localStorage.removeItem('inscriptions');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de l’inscription.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création de l’inscription.')
+        );
       } finally {
         this.loading = false;
       }
@@ -99,7 +102,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         localStorage.removeItem('inscriptions');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de l’inscription.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de l’inscription.')
+        );
       } finally {
         this.loading = false;
       }
@@ -114,7 +119,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         messageStore.notifySuccess('Statut de l’inscription modifié avec succès.');
         await this.fetchInscriptionById(id);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du changement de statut.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du changement de statut.')
+        );
       } finally {
         this.loading = false;
       }
@@ -129,7 +136,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         messageStore.notifySuccess('Import des nouveaux étudiants réussi.');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des étudiants.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’import des étudiants.')
+        );
       } finally {
         this.loading = false;
       }
@@ -144,7 +153,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         messageStore.notifySuccess('Import des réinscriptions réussi.');
         await this.fetchInscriptions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des réinscriptions.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’import des réinscriptions.')
+        );
       } finally {
         this.loading = false;
       }
@@ -158,7 +169,9 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         await importTuteurs(file);
         messageStore.notifySuccess('Import des tuteurs réussi.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des tuteurs.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’import des tuteurs.')
+        );
       } finally {
         this.loading = false;
       }

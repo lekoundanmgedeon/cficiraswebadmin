@@ -3,7 +3,6 @@ import { evaluationApi } from '../config/apiClients';
 
 const noteService = buildService(evaluationApi);
 
-
 // Voir la grille de notes d'une évaluation
 export const getNotesByEvaluation = (evaluationId) =>
   noteService.get(`/evaluations/${evaluationId}/notes`);
@@ -21,6 +20,4 @@ export const getNotesByEtudiant = (etudiantId, semestreId) =>
 
 // --- Routes axées sur la Note elle-même ---
 // Mettre à jour une note spécifique
-export const updateNote = (id, data) =>
-  noteService.put(`/notes/${id}`, data);
-
+export const updateNote = (id, data) => noteService.put(`/notes/${id}`, data);

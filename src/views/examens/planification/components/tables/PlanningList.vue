@@ -11,10 +11,7 @@
     </thead>
 
     <tbody>
-      <tr
-        v-for="(plan, index) in planning"
-        :key="plan.planification_id"
-      >
+      <tr v-for="(plan, index) in planning" :key="plan.planification_id">
         <td>{{ plan.designation }}</td>
 
         <td>{{ plan.designation_filiere }}</td>

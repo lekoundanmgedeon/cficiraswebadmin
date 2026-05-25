@@ -25,7 +25,9 @@ export const useEtudiantStore = defineStore('etudiantStore', {
         this.etudiant = response.data;
         messageStore.notifySuccess('Étudiant créé avec succès.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de l’étudiant.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création de l’étudiant.')
+        );
       } finally {
         this.loading = false;
       }
@@ -53,7 +55,9 @@ export const useEtudiantStore = defineStore('etudiantStore', {
         await uploadPhotoEtudiant(etudiantId, file);
         messageStore.notifySuccess('Photo de profil mise à jour avec succès.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du téléchargement de la photo.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du téléchargement de la photo.')
+        );
       } finally {
         this.loading = false;
       }
@@ -67,7 +71,9 @@ export const useEtudiantStore = defineStore('etudiantStore', {
         const response = await getParcoursAcademique(id);
         this.parcours = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du parcours académique.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du parcours académique.')
+        );
       } finally {
         this.loading = false;
       }

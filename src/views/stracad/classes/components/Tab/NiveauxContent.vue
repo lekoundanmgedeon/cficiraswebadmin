@@ -2,26 +2,26 @@
   <div class="row">
     <div class="col-12 mb-4">
       <div class="card border-0 shadow-sm bg-light-subtle">
-        <div class="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div
+          class="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"
+        >
           <div>
             <h4 class="mb-1">Classes par Niveau</h4>
-            <p class="text-muted small mb-0">Sélectionnez un niveau académique pour visualiser les classes rattachées.</p>
+            <p class="text-muted small mb-0">
+              Sélectionnez un niveau académique pour visualiser les classes rattachées.
+            </p>
           </div>
-          
-          <div class="d-flex align-items-center gap-2" style="min-width: 250px;">
+
+          <div class="d-flex align-items-center gap-2" style="min-width: 250px">
             <label class="text-nowrap text-muted small fw-semibold mb-0">Niveau :</label>
-            <select 
-              v-model="selectedNiveauId" 
+            <select
+              v-model="selectedNiveauId"
               @change="handleNiveauChange"
               class="form-select bg-white border-0 shadow-sm fw-medium"
               :disabled="loadingNiveaux"
             >
               <option value="" disabled>-- Choisir un niveau --</option>
-              <option 
-                v-for="niv in niveaux" 
-                :key="niv.id" 
-                :value="niv.id"
-              >
+              <option v-for="niv in niveaux" :key="niv.id" :value="niv.id">
                 {{ niv.code }} - {{ niv.nom || niv.designation || 'Niveau' }}
               </option>
             </select>
@@ -48,8 +48,13 @@
             <tr v-if="!selectedNiveauId">
               <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center py-3">
-                  <i class="mdi mdi-arrow-top-right-bold-box-outline text-primary" style="font-size: 3rem; opacity: 0.4"></i>
-                  <div class="text-primary fw-medium mt-2">Veuillez sélectionner un niveau dans le menu ci-dessus</div>
+                  <i
+                    class="mdi mdi-arrow-top-right-bold-box-outline text-primary"
+                    style="font-size: 3rem; opacity: 0.4"
+                  ></i>
+                  <div class="text-primary fw-medium mt-2">
+                    Veuillez sélectionner un niveau dans le menu ci-dessus
+                  </div>
                 </div>
               </td>
             </tr>
@@ -64,8 +69,13 @@
             <tr v-else-if="classesByNiveau.length === 0">
               <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center py-3">
-                  <i class="mdi mdi-google-classroom text-muted" style="font-size: 3rem; opacity: 0.2"></i>
-                  <div class="text-muted mt-2 small">Aucune classe n'est configurée pour ce niveau</div>
+                  <i
+                    class="mdi mdi-google-classroom text-muted"
+                    style="font-size: 3rem; opacity: 0.2"
+                  ></i>
+                  <div class="text-muted mt-2 small">
+                    Aucune classe n'est configurée pour ce niveau
+                  </div>
                 </div>
               </td>
             </tr>
@@ -73,7 +83,9 @@
             <tr v-else v-for="(item, index) in classesByNiveau" :key="item.id">
               <td class="ps-3 text-muted small">{{ index + 1 }}</td>
               <td>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1">
+                <span
+                  class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1"
+                >
                   {{ item.code }}
                 </span>
               </td>
@@ -107,7 +119,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
-import { useNiveauStore } from '@/stores/academiqueStore/niveauStore'; 
+import { useNiveauStore } from '@/stores/academiqueStore/niveauStore';
 import ItemActions from '../details/ItemActions.vue';
 
 const classeStore = useClasseStore();
@@ -152,11 +164,11 @@ const handleNiveauChange = async () => {
     Actions & Formats
 ======================================================== */
 const handleEdit = (item) => {
-  console.log("Édition classe :", item);
+  console.log('Édition classe :', item);
 };
 
 const handleDelete = (item) => {
-  console.log("Suppression classe :", item);
+  console.log('Suppression classe :', item);
 };
 
 const formatDate = (dateString) => {
@@ -165,7 +177,7 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 </script>

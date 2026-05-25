@@ -71,14 +71,10 @@ const editModule = (concour) => {
 };
 
 const confirmDelete = (concour) => {
-  const confirmAction = confirm(
-    `Voulez-vous supprimer ${concour.designation} ?`,
-  );
+  const confirmAction = confirm(`Voulez-vous supprimer ${concour.designation} ?`);
 
   if (confirmAction) {
-    concours.value = concours.value.filter(
-      (item) => item.id !== concour.id,
-    );
+    concours.value = concours.value.filter((item) => item.id !== concour.id);
   }
 };
 </script>

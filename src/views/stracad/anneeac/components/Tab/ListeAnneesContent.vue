@@ -1,7 +1,10 @@
 <template>
   <div class="row">
     <h4>Liste des années académiques</h4>
-    <p>Vous pouvez consulter les détails de chaque année académique en cliquant sur le lien correspondant.</p>
+    <p>
+      Vous pouvez consulter les détails de chaque année académique en cliquant sur le lien
+      correspondant.
+    </p>
 
     <div class="table-responsive">
       <table class="table table-striped">

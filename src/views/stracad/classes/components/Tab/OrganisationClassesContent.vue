@@ -3,7 +3,8 @@
     <div class="col-12 mb-3">
       <h4>Arbre d'organisation des classes</h4>
       <p class="text-muted">
-        Suivi global des structures pédagogiques : répartition des effectifs par cycle, filière et niveau.
+        Suivi global des structures pédagogiques : répartition des effectifs par cycle, filière et
+        niveau.
       </p>
     </div>
 
@@ -68,7 +69,10 @@
             <tr v-else-if="filteredTree.length === 0">
               <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center py-3">
-                  <i class="mdi mdi-file-tree-outline text-muted" style="font-size: 3rem; opacity: 0.3"></i>
+                  <i
+                    class="mdi mdi-file-tree-outline text-muted"
+                    style="font-size: 3rem; opacity: 0.3"
+                  ></i>
                   <div class="text-muted mt-2 small">Aucune donnée d'organisation disponible</div>
                 </div>
               </td>
@@ -77,8 +81,12 @@
             <tr v-else v-for="item in filteredTree" :key="item.id">
               <td class="ps-3">
                 <div class="d-flex align-items-center">
-                  <span class="badge bg-primary text-white me-2 font-monospace px-2 py-1">{{ item.classe }}</span>
-                  <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ item.niveau }}</span>
+                  <span class="badge bg-primary text-white me-2 font-monospace px-2 py-1">{{
+                    item.classe
+                  }}</span>
+                  <span class="badge bg-secondary-subtle text-secondary font-monospace">{{
+                    item.niveau
+                  }}</span>
                 </div>
               </td>
               <td>
@@ -86,15 +94,17 @@
               </td>
               <td>
                 <div class="text-dark small mb-0">{{ item.cycle }}</div>
-                <small class="badge bg-light text-muted border font-monospace text-xs">{{ item.cycle_code }}</small>
+                <small class="badge bg-light text-muted border font-monospace text-xs">{{
+                  item.cycle_code
+                }}</small>
               </td>
               <td class="text-center">
                 <span class="fw-bold text-dark">{{ item.effectif }}</span>
                 <span class="text-muted"> / {{ item.capacite }}</span>
               </td>
               <td>
-                <div class="d-flex align-items-center" style="min-width: 130px;">
-                  <div class="progress w-100 me-2" style="height: 6px;">
+                <div class="d-flex align-items-center" style="min-width: 130px">
+                  <div class="progress w-100 me-2" style="height: 6px">
                     <div
                       class="progress-bar"
                       :class="getProgressBarClass(item.taux)"
@@ -105,7 +115,10 @@
                 </div>
               </td>
               <td class="text-end pe-3">
-                <span class="badge rounded-pill px-2 py-1" :class="getStatutBadgeClass(item.statut)">
+                <span
+                  class="badge rounded-pill px-2 py-1"
+                  :class="getStatutBadgeClass(item.statut)"
+                >
                   {{ item.statut }}
                 </span>
               </td>
@@ -120,7 +133,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 // Assure-toi que le chemin d'importation correspond à ton projet
-import { useClasseStore } from '@/stores/academiqueStore/classeStore'; 
+import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 
 const classeStore = useClasseStore();
 
@@ -140,7 +153,7 @@ const organisationTree = computed(() => classeStore.organisationTree || []);
 
 // Génération de la liste unique des cycles pour le filtre dynamique dropdown
 const uniqueCycles = computed(() => {
-  const cycles = organisationTree.value.map(item => item.cycle_code);
+  const cycles = organisationTree.value.map((item) => item.cycle_code);
   return [...new Set(cycles)].filter(Boolean);
 });
 
@@ -148,12 +161,12 @@ const uniqueCycles = computed(() => {
 const filteredTree = computed(() => {
   return organisationTree.value.filter((item) => {
     const search = searchQuery.value.toLowerCase();
-    
-    const matchSearch = 
+
+    const matchSearch =
       item.classe.toLowerCase().includes(search) ||
       item.filiere.toLowerCase().includes(search) ||
       item.cycle.toLowerCase().includes(search);
-      
+
     const matchCycle = !filterCycle.value || item.cycle_code === filterCycle.value;
     const matchStatut = !filterStatut.value || item.statut === filterStatut.value;
 
@@ -174,9 +187,9 @@ const getProgressBarClass = (taux) => {
 // Utilities : Classes de couleur du badge de statut
 const getStatutBadgeClass = (statut) => {
   const map = {
-    'OUVERTE': 'bg-success-subtle text-success border border-success-subtle',
-    'VIDE': 'bg-secondary-subtle text-secondary border border-secondary-subtle',
-    'FERMÉE': 'bg-danger-subtle text-danger border border-danger-subtle'
+    OUVERTE: 'bg-success-subtle text-success border border-success-subtle',
+    VIDE: 'bg-secondary-subtle text-secondary border border-secondary-subtle',
+    FERMÉE: 'bg-danger-subtle text-danger border border-danger-subtle',
   };
   return map[statut] || 'bg-light text-dark';
 };

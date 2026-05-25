@@ -94,7 +94,9 @@
                     <div v-if="filiere.moyenne_generale">
                       <div class="d-flex justify-content-between mb-1">
                         <small class="fw-bold">{{ filiere.moyenne_generale }} / 20</small>
-                        <small class="text-muted">{{ (filiere.moyenne_generale * 5).toFixed(0) }}%</small>
+                        <small class="text-muted"
+                          >{{ (filiere.moyenne_generale * 5).toFixed(0) }}%</small
+                        >
                       </div>
                       <div class="progress" style="height: 6px">
                         <div
@@ -107,7 +109,10 @@
                     <span v-else class="text-muted italic small">Attente de délibération</span>
                   </td>
                   <td class="text-center">
-                    <span v-if="filiere.moyenne_generale" class="badge bg-soft-success text-success px-3">
+                    <span
+                      v-if="filiere.moyenne_generale"
+                      class="badge bg-soft-success text-success px-3"
+                    >
                       <i class="mdi mdi-check-circle-outline me-1"></i> Validé
                     </span>
                     <span v-else class="badge bg-soft-warning text-warning px-3">
@@ -119,8 +124,15 @@
               <tbody v-else>
                 <tr>
                   <td colspan="4" class="text-center py-5">
-                    <img src="/img/empty-box.svg" alt="Vide" style="width: 80px" class="mb-3 opacity-50" />
-                    <p class="text-muted">Aucune donnée statistique disponible pour cette période.</p>
+                    <img
+                      src="/img/empty-box.svg"
+                      alt="Vide"
+                      style="width: 80px"
+                      class="mb-3 opacity-50"
+                    />
+                    <p class="text-muted">
+                      Aucune donnée statistique disponible pour cette période.
+                    </p>
                   </td>
                 </tr>
               </tbody>
@@ -170,7 +182,6 @@ const exportRapport = async () => {
   }
 };
 </script>
-
 
 <style scoped>
 /* Cartes Stats */

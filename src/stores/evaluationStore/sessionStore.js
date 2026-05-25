@@ -12,10 +12,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -51,7 +48,9 @@ export const useSessionStore = defineStore('sessionStore', {
           setCache('sessions', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des sessions.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des sessions.')
+        );
       } finally {
         this.loading = false;
       }
@@ -65,7 +64,9 @@ export const useSessionStore = defineStore('sessionStore', {
         const response = await getSessionById(id);
         this.session = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de la session.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de la session.')
+        );
       } finally {
         this.loading = false;
       }
@@ -81,7 +82,9 @@ export const useSessionStore = defineStore('sessionStore', {
         localStorage.removeItem('sessions');
         await this.fetchSessions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de la session.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création de la session.')
+        );
       } finally {
         this.loading = false;
       }
@@ -97,7 +100,9 @@ export const useSessionStore = defineStore('sessionStore', {
         localStorage.removeItem('sessions');
         await this.fetchSessions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de la session.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de la session.')
+        );
       } finally {
         this.loading = false;
       }
@@ -113,7 +118,9 @@ export const useSessionStore = defineStore('sessionStore', {
         localStorage.removeItem('sessions');
         await this.fetchSessions();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression de la session.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression de la session.')
+        );
       } finally {
         this.loading = false;
       }
@@ -128,7 +135,9 @@ export const useSessionStore = defineStore('sessionStore', {
         messageStore.notifySuccess('État de la session modifié avec succès.');
         await this.fetchSessionById(id);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du changement d’état de la session.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du changement d’état de la session.')
+        );
       } finally {
         this.loading = false;
       }

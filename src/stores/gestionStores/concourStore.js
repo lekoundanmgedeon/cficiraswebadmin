@@ -30,7 +30,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         const response = await getConcours();
         this.concoursList = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des concours.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des concours.')
+        );
       } finally {
         this.loading = false;
       }
@@ -44,7 +46,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         const response = await getConcoursById(id);
         this.concours = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du concours.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du concours.')
+        );
       } finally {
         this.loading = false;
       }
@@ -59,7 +63,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         messageStore.notifySuccess('Concours créé avec succès.');
         await this.fetchConcours();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création du concours.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création du concours.')
+        );
       } finally {
         this.loading = false;
       }
@@ -74,7 +80,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         messageStore.notifySuccess('Concours mis à jour avec succès.');
         await this.fetchConcours();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour du concours.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour du concours.')
+        );
       } finally {
         this.loading = false;
       }
@@ -89,7 +97,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         messageStore.notifySuccess('Statut du concours modifié avec succès.');
         await this.fetchConcoursById(id);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du changement de statut.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du changement de statut.')
+        );
       } finally {
         this.loading = false;
       }
@@ -104,7 +114,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         messageStore.notifySuccess('Concours supprimé avec succès.');
         await this.fetchConcours();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression du concours.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression du concours.')
+        );
       } finally {
         this.loading = false;
       }
@@ -118,7 +130,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         const response = await calculerMoyennesEtRangs(id);
         this.moyennesRangs = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du calcul des moyennes et rangs.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du calcul des moyennes et rangs.')
+        );
       } finally {
         this.loading = false;
       }
@@ -133,7 +147,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         messageStore.notifySuccess('Admissions proclamées avec succès.');
         await this.fetchConcoursById(id);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la proclamation des admissions.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la proclamation des admissions.')
+        );
       } finally {
         this.loading = false;
       }
@@ -153,7 +169,9 @@ export const useConcoursStore = defineStore('concoursStore', {
         link.click();
         messageStore.notifySuccess('Liste des admis téléchargée.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du téléchargement de la liste des admis.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du téléchargement de la liste des admis.')
+        );
       } finally {
         this.loading = false;
       }

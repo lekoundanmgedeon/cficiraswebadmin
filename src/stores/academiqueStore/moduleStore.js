@@ -27,7 +27,9 @@ export const useModuleStore = defineStore('moduleStore', {
         const response = await getSemestresConfiguration();
         this.semestresConfig = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de la configuration des semestres.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de la configuration des semestres.')
+        );
       } finally {
         this.loading = false;
       }
@@ -70,7 +72,9 @@ export const useModuleStore = defineStore('moduleStore', {
         await assignModuleToClasse(data);
         messageStore.notifySuccess('Module assigné avec succès.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’assignation du module.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’assignation du module.')
+        );
       } finally {
         this.loading = false;
       }
@@ -85,7 +89,9 @@ export const useModuleStore = defineStore('moduleStore', {
         messageStore.notifySuccess('Module créé avec succès.');
         await this.fetchUesByConfiguration();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création du module.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création du module.')
+        );
       } finally {
         this.loading = false;
       }
@@ -99,7 +105,9 @@ export const useModuleStore = defineStore('moduleStore', {
         messageStore.notifySuccess('Module mis à jour avec succès.');
         await this.fetchUesByConfiguration();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour du module.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour du module.')
+        );
       } finally {
         this.loading = false;
       }
@@ -113,7 +121,9 @@ export const useModuleStore = defineStore('moduleStore', {
         messageStore.notifySuccess('Module supprimé avec succès.');
         await this.fetchUesByConfiguration();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression du module.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression du module.')
+        );
       } finally {
         this.loading = false;
       }

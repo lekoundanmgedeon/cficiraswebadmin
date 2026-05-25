@@ -11,10 +11,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -50,7 +47,9 @@ export const useEvaluationStore = defineStore('evaluationStore', {
           setCache('evaluations', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des évaluations.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des évaluations.')
+        );
       } finally {
         this.loading = false;
       }
@@ -64,7 +63,9 @@ export const useEvaluationStore = defineStore('evaluationStore', {
         const response = await getEvaluationById(id);
         this.evaluation = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’évaluation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de l’évaluation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -80,7 +81,9 @@ export const useEvaluationStore = defineStore('evaluationStore', {
         localStorage.removeItem('evaluations');
         await this.fetchEvaluations();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de l’évaluation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création de l’évaluation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -96,7 +99,9 @@ export const useEvaluationStore = defineStore('evaluationStore', {
         localStorage.removeItem('evaluations');
         await this.fetchEvaluations();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de l’évaluation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de l’évaluation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -112,7 +117,9 @@ export const useEvaluationStore = defineStore('evaluationStore', {
         localStorage.removeItem('evaluations');
         await this.fetchEvaluations();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression de l’évaluation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression de l’évaluation.')
+        );
       } finally {
         this.loading = false;
       }

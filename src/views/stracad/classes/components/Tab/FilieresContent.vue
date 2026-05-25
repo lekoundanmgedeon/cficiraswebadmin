@@ -2,26 +2,26 @@
   <div class="row">
     <div class="col-12 mb-4">
       <div class="card border-0 shadow-sm bg-light-subtle">
-        <div class="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div
+          class="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"
+        >
           <div>
             <h4 class="mb-1">Classes par Filière académique</h4>
-            <p class="text-muted small mb-0">Sélectionnez une filière pour charger et gérer ses classes rattachées.</p>
+            <p class="text-muted small mb-0">
+              Sélectionnez une filière pour charger et gérer ses classes rattachées.
+            </p>
           </div>
-          
-          <div class="d-flex align-items-center gap-2" style="min-width: 300px;">
+
+          <div class="d-flex align-items-center gap-2" style="min-width: 300px">
             <label class="text-nowrap text-muted small fw-semibold mb-0">Filière :</label>
-            <select 
-              v-model="selectedFiliereId" 
+            <select
+              v-model="selectedFiliereId"
               @change="handleFiliereChange"
               class="form-select bg-white border-0 shadow-sm fw-medium"
               :disabled="loadingFilieres"
             >
               <option value="" disabled>-- Choisir une filière --</option>
-              <option 
-                v-for="fil in filieres" 
-                :key="fil.id" 
-                :value="fil.id"
-              >
+              <option v-for="fil in filieres" :key="fil.id" :value="fil.id">
                 {{ fil.nom || fil.filiere || fil.code }}
               </option>
             </select>
@@ -48,8 +48,13 @@
             <tr v-if="!selectedFiliereId">
               <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center py-3">
-                  <i class="mdi mdi-filter-variant text-primary" style="font-size: 3rem; opacity: 0.4"></i>
-                  <div class="text-primary fw-medium mt-2">Veuillez sélectionner une filière dans le menu ci-dessus</div>
+                  <i
+                    class="mdi mdi-filter-variant text-primary"
+                    style="font-size: 3rem; opacity: 0.4"
+                  ></i>
+                  <div class="text-primary fw-medium mt-2">
+                    Veuillez sélectionner une filière dans le menu ci-dessus
+                  </div>
                 </div>
               </td>
             </tr>
@@ -64,8 +69,13 @@
             <tr v-else-if="classesByFiliere.length === 0">
               <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center py-3">
-                  <i class="mdi mdi-google-classroom text-muted" style="font-size: 3rem; opacity: 0.2"></i>
-                  <div class="text-muted mt-2 small">Aucune classe n'est configurée pour cette filière</div>
+                  <i
+                    class="mdi mdi-google-classroom text-muted"
+                    style="font-size: 3rem; opacity: 0.2"
+                  ></i>
+                  <div class="text-muted mt-2 small">
+                    Aucune classe n'est configurée pour cette filière
+                  </div>
                 </div>
               </td>
             </tr>
@@ -73,12 +83,16 @@
             <tr v-else v-for="(item, index) in classesByFiliere" :key="item.id">
               <td class="ps-3 text-muted small">{{ index + 1 }}</td>
               <td>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1">
+                <span
+                  class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1"
+                >
                   {{ item.code }}
                 </span>
               </td>
               <td>
-                <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1 rounded">
+                <span
+                  class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1 rounded"
+                >
                   {{ item.niveau_code }}
                 </span>
               </td>
@@ -159,11 +173,11 @@ const handleFiliereChange = async () => {
     Actions & Formats
 ======================================================== */
 const handleEdit = (item) => {
-  console.log("Édition classe filière :", item);
+  console.log('Édition classe filière :', item);
 };
 
 const handleDelete = (item) => {
-  console.log("Suppression classe filière :", item);
+  console.log('Suppression classe filière :', item);
 };
 
 const formatDate = (dateString) => {
@@ -172,7 +186,7 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   });
 };
 </script>

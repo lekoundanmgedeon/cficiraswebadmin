@@ -33,7 +33,7 @@ const epreuves = ref(
     heure_fin: '',
     type_epreuve: 'écrit',
     statut: 'prévu',
-  })),
+  }))
 );
 
 // =========================

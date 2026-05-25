@@ -19,10 +19,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -64,7 +61,9 @@ export const useClasseStore = defineStore('classeStore', {
           setCache('classes', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des classes.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des classes.')
+        );
       } finally {
         this.loading = false;
       }
@@ -78,7 +77,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClasseById(id);
         this.classe = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de la classe.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de la classe.')
+        );
       } finally {
         this.loading = false;
       }
@@ -92,7 +93,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClassesOrganisationTree();
         this.organisationTree = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’organisation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de l’organisation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -106,7 +109,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getGlobalInfrastructureKPIs();
         this.analytics = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des analytics.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des analytics.')
+        );
       } finally {
         this.loading = false;
       }
@@ -120,7 +125,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClassesByNiveau(niveauId);
         this.classesNiveau = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des classes par niveau.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des classes par niveau.')
+        );
       } finally {
         this.loading = false;
       }
@@ -134,7 +141,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClassesByFiliere(filiereId);
         this.classes = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des classes par filière.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des classes par filière.')
+        );
       } finally {
         this.loading = false;
       }
@@ -148,7 +157,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClasseStudents(id);
         this.students = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des étudiants.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des étudiants.')
+        );
       } finally {
         this.loading = false;
       }
@@ -162,7 +173,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClasseModules(id);
         this.modules = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des modules.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des modules.')
+        );
       } finally {
         this.loading = false;
       }
@@ -177,7 +190,9 @@ export const useClasseStore = defineStore('classeStore', {
         messageStore.notifySuccess('Module assigné avec succès.');
         await this.fetchClasseModules(id);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’assignation du module.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’assignation du module.')
+        );
       } finally {
         this.loading = false;
       }
@@ -191,7 +206,9 @@ export const useClasseStore = defineStore('classeStore', {
         const response = await getClasseOccupancyRate(id);
         this.occupancyRate = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du taux de remplissage.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du taux de remplissage.')
+        );
       } finally {
         this.loading = false;
       }
@@ -207,7 +224,9 @@ export const useClasseStore = defineStore('classeStore', {
         localStorage.removeItem('classes');
         await this.fetchClasses();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de la classe.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création de la classe.')
+        );
       } finally {
         this.loading = false;
       }
@@ -222,7 +241,9 @@ export const useClasseStore = defineStore('classeStore', {
         localStorage.removeItem('classes');
         await this.fetchClasses();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de la classe.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de la classe.')
+        );
       } finally {
         this.loading = false;
       }
@@ -237,7 +258,9 @@ export const useClasseStore = defineStore('classeStore', {
         localStorage.removeItem('classes');
         await this.fetchClasses();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression de la classe.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression de la classe.')
+        );
       } finally {
         this.loading = false;
       }

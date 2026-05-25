@@ -14,10 +14,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -55,7 +52,9 @@ export const useFiliereStore = defineStore('filiereStore', {
           setCache('filieres', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des filières.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des filières.')
+        );
       } finally {
         this.loading = false;
       }
@@ -69,7 +68,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         const response = await getFiliereById(id);
         this.filiere = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de la filière.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de la filière.')
+        );
       } finally {
         this.loading = false;
       }
@@ -83,7 +84,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         const response = await getFiliereOrganisation();
         this.organisationTree = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement de l’organisation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement de l’organisation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -97,7 +100,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         const response = await getFilieresByCycle(cycleId);
         this.filieres = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des filières par cycle.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des filières par cycle.')
+        );
       } finally {
         this.loading = false;
       }
@@ -111,7 +116,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         const response = await getFiliereStats(id);
         this.stats = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des statistiques.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des statistiques.')
+        );
       } finally {
         this.loading = false;
       }
@@ -127,7 +134,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         localStorage.removeItem('filieres');
         await this.fetchFilieres();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création de la filière.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création de la filière.')
+        );
       } finally {
         this.loading = false;
       }
@@ -142,7 +151,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         localStorage.removeItem('filieres');
         await this.fetchFilieres();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de la filière.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de la filière.')
+        );
       } finally {
         this.loading = false;
       }
@@ -157,7 +168,9 @@ export const useFiliereStore = defineStore('filiereStore', {
         localStorage.removeItem('filieres');
         await this.fetchFilieres();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression de la filière.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression de la filière.')
+        );
       } finally {
         this.loading = false;
       }

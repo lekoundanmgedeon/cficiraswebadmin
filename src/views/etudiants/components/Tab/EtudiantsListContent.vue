@@ -403,15 +403,10 @@ const etudiants = ref([
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
-const startIndex = computed(
-  () => (currentPage.value - 1) * itemsPerPage.value,
-);
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
 
 const paginatedEtudiants = computed(() =>
-  etudiants.value.slice(
-    startIndex.value,
-    startIndex.value + itemsPerPage.value,
-  ),
+  etudiants.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
 );
 
 // =========================
@@ -422,14 +417,8 @@ const editEtudiant = (etudiant) => {
 };
 
 const confirmDelete = (etudiant) => {
-  if (
-    confirm(
-      `Voulez-vous vraiment supprimer ${etudiant.nom} ${etudiant.prenom} ?`,
-    )
-  ) {
-    etudiants.value = etudiants.value.filter(
-      (item) => item.id !== etudiant.id,
-    );
+  if (confirm(`Voulez-vous vraiment supprimer ${etudiant.nom} ${etudiant.prenom} ?`)) {
+    etudiants.value = etudiants.value.filter((item) => item.id !== etudiant.id);
   }
 };
 </script>

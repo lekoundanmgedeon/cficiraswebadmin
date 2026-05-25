@@ -24,7 +24,9 @@ export const useResultatStore = defineStore('resultatStore', {
         const response = await getBulletinsByClasse(classeId);
         this.bulletinsClasse = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des bulletins de la classe.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des bulletins de la classe.')
+        );
       } finally {
         this.loading = false;
       }
@@ -38,7 +40,9 @@ export const useResultatStore = defineStore('resultatStore', {
         const response = await getBulletinEtudiant(etudiantId, semestreId);
         this.bulletinEtudiant = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du bulletin de l’étudiant.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du bulletin de l’étudiant.')
+        );
       } finally {
         this.loading = false;
       }
@@ -53,7 +57,9 @@ export const useResultatStore = defineStore('resultatStore', {
         messageStore.notifySuccess('Décision du jury mise à jour avec succès.');
         await this.fetchBulletinsByClasse(data.classeId);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de la décision du jury.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de la décision du jury.')
+        );
       } finally {
         this.loading = false;
       }
@@ -68,7 +74,9 @@ export const useResultatStore = defineStore('resultatStore', {
         messageStore.notifySuccess('Bulletins publiés officiellement.');
         await this.fetchBulletinsByClasse(classeId);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la publication des bulletins.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la publication des bulletins.')
+        );
       } finally {
         this.loading = false;
       }

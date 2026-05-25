@@ -32,7 +32,12 @@
             <tr v-else-if="organisationFilieres.length === 0">
               <td colspan="6" class="text-center py-5">
                 <div class="d-flex flex-column align-items-center">
-                  <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" style="width: 80px;" />
+                  <img
+                    src="/img/empty-box.svg"
+                    alt="Aucune donnée"
+                    class="mb-2"
+                    style="width: 80px"
+                  />
                   <div class="text-muted small">Aucune filière trouvée</div>
                 </div>
               </td>
@@ -41,14 +46,16 @@
             <tr v-else v-for="org in organisationFilieres" :key="org.id">
               <td class="ps-3 fw-bold text-dark">{{ org.filiere }}</td>
               <td>
-                <span :class="org.responsable === 'Non assigné' ? 'text-muted italic' : 'fw-medium'">
+                <span
+                  :class="org.responsable === 'Non assigné' ? 'text-muted italic' : 'fw-medium'"
+                >
                   {{ org.responsable }}
                 </span>
               </td>
               <td>{{ org.effectif }}</td>
               <td>{{ org.capacite }}</td>
               <td>
-                <div class="d-flex align-items-center" style="min-width: 150px;">
+                <div class="d-flex align-items-center" style="min-width: 150px">
                   <div class="progress w-100 me-2" style="height: 6px">
                     <div
                       class="progress-bar"
@@ -96,9 +103,9 @@ const getProgressClass = (taux) => {
 // Style personnalisé pour les badges selon le statut backend
 const getBadgeClass = (statut) => {
   const map = {
-    'OUVERTE': 'bg-success-subtle text-success border border-success',
-    'VIDE': 'bg-secondary-subtle text-secondary border border-secondary',
-    'FERMÉE': 'bg-danger-subtle text-danger border border-danger'
+    OUVERTE: 'bg-success-subtle text-success border border-success',
+    VIDE: 'bg-secondary-subtle text-secondary border border-secondary',
+    FERMÉE: 'bg-danger-subtle text-danger border border-danger',
   };
   return map[statut] || 'bg-light text-dark';
 };

@@ -4,7 +4,8 @@
     <p>Vous pouvez consulter les détails de chaque examen en cliquant sur le lien correspondant.</p>
 
     <div class="table-responsive">
-      <table class="table table-striped align-middle"> <thead>
+      <table class="table table-striped align-middle">
+        <thead>
           <tr>
             <th>Cycle</th>
             <th>Filiere disponible</th>
@@ -25,14 +26,22 @@
           <tr v-else-if="organisations.length === 0">
             <td colspan="6" class="text-center py-4">
               <div class="d-flex flex-column align-items-center">
-                <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" style="width: 80px;" />
-                <div class="text-muted">Aucune donnée disponible</div> 
+                <img
+                  src="/img/empty-box.svg"
+                  alt="Aucune donnée"
+                  class="mb-2"
+                  style="width: 80px"
+                />
+                <div class="text-muted">Aucune donnée disponible</div>
               </div>
             </td>
           </tr>
 
           <tr v-else v-for="item in organisations" :key="item.cycle_id">
-            <td><strong>{{ item.cycle_designation }}</strong> <small class="text-muted">({{ item.cycle_code }})</small></td>
+            <td>
+              <strong>{{ item.cycle_designation }}</strong>
+              <small class="text-muted">({{ item.cycle_code }})</small>
+            </td>
             <td>{{ item.filieres_disponibles }}</td>
             <td>{{ item.effectifs }}</td>
             <td>{{ item.capacite_totale }}</td>
@@ -45,7 +54,8 @@
                 class="badge"
                 :class="{
                   'bg-success': item.statut === 'Complet',
-                  'bg-warning text-dark': item.statut === 'Partiel', /* text-dark pour le contraste du jaune Bootstrap */
+                  'bg-warning text-dark':
+                    item.statut === 'Partiel' /* text-dark pour le contraste du jaune Bootstrap */,
                   'bg-secondary': item.statut === 'Vide' || item.statut === 'Aucune capacité',
                 }"
               >

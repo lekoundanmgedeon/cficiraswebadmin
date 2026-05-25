@@ -76,8 +76,7 @@ export const useAnneeStore = defineStore('anneeStore', {
         this.anneeHistory = response.data;
       } catch (error) {
         messageStore.notifyError('Erreur lors de la récupération de l’historique.');
-      }
-      finally {
+      } finally {
         this.loading = false;
       }
     },

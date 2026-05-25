@@ -29,28 +29,36 @@
               </td>
             </tr>
 
-            <tr v-else-if="paginatedClasses.length > 0" v-for="(classe, index) in paginatedClasses" :key="classe.id">
-  <td class="ps-3 text-muted">{{ startIndex + index + 1 }}</td>
-  <td><strong class="text-dark">{{ classe.code }}</strong></td>
-  <td>{{ classe.filiere_nom }}</td>
-  <td>
-    <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">{{ classe.niveau_code }}</span>
-  </td>
-  <td class="text-center">
-    <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-semibold">
-      {{ classe.nb_etudiants }} / {{ classe.capacite_max }}
-    </span>
-  </td>
-  <td class="text-end pe-3">
-    <ItemActions
-      :item="classe"
-      concourRoute="/edition-concours/"
-      :showAdd="false"
-      @edit="editClasse"
-      @delete="confirmDelete"
-    />
-  </td>
-</tr>
+            <tr
+              v-else-if="paginatedClasses.length > 0"
+              v-for="(classe, index) in paginatedClasses"
+              :key="classe.id"
+            >
+              <td class="ps-3 text-muted">{{ startIndex + index + 1 }}</td>
+              <td>
+                <strong class="text-dark">{{ classe.code }}</strong>
+              </td>
+              <td>{{ classe.filiere_nom }}</td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">{{
+                  classe.niveau_code
+                }}</span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-semibold">
+                  {{ classe.nb_etudiants }} / {{ classe.capacite_max }}
+                </span>
+              </td>
+              <td class="text-end pe-3">
+                <ItemActions
+                  :item="classe"
+                  concourRoute="/edition-concours/"
+                  :showAdd="false"
+                  @edit="editClasse"
+                  @delete="confirmDelete"
+                />
+              </td>
+            </tr>
 
             <tr v-else>
               <td colspan="6" class="text-center py-5">
@@ -116,6 +124,6 @@ const confirmDelete = (classe) => {
 ===================== */
 onMounted(async () => {
   // CORRECTION: Utilisation du bon nom d'action défini dans ton store
-  await classeStore.fetchClasses(); 
+  await classeStore.fetchClasses();
 });
 </script>

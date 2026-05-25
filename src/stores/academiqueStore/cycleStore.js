@@ -75,12 +75,12 @@ export const useCycleStore = defineStore('cycleStore', {
         this.organisationStats = response.data;
       } catch (error) {
         messageStore.notifyError(
-          extractErrorMessage(error, 'Échec lors du chargement de l\'organisation des cycles.')
+          extractErrorMessage(error, "Échec lors du chargement de l'organisation des cycles.")
         );
       } finally {
         this.loading = false;
       }
-    }, 
+    },
     // Récupérer un cycle par ID
     async fetchCycleById(id) {
       const messageStore = useMessageStore();
@@ -89,9 +89,7 @@ export const useCycleStore = defineStore('cycleStore', {
         const response = await getCycleById(id);
         this.cycle = response.data;
       } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, 'Échec lors du chargement du cycle.')
-        );
+        messageStore.notifyError(extractErrorMessage(error, 'Échec lors du chargement du cycle.'));
       } finally {
         this.loading = false;
       }

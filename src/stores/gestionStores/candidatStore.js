@@ -27,7 +27,9 @@ export const useCandidatStore = defineStore('candidatStore', {
         await createCandidat(data);
         messageStore.notifySuccess('Candidat créé avec succès.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création du candidat.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création du candidat.')
+        );
       } finally {
         this.loading = false;
       }
@@ -55,7 +57,9 @@ export const useCandidatStore = defineStore('candidatStore', {
         await importCandidats(file);
         messageStore.notifySuccess('Import des candidats réussi.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des candidats.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’import des candidats.')
+        );
       } finally {
         this.loading = false;
       }
@@ -83,7 +87,9 @@ export const useCandidatStore = defineStore('candidatStore', {
         await addNoteEpreuve(numTable, data);
         messageStore.notifySuccess('Note enregistrée avec succès.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’enregistrement de la note.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’enregistrement de la note.')
+        );
       } finally {
         this.loading = false;
       }
@@ -97,7 +103,9 @@ export const useCandidatStore = defineStore('candidatStore', {
         const response = await getCandidatsByConcours(concoursId);
         this.candidats = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des candidats.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des candidats.')
+        );
       } finally {
         this.loading = false;
       }
@@ -111,7 +119,9 @@ export const useCandidatStore = defineStore('candidatStore', {
         const response = await getCandidatById(id);
         this.candidat = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du candidat.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du candidat.')
+        );
       } finally {
         this.loading = false;
       }

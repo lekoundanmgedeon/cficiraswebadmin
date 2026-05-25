@@ -24,7 +24,9 @@ export const useNoteStore = defineStore('noteStore', {
         const response = await getNotesByEvaluation(evaluationId);
         this.notesEvaluation = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des notes de l’évaluation.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des notes de l’évaluation.')
+        );
       } finally {
         this.loading = false;
       }
@@ -39,7 +41,9 @@ export const useNoteStore = defineStore('noteStore', {
         messageStore.notifySuccess('Notes publiées avec succès.');
         await this.fetchNotesByEvaluation(evaluationId);
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la publication des notes.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la publication des notes.')
+        );
       } finally {
         this.loading = false;
       }
@@ -53,7 +57,9 @@ export const useNoteStore = defineStore('noteStore', {
         const response = await getNotesByEtudiant(etudiantId, semestreId);
         this.notesEtudiant = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des notes de l’étudiant.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des notes de l’étudiant.')
+        );
       } finally {
         this.loading = false;
       }
@@ -67,7 +73,9 @@ export const useNoteStore = defineStore('noteStore', {
         await updateNote(id, data);
         messageStore.notifySuccess('Note mise à jour avec succès.');
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour de la note.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour de la note.')
+        );
       } finally {
         this.loading = false;
       }

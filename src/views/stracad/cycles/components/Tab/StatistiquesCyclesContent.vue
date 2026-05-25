@@ -2,7 +2,9 @@
   <div>
     <div class="col-12 mb-2">
       <h4>Statistiques des cycles</h4>
-      <p class="text-muted">Indicateurs globaux de distribution des étudiants par cycle académique.</p>
+      <p class="text-muted">
+        Indicateurs globaux de distribution des étudiants par cycle académique.
+      </p>
     </div>
 
     <div class="table-responsive card border-light shadow-sm">
@@ -26,7 +28,10 @@
           <tr v-else-if="filteredCycles.length === 0">
             <td colspan="4" class="text-center py-5">
               <div class="py-3">
-                <i class="mdi mdi-account-off-outline text-muted" style="font-size: 3rem; opacity: 0.3"></i>
+                <i
+                  class="mdi mdi-account-off-outline text-muted"
+                  style="font-size: 3rem; opacity: 0.3"
+                ></i>
                 <p class="text-muted mt-2">Aucune donnée statistique disponible</p>
               </div>
             </td>
@@ -50,7 +55,14 @@
               </span>
             </td>
             <td class="text-end pe-4">
-              <span :class="Number(cycle.nb_etudiants) > 0 ? 'badge bg-success-subtle text-success' : 'badge bg-secondary-subtle text-secondary'" class="px-2 py-1 rounded-pill small">
+              <span
+                :class="
+                  Number(cycle.nb_etudiants) > 0
+                    ? 'badge bg-success-subtle text-success'
+                    : 'badge bg-secondary-subtle text-secondary'
+                "
+                class="px-2 py-1 rounded-pill small"
+              >
                 {{ Number(cycle.nb_etudiants) > 0 ? 'Actif' : 'Inactif' }}
               </span>
             </td>

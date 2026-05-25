@@ -3,7 +3,6 @@ import { academiqueApi } from '../config/apiClients';
 
 const etudiantService = buildService(academiqueApi);
 
-
 // API pour gérer les étudiants
 export const createEtudiant = (data) => etudiantService.post('/etudiants', data);
 
@@ -18,6 +17,4 @@ export const uploadPhotoEtudiant = (etudiantId, file) => {
   });
 };
 
-export const getParcoursAcademique = (id) =>
-  etudiantService.get(`/etudiants/${id}/parcours`);
-
+export const getParcoursAcademique = (id) => etudiantService.get(`/etudiants/${id}/parcours`);

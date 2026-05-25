@@ -13,10 +13,7 @@ import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
 // Helpers cache
 function setCache(key, data) {
-  localStorage.setItem(
-    key,
-    JSON.stringify({ data, timestamp: Date.now() })
-  );
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
 }
 
 function getCache(key, ttl = 5 * 60 * 1000) {
@@ -53,7 +50,9 @@ export const useNiveauStore = defineStore('niveauStore', {
           setCache('niveaux', response.data);
         }
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des niveaux.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des niveaux.')
+        );
       } finally {
         this.loading = false;
       }
@@ -67,7 +66,9 @@ export const useNiveauStore = defineStore('niveauStore', {
         const response = await getNiveauById(id);
         this.niveau = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement du niveau.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du niveau.')
+        );
       } finally {
         this.loading = false;
       }
@@ -81,7 +82,9 @@ export const useNiveauStore = defineStore('niveauStore', {
         const response = await getNiveauxByFiliere(filiereId);
         this.niveaux = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des niveaux par filière.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des niveaux par filière.')
+        );
       } finally {
         this.loading = false;
       }
@@ -95,7 +98,9 @@ export const useNiveauStore = defineStore('niveauStore', {
         const response = await getNiveauEffectifs(id);
         this.effectifs = response.data;
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors du chargement des effectifs.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des effectifs.')
+        );
       } finally {
         this.loading = false;
       }
@@ -111,7 +116,9 @@ export const useNiveauStore = defineStore('niveauStore', {
         localStorage.removeItem('niveaux');
         await this.fetchNiveaux();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la création du niveau.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la création du niveau.')
+        );
       } finally {
         this.loading = false;
       }
@@ -126,7 +133,9 @@ export const useNiveauStore = defineStore('niveauStore', {
         localStorage.removeItem('niveaux');
         await this.fetchNiveaux();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la mise à jour du niveau.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la mise à jour du niveau.')
+        );
       } finally {
         this.loading = false;
       }
@@ -141,7 +150,9 @@ export const useNiveauStore = defineStore('niveauStore', {
         localStorage.removeItem('niveaux');
         await this.fetchNiveaux();
       } catch (error) {
-        messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de la suppression du niveau.'));
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de la suppression du niveau.')
+        );
       } finally {
         this.loading = false;
       }

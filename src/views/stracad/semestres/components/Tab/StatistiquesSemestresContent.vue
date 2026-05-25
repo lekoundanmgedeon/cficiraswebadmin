@@ -312,7 +312,6 @@ const semesterStats = ref([
     statutMaquette: 'Conforme',
   },
 ]);
-
 </script>
 
 <style scoped>
