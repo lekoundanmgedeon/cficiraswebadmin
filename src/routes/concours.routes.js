@@ -1,18 +1,8 @@
 export default [
-  {
-    path: '/etudiants',
-    name: 'Etudiants',
-    component: () => import('@/views/etudiants/Etudiants.vue'),
-  },
-  {
-    path: '/etudiants/:id',
-    name: 'EtudiantDetails',
-    component: () => import('@/views/etudiants/components/details/DetailEtudiant.vue'),
-    props: true,
-  },
-  {
-    path: '/inscriptions',
-    name: 'Inscriptions',
-    component: () => import('@/views/inscriptions/Inscription.vue'),
-  },
+  { path: '/edition-concours', name: 'EditionConcours', component: () => import('@/views/concours/editions/Edition.vue') },
+  { path: '/edition-concours/:id/configurations',name: 'concours-configuration',
+  component: () => import('@/views/concours/editions/components/Tab/configSub/configDetails.vue'),
+  props: true }, 
+  { path: '/rapport-concours', name: 'RapportConcours', component: () => import('@/views/concours/resultats/RapportConcours.vue') },
 ];
+

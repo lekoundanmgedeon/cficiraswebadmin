@@ -4,79 +4,111 @@
       <li class="nav-item">
         <a
           class="nav-link active"
-          id="details-tab"
+          id="epreuves-tab"
           data-bs-toggle="tab"
-          href="#details"
+          href="#epreuves"
           role="tab"
-          aria-controls="details"
+          aria-controls="epreuves"
           aria-selected="true"
-          >Details</a
         >
+         <i class="bi bi-journal-text"></i>
+          1. Épreuves & Coeffs
+        </a>
       </li>
+
       <li class="nav-item">
         <a
           class="nav-link"
-          id="epreuve-tab"
+          id="candidatures-tab"
           data-bs-toggle="tab"
-          href="#epreuve"
+          href="#candidatures"
           role="tab"
-          aria-controls="epreuve"
+          aria-controls="candidatures"
           aria-selected="false"
-          >Epreuves</a
         >
+        <i class="bi bi-people"></i>
+          2. Candidatures
+        </a>
       </li>
+
       <li class="nav-item">
         <a
           class="nav-link"
-          id="candidat-tab"
+          id="notes-tab"
           data-bs-toggle="tab"
-          href="#candidat"
+          href="#notes"
           role="tab"
-          aria-controls="candidat"
+          aria-controls="notes"
           aria-selected="false"
-          >Candidats</a
         >
+        <i class="bi bi-pencil-square"></i>
+          3. Saisie des Notes
+        </a>
       </li>
+
       <li class="nav-item">
         <a
           class="nav-link"
-          id="resultat-tab"
+          id="deliberation-tab"
           data-bs-toggle="tab"
-          href="#resultat"
+          href="#deliberation"
           role="tab"
-          aria-controls="resultat"
+          aria-controls="deliberation"
           aria-selected="false"
-          >Notes et resultats</a
         >
+        <i class="bi bi-award"></i>
+          4. Délibération & Publication
+        </a>
       </li>
     </ul>
+
     <div class="tab-content p-4">
       <div
         class="tab-pane fade show active"
-        id="details"
+        id="epreuves"
         role="tabpanel"
-        aria-labelledby="details-tab"
+        aria-labelledby="epreuves-tab"
       >
-        <DetailsConcours />
+        <TabEpreuves/>
       </div>
-      <div class="tab-pane fade" id="epreuve" role="tabpanel" aria-labelledby="epreuve-tab">
-        <Epreuve />
+
+      <div
+        class="tab-pane fade"
+        id="candidatures"
+        role="tabpanel"
+        aria-labelledby="candidatures-tab"
+      >
+        <TabCandidats />
       </div>
-      <div class="tab-pane fade" id="candidat" role="tabpanel" aria-labelledby="candidat-tab">
-        <Candidats />
+
+      <div
+        class="tab-pane fade"
+        id="notes"
+        role="tabpanel"
+        aria-labelledby="notes-tab"
+      >
+        <TabNotes/>
       </div>
-      <div class="tab-pane fade" id="resultat" role="tabpanel" aria-labelledby="resultat-tab">
-        <Resultat />
+
+      <div
+        class="tab-pane fade"
+        id="deliberation"
+        role="tabpanel"
+        aria-labelledby="deliberation-tab"
+      >
+        <TabDeliberation />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import DetailsConcours from './detail-content.vue';
-import Epreuve from './epreuve-content.vue';
-import Resultat from './notes-content.vue';
-import Candidats from './candidat-content.vue';
+import { ref, computed } from 'vue';
+
+import TabEpreuves from './TabEpreuves.vue';
+import TabCandidats from './TabCandidats.vue';
+import TabNotes from './TabNotes.vue';
+import TabDeliberation from './TabDeliberation.vue';
 </script>
 
 <style scoped>

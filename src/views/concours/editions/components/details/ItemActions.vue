@@ -5,17 +5,17 @@
     </button>
     <ul class="dropdown-menu dropdown-menu-light">
       <li>
-        <button class="dropdown-item" @click="isDetailsVisible = true">
+        <button class="dropdown-item" @click="openDetails">
           <i class="mdi mdi-information-outline me-2"></i> Détails
         </button>
       </li>
       <li v-if="showAdd">
         <RouterLink
           class="dropdown-item"
-          :to="`/edition-concours/edit/${item.concours_id}`"
+          :to="`/edition-concours/edit/${item.id}`"
           @click="$emit('add', item)"
         >
-          <i class="mdi mdi mdi-launch me-2"></i> Editer
+          <i class="mdi mdi-launch me-2"></i> Editer
         </RouterLink>
       </li>
       <li>
@@ -36,52 +36,50 @@
       </li>
     </ul>
   </div>
+
   <teleport to="body">
     <div
       v-if="isDetailsVisible"
       class="modal fade show d-block"
       tabindex="-1"
       role="dialog"
-      style="background-color: rgba(0, 0, 0, 0.5)"
+      style="background-color: rgba(0, 0, 0, 0.5); z-index: 1055;"
       @click.self="closeDetails"
     >
-      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">
-              <i class="mdi mdi-information-outline me-2"></i>
+      <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+          <div class="modal-header bg-primary text-white py-3">
+            <h5 class="modal-title d-flex align-items-center">
+              <i class="mdi mdi-information-outline me-2 fs-4"></i>
               Détails du concours
             </h5>
             <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
-          <div class="modal-body">
-            <div class="row">
+          
+          <div class="modal-body p-4">
+            <div class="row g-3">
               <div class="col-md-6">
                 <div class="info-card mb-3">
                   <h6 class="info-title">Informations générales</h6>
                   <div class="info-content">
                     <div class="info-item">
-                      <span class="info-label">ID:</span>
-                      <span class="info-value">{{ item.concours_id }}</span>
-                    </div>
-                    <div class="info-item">
                       <span class="info-label">Désignation:</span>
-                      <span class="info-value">{{ item.designation }}</span>
+                      <span class="info-value fw-bold text-dark">{{ item.designation }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Type:</span>
-                      <span class="info-value">{{ item.type_libelle }} ({{ item.type_code }})</span>
+                      <span class="info-value">{{ item.libelle_type }} ({{ item.type_concours }})</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Description:</span>
-                      <span class="info-value">{{ item.description }}</span>
+                      <span class="info-value text-start">{{ item.description || 'Aucune description' }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Dossier requis:</span>
                       <span class="info-value">
                         <span
-                          class="badge"
-                          :class="item.dossier_requis ? 'bg-success' : 'bg-secondary'"
+                          class="badge rounded-pill px-2 py-1 text-xs"
+                          :class="item.dossier_requis ? 'bg-success-subtle text-success border border-success' : 'bg-secondary-subtle text-secondary border border-secondary'"
                         >
                           {{ item.dossier_requis ? 'Oui' : 'Non' }}
                         </span>
@@ -93,27 +91,27 @@
 
               <div class="col-md-6">
                 <div class="info-card mb-3">
-                  <h6 class="info-title">Dates et période</h6>
+                  <h6 class="info-title">Dates & Session</h6>
                   <div class="info-content">
                     <div class="info-item">
-                      <span class="info-label">Date début:</span>
-                      <span class="info-value">{{ formatDate(item.date_debut) }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Date fin:</span>
-                      <span class="info-value">{{ formatDate(item.date_fin) }}</span>
+                      <span class="info-label">Année académique:</span>
+                      <span class="info-value fw-bold text-primary">{{ item.code_annee }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Limite inscription:</span>
-                      <span class="info-value">{{ formatDate(item.date_limite_inscription) }}</span>
+                      <span class="info-value text-danger fw-semibold">{{ formatDate(item.date_limite_inscription) }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="info-label">Année académique:</span>
-                      <span class="info-value">{{ item.annee_code }}</span>
+                      <span class="info-label">Date de début:</span>
+                      <span class="info-value font-monospace">{{ formatDate(item.date_debut) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Date de fin:</span>
+                      <span class="info-value font-monospace">{{ formatDate(item.date_fin) }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Statut:</span>
-                      <span class="badge" :class="getStatusClass(item.statut)">
+                      <span class="badge rounded-pill px-2.5 py-1.5 fw-bold" :class="getStatusClass(item.statut)">
                         {{ item.statut }}
                       </span>
                     </div>
@@ -122,58 +120,34 @@
               </div>
             </div>
 
-            <div class="row mt-3">
-              <div class="col-md-6">
-                <div class="info-card">
-                  <h6 class="info-title">Période académique</h6>
-                  <div class="info-content">
-                    <div class="info-item">
-                      <span class="info-label">Début année:</span>
-                      <span class="info-value">{{ formatDate(item.annee_debut) }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Fin année:</span>
-                      <span class="info-value">{{ formatDate(item.annee_fin) }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Année active:</span>
-                      <span class="info-value">
-                        <span
-                          class="badge"
-                          :class="item.annee_active ? 'bg-success' : 'bg-secondary'"
-                        >
-                          {{ item.annee_active ? 'Oui' : 'Non' }}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <div class="info-card">
+            <div class="row mt-2">
+              <div class="col-12">
+                <div class="info-card bg-light-subtle border">
                   <h6 class="info-title">Actions rapides</h6>
-                  <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary btn-sm">
-                      <i class="mdi mdi-file-document-outline me-2"></i> Voir les épreuves
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary btn-sm px-3" @click="$emit('view-exams', item)">
+                      <i class="mdi mdi-file-document-outline me-1"></i> Voir les épreuves
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm">
-                      <i class="mdi mdi-clipboard-list-outline me-2"></i> Liste des candidats
-                    </button>
-                    <button class="btn btn-outline-info btn-sm">
-                      <i class="mdi mdi-chart-bar me-2"></i> Statistiques
+                    <button class="btn btn-outline-secondary btn-sm px-3" @click="$emit('view-candidates', item)">
+                      <i class="mdi mdi-clipboard-list-outline me-1"></i> Liste des candidats
                     </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeDetails">
-              <i class="mdi mdi-close me-2"></i> Fermer
+          
+          <div class="modal-footer bg-light py-2">
+            <button class="btn btn-secondary text-sm" @click="closeDetails">
+               Fermer
             </button>
-            <button class="btn btn-primary" @click="$emit('edit', item)">
-              <i class="mdi mdi-pencil me-2"></i> Modifier
+            <button 
+              class="btn btn-primary text-sm" 
+              data-bs-toggle="modal" 
+              :data-bs-target="editModalTarget" 
+              @click="handleEditFromModal"
+            >
+              Modifier
             </button>
           </div>
         </div>
@@ -200,6 +174,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['add', 'edit', 'delete', 'view-exams', 'view-candidates']);
+
 const isDetailsVisible = ref(false);
 
 const openDetails = () => {
@@ -208,6 +184,11 @@ const openDetails = () => {
 
 const closeDetails = () => {
   isDetailsVisible.value = false;
+};
+
+const handleEditFromModal = () => {
+  closeDetails();
+  emit('edit', props.item);
 };
 
 const formatDate = (dateString) => {
@@ -223,13 +204,16 @@ const formatDate = (dateString) => {
 const getStatusClass = (status) => {
   switch (status?.toLowerCase()) {
     case 'ouvert':
-      return 'bg-success';
+      return 'bg-success text-white';
     case 'fermé':
-      return 'bg-danger';
+      return 'bg-danger text-white';
+    case 'planifié':
     case 'en attente':
-      return 'bg-warning';
+      return 'bg-warning text-dark';
+    case 'proclamé':
+      return 'bg-info text-white';
     default:
-      return 'bg-secondary';
+      return 'bg-secondary text-white';
   }
 };
 
@@ -240,27 +224,34 @@ defineExpose({ openDetails, closeDetails });
 .info-card {
   background-color: #f8f9fa;
   border-radius: 0.5rem;
-  padding: 1rem;
+  padding: 1.25rem;
   height: 100%;
 }
 
 .info-title {
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-bottom: 1rem;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 2px solid #dee2e6;
   padding-bottom: 0.5rem;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  align-items: start;
+  gap: 15px;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .info-label {
-  font-weight: 500;
+  font-weight: 600;
   color: #6c757d;
+  white-space: nowrap;
 }
 
 .info-value {

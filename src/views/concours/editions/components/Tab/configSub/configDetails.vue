@@ -1,5 +1,5 @@
 <template>
-  <div class="planification-container">
+  <div class="">
     <div class="row">
       <div class="col-12">
         <!-- En-tête -->
@@ -68,7 +68,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import TabDetail from '../tabs/TabDetails.vue';
+import TabDetail from './configTab.vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
 </script>
 
