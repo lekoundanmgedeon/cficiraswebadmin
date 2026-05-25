@@ -1,61 +1,57 @@
-<!-- CyclesContent.vue -->
 <template>
   <div>
-    <!-- Statistiques rapides -->
     <div class="col-12 mb-2">
       <h4>Statistiques des cycles</h4>
-      <p class="text-muted">Indicateurs globaux liés aux cycles et à l’activité académique.</p>
+      <p class="text-muted">Indicateurs globaux de distribution des étudiants par cycle académique.</p>
     </div>
 
-    <div class="table-responsive card border-light">
-      <table class="table align-middle mb-0 custom-table-robust">
+    <div class="table-responsive card border-light shadow-sm">
+      <table class="table align-middle mb-0 table-hover">
         <thead>
           <tr>
-            <th class="ps-4">Code / Nom</th>
+            <th class="ps-4">Code / Cycle</th>
             <th>Diplôme</th>
-            <th class="text-center">Filières</th>
-            <th class="text-center">Effectif</th>
-            <th class="text-center">Crédits</th>
+            <th class="text-center">Effectif Étudiants</th>
             <th class="text-end pe-4">Statut</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="filteredCycles.length === 0">
-            <td colspan="6" class="text-center py-5">
+          <tr v-if="loading">
+            <td colspan="4" class="text-center py-5">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+              <span class="text-muted">Chargement des statistiques...</span>
+            </td>
+          </tr>
+
+          <tr v-else-if="filteredCycles.length === 0">
+            <td colspan="4" class="text-center py-5">
               <div class="py-3">
-                <i
-                  class="mdi mdi-folder-open-outline text-muted"
-                  style="font-size: 3rem; opacity: 0.3"
-                ></i>
+                <i class="mdi mdi-account-off-outline text-muted" style="font-size: 3rem; opacity: 0.3"></i>
                 <p class="text-muted mt-2">Aucune donnée statistique disponible</p>
               </div>
             </td>
           </tr>
-          <tr v-for="cycle in filteredCycles" :key="cycle.id">
+
+          <tr v-else v-for="cycle in filteredCycles" :key="cycle.cycle_id">
             <td class="ps-4">
               <div class="d-flex align-items-center">
-                <span class="code-tag-blue me-3">{{ cycle.code }}</span>
-                <div>
-                  <div class="fw-bold text-dark">{{ cycle.nom }}</div>
-                  <div class="x-small text-muted">{{ cycle.nomComplet }}</div>
-                </div>
+                <span class="badge bg-primary-subtle text-primary me-3 px-2 py-1 fw-bold">
+                  {{ cycle.cycle_code }}
+                </span>
+                <span class="fw-bold text-dark">{{ cycle.cycle_code }}</span>
               </div>
             </td>
             <td>
-              <span class="text-muted small fw-medium">{{ cycle.diplome }}</span>
+              <span class="text-muted small fw-medium">{{ cycle.diplome || 'N/A' }}</span>
             </td>
             <td class="text-center">
-              <span class="fw-bold">{{ cycle.nombreFilieres }}</span>
-            </td>
-            <td class="text-center">
-              <span class="badge rounded-pill bg-light text-dark border px-3">
-                {{ cycle.nombreEtudiants }}
+              <span class="badge rounded-pill bg-light text-dark border px-3 fw-semibold">
+                {{ formatNumber(cycle.nb_etudiants) }}
               </span>
             </td>
-            <td class="text-center fw-semibold text-muted">{{ cycle.creditsECTS }} ECTS</td>
             <td class="text-end pe-4">
-              <span :class="getStatutClass(cycle.statut)" class="status-pill-robust">
-                {{ getStatutLabel(cycle.statut) }}
+              <span :class="Number(cycle.nb_etudiants) > 0 ? 'badge bg-success-subtle text-success' : 'badge bg-secondary-subtle text-secondary'" class="px-2 py-1 rounded-pill small">
+                {{ Number(cycle.nb_etudiants) > 0 ? 'Actif' : 'Inactif' }}
               </span>
             </td>
           </tr>
@@ -66,143 +62,43 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
 
-// Statistiques
-const totalCycles = ref(3);
-const cyclesActifs = ref(3);
-const totalFilieres = ref(12);
-const totalEtudiants = ref(1450);
+const cycleStore = useCycleStore();
 
-// Filtres
+// Filtres de recherche
 const searchQuery = ref('');
-const filterStatut = ref('');
-const filterNiveau = ref('');
 
-// Données
-const cycles = ref([
-  {
-    id: 1,
-    code: 'L',
-    nom: 'Licence',
-    nomComplet: 'Licence Professionnelle',
-    type: 'licence',
-    duree: 3,
-    diplome: 'Licence (BAC+3)',
-    nombreFilieres: 5,
-    nombreEtudiants: 850,
-    creditsECTS: 180,
-    statut: 'actif',
-  },
-  {
-    id: 2,
-    code: 'M',
-    nom: 'Master',
-    nomComplet: 'Master Recherche et Professionnel',
-    type: 'master',
-    duree: 2,
-    diplome: 'Master (BAC+5)',
-    nombreFilieres: 4,
-    nombreEtudiants: 450,
-    creditsECTS: 120,
-    statut: 'actif',
-  },
-  {
-    id: 3,
-    code: 'D',
-    nom: 'Doctorat',
-    nomComplet: 'Doctorat / PhD',
-    type: 'doctorat',
-    duree: 3,
-    diplome: 'Doctorat (BAC+8)',
-    nombreFilieres: 3,
-    nombreEtudiants: 150,
-    creditsECTS: 180,
-    statut: 'actif',
-  },
-]);
-
-const formData = ref({
-  code: '',
-  nom: '',
-  nomComplet: '',
-  type: 'licence',
-  duree: 3,
-  diplome: '',
-  description: '',
-  creditsECTS: 180,
-  statut: 'actif',
+// Appel API au montage du composant
+onMounted(() => {
+  cycleStore.fetchCycleDistributionStats();
 });
 
-// Computed
+// Alias réactifs vers le Store
+const loading = computed(() => cycleStore.loading);
+const cyclesRaw = computed(() => cycleStore.stats || []);
+
+// Filtrage en direct sur les données de l'API
 const filteredCycles = computed(() => {
-  return cycles.value.filter((cycle) => {
-    const matchSearch =
-      cycle.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      cycle.code.toLowerCase().includes(searchQuery.value.toLowerCase());
-    const matchStatut = !filterStatut.value || cycle.statut === filterStatut.value;
-    return matchSearch && matchStatut;
+  return cyclesRaw.value.filter((cycle) => {
+    const search = searchQuery.value.toLowerCase();
+    return (
+      cycle.cycle_code.toLowerCase().includes(search) ||
+      cycle.diplome.toLowerCase().includes(search)
+    );
   });
 });
 
-// Méthodes
-const getCycleIcon = (type) => {
-  const icons = {
-    licence: 'mdi mdi-school text-primary',
-    master: 'mdi mdi-school-outline text-success',
-    doctorat: 'mdi mdi-certificate text-warning',
-  };
-  return icons[type] || 'mdi mdi-school';
-};
+// Total global calculé dynamiquement depuis l'API
+const totalEtudiants = computed(() => {
+  return cyclesRaw.value.reduce((sum, item) => sum + parseInt(item.nb_etudiants || 0, 10), 0);
+});
 
-const getStatutClass = (statut) => {
-  const classes = {
-    actif: 'status-badge status-active',
-    inactif: 'status-badge status-inactive',
-    brouillon: 'status-badge status-draft',
-  };
-  return classes[statut] || 'status-badge';
-};
-
-const getStatutLabel = (statut) => {
-  const labels = {
-    actif: 'Actif',
-    inactif: 'Inactif',
-    brouillon: 'Brouillon',
-  };
-  return labels[statut] || statut;
-};
-
-const resetFilters = () => {
-  searchQuery.value = '';
-  filterStatut.value = '';
-  filterNiveau.value = '';
-};
-
-const applyFilters = () => {
-  console.log('Filtres appliqués');
-};
-
-const exportData = () => {
-  console.log('Export des cycles');
-};
-
-const voirDetails = (cycle) => {
-  console.log('Voir détails:', cycle);
-};
-
-const modifierCycle = (cycle) => {
-  console.log('Modifier:', cycle);
-};
-
-const supprimerCycle = (cycle) => {
-  if (confirm(`Êtes-vous sûr de vouloir supprimer le cycle ${cycle.nom} ?`)) {
-    console.log('Supprimer:', cycle);
-  }
-};
-
-const enregistrerCycle = () => {
-  console.log('Enregistrer:', formData.value);
+// Sécurité de formatage pour les chaînes de l'API
+const formatNumber = (val) => {
+  const num = parseInt(val, 10);
+  return isNaN(num) ? 0 : num;
 };
 </script>
 

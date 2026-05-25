@@ -56,7 +56,7 @@ export const deleteCycle = (id) => academiqueService.delete(`/cycles/${id}`);
 export const getFilieres = () => academiqueService.get('/filieres');
 export const getFiliereById = (id) => academiqueService.get(`/filieres/${id}`);
 
-export const getFiliereOrganisation = () => academiqueService.get('/filieres/organisation/arbre');
+export const getFiliereOrganisation = () => academiqueService.get('/filieres/stats/organisations');
 export const getFilieresByCycle = (cycleId) => academiqueService.get(`/filieres/cycle/${cycleId}`);
 export const getFiliereStats = (id) => academiqueService.get(`/filieres/${id}/stats`);
 
