@@ -2,10 +2,11 @@ import buildService from '../config/serviceApi';
 import { academiqueApi, academiqueFormApi } from '../config/apiClients';
 
 const academiqueService = buildService(academiqueApi);
-const academiqueFormService = buildService(academiqueFormApi);
+
 
 // API pour gérer les années académiques
 export const getAnneesAcademiques = () => academiqueService.get('/annees');
+export const getAnneesHistory = () => academiqueService.get('/annees/history');
 export const getCurrentAnnee = () => academiqueService.get('/annees/current');
 export const getAnneeById = (id) => academiqueService.get(`/annees/${id}`);
 export const getAnneeStats = (id) => academiqueService.get(`/annees/${id}/stats`);
@@ -37,17 +38,14 @@ export const updateClasse = (id, data) => academiqueService.put(`/classes/${id}`
 export const deleteClasse = (id) => academiqueService.delete(`/classes/${id}`);
 
 
-// API pour gérer les cursus --- A SUPPRIMER
-export const getCursus = () => academiqueService.get('/cursus');
-export const createCursus = (data) => academiqueService.post('/cursus', data);
-export const updateCursus = (id, data) => academiqueService.put(`/cursus/${id}`, data);
-export const deleteCursus = (id) => academiqueService.delete(`/cursus/${id}`);
+
 
 // API pour gérer les cycles
 export const getCycles = () => academiqueService.get('/cycles');
 export const getCycleById = (id) => academiqueService.get(`/cycles/${id}`);
 export const getCycleFilieres = (id) => academiqueService.get(`/cycles/${id}/filieres`);
 export const getCycleDistributionStats = () => academiqueService.get('/cycles/stats/distribution');
+export const getCycleOrganisation = () => academiqueService.get('/cycles/stats/organisations/');
 
 export const createCycle = (data) => academiqueService.post('/cycles', data);
 export const updateCycle = (id, data) => academiqueService.put(`/cycles/${id}`, data);

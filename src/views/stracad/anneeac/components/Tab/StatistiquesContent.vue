@@ -1,6 +1,6 @@
 <template>
   <div class="row g-4">
-    <!-- Header avec Date et Sélecteur rapide (optionnel) -->
+    <!-- Header -->
     <div class="col-12 d-flex justify-content-between align-items-center mb-2">
       <h5 class="fw-bold mb-0">Performances de l'Année Académique</h5>
       <span class="badge bg-soft-primary text-primary px-3 py-2">
@@ -15,7 +15,7 @@
           <i class="mdi mdi-account-group text-primary"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ totalEtudiants }}</h3>
+          <h3>{{ stats?.nb_etudiants ?? '-' }}</h3>
           <p class="text-uppercase small fw-bold">Effectif Total</p>
         </div>
       </div>
@@ -27,7 +27,7 @@
           <i class="mdi mdi-trending-up text-success"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ backendData.reussite.taux_reussite }}%</h3>
+          <h3>{{ stats?.reussite?.taux_reussite ?? '-' }}%</h3>
           <p class="text-uppercase small fw-bold">Taux de Réussite</p>
         </div>
       </div>
@@ -39,7 +39,7 @@
           <i class="mdi mdi-book-open-variant text-info"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ backendData.nb_modules }}</h3>
+          <h3>{{ stats?.nb_modules ?? '-' }}</h3>
           <p class="text-uppercase small fw-bold">Modules Actifs</p>
         </div>
       </div>
@@ -51,7 +51,7 @@
           <i class="mdi mdi-door-open text-warning"></i>
         </div>
         <div class="stat-content">
-          <h3>{{ backendData.nb_classes }}</h3>
+          <h3>{{ stats?.nb_classes ?? '-' }}</h3>
           <p class="text-uppercase small fw-bold">Classes Ouvertes</p>
         </div>
       </div>
@@ -63,7 +63,7 @@
         <div class="card-header bg-white py-3">
           <div class="d-flex justify-content-between align-items-center">
             <h6 class="mb-0 fw-bold text-dark">Rapport de Performance par Filière</h6>
-            <button class="btn btn-sm btn-light border">
+            <button class="btn btn-sm btn-light border" @click="exportRapport">
               <i class="mdi mdi-download me-1"></i> Rapport complet
             </button>
           </div>
@@ -83,20 +83,18 @@
                 <tr v-for="filiere in filieres" :key="filiere.id">
                   <td class="ps-4">
                     <div class="fw-bold text-dark">{{ filiere.designation }}</div>
-                    <small class="text-muted">ID: #FL-00{{ filiere.id }}</small>
+                    <small class="text-muted">ID: #{{ filiere.code }}</small>
                   </td>
                   <td class="text-center">
-                    <span class="badge rounded-pill bg-light text-dark px-3"
-                      >{{ filiere.nb_etudiants }} étudiants</span
-                    >
+                    <span class="badge rounded-pill bg-light text-dark px-3">
+                      {{ filiere.nb_etudiants }} étudiants
+                    </span>
                   </td>
                   <td class="text-center">
                     <div v-if="filiere.moyenne_generale">
                       <div class="d-flex justify-content-between mb-1">
                         <small class="fw-bold">{{ filiere.moyenne_generale }} / 20</small>
-                        <small class="text-muted"
-                          >{{ (filiere.moyenne_generale * 5).toFixed(0) }}%</small
-                        >
+                        <small class="text-muted">{{ (filiere.moyenne_generale * 5).toFixed(0) }}%</small>
                       </div>
                       <div class="progress" style="height: 6px">
                         <div
@@ -109,10 +107,7 @@
                     <span v-else class="text-muted italic small">Attente de délibération</span>
                   </td>
                   <td class="text-center">
-                    <span
-                      v-if="filiere.moyenne_generale"
-                      class="badge bg-soft-success text-success px-3"
-                    >
+                    <span v-if="filiere.moyenne_generale" class="badge bg-soft-success text-success px-3">
                       <i class="mdi mdi-check-circle-outline me-1"></i> Validé
                     </span>
                     <span v-else class="badge bg-soft-warning text-warning px-3">
@@ -124,15 +119,8 @@
               <tbody v-else>
                 <tr>
                   <td colspan="4" class="text-center py-5">
-                    <img
-                      src="/img/empty-box.svg"
-                      alt="Vide"
-                      style="width: 80px"
-                      class="mb-3 opacity-50"
-                    />
-                    <p class="text-muted">
-                      Aucune donnée statistique disponible pour cette période.
-                    </p>
+                    <img src="/img/empty-box.svg" alt="Vide" style="width: 80px" class="mb-3 opacity-50" />
+                    <p class="text-muted">Aucune donnée statistique disponible pour cette période.</p>
                   </td>
                 </tr>
               </tbody>
@@ -145,37 +133,44 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
+import { useNotifier } from '@/stores/messages/useNotifier';
 
-const backendData = ref({
-  nb_classes: '15',
-  nb_etudiants: '30',
-  nb_modules: '37',
-  nb_semestres: '2',
-  reussite: {
-    total_notes: '10',
-    admis: '8',
-    taux_reussite: '80.00',
-  },
-  filieres: [
-    { id: 1, designation: 'Informatique', nb_etudiants: '7', moyenne_generale: '14.49' },
-    { id: 2, designation: 'Administration Publique', nb_etudiants: '7', moyenne_generale: '10.83' },
-    { id: 3, designation: 'Assistant Manager', nb_etudiants: '7', moyenne_generale: null },
-    { id: 4, designation: 'Économie', nb_etudiants: '7', moyenne_generale: '9.50' },
-    { id: 5, designation: 'Biologie', nb_etudiants: '2', moyenne_generale: null },
-  ],
+const anneeStore = useAnneeStore();
+const messageStore = useNotifier();
+
+// Récupération des stats depuis le store
+const stats = computed(() => anneeStore.stats || {});
+const filieres = computed(() => stats.value.filieres ?? []);
+
+// Charger les stats au montage (exemple avec ID courant)
+onMounted(async () => {
+  try {
+    // Ici tu peux passer l'ID de l'année courante ou sélectionnée
+    await anneeStore.fetchAnneeStats('ae71e0d4-88d2-43b8-aa68-c79fd925d2dd');
+  } catch (error) {
+    messageStore.error('Erreur lors du chargement des statistiques.');
+  }
 });
 
-const filieres = computed(() => backendData.value.filieres ?? []);
-const totalEtudiants = computed(() => backendData.value.nb_etudiants);
-
-// Logique de couleur pour les barres de progression
+// Couleur des barres de progression
 const getMoyenneColor = (moyenne) => {
   if (moyenne >= 14) return 'bg-success';
   if (moyenne >= 10) return 'bg-info';
   return 'bg-danger';
 };
+
+// Export du rapport
+const exportRapport = async () => {
+  try {
+    await anneeStore.exportAnnee('ae71e0d4-88d2-43b8-aa68-c79fd925d2dd');
+  } catch (error) {
+    messageStore.error('Erreur lors de l’exportation du rapport.');
+  }
+};
 </script>
+
 
 <style scoped>
 /* Cartes Stats */

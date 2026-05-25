@@ -104,9 +104,15 @@
 
                 <!-- Stats rapides -->
                 <div class="col-md-2 text-muted small border-start px-3">
-                  <div><i class="mdi mdi-account-group me-1"></i> 1,240 Étudiants</div>
-                  <div><i class="mdi mdi-school me-1"></i> 45 Classes</div>
-                </div>
+                    <div>
+                      <i class="mdi mdi-account-group me-1"></i> 
+                      {{ annee.nb_etudiants }} {{ annee.nb_etudiants > 1 ? 'Étudiants' : 'Étudiant' }}
+                    </div>
+                    <div>
+                      <i class="mdi mdi-school me-1"></i> 
+                      {{ annee.nb_classes }} {{ annee.nb_classes > 1 ? 'Classes' : 'Classe' }}
+                    </div>
+                  </div>
 
                 <!-- Actions -->
                 <div class="col-md-2 text-end">
@@ -138,24 +144,45 @@
   </div>
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+// Importe ton store Pinia (ajuste le chemin selon ton projet)
+import { useAnneeStore } from '@/stores/academiqueStore/anneStore'; 
 
+// Initialisation du store
+const anneeStore = useAnneeStore();
+
+// Gestion des filtres
 const searchQuery = ref('');
 const filterStatut = ref('');
 const filterPeriode = ref('');
-const loading = ref(false);
 
-const annees = ref([
-  { id: 1, code: '2024-2025', debut: '2024-10-01', fin: '2025-07-31', statut: 'active' },
-  { id: 2, code: '2023-2024', debut: '2023-10-01', fin: '2024-07-31', statut: 'terminee' },
-]);
+// Récupération des données au chargement du composant
+onMounted(() => {
+  anneeStore.fetchAnneesHistory();
+});
 
+// Alias réactifs pour simplifier le template (branchement direct sur le store)
+const loading = computed(() => anneeStore.loading);
+const annees = computed(() => anneeStore.anneeHistory || []);
+
+// Logique des filtres combinés
 const anneesFiltrees = computed(() => {
   return annees.value.filter((a) => {
-    return (
-      a.code.toLowerCase().includes(searchQuery.value.toLowerCase()) &&
-      (!filterStatut.value || a.statut === filterStatut.value)
-    );
+    // 1. Filtre par zone de texte (Code)
+    const matchesSearch = a.code.toLowerCase().includes(searchQuery.value.toLowerCase());
+    
+    // 2. Filtre par Statut
+    const matchesStatut = !filterStatut.value || a.statut === filterStatut.value;
+    
+    // 3. Filtre par Période (Current vs Previous)
+    let matchesPeriode = true;
+    if (filterPeriode.value === 'current') {
+      matchesPeriode = a.statut === 'active' || a.statut === 'en_preparation';
+    } else if (filterPeriode.value === 'previous') {
+      matchesPeriode = a.statut === 'terminee' || a.statut === 'archivee';
+    }
+
+    return matchesSearch && matchesStatut && matchesPeriode;
   });
 });
 
@@ -165,26 +192,43 @@ const resetFilters = () => {
   filterPeriode.value = '';
 };
 
-// Fonctions utilitaires pour le nouveau design
-const formatSimpleDate = (date) =>
-  new Date(date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+// --- Fonctions utilitaires ---
 
-const getStatusBadgeClass = (statut) => {
-  const map = {
-    active: 'badge-soft-success',
-    en_preparation: 'badge-soft-warning',
-    terminee: 'badge-soft-secondary',
-    archivee: 'badge-soft-info',
-  };
-  return map[statut] || 'bg-light';
+// Formate les dates de l'API (ex: 2025-10-01T00:00:00.000Z -> oct. 2025)
+const formatSimpleDate = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
 };
 
-const formatStatut = (s) => s.replace('_', ' ').toUpperCase();
+// Classes dynamiques pour le badge de statut
+const getStatusBadgeClass = (statut) => {
+  const map = {
+    active: 'badge-soft-success bg-success text-white', // Ajout de fallback Bootstrap si badge-soft n'est pas défini
+    en_preparation: 'badge-soft-warning bg-warning text-dark',
+    terminee: 'badge-soft-secondary bg-secondary text-white',
+    archivee: 'badge-soft-info bg-info text-white',
+  };
+  return map[statut] || 'bg-light text-dark';
+};
 
+const formatStatut = (s) => s ? s.replace('_', ' ').toUpperCase() : '';
+
+// Calcul intelligent du pourcentage de progression
 const calculateProgress = (annee) => {
   if (annee.statut === 'terminee' || annee.statut === 'archivee') return 100;
   if (annee.statut === 'en_preparation') return 0;
-  return 65; // Exemple pour l'année active
+  
+  // Si active, calcul basé sur le temps réel écoulé
+  const debut = new Date(annee.debut);
+  const fin = new Date(annee.fin);
+  const maintenant = new Date();
+  
+  if (maintenant < debut) return 0;
+  if (maintenant > fin) return 100;
+  
+  const total = fin - debut;
+  const actuel = maintenant - debut;
+  return Math.round((actuel / total) * 100);
 };
 
 const getProgressBarClass = (statut) => (statut === 'active' ? 'bg-success' : 'bg-secondary');

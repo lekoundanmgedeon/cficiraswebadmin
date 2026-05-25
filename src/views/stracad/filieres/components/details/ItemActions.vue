@@ -3,21 +3,14 @@
     <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
       ...
     </button>
+
     <ul class="dropdown-menu dropdown-menu-light">
       <li>
         <button class="dropdown-item" @click="isDetailsVisible = true">
           <i class="mdi mdi-information-outline me-2"></i> Détails
         </button>
       </li>
-      <li v-if="showAdd">
-        <RouterLink
-          class="dropdown-item"
-          :to="`/edition-concours/edit/${item.concours_id}`"
-          @click="$emit('add', item)"
-        >
-          <i class="mdi mdi mdi-launch me-2"></i> Editer
-        </RouterLink>
-      </li>
+
       <li>
         <button
           class="dropdown-item"
@@ -28,7 +21,9 @@
           <i class="mdi mdi-pencil-outline me-2"></i> Modifier
         </button>
       </li>
+
       <li class="dropdown-divider"></li>
+
       <li>
         <button class="dropdown-item text-danger" @click="$emit('delete', item)">
           <i class="mdi mdi-delete-outline me-2"></i> Supprimer
@@ -36,20 +31,20 @@
       </li>
     </ul>
   </div>
-  <!-- Modal pour les détails -->
+
+  <!-- Modal Détails -->
   <teleport to="body">
     <div
       v-if="isDetailsVisible"
       class="modal fade show d-block"
       tabindex="-1"
-      role="dialog"
       style="background-color: rgba(0, 0, 0, 0.5)"
     >
-      <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">Détails de la filière</h5>
-            <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
+            <h5 class="modal-title">Détails du niveau</h5>
+            <button class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
 
           <div class="modal-body">
@@ -58,25 +53,27 @@
                 <strong>Code :</strong>
                 <span class="fw-bold text-primary">{{ item.code }}</span>
               </li>
+
               <li class="list-group-item d-flex justify-content-between">
-                <strong>Désignation :</strong>
-                <span>{{ item.designation }}</span>
+                <strong>Ordre :</strong>
+                <span class="badge bg-secondary">{{ item.ordre }}</span>
               </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <strong>Crédit total :</strong>
-                <span class="badge bg-info">{{ item.credit_total }}</span>
-              </li>
+
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Cycle :</strong>
-                <span class="text-success">{{ item.cycle_nom }}</span>
+                <span class="text-success">{{ item.cycle_code }}</span>
               </li>
+
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Frais de scolarité :</strong>
+                <span class="badge bg-info"> {{ formatMoney(item.frais_scolarite) }} FCFA </span>
+              </li>
+
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Nombre de classes :</strong>
-                <span class="badge bg-secondary">{{ item.nb_classes }}</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <strong>Nombre d'étudiants :</strong>
-                <span class="badge bg-warning text-dark">{{ item.nb_etudiants }}</span>
+                <span class="badge bg-warning text-dark">
+                  {{ item.nb_classes }}
+                </span>
               </li>
             </ul>
           </div>
@@ -94,14 +91,13 @@
 import { ref } from 'vue';
 
 defineProps({
-  item: Object,
-  showAdd: {
-    type: Boolean,
-    default: false,
+  item: {
+    type: Object,
+    required: true,
   },
   editModalTarget: {
     type: String,
-    default: '#exampleModal-edit',
+    default: '#editNiveauModal',
   },
 });
 
@@ -109,5 +105,10 @@ const isDetailsVisible = ref(false);
 
 const closeDetails = () => {
   isDetailsVisible.value = false;
+};
+
+const formatMoney = (value) => {
+  if (!value) return '0';
+  return new Intl.NumberFormat('fr-FR').format(Number(value));
 };
 </script>

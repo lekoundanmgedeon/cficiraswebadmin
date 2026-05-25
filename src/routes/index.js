@@ -16,8 +16,6 @@ const routes = [
   {
     path: '/',
     component: DefaultLayout,
-    linkActiveClass: 'active',       
-    linkExactActiveClass: 'active',
     meta: { requiresAuth: true },
     children: [
       ...structureRoutes,

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import {
   getAnneesAcademiques,
+  getAnneesHistory,
   getCurrentAnnee,
   getAnneeById,
   getAnneeStats,
@@ -39,6 +40,7 @@ function getCache(key, ttl = 5 * 60 * 1000) {
 export const useAnneeStore = defineStore('anneeStore', {
   state: () => ({
     anneesAcademiques: [],
+    anneeHistory: [],
     anneeAcademique: null,
     stats: null,
     meta: null,
@@ -63,6 +65,19 @@ export const useAnneeStore = defineStore('anneeStore', {
       } catch (error) {
         messageStore.notifyError('Erreur lors de la récupération des données.');
       } finally {
+        this.loading = false;
+      }
+    },
+    async fetchAnneesHistory() {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getAnneesHistory();
+        this.anneeHistory = response.data;
+      } catch (error) {
+        messageStore.notifyError('Erreur lors de la récupération de l’historique.');
+      }
+      finally {
         this.loading = false;
       }
     },

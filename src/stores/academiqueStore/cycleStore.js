@@ -3,6 +3,7 @@ import {
   getCycles,
   getCycleById,
   getCycleFilieres,
+  getCycleOrganisation,
   getCycleDistributionStats,
   createCycle,
   updateCycle,
@@ -38,6 +39,7 @@ export const useCycleStore = defineStore('cycleStore', {
   state: () => ({
     cycles: [],
     cycle: null,
+    organisationStats: [],
     filieres: [],
     stats: null,
     loading: false,
@@ -65,7 +67,20 @@ export const useCycleStore = defineStore('cycleStore', {
         this.loading = false;
       }
     },
-
+    async fetchCycleOrganisation() {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getCycleOrganisation();
+        this.organisationStats = response.data;
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Échec lors du chargement de l\'organisation des cycles.')
+        );
+      } finally {
+        this.loading = false;
+      }
+    }, 
     // Récupérer un cycle par ID
     async fetchCycleById(id) {
       const messageStore = useMessageStore();

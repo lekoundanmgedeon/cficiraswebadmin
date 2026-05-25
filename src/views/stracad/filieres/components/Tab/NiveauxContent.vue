@@ -22,7 +22,7 @@
             </li>
             <li v-for="cycle in cycles" :key="cycle.id">
               <button class="dropdown-item" @click="filterByCycle(cycle.id)">
-                {{ cycle.designation }}
+                {{ cycle.cycle_code}}
               </button>
             </li>
           </ul>
@@ -65,7 +65,7 @@
                   {{ niveau.ordre + 'e année' }}
                 </span>
               </td>
-              <td>{{ niveau.cycle_designation }}</td>
+              <td>{{ niveau.cycle_code }}</td>
               <td>{{ formatMoney(niveau.frais_scolarite) }}</td>
               <td>
                 <span class="badge" :class="niveau.nb_classes > 0 ? 'bg-success' : 'bg-secondary'">
@@ -107,7 +107,7 @@ import { useNiveauStore } from '@/stores/academiqueStore/niveauStore';
 import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
 
 import NiveauFormModal from '../Modal/addNiveau.vue';
-import ItemActions from '../details/ItemActions2.vue';
+import ItemActions from '../details/ItemActions.vue';
 
 const niveauStore = useNiveauStore();
 const cycleStore = useCycleStore();

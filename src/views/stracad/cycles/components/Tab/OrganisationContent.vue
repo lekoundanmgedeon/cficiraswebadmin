@@ -4,8 +4,7 @@
     <p>Vous pouvez consulter les détails de chaque examen en cliquant sur le lien correspondant.</p>
 
     <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
+      <table class="table table-striped align-middle"> <thead>
           <tr>
             <th>Cycle</th>
             <th>Filiere disponible</th>
@@ -17,33 +16,36 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="6" class="text-center py-4">Chargement en cours...</td>
+            <td colspan="6" class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+              Chargement en cours...
+            </td>
           </tr>
 
           <tr v-else-if="organisations.length === 0">
             <td colspan="6" class="text-center py-4">
               <div class="d-flex flex-column align-items-center">
-                <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" />
-                <div class="text-pr">Aucune donnée</div>
+                <img src="/img/empty-box.svg" alt="Aucune donnée" class="mb-2" style="width: 80px;" />
+                <div class="text-muted">Aucune donnée disponible</div> 
               </div>
             </td>
           </tr>
 
           <tr v-else v-for="item in organisations" :key="item.cycle_id">
-            <td>{{ item.cycle_designation }}</td>
+            <td><strong>{{ item.cycle_designation }}</strong> <small class="text-muted">({{ item.cycle_code }})</small></td>
             <td>{{ item.filieres_disponibles }}</td>
             <td>{{ item.effectifs }}</td>
             <td>{{ item.capacite_totale }}</td>
             <td>
-              <span v-if="item.capacite_totale > 0"> {{ item.taux_remplissage }} % </span>
-              <span v-else>-</span>
+              <span v-if="Number(item.capacite_totale) > 0"> {{ item.taux_remplissage }} % </span>
+              <span v-else class="text-muted">-</span>
             </td>
             <td>
               <span
                 class="badge"
                 :class="{
                   'bg-success': item.statut === 'Complet',
-                  'bg-warning': item.statut === 'Partiel',
+                  'bg-warning text-dark': item.statut === 'Partiel', /* text-dark pour le contraste du jaune Bootstrap */
                   'bg-secondary': item.statut === 'Vide' || item.statut === 'Aucune capacité',
                 }"
               >
@@ -55,25 +57,21 @@
       </table>
     </div>
   </div>
-
-  <div class="row"></div>
 </template>
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
 
 const cycleStore = useCycleStore();
 const messageStore = useNotifier();
 
-const organisations = ref([]);
+// 1. Branchement sur la bonne variable de ton store : organisationStats
 const loading = computed(() => cycleStore.loading);
+const organisations = computed(() => cycleStore.organisationStats || []);
 
-const loadOrganisation = async () => {
-  organisations.value = await cycleStore.fetchOrganisation();
-};
-
-onMounted(() => {
-  loadOrganisation();
+// 2. Appel propre de l'action sans les doubles parenthèses ()
+onMounted(async () => {
+  await cycleStore.fetchCycleOrganisation();
 });
 </script>
