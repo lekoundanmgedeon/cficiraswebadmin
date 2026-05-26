@@ -1,57 +1,57 @@
 <template>
   <div>
-    <!-- Onglets -->
     <ul class="nav nav-tabs px-4" role="tablist">
       <li class="nav-item">
         <a
-          class="nav-link"
-          id="devoirs-tab"
+          class="nav-link active"
+          id="devoirs-s2-tab"
           data-bs-toggle="tab"
-          href="#devoirs"
+          href="#devoirs-s2"
           role="tab"
-          aria-controls="devoirs"
-          aria-selected="false"
+          aria-selected="true"
         >
-          <i class="mdi mdi-file-document-edit-outline me-1"></i> Devoirs
+          <i class="bi bi-file-earmark-text me-1"></i> Devoirs
         </a>
       </li>
       <li class="nav-item">
         <a
           class="nav-link"
-          id="sessions-tab"
+          id="sessions-s2-tab"
           data-bs-toggle="tab"
-          href="#sessions"
+          href="#sessions-s2"
           role="tab"
-          aria-controls="sessions"
           aria-selected="false"
         >
-          <i class="mdi mdi-calendar-check me-1"></i> Sessions ordinaires
+          <i class="bi bi-calendar-check me-1"></i> Sessions ordinaires
         </a>
       </li>
       <li class="nav-item">
         <a
           class="nav-link"
-          id="rappels-tab"
+          id="rappels-s2-tab"
           data-bs-toggle="tab"
-          href="#rappels"
+          href="#rappels-s2"
           role="tab"
-          aria-controls="rappels"
           aria-selected="false"
         >
-          <i class="mdi mdi-calendar-refresh me-1"></i> Sessions de rappels
+          <i class="bi bi-calendar-arrow-clockwise me-1"></i> Sessions de rappels
         </a>
       </li>
     </ul>
 
-    <!-- Contenu des onglets -->
     <div class="tab-content p-4">
-      <div class="tab-pane fade" id="devoirs" role="tabpanel" aria-labelledby="devoirs-tab">
+      <div
+        class="tab-pane fade show active"
+        id="devoirs-s2"
+        role="tabpanel"
+        aria-labelledby="devoirs-s2-tab"
+      >
         <app-devoirs />
       </div>
-      <div class="tab-pane fade" id="sessions" role="tabpanel" aria-labelledby="sessions-tab">
+      <div class="tab-pane fade" id="sessions-s2" role="tabpanel" aria-labelledby="sessions-s2-tab">
         <app-sessions />
       </div>
-      <div class="tab-pane fade" id="rappels" role="tabpanel" aria-labelledby="rappels-tab">
+      <div class="tab-pane fade" id="rappels-s2" role="tabpanel" aria-labelledby="rappels-s2-tab">
         <app-rappels />
       </div>
     </div>
@@ -65,3 +65,17 @@ import AppDevoirs from './AppDevoirs.vue';
 import AppSessions from './AppSessions.vue';
 import AppRappels from './AppRappels.vue';
 </script>
+
+<style scoped>
+/* Supprime la bordure supérieure ou globale de la navigation imbriquée */
+.nav-tabs {
+  border-top: none !important; /* Si la ligne vient de l'onglet lui-même */
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Ou si c'est le conteneur global qui injecte une bordure */
+:deep(.tab-content) {
+  border: none !important;
+}
+</style>

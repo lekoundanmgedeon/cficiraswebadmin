@@ -4,8 +4,7 @@
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
-          <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="1" />
-          <div v-else class="card-body dashboard-tabs p-0">
+          <div class="card-body dashboard-tabs p-0">
             <NotesTabs />
           </div>
         </div>
@@ -18,33 +17,7 @@
 import { ref, onMounted } from 'vue';
 import NotesHeader from './components/NotesHeader.vue';
 import NotesTabs from './components/NotesTabs.vue';
-import SkeletonLoader from '@/components/SkeletonLoader.vue';
-
-const loading = ref(true);
-const formateurs = ref([]);
-onMounted(() => {
-  setTimeout(() => {
-    formateurs.value = [
-      {
-        id: 1,
-        matricule: 'F001',
-        nom: 'Doe',
-        prenom: 'John',
-        email: 'john@example.com',
-        telephone: '0123456789',
-      },
-      {
-        id: 2,
-        matricule: 'F002',
-        nom: 'Smith',
-        prenom: 'Anna',
-        email: 'anna@example.com',
-        telephone: '0987654321',
-      },
-    ];
-    loading.value = false;
-  }, 3000);
-});
+//import SkeletonLoader from '@/components/SkeletonLoader.vue';
 </script>
 
 <style scoped>

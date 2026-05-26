@@ -5,7 +5,7 @@
       <li class="nav-item">
         <a
           class="nav-link active"
-          id="semestre1-tab"
+          id="vue-overview-tab"
           data-bs-toggle="tab"
           href="#vue-overview"
           role="tab"
