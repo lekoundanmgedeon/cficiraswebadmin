@@ -25,7 +25,7 @@
           aria-controls="semestre1"
           aria-selected="true"
         >
-          Semestre I
+          Semestre 1
         </a>
       </li>
       <li class="nav-item">
@@ -38,7 +38,7 @@
           aria-controls="semestre2"
           aria-selected="false"
         >
-          Semestre II
+          Semestre 2
         </a>
       </li>
     </ul>
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import SemestreI from './semestre-i/SemestreI.vue';
-import SemestreII from './semestre-ii/SemestreII.vue';
+import SemestreI from './semestre1/Semestre1Tab.vue';
+import SemestreII from './semestre2/Semestre2Tab.vue';
 import VueOverview from './VueOverview.vue';
 </script>

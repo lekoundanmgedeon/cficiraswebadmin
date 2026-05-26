@@ -1,12 +1,26 @@
 <template>
-  <div>
+  <div class="container-fluid py-4 animate__animated animate__fadeIn">
+    <!-- En-tête de la page -->
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
+    >
+      <div>
+        <h4 class="fw-bold text-dark mb-1">
+          <i class="bi bi-archive text-secondary me-2"></i>Semestres impaires
+        </h4>
+        <p class="text-muted small mb-0">
+          Gestion des notes l'historique complet des sessions passées, les classements définitifs et
+          les procès-verbaux officiels.
+        </p>
+      </div>
+    </div>
     <ul class="nav nav-tabs px-4" role="tablist">
       <li class="nav-item">
         <a
           class="nav-link active"
-          id="devoirs-s2-tab"
+          id="devoirs-s1-tab"
           data-bs-toggle="tab"
-          href="#devoirs-s2"
+          href="#devoirs-s1"
           role="tab"
           aria-selected="true"
         >
@@ -16,9 +30,9 @@
       <li class="nav-item">
         <a
           class="nav-link"
-          id="sessions-s2-tab"
+          id="sessions-s1-tab"
           data-bs-toggle="tab"
-          href="#sessions-s2"
+          href="#sessions-s1"
           role="tab"
           aria-selected="false"
         >
@@ -28,13 +42,13 @@
       <li class="nav-item">
         <a
           class="nav-link"
-          id="rappels-s2-tab"
+          id="rappels-s1-tab"
           data-bs-toggle="tab"
-          href="#rappels-s2"
+          href="#rappels-s1"
           role="tab"
           aria-selected="false"
         >
-          <i class="bi bi-calendar-arrow-clockwise me-1"></i> Sessions de rappels
+          <i class="bi bi-clock-history me-1"></i> Sessions de rappels
         </a>
       </li>
     </ul>
@@ -42,16 +56,16 @@
     <div class="tab-content p-4">
       <div
         class="tab-pane fade show active"
-        id="devoirs-s2"
+        id="devoirs-s1"
         role="tabpanel"
-        aria-labelledby="devoirs-s2-tab"
+        aria-labelledby="devoirs-s1-tab"
       >
         <app-devoirs />
       </div>
-      <div class="tab-pane fade" id="sessions-s2" role="tabpanel" aria-labelledby="sessions-s2-tab">
+      <div class="tab-pane fade" id="sessions-s1" role="tabpanel" aria-labelledby="sessions-s1-tab">
         <app-sessions />
       </div>
-      <div class="tab-pane fade" id="rappels-s2" role="tabpanel" aria-labelledby="rappels-s2-tab">
+      <div class="tab-pane fade" id="rappels-s1" role="tabpanel" aria-labelledby="rappels-s1-tab">
         <app-rappels />
       </div>
     </div>
@@ -61,11 +75,10 @@
 <script setup>
 // Tu peux garder app-notes partout si tu n’as pas encore les autres composants.
 // Ici je montre comment préparer pour modulariser.
-import AppDevoirs from './AppDevoirs.vue';
-import AppSessions from './AppSessions.vue';
-import AppRappels from './AppRappels.vue';
+import AppDevoirs from './devoir-s1.vue';
+import AppSessions from './session-s1.vue';
+import AppRappels from './rappel-s1.vue';
 </script>
-
 <style scoped>
 /* Supprime la bordure supérieure ou globale de la navigation imbriquée */
 .nav-tabs {
