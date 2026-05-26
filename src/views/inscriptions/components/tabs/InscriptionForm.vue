@@ -107,7 +107,7 @@
                       <span class="badge bg-soft-info text-info me-2">{{
                         inscription.classe_code
                       }}</span>
-                      <small class="text-muted">{{ inscription.filiere_code }}</small>
+                      <small class="text-muted">{{ inscription.filiere_nom }}</small>
                     </div>
                   </td>
                   <td class="text-center">
