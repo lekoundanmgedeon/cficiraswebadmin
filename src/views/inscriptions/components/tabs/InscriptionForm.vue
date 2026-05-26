@@ -90,12 +90,12 @@
                     {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                   </td>
                   <td>
-                    <span class="fw-bold text-primary">{{ inscription.matricule }}</span>
+                    <span class="fw-bold text-primary">{{ inscription.etudiant_matricule }}</span>
                   </td>
                   <td>
                     <div class="d-flex flex-column">
                       <span class="fw-bold text-dark"
-                        >{{ inscription.nom }} {{ inscription.prenom }}</span
+                        >{{ inscription.etudiant_nom }} {{ inscription.etudiant_prenom }}</span
                       >
                       <small class="text-muted" style="font-size: 11px"
                         >Inscrit le 12/10/2024</small
@@ -114,10 +114,10 @@
                     <span
                       :class="[
                         'badge rounded-pill px-3 py-2',
-                        statutBadgeStyle(inscription.statut),
+                        statutBadgeStyle(inscription.inscription_statut),
                       ]"
                     >
-                      {{ inscription.statut }}
+                      {{ inscription.inscription_statut }}
                     </span>
                   </td>
                   <td class="text-end pe-4">
@@ -262,11 +262,12 @@ const openModal = (inscription) => {
   showModal.value = true;
 };
 
+// statut badge 'EN_ATTENTE' => warning, 'ACTIVE' => success, 'ANNULÉE' => danger
 const statutBadgeStyle = (statut) => {
   return {
-    'bg-success': statut === 'validée',
-    'bg-warning text-dark': statut === 'en attente',
-    'bg-danger': statut === 'annulée',
+    'bg-success': statut === 'ACTIVE',
+    'bg-warning text-dark': statut === 'EN_ATTENTE',
+    'bg-danger': statut === 'ANNULEE',
   };
 };
 
