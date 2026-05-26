@@ -7,20 +7,6 @@
           <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="1" />
           <div v-else class="card-body dashboard-tabs p-0">
             <NotesTabs />
-            <div class="tab-content">
-              <div class="tab-pane fade show active" id="overview" role="tabpanel">
-                <StudentsList :students="formateurs" />
-              </div>
-              <div class="tab-pane fade" id="devoirf" role="tabpanel">
-                <ExamTable :rows="examDevoirData" />
-              </div>
-              <div class="tab-pane fade" id="sales" role="tabpanel">
-                <ExamTable :rows="sessionOrdinaireData" />
-              </div>
-              <div class="tab-pane fade" id="purchases" role="tabpanel">
-                <ExamTable :rows="sessionRappelData" />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -32,16 +18,10 @@
 import { ref, onMounted } from 'vue';
 import NotesHeader from './NotesHeader.vue';
 import NotesTabs from './NotesTabs.vue';
-import StudentsList from './StudentsList.vue';
-import ExamTable from './ExamenTable.vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
 
 const loading = ref(true);
 const formateurs = ref([]);
-const examDevoirData = ref([]);
-const sessionOrdinaireData = ref([]);
-const sessionRappelData = ref([]);
-
 onMounted(() => {
   setTimeout(() => {
     formateurs.value = [
