@@ -92,6 +92,7 @@
 
 <script setup>
 import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 
 // Définition des Props reçues du parent
@@ -107,19 +108,21 @@ const props = defineProps({
 });
 
 const classeStore = useClasseStore();
+const router = useRouter();
 
-// Figeage du contexte pour la session ordinaire
+// Contexte figé pour ce composant (Contrôles Continus / Devoirs)
 const activeTab = 'SESSION_ORDINAIRE'; 
 const currentTabLabel = 'Examens Partiels (Ordinaires)';
 
-// Récupération sécurisée du Store
+// Récupération réactive des classes depuis le store Pinia
 const classes = computed(() => (Array.isArray(classeStore.classes) ? classeStore.classes : []));
 
-// Filtrage basé sur la Prop du parent
+// Filtrage en temps réel basé sur la recherche du composant parent
 const filteredClasses = computed(() => {
   return classes.value.filter((c) => {
     const q = props.searchQuery.toLowerCase().trim();
     
+    // Sécurité pour tolérer les deux variantes de clés d'objets
     const codeClasse = (c.classe_code || c.code || '').toLowerCase();
     const nomFiliere = (c.filiere_nom || '').toLowerCase();
 
@@ -127,26 +130,44 @@ const filteredClasses = computed(() => {
   });
 });
 
-// Chargement initial au besoin
+// Chargement des classes au montage si le store est vide
 onMounted(() => {
   if (classes.value.length === 0) {
     classeStore.fetchClasses();
   }
 });
 
-/* ===================== Fonctions métiers réadaptées ===================== */
+/* ===================== Routage & Logique métier ===================== */
+
+// Action : Voir les notes (Redirection vers l'URL dynamique)
 const consulterNotes = (classe) => {
-  const code = classe.classe_code || classe.code;
-  console.log(`Consultation des examens de la classe: ${code} (Semestre: ${props.semestre})`);
+  const id = classe.id || classe.classe_id;
+  router.push({
+    name: 'NotesEdition',
+    params: {
+      classeId: id,
+      semestre: props.semestre,
+      type: activeTab
+    }
+  });
 };
 
+// Action : Modifier les saisies (Redirection vers la même URL d'édition)
 const ouvrirSaisieRapide = (classe) => {
-  const code = classe.classe_code || classe.code;
-  console.log(`Grille de saisie examen pour la classe: ${code}`);
+  const id = classe.id || classe.classe_id;
+  router.push({
+    name: 'NotesEdition',
+    params: {
+      classeId: id,
+      semestre: props.semestre,
+      type: activeTab
+    }
+  });
 };
 
+// Action : Clôture locale (simulation)
 const validerNotesSession = (classe) => {
   const code = classe.classe_code || classe.code;
-  console.log(`Verrouillage officiel de la session ordinaire pour la classe: ${code}`);
+  console.log(`Verrouillage définitif des CC pour la classe: ${code}`);
 };
 </script>

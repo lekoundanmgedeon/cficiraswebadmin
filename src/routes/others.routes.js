@@ -16,9 +16,9 @@ export default [
   },
   { path: '/notes', name: 'Notes', component: () => import('@/views/notes/NotesView.vue') },
   {
-    path: '/notes/:id/configurations',
-    name: 'NotesClasses',
-    component: () => import('@/views/notes/Notes.vue'),
+    path: '/notes/:classeId/:semestre/:type/edit',
+    name: 'NotesEdition',
+    component: () => import('@/views/notes/components/EditNotes.vue'),
     props: true,
   },
   {

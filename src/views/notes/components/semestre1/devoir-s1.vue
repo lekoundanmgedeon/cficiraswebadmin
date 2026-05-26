@@ -92,6 +92,7 @@
 
 <script setup>
 import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 
 // Définition des Props reçues du parent
@@ -102,25 +103,26 @@ const props = defineProps({
   },
   semestre: {
     type: Number,
-    default: 1 // Permet de savoir si on est dans le S1 ou S2
+    default: 1
   }
 });
 
 const classeStore = useClasseStore();
+const router = useRouter();
 
-// Ce composant étant dédié aux devoirs, le type d'évaluation est figé sur 'CC' (Contrôle Continu)
+// Contexte figé pour ce composant (Contrôles Continus / Devoirs)
 const activeTab = 'CC'; 
 const currentTabLabel = 'Contrôles Continus';
 
-// Récupération sécurisée des classes depuis Pinia
+// Récupération réactive des classes depuis le store Pinia
 const classes = computed(() => (Array.isArray(classeStore.classes) ? classeStore.classes : []));
 
-// Filtrage basé sur la Prop "searchQuery" envoyée par le parent
+// Filtrage en temps réel basé sur la recherche du composant parent
 const filteredClasses = computed(() => {
   return classes.value.filter((c) => {
     const q = props.searchQuery.toLowerCase().trim();
     
-    // Sécurité sur les clés d'objets (s'adapte à classe_code ou code)
+    // Sécurité pour tolérer les deux variantes de clés d'objets
     const codeClasse = (c.classe_code || c.code || '').toLowerCase();
     const nomFiliere = (c.filiere_nom || '').toLowerCase();
 
@@ -128,24 +130,42 @@ const filteredClasses = computed(() => {
   });
 });
 
-// Chargement des données au montage du composant
+// Chargement des classes au montage si le store est vide
 onMounted(() => {
   if (classes.value.length === 0) {
     classeStore.fetchClasses();
   }
 });
 
-/* ===================== Fonctions métiers ===================== */
+/* ===================== Routage & Logique métier ===================== */
+
+// Action : Voir les notes (Redirection vers l'URL dynamique)
 const consulterNotes = (classe) => {
-  const code = classe.classe_code || classe.code;
-  console.log(`Consultation des devoirs de la classe: ${code} (Semestre: ${props.semestre})`);
+  const id = classe.id || classe.classe_id;
+  router.push({
+    name: 'NotesEdition',
+    params: {
+      classeId: id,
+      semestre: props.semestre,
+      type: activeTab
+    }
+  });
 };
 
+// Action : Modifier les saisies (Redirection vers la même URL d'édition)
 const ouvrirSaisieRapide = (classe) => {
-  const code = classe.classe_code || classe.code;
-  console.log(`Grille d'édition des CC pour la classe: ${code}`);
+  const id = classe.id || classe.classe_id;
+  router.push({
+    name: 'NotesEdition',
+    params: {
+      classeId: id,
+      semestre: props.semestre,
+      type: activeTab
+    }
+  });
 };
 
+// Action : Clôture locale (simulation)
 const validerNotesSession = (classe) => {
   const code = classe.classe_code || classe.code;
   console.log(`Verrouillage définitif des CC pour la classe: ${code}`);

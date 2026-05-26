@@ -5,7 +5,7 @@
         <!-- En-tête -->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2 class="page-title">Editions concours</h2>
+            <h2 class="page-title">Editions concours -- </h2>
             <p class="page-subtitle text-muted">
               Details des concours et editions candidatss, epreuves et resultats
             </p>
@@ -56,8 +56,7 @@
         </div>
         <!-- Carte Principale -->
         <div class="card">
-          <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="1" />
-          <div v-else class="card-body dashboard-tabs p-0">
+          <div class="card-body dashboard-tabs p-0">
             <TabDetail />
           </div>
         </div>
@@ -67,9 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
 import TabDetail from './configTab.vue';
-import SkeletonLoader from '@/components/SkeletonLoader.vue';
 </script>
 
 <style scoped>
