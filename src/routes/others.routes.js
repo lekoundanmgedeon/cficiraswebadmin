@@ -16,6 +16,12 @@ export default [
   },
   { path: '/notes', name: 'Notes', component: () => import('@/views/notes/NotesView.vue') },
   {
+    path: '/notes/:id/configurations',
+    name: 'NotesClasses',
+    component: () => import('@/views/notes/Notes.vue'),
+    props: true,
+  },
+  {
     path: '/dossiers-scolaires',
     name: 'DossiersScolaires',
     component: () => import('@/views/parcours/DossierAcademique.vue'),
