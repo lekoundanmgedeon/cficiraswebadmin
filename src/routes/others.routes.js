@@ -14,7 +14,7 @@ export default [
     name: 'Documentation',
     component: () => import('@/views/docf/Document.vue'),
   },
-  { path: '/notes', name: 'Notes', component: () => import('@/views/notes/Notes.vue') },
+  { path: '/notes', name: 'Notes', component: () => import('@/views/notes/NotesView.vue') },
   {
     path: '/dossiers-scolaires',
     name: 'DossiersScolaires',

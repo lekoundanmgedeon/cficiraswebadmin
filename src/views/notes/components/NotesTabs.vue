@@ -7,6 +7,19 @@
           class="nav-link active"
           id="semestre1-tab"
           data-bs-toggle="tab"
+          href="#vue-overview"
+          role="tab"
+          aria-controls="vue-overview"
+          aria-selected="true"
+        >
+          Vue d'ensemble
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          id="semestre1-tab"
+          data-bs-toggle="tab"
           href="#semestre1"
           role="tab"
           aria-controls="semestre1"
@@ -25,7 +38,7 @@
           aria-controls="semestre2"
           aria-selected="false"
         >
-         Semestre II
+          Semestre II
         </a>
       </li>
     </ul>
@@ -34,21 +47,25 @@
     <div class="tab-content p-4">
       <div
         class="tab-pane fade show active"
+        id="vue-overview"
+        role="tabpanel"
+        aria-labelledby="vue-overview-tab"
+      >
+        <!-- Composant spécifique à la vue d'ensemble -->
+        <VueOverview />
+      </div>
+      <div
+        class="tab-pane fade show active"
         id="semestre1"
         role="tabpanel"
         aria-labelledby="semestre1-tab"
       >
         <!-- Composant spécifique au Semestre I -->
-        <SemestreI/>
+        <SemestreI />
       </div>
-      <div
-        class="tab-pane fade"
-        id="semestre2"
-        role="tabpanel"
-        aria-labelledby="semestre2-tab"
-      >
+      <div class="tab-pane fade" id="semestre2" role="tabpanel" aria-labelledby="semestre2-tab">
         <!-- Composant spécifique au Semestre II -->
-        <SemestreII/>
+        <SemestreII />
       </div>
     </div>
   </div>
@@ -57,5 +74,5 @@
 <script setup>
 import SemestreI from './semestre-i/SemestreI.vue';
 import SemestreII from './semestre-ii/SemestreII.vue';
+import VueOverview from './VueOverview.vue';
 </script>
-

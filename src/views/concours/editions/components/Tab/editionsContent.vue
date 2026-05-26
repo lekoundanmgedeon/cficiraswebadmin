@@ -1,12 +1,12 @@
 <template>
   <div class="container-fluid p-0">
-    
     <div v-if="!selectedConcoursToConfigure">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 class="fw-bold mb-1">Listes de concours</h4>
           <p class="text-muted mb-0">
-            Consultez les détails de chaque examen ou cliquez sur "Configurer" pour gérer ses étapes (épreuves, candidats, notes).
+            Consultez les détails de chaque examen ou cliquez sur "Configurer" pour gérer ses étapes
+            (épreuves, candidats, notes).
           </p>
         </div>
       </div>
@@ -53,9 +53,8 @@
               </td>
               <td class="text-end">
                 <div class="d-flex justify-content-end align-items-center gap-2">
-                  
-                  <RouterLink 
-                    :to="`/edition-concours/${concour.id}/configurations`" 
+                  <RouterLink
+                    :to="`/edition-concours/${concour.id}/configurations`"
                     class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                   >
                     <i class="mdi mdi-cog-outline"></i>
@@ -89,12 +88,8 @@
     </div>
 
     <div v-else>
-      <ConcoursConfigDetails 
-        :concours="selectedConcoursToConfigure" 
-        @close="fermerConfiguration" 
-      />
+      <ConcoursConfigDetails :concours="selectedConcoursToConfigure" @close="fermerConfiguration" />
     </div>
-
   </div>
 </template>
 
@@ -145,7 +140,7 @@ const paginatedConcours = computed(() => {
 /* ========================================================
     Utilitaires & Cycle de vie
 ======================================================== */
-const formatDate = (date) => date ? dayjs(date).format('DD-MM-YYYY') : 'Non définie';
+const formatDate = (date) => (date ? dayjs(date).format('DD-MM-YYYY') : 'Non définie');
 
 const getStatusClass = (status) => {
   const norm = status ? status.toLowerCase().trim() : '';
@@ -176,7 +171,14 @@ onMounted(async () => {
   display: inline-block;
   text-transform: uppercase;
 }
-.status-draft { background-color: #c34f49; }
-.status-active { background-color: #198754; }
-.status-warning { background-color: #ffc107; color: #000; }
+.status-draft {
+  background-color: #c34f49;
+}
+.status-active {
+  background-color: #198754;
+}
+.status-warning {
+  background-color: #ffc107;
+  color: #000;
+}
 </style>

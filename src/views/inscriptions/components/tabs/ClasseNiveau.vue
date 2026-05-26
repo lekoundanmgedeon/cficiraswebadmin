@@ -122,7 +122,9 @@
                     <span class="fw-bold text-primary">{{ classe.code }}</span>
                   </td>
                   <td>
-                    <div class="fw-semibold text-dark">{{ classe.filiere_nom || 'Filière non spécifiée' }}</div>
+                    <div class="fw-semibold text-dark">
+                      {{ classe.filiere_nom || 'Filière non spécifiée' }}
+                    </div>
                     <small class="text-muted">{{ classe.annee_code || 'N/A' }} • Académique</small>
                   </td>
                   <td class="text-center">
@@ -131,11 +133,23 @@
                     </span>
                   </td>
                   <td class="text-center">
-                    <div class="d-flex align-items-center justify-content-center" style="min-width: 150px;">
-                      <span class="fw-bold me-2 small">{{ classe.nb_etudiants || 0 }}/{{ classe.capacite_max }}</span>
-                      <div class="progress w-50" style="height: 6px" :title="`Taux d'occupation : ${calculateRate(classe)}%`">
-                        <div 
-                          :class="['progress-bar', calculateRate(classe) > 100 ? 'bg-danger' : 'bg-success']" 
+                    <div
+                      class="d-flex align-items-center justify-content-center"
+                      style="min-width: 150px"
+                    >
+                      <span class="fw-bold me-2 small"
+                        >{{ classe.nb_etudiants || 0 }}/{{ classe.capacite_max }}</span
+                      >
+                      <div
+                        class="progress w-50"
+                        style="height: 6px"
+                        :title="`Taux d'occupation : ${calculateRate(classe)}%`"
+                      >
+                        <div
+                          :class="[
+                            'progress-bar',
+                            calculateRate(classe) > 100 ? 'bg-danger' : 'bg-success',
+                          ]"
                           :style="{ width: Math.min(calculateRate(classe), 100) + '%' }"
                         ></div>
                       </div>
@@ -156,7 +170,9 @@
                           class="me-1"
                           viewBox="0 0 24 24"
                         >
-                          <path d="M16 11C17.66 11 18.99 9.66 18.99 8S17.66 5 16 5 13 6.34 13 8 14.34 11 16 11M8 11C9.66 11 10.99 9.66 10.99 8S9.66 5 8 5 5 6.34 5 8 6.34 11 8 11M8 13C5.33 13 0 14.34 0 17V19H16V17C16 14.34 10.67 13 8 13M16 13C15.5 13 14.96 13.04 14.39 13.1C15.78 14.03 17 15.35 17 17V19H24V17C24 14.34 18.67 13 16 13Z" />
+                          <path
+                            d="M16 11C17.66 11 18.99 9.66 18.99 8S17.66 5 16 5 13 6.34 13 8 14.34 11 16 11M8 11C9.66 11 10.99 9.66 10.99 8S9.66 5 8 5 5 6.34 5 8 6.34 11 8 11M8 13C5.33 13 0 14.34 0 17V19H16V17C16 14.34 10.67 13 8 13M16 13C15.5 13 14.96 13.04 14.39 13.1C15.78 14.03 17 15.35 17 17V19H24V17C24 14.34 18.67 13 16 13Z"
+                          />
                         </svg>
                         Étudiants
                       </button>
@@ -182,16 +198,26 @@
 
                 <tr v-if="!loading && filteredClasses.length === 0">
                   <td colspan="6" class="text-center py-5">
-                    <img src="/img/empty-box.svg" width="100" class="mb-3 opacity-50" onerror="this.style.display='none'" />
-                    <p class="text-muted mb-0">Aucune classe ne correspond à vos critères de recherche.</p>
+                    <img
+                      src="/img/empty-box.svg"
+                      width="100"
+                      class="mb-3 opacity-50"
+                      onerror="this.style.display='none'"
+                    />
+                    <p class="text-muted mb-0">
+                      Aucune classe ne correspond à vos critères de recherche.
+                    </p>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        
-        <div v-if="!loading && filteredClasses.length > 0" class="card-footer bg-white border-0 py-3">
+
+        <div
+          v-if="!loading && filteredClasses.length > 0"
+          class="card-footer bg-white border-0 py-3"
+        >
           <Pagination
             v-model="currentPage"
             :items-per-page="itemsPerPage"
@@ -219,7 +245,7 @@ const itemsPerPage = ref(10);
 
 /* ===================== Données du Store (Securisées) ===================== */
 const loading = computed(() => classeStore.loading);
-const classes = computed(() => Array.isArray(classeStore.classes) ? classeStore.classes : []);
+const classes = computed(() => (Array.isArray(classeStore.classes) ? classeStore.classes : []));
 
 /* ===================== KPI Réactifs ===================== */
 const totalClassesCount = computed(() => classes.value.length);
@@ -229,12 +255,12 @@ const totalCapacite = computed(() => {
 });
 
 const classesSurchargeesCount = computed(() => {
-  return classes.value.filter(c => (c.effectif_actuel || 0) > (c.classe_capacite || 0)).length;
+  return classes.value.filter((c) => (c.effectif_actuel || 0) > (c.classe_capacite || 0)).length;
 });
 
 /* ===================== Extraction des filières uniques ===================== */
 const filieresUniques = computed(() => {
-  const list = classes.value.map(c => c.filiere_nom).filter(Boolean);
+  const list = classes.value.map((c) => c.filiere_nom).filter(Boolean);
   return [...new Set(list)].sort();
 });
 
@@ -242,7 +268,10 @@ const filieresUniques = computed(() => {
 const filteredClasses = computed(() => {
   return classes.value.filter((c) => {
     const search = searchQuery.value.toLowerCase().trim();
-    const matchSearch = !search || c.classe_code?.toLowerCase().includes(search) || c.filiere_nom?.toLowerCase().includes(search);
+    const matchSearch =
+      !search ||
+      c.classe_code?.toLowerCase().includes(search) ||
+      c.filiere_nom?.toLowerCase().includes(search);
     const matchFiliere = !filterFiliere.value || c.filiere_nom === filterFiliere.value;
     return matchSearch && matchFiliere;
   });
@@ -300,10 +329,18 @@ watch([searchQuery, filterFiliere], () => {
   align-items: center;
   justify-content: center;
 }
-.bg-soft-primary { background: rgba(13, 110, 253, 0.1); }
-.bg-soft-success { background: rgba(25, 135, 84, 0.1); }
-.bg-soft-warning { background: rgba(255, 193, 7, 0.1); }
-.bg-soft-info { background: rgba(13, 202, 240, 0.1); }
+.bg-soft-primary {
+  background: rgba(13, 110, 253, 0.1);
+}
+.bg-soft-success {
+  background: rgba(25, 135, 84, 0.1);
+}
+.bg-soft-warning {
+  background: rgba(255, 193, 7, 0.1);
+}
+.bg-soft-info {
+  background: rgba(13, 202, 240, 0.1);
+}
 
 .btn-white {
   background: #fff;

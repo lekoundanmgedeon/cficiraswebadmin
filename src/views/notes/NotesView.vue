@@ -16,8 +16,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import NotesHeader from './NotesHeader.vue';
-import NotesTabs from './NotesTabs.vue';
+import NotesHeader from './components/NotesHeader.vue';
+import NotesTabs from './components/NotesTabs.vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
 
 const loading = ref(true);

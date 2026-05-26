@@ -43,7 +43,7 @@
       class="modal fade show d-block"
       tabindex="-1"
       role="dialog"
-      style="background-color: rgba(0, 0, 0, 0.5); z-index: 1055;"
+      style="background-color: rgba(0, 0, 0, 0.5); z-index: 1055"
       @click.self="closeDetails"
     >
       <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -55,7 +55,7 @@
             </h5>
             <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
-          
+
           <div class="modal-body p-4">
             <div class="row g-3">
               <div class="col-md-6">
@@ -68,18 +68,26 @@
                     </div>
                     <div class="info-item">
                       <span class="info-label">Type:</span>
-                      <span class="info-value">{{ item.libelle_type }} ({{ item.type_concours }})</span>
+                      <span class="info-value"
+                        >{{ item.libelle_type }} ({{ item.type_concours }})</span
+                      >
                     </div>
                     <div class="info-item">
                       <span class="info-label">Description:</span>
-                      <span class="info-value text-start">{{ item.description || 'Aucune description' }}</span>
+                      <span class="info-value text-start">{{
+                        item.description || 'Aucune description'
+                      }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Dossier requis:</span>
                       <span class="info-value">
                         <span
                           class="badge rounded-pill px-2 py-1 text-xs"
-                          :class="item.dossier_requis ? 'bg-success-subtle text-success border border-success' : 'bg-secondary-subtle text-secondary border border-secondary'"
+                          :class="
+                            item.dossier_requis
+                              ? 'bg-success-subtle text-success border border-success'
+                              : 'bg-secondary-subtle text-secondary border border-secondary'
+                          "
                         >
                           {{ item.dossier_requis ? 'Oui' : 'Non' }}
                         </span>
@@ -99,11 +107,15 @@
                     </div>
                     <div class="info-item">
                       <span class="info-label">Limite inscription:</span>
-                      <span class="info-value text-danger fw-semibold">{{ formatDate(item.date_limite_inscription) }}</span>
+                      <span class="info-value text-danger fw-semibold">{{
+                        formatDate(item.date_limite_inscription)
+                      }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Date de début:</span>
-                      <span class="info-value font-monospace">{{ formatDate(item.date_debut) }}</span>
+                      <span class="info-value font-monospace">{{
+                        formatDate(item.date_debut)
+                      }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Date de fin:</span>
@@ -111,7 +123,10 @@
                     </div>
                     <div class="info-item">
                       <span class="info-label">Statut:</span>
-                      <span class="badge rounded-pill px-2.5 py-1.5 fw-bold" :class="getStatusClass(item.statut)">
+                      <span
+                        class="badge rounded-pill px-2.5 py-1.5 fw-bold"
+                        :class="getStatusClass(item.statut)"
+                      >
                         {{ item.statut }}
                       </span>
                     </div>
@@ -125,10 +140,16 @@
                 <div class="info-card bg-light-subtle border">
                   <h6 class="info-title">Actions rapides</h6>
                   <div class="d-flex flex-wrap gap-2">
-                    <button class="btn btn-outline-primary btn-sm px-3" @click="$emit('view-exams', item)">
+                    <button
+                      class="btn btn-outline-primary btn-sm px-3"
+                      @click="$emit('view-exams', item)"
+                    >
                       <i class="mdi mdi-file-document-outline me-1"></i> Voir les épreuves
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm px-3" @click="$emit('view-candidates', item)">
+                    <button
+                      class="btn btn-outline-secondary btn-sm px-3"
+                      @click="$emit('view-candidates', item)"
+                    >
                       <i class="mdi mdi-clipboard-list-outline me-1"></i> Liste des candidats
                     </button>
                   </div>
@@ -136,15 +157,13 @@
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer bg-light py-2">
-            <button class="btn btn-secondary text-sm" @click="closeDetails">
-               Fermer
-            </button>
-            <button 
-              class="btn btn-primary text-sm" 
-              data-bs-toggle="modal" 
-              :data-bs-target="editModalTarget" 
+            <button class="btn btn-secondary text-sm" @click="closeDetails">Fermer</button>
+            <button
+              class="btn btn-primary text-sm"
+              data-bs-toggle="modal"
+              :data-bs-target="editModalTarget"
               @click="handleEditFromModal"
             >
               Modifier

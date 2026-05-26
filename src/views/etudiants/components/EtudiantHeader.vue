@@ -77,12 +77,14 @@
   </div>
 
   <AddEtudiant />
+  <!-- Le modal d’import est dans un composant séparé pour mieux gérer la logique d’importation et le template de téléchargement 
   <ImportEtudiantsModal @import-complete="handleImport" />
+  -->
 </template>
 
 <script setup>
 import AddEtudiant from './Modal/addEtudiant.vue';
-import ImportEtudiantsModal from './Modal/importEtudiantModal.vue';
+//import ImportEtudiantsModal from './Modal/importEtudiantModal.vue';
 
 const exportData = () => {
   console.log('Export des étudiants');

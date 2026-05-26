@@ -51,9 +51,10 @@ export const useMessageStore = defineStore('messageStore', {
      * Gère aussi bien une string brute qu'un objet d'erreur Axios complet.
      */
     notifyError(errorOrMessage, fallback = 'Une erreur est survenue.') {
-      const finalMessage = typeof errorOrMessage === 'string'
-        ? errorOrMessage
-        : extractErrorMessage(errorOrMessage, fallback);
+      const finalMessage =
+        typeof errorOrMessage === 'string'
+          ? errorOrMessage
+          : extractErrorMessage(errorOrMessage, fallback);
 
       this._addMessage(finalMessage, 'error');
     },

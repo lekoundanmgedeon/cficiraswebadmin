@@ -1,17 +1,26 @@
 <template>
   <div class="animate__animated animate__fadeIn">
-    
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h5 class="fw-bold mb-1 text-dark">Registre des Épreuves</h5>
-        <p class="text-muted small mb-0">Définissez les matières, coefficients et plages horaires indispensables aux calculs de délibération.</p>
+        <p class="text-muted small mb-0">
+          Définissez les matières, coefficients et plages horaires indispensables aux calculs de
+          délibération.
+        </p>
       </div>
-      
+
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-light border text-secondary" @click="exportExcel" title="Exporter sous Excel">
+        <button
+          class="btn btn-sm btn-light border text-secondary"
+          @click="exportExcel"
+          title="Exporter sous Excel"
+        >
           <i class="bi bi-file-earmark-excel me-1"></i> Excel
         </button>
-        <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5" @click="addEpreuve">
+        <button
+          class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5"
+          @click="addEpreuve"
+        >
           <i class="bi bi-plus-lg"></i>
           <span>Ajouter une épreuve</span>
         </button>
@@ -31,81 +40,98 @@
             <th class="text-end pe-3" style="width: 12%">Actions</th>
           </tr>
         </thead>
-        
+
         <tbody>
-          <tr 
-            v-for="(epreuve, index) in epreuves" 
+          <tr
+            v-for="(epreuve, index) in epreuves"
             :key="index"
             :class="{ 'table-primary-subtle': activeEditIndex === index }"
           >
             <td class="ps-3">
-              <input 
-                v-if="activeEditIndex === index" 
-                v-model="epreuve.code" 
-                type="text" 
-                class="form-control form-control-sm font-monospace text-uppercase" 
-                placeholder="EX01" 
+              <input
+                v-if="activeEditIndex === index"
+                v-model="epreuve.code"
+                type="text"
+                class="form-control form-control-sm font-monospace text-uppercase"
+                placeholder="EX01"
               />
-              <span v-else class="font-monospace fw-bold text-secondary">{{ epreuve.code || '—' }}</span>
+              <span v-else class="font-monospace fw-bold text-secondary">{{
+                epreuve.code || '—'
+              }}</span>
             </td>
 
             <td>
-              <input 
-                v-if="activeEditIndex === index" 
-                v-model="epreuve.designation" 
-                type="text" 
-                class="form-control form-control-sm" 
-                placeholder="Ex: Mathématiques" 
+              <input
+                v-if="activeEditIndex === index"
+                v-model="epreuve.designation"
+                type="text"
+                class="form-control form-control-sm"
+                placeholder="Ex: Mathématiques"
               />
-              <span v-else class="fw-semibold text-dark">{{ epreuve.designation || 'Sans intitulé' }}</span>
+              <span v-else class="fw-semibold text-dark">{{
+                epreuve.designation || 'Sans intitulé'
+              }}</span>
             </td>
 
             <td class="text-center">
               <div v-if="activeEditIndex === index" class="d-flex justify-content-center">
-                <input 
-                  v-model.number="epreuve.coefficient" 
-                  type="number" 
-                  class="form-control form-control-sm text-center font-monospace" 
-                  min="1" 
+                <input
+                  v-model.number="epreuve.coefficient"
+                  type="number"
+                  class="form-control form-control-sm text-center font-monospace"
+                  min="1"
                   style="max-width: 70px"
                 />
               </div>
-              <span v-else class="font-monospace fw-bold bg-light px-2.5 py-1 rounded text-secondary border">
+              <span
+                v-else
+                class="font-monospace fw-bold bg-light px-2.5 py-1 rounded text-secondary border"
+              >
                 {{ epreuve.coefficient }}
               </span>
             </td>
 
             <td>
-              <input 
-                v-if="activeEditIndex === index" 
-                v-model="epreuve.heure_debut" 
-                type="time" 
-                class="form-control form-control-sm font-monospace" 
+              <input
+                v-if="activeEditIndex === index"
+                v-model="epreuve.heure_debut"
+                type="time"
+                class="form-control form-control-sm font-monospace"
               />
               <span v-else class="font-monospace text-muted">
-                <i class="bi bi-clock me-1 text-muted-light"></i>{{ epreuve.heure_debut || '--:--' }}
+                <i class="bi bi-clock me-1 text-muted-light"></i
+                >{{ epreuve.heure_debut || '--:--' }}
               </span>
             </td>
 
             <td>
-              <input 
-                v-if="activeEditIndex === index" 
-                v-model="epreuve.heure_fin" 
-                type="time" 
-                class="form-control form-control-sm font-monospace" 
+              <input
+                v-if="activeEditIndex === index"
+                v-model="epreuve.heure_fin"
+                type="time"
+                class="form-control form-control-sm font-monospace"
               />
               <span v-else class="font-monospace text-muted">
-                <i class="bi bi-clock-history me-1 text-muted-light"></i>{{ epreuve.heure_fin || '--:--' }}
+                <i class="bi bi-clock-history me-1 text-muted-light"></i
+                >{{ epreuve.heure_fin || '--:--' }}
               </span>
             </td>
 
             <td>
-              <select v-if="activeEditIndex === index" v-model="epreuve.type_epreuve" class="form-select form-select-sm">
+              <select
+                v-if="activeEditIndex === index"
+                v-model="epreuve.type_epreuve"
+                class="form-select form-select-sm"
+              >
                 <option value="écrit">Écrit</option>
                 <option value="oral">Oral</option>
                 <option value="pratique">Pratique</option>
               </select>
-              <span v-else class="badge px-2.5 py-1 text-capitalize fw-semibold text-xs" :class="getTypeBadgeClass(epreuve.type_epreuve)">
+              <span
+                v-else
+                class="badge px-2.5 py-1 text-capitalize fw-semibold text-xs"
+                :class="getTypeBadgeClass(epreuve.type_epreuve)"
+              >
                 {{ epreuve.type_epreuve }}
               </span>
             </td>
@@ -113,19 +139,35 @@
             <td class="text-end pe-3">
               <div class="d-flex justify-content-end gap-1">
                 <template v-if="activeEditIndex === index">
-                  <button class="btn btn-sm btn-success p-1 px-2" @click="saveEpreuve(epreuve, index)" title="Sauvegarder">
+                  <button
+                    class="btn btn-sm btn-success p-1 px-2"
+                    @click="saveEpreuve(epreuve, index)"
+                    title="Sauvegarder"
+                  >
                     <i class="bi bi-check-lg"></i>
                   </button>
-                  <button class="btn btn-sm btn-light border p-1 px-2" @click="cancelEdit(index)" title="Annuler">
+                  <button
+                    class="btn btn-sm btn-light border p-1 px-2"
+                    @click="cancelEdit(index)"
+                    title="Annuler"
+                  >
                     <i class="bi bi-x-lg"></i>
                   </button>
                 </template>
-                
+
                 <template v-else>
-                  <button class="btn btn-sm btn-link text-primary p-1" @click="activeEditIndex = index" title="Modifier la ligne">
+                  <button
+                    class="btn btn-sm btn-link text-primary p-1"
+                    @click="activeEditIndex = index"
+                    title="Modifier la ligne"
+                  >
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-sm btn-link text-danger p-1" @click="removeEpreuve(index)" title="Supprimer">
+                  <button
+                    class="btn btn-sm btn-link text-danger p-1"
+                    @click="removeEpreuve(index)"
+                    title="Supprimer"
+                  >
                     <i class="bi bi-trash"></i>
                   </button>
                 </template>
@@ -143,8 +185,15 @@
 
         <tfoot v-if="epreuves.length > 0" class="table-light border-top fw-bold">
           <tr>
-            <td colspan="2" class="text-end ps-3 text-secondary text-uppercase font-monospace text-xs">Total des Coefficients :</td>
-            <td class="text-center font-monospace fs-5 text-primary fw-extrabold">{{ totalCoefficients }}</td>
+            <td
+              colspan="2"
+              class="text-end ps-3 text-secondary text-uppercase font-monospace text-xs"
+            >
+              Total des Coefficients :
+            </td>
+            <td class="text-center font-monospace fs-5 text-primary fw-extrabold">
+              {{ totalCoefficients }}
+            </td>
             <td colspan="4"></td>
           </tr>
         </tfoot>
@@ -192,7 +241,7 @@ const loadEpreuvesData = async () => {
 const addEpreuve = () => {
   // S'il y a déjà une édition en cours, on force sa validation d'abord
   if (activeEditIndex.value !== null) {
-    notifyError('Veuillez d\'abord enregistrer l\'épreuve en cours de modification.');
+    notifyError("Veuillez d'abord enregistrer l'épreuve en cours de modification.");
     return;
   }
 
@@ -205,9 +254,9 @@ const addEpreuve = () => {
     type_epreuve: 'écrit',
     ordre: epreuves.value.length + 1,
     description: 'N/A',
-    isNew: true // Drapeau temporaire local
+    isNew: true, // Drapeau temporaire local
   });
-  
+
   // Ouvre automatiquement le mode édition sur la ligne nouvellement ajoutée
   activeEditIndex.value = epreuves.value.length - 1;
 };
@@ -238,10 +287,14 @@ const removeEpreuve = async (index) => {
 };
 
 const validateEpreuve = (epreuve) => {
-  if (!epreuve.code?.trim() || !epreuve.designation?.trim()) return 'Le code et l\'intitulé de la matière sont obligatoires.';
-  if (!epreuve.heure_debut || !epreuve.heure_fin) return 'Les horaires de début et de fin sont obligatoires.';
-  if (epreuve.heure_debut >= epreuve.heure_fin) return 'L\'heure de fin doit impérativement être après l\'heure de début.';
-  if (!epreuve.coefficient || epreuve.coefficient <= 0) return 'Le coefficient doit être un entier supérieur à 0.';
+  if (!epreuve.code?.trim() || !epreuve.designation?.trim())
+    return "Le code et l'intitulé de la matière sont obligatoires.";
+  if (!epreuve.heure_debut || !epreuve.heure_fin)
+    return 'Les horaires de début et de fin sont obligatoires.';
+  if (epreuve.heure_debut >= epreuve.heure_fin)
+    return "L'heure de fin doit impérativement être après l'heure de début.";
+  if (!epreuve.coefficient || epreuve.coefficient <= 0)
+    return 'Le coefficient doit être un entier supérieur à 0.';
   return null;
 };
 
@@ -258,7 +311,7 @@ const saveEpreuve = async (epreuve, index) => {
     activeEditIndex.value = null;
     notifySuccess('Épreuve enregistrée avec succès.');
   } catch (err) {
-    notifyError(extractErrorMessage(err, 'Erreur lors de la sauvegarde de l\'épreuve.'));
+    notifyError(extractErrorMessage(err, "Erreur lors de la sauvegarde de l'épreuve."));
   }
 };
 
@@ -273,22 +326,39 @@ const exportExcel = () => console.log('Exportation Excel lancé...');
 </script>
 
 <style scoped>
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.875rem; }
-.fw-extrabold { font-weight: 800; }
-.gap-1\.5 { gap: 0.375rem; }
-.text-muted-light { color: #ced4da; }
+.text-xs {
+  font-size: 0.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+}
+.fw-extrabold {
+  font-weight: 800;
+}
+.gap-1\.5 {
+  gap: 0.375rem;
+}
+.text-muted-light {
+  color: #ced4da;
+}
 
 /* Couleur spécifique pour le type pratique (Violet) */
-.bg-purple-subtle { background-color: #f3e5f5; }
-.text-purple { color: #7b1fa2; }
-.border-purple-subtle { border-color: #e1bee7; }
+.bg-purple-subtle {
+  background-color: #f3e5f5;
+}
+.text-purple {
+  color: #7b1fa2;
+}
+.border-purple-subtle {
+  border-color: #e1bee7;
+}
 
 /* Classes sur les lignes de tableaux */
 .table-primary-subtle {
   background-color: #f0f7ff;
 }
-.form-control-sm, .form-select-sm {
+.form-control-sm,
+.form-select-sm {
   border-radius: 0.375rem;
 }
 </style>

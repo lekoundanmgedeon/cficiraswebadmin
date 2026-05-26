@@ -5,7 +5,8 @@
         <div>
           <h3 class="fw-bold text-dark mb-1">Analytique & Statistiques Semestrielles</h3>
           <p class="text-muted text-sm mb-0">
-            Aperçu des indicateurs de performance, volume d'heures global et suivi de l'assiduité par cycle académique.
+            Aperçu des indicateurs de performance, volume d'heures global et suivi de l'assiduité
+            par cycle académique.
           </p>
         </div>
 
@@ -16,11 +17,7 @@
             class="form-select text-sm bg-white border border-secondary-subtle py-1.5 px-3 shadow-none style-select"
             :disabled="loading"
           >
-            <option 
-              v-for="option in dynamicOptions" 
-              :key="option.value" 
-              :value="option.value"
-            >
+            <option v-for="option in dynamicOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
           </select>
@@ -36,31 +33,39 @@
     <template v-else-if="analyticsData">
       <div class="row g-3 mb-4">
         <div class="col-xl-3 col-sm-6">
-          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-primary">
+          <div
+            class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-primary"
+          >
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Volume Horaire global</span>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
+                  >Volume Horaire global</span
+                >
                 <h3 class="fw-bold text-dark mb-0 font-monospace">
-                  {{ formatNumber(analyticsData.kpis?.volume_horaire_global) }} <small class="fs-6 text-muted">H</small>
+                  {{ formatNumber(analyticsData.kpis?.volume_horaire_global) }}
+                  <small class="fs-6 text-muted">H</small>
                 </h3>
               </div>
               <div class="kpi-icon-wrapper bg-soft-primary text-primary">
                 <i class="mdi mdi-clock-outline"></i>
               </div>
             </div>
-            <div class="mt-2 text-xs text-muted">
-              Heures cumulées sur la période
-            </div>
+            <div class="mt-2 text-xs text-muted">Heures cumulées sur la période</div>
           </div>
         </div>
 
         <div class="col-xl-3 col-sm-6">
-          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-success">
+          <div
+            class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-success"
+          >
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Taux d'Assiduité Global</span>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
+                  >Taux d'Assiduité Global</span
+                >
                 <h3 class="fw-bold text-success mb-0 font-monospace">
-                  {{ analyticsData.kpis?.taux_assiduite_global || '0' }} <small class="fs-6">%</small>
+                  {{ analyticsData.kpis?.taux_assiduite_global || '0' }}
+                  <small class="fs-6">%</small>
                 </h3>
               </div>
               <div class="kpi-icon-wrapper bg-soft-success text-success">
@@ -74,29 +79,36 @@
         </div>
 
         <div class="col-xl-3 col-sm-6">
-          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-info">
+          <div
+            class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-info"
+          >
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Corps Enseignant</span>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
+                  >Corps Enseignant</span
+                >
                 <h3 class="fw-bold text-dark mb-0 font-monospace">
-                  {{ analyticsData.kpis?.corps_enseignant_total || 0 }} <small class="fs-6 text-muted">Prof.</small>
+                  {{ analyticsData.kpis?.corps_enseignant_total || 0 }}
+                  <small class="fs-6 text-muted">Prof.</small>
                 </h3>
               </div>
               <div class="kpi-icon-wrapper bg-soft-info text-info">
                 <i class="mdi mdi-tie"></i>
               </div>
             </div>
-            <div class="mt-2 text-xs text-muted">
-              Intervenants déployés
-            </div>
+            <div class="mt-2 text-xs text-muted">Intervenants déployés</div>
           </div>
         </div>
 
         <div class="col-xl-3 col-sm-6">
-          <div class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-warning">
+          <div
+            class="card border-0 shadow-sm bg-white rounded-4 p-3 h-100 border-start border-4 border-warning"
+          >
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1">Unités d'Enseignement</span>
+                <span class="text-xs text-muted text-uppercase fw-bold tracking-wider d-block mb-1"
+                  >Unités d'Enseignement</span
+                >
                 <h3 class="fw-bold text-dark mb-0 font-monospace">
                   {{ analyticsData.kpis?.total_ues || 0 }} <small class="fs-6 text-muted">UE</small>
                 </h3>
@@ -105,9 +117,7 @@
                 <i class="mdi mdi-book-open-variant"></i>
               </div>
             </div>
-            <div class="mt-2 text-xs text-muted">
-              Planifiées au catalogue
-            </div>
+            <div class="mt-2 text-xs text-muted">Planifiées au catalogue</div>
           </div>
         </div>
       </div>
@@ -117,7 +127,10 @@
           <div class="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5 class="fw-bold text-dark mb-0">Charge d'Enseignement par Semestre</h5>
-              <span class="badge bg-light text-secondary border font-monospace text-xs px-2.5 py-1.5">Vue d'ensemble analytique</span>
+              <span
+                class="badge bg-light text-secondary border font-monospace text-xs px-2.5 py-1.5"
+                >Vue d'ensemble analytique</span
+              >
             </div>
 
             <div class="table-responsive">
@@ -133,13 +146,21 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="stat in analyticsData.matrix" :key="stat.semestre_id" class="stats-row">
+                  <tr
+                    v-for="stat in analyticsData.matrix"
+                    :key="stat.semestre_id"
+                    class="stats-row"
+                  >
                     <td class="text-start ps-3 font-monospace fw-bold text-primary">
                       {{ stat.semestre_code }}
                     </td>
 
                     <td class="text-start">
-                      <div class="fw-bold text-dark text-truncate" style="max-width: 180px" :title="stat.filiere">
+                      <div
+                        class="fw-bold text-dark text-truncate"
+                        style="max-width: 180px"
+                        :title="stat.filiere"
+                      >
                         {{ stat.filiere }}
                       </div>
                       <small class="text-xs text-muted">{{ stat.niveau }}</small>
@@ -159,14 +180,20 @@
                     <td class="text-end pe-3">
                       <span
                         class="badge text-xs px-2.5 py-1.5 rounded-pill font-semibold"
-                        :class="stat.statut_maquette === 'Conforme' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-danger-subtle text-danger border border-danger-subtle'"
+                        :class="
+                          stat.statut_maquette === 'Conforme'
+                            ? 'bg-success-subtle text-success border border-success-subtle'
+                            : 'bg-danger-subtle text-danger border border-danger-subtle'
+                        "
                       >
                         {{ stat.statut_maquette || 'Inconnu' }}
                       </span>
                     </td>
                   </tr>
                   <tr v-if="!analyticsData.matrix || analyticsData.matrix.length === 0">
-                    <td colspan="6" class="text-center py-4 text-muted small">Aucune donnée matricielle disponible</td>
+                    <td colspan="6" class="text-center py-4 text-muted small">
+                      Aucune donnée matricielle disponible
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -192,28 +219,36 @@
                     {{ type.volume_heures }} H ({{ type.pourcentage }}%)
                   </span>
                 </div>
-                <div class="progress" style="height: 6px;">
-                  <div 
-                    class="progress-bar" 
-                    :class="getTypologyBgClass(i)" 
-                    role="progressbar" 
+                <div class="progress" style="height: 6px">
+                  <div
+                    class="progress-bar"
+                    :class="getTypologyBgClass(i)"
+                    role="progressbar"
                     :style="{ width: type.pourcentage + '%' }"
-                    :aria-valuenow="type.pourcentage" 
-                    aria-valuemin="0" 
+                    :aria-valuenow="type.pourcentage"
+                    aria-valuemin="0"
                     aria-valuemax="100"
                   ></div>
                 </div>
               </div>
-              
-              <div v-if="!analyticsData.typology || analyticsData.typology.length === 0" class="text-center text-muted small py-3">
+
+              <div
+                v-if="!analyticsData.typology || analyticsData.typology.length === 0"
+                class="text-center text-muted small py-3"
+              >
                 Aucune donnée de typologie
               </div>
             </div>
 
-            <div class="mt-4 pt-3 border-top bg-light-subtle rounded p-2.5 text-xs text-muted d-flex align-items-start gap-2">
+            <div
+              class="mt-4 pt-3 border-top bg-light-subtle rounded p-2.5 text-xs text-muted d-flex align-items-start gap-2"
+            >
               <i class="mdi mdi-information-outline text-primary mt-0.5 fs-6"></i>
               <span>
-                {{ analyticsData.llm_summary || "Les indicateurs reflètent la ventilation actuelle des maquettes de formation configurées pour cette session académique." }}
+                {{
+                  analyticsData.llm_summary ||
+                  'Les indicateurs reflètent la ventilation actuelle des maquettes de formation configurées pour cette session académique.'
+                }}
               </span>
             </div>
           </div>
@@ -258,12 +293,12 @@ const selectedPeriod = ref(getDynamicAcademicPeriod());
 const dynamicOptions = computed(() => {
   const current = getDynamicAcademicPeriod();
   const [startYear, endYear] = current.split('-').map(Number);
-  
+
   const previous = `${startYear - 1}-${startYear}`;
-  
+
   return [
     { value: current, label: `${current} (En cours)` },
-    { value: previous, label: previous }
+    { value: previous, label: previous },
   ];
 });
 
@@ -282,7 +317,7 @@ const loadDashboardStats = async () => {
     // Si fetchAnalytics() ne prend pas de paramètre, il consomme par défaut l'URL de base.
     await semestreStore.fetchAnalytics(selectedPeriod.value);
   } catch (error) {
-    console.error("Erreur lors de la récupération des analytics :", error);
+    console.error('Erreur lors de la récupération des analytics :', error);
   }
 };
 

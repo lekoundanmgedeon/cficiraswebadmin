@@ -2,19 +2,22 @@
   <div class="modal fade" id="addNotesModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
-        
         <!-- Header -->
         <div class="modal-header bg-soft-primary">
           <h5 class="modal-title">
             <i class="mdi mdi-note-plus-outline me-2"></i> Ajouter une note
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Fermer"
+          ></button>
         </div>
 
         <!-- Body -->
         <div class="modal-body">
           <form @submit.prevent="submitNote">
-            
             <!-- Étudiant -->
             <div class="mb-3">
               <label for="student" class="form-label">Étudiant</label>
@@ -71,7 +74,6 @@
                 required
               />
             </div>
-
           </form>
         </div>
 

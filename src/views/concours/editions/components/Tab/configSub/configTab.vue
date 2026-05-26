@@ -11,7 +11,7 @@
           aria-controls="epreuves"
           aria-selected="true"
         >
-         <i class="bi bi-journal-text"></i>
+          <i class="bi bi-journal-text"></i>
           1. Épreuves & Coeffs
         </a>
       </li>
@@ -26,7 +26,7 @@
           aria-controls="candidatures"
           aria-selected="false"
         >
-        <i class="bi bi-people"></i>
+          <i class="bi bi-people"></i>
           2. Candidatures
         </a>
       </li>
@@ -41,7 +41,7 @@
           aria-controls="notes"
           aria-selected="false"
         >
-        <i class="bi bi-pencil-square"></i>
+          <i class="bi bi-pencil-square"></i>
           3. Saisie des Notes
         </a>
       </li>
@@ -56,7 +56,7 @@
           aria-controls="deliberation"
           aria-selected="false"
         >
-        <i class="bi bi-award"></i>
+          <i class="bi bi-award"></i>
           4. Délibération & Publication
         </a>
       </li>
@@ -69,7 +69,7 @@
         role="tabpanel"
         aria-labelledby="epreuves-tab"
       >
-        <TabEpreuves/>
+        <TabEpreuves />
       </div>
 
       <div
@@ -81,13 +81,8 @@
         <TabCandidats />
       </div>
 
-      <div
-        class="tab-pane fade"
-        id="notes"
-        role="tabpanel"
-        aria-labelledby="notes-tab"
-      >
-        <TabNotes/>
+      <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+        <TabNotes />
       </div>
 
       <div

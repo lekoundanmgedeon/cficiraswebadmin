@@ -4,7 +4,8 @@
       <div class="col-12 mb-3">
         <h4 class="fw-bold mb-1">Résultats et Proclamations des Concours</h4>
         <p class="text-muted">
-          Gérez les délibérations : calculez les moyennes, proclamez officiellement les résultats et téléchargez les listes des admis.
+          Gérez les délibérations : calculez les moyennes, proclamez officiellement les résultats et
+          téléchargez les listes des admis.
         </p>
       </div>
 
@@ -46,7 +47,7 @@
                 <span
                   :class="[
                     'badge rounded-pill px-2.5 py-1.5 text-uppercase fw-bold text-xs',
-                    getStatusBadgeClass(resultat.statut)
+                    getStatusBadgeClass(resultat.statut),
                   ]"
                 >
                   {{ resultat.statut }}
@@ -55,8 +56,7 @@
 
               <td class="text-end">
                 <div class="d-flex justify-content-end gap-1.5">
-                  
-                  <button 
+                  <button
                     @click="handleCalculerRangs(resultat.id)"
                     class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1"
                     title="Calculer les moyennes et générer les rangs"
@@ -64,7 +64,7 @@
                     <i class="mdi mdi-calculator"></i> Rangs
                   </button>
 
-                  <button 
+                  <button
                     v-if="resultat.statut !== 'PROCLAMÉ'"
                     @click="handleProclamer(resultat.id)"
                     class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
@@ -73,7 +73,7 @@
                     <i class="mdi mdi-bullhorn-outline"></i> Proclamer
                   </button>
 
-                  <button 
+                  <button
                     @click="handleDownloadAdmis(resultat.id)"
                     class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1"
                     title="Télécharger la liste des admis en PDF"
@@ -123,9 +123,9 @@ const getStatusBadgeClass = (status) => {
     case 'PROCLAMÉ':
       return 'bg-success text-white'; // Clôturé et validé
     case 'OUVERT':
-      return 'bg-warning text-dark';  // En cours de traitement / inscriptions actives
+      return 'bg-warning text-dark'; // En cours de traitement / inscriptions actives
     case 'FERMÉ':
-      return 'bg-danger text-white';  // Inscriptions closes, en attente de délibération
+      return 'bg-danger text-white'; // Inscriptions closes, en attente de délibération
     default:
       return 'bg-secondary text-white';
   }
@@ -135,13 +135,21 @@ const getStatusBadgeClass = (status) => {
     Traitements Métiers reliés au Store
 ======================================================== */
 const handleCalculerRangs = async (id) => {
-  if (confirm("Voulez-vous lancer l'algorithme de calcul des moyennes globales et d'attribution des rangs ?")) {
+  if (
+    confirm(
+      "Voulez-vous lancer l'algorithme de calcul des moyennes globales et d'attribution des rangs ?"
+    )
+  ) {
     await concoursStore.fetchMoyennesRangs(id);
   }
 };
 
 const handleProclamer = async (id) => {
-  if (confirm("🚨 ATTENTION : Cette action va figer les notes et publier officiellement la liste des candidats admis. Continuer ?")) {
+  if (
+    confirm(
+      '🚨 ATTENTION : Cette action va figer les notes et publier officiellement la liste des candidats admis. Continuer ?'
+    )
+  ) {
     await concoursStore.proclaimAdmissions(id);
   }
 };

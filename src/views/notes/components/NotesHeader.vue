@@ -1,42 +1,111 @@
 <template>
- <div class="row">
-      <div class="col-md-12 grid-margin">
-        <div class="d-flex justify-content-between flex-wrap">
-          <div class="d-flex align-items-end flex-wrap">
-            <div class="me-md-3 me-xl-5">
-              <h2 class="fw-bold text-dark mb-1">Notes & Résultats</h2>
-              <p class="text-muted small mb-0">Attributions et suivi des notes de contrôles continus et examens</p>
-            </div>
-            <div class="d-flex shadow-sm bg-white rounded px-3 py-2 border mb-2 mb-md-0">
-              <i class="mdi mdi-home text-muted hover-cursor"></i>
-              <p class="text-muted mb-0 hover-cursor">&nbsp;/&nbsp;Scolarité&nbsp;/&nbsp;</p>
-              <p class="text-primary mb-0 hover-cursor fw-bold">Notes</p>
-            </div>
+  <div class="row">
+    <div class="col-md-12 grid-margin">
+      <div class="d-flex justify-content-between flex-wrap">
+        <!-- Partie gauche : titre + breadcrumb -->
+        <div class="d-flex align-items-end flex-wrap">
+          <div class="me-md-3 me-xl-5">
+            <h2>Gestion des Notes</h2>
+            <p class="mb-md-0">Saisie, suivi et gestion des notes des étudiants</p>
           </div>
-          
-          <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
-            <button class="btn btn-outline-dark shadow-sm btn-sm px-3" >
-              <i class="mdi mdi-file-export me-1"></i>Exporter
+
+          <div class="d-flex align-items-center">
+            <i class="mdi mdi-home text-muted hover-cursor"></i>
+
+            <p class="text-muted mb-0 hover-cursor">&nbsp;/&nbsp;Scolarité&nbsp;/&nbsp;</p>
+
+            <p class="text-primary mb-0 hover-cursor">Notes</p>
+          </div>
+        </div>
+
+        <!-- Partie droite : actions -->
+        <div class="d-flex justify-content-between align-items-end flex-wrap">
+          <!-- Export -->
+          <button
+            type="button"
+            @click="exportData"
+            class="btn btn-light bg-white btn-icon me-3 d-none d-md-block"
+          >
+            <i class="mdi mdi-download text-muted"></i>
+          </button>
+
+          <!-- Impression -->
+          <button
+            type="button"
+            @click="printData"
+            class="btn btn-light bg-white btn-icon me-3 mt-2 mt-xl-0"
+          >
+            <i class="mdi mdi-printer text-muted"></i>
+          </button>
+
+          <!-- Ajouter / Importer -->
+          <div class="btn-group">
+            <!-- Ajouter -->
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-toggle="modal"
+              data-bs-target="#addNoteModal"
+            >
+              + Ajouter une note
             </button>
-            <div class="btn-group shadow-sm">
-              <router-link to="/addNotes" class="btn btn-primary btn-sm px-3">
-                <i class="mdi mdi-plus-circle me-1"></i> Saisir des notes
-              </router-link>
-              <button
-                type="button"
-                class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <span class="visually-hidden">Toggle Dropdown</span>
-              </button>
-              <ul class="dropdown-menu shadow-sm">
-                <li><a class="dropdown-item" href="#" >Importer un fichier CSV</a></li>
-                <li><a class="dropdown-item" href="#">Importer un fichier Excel</a></li>
-              </ul>
-            </div>
+
+            <!-- Dropdown -->
+            <button
+              type="button"
+              class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+
+            <!-- Menu -->
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#importModal">
+                  Importer notes (Excel/CSV)
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item" @click="downloadTemplate"> Télécharger modèle </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item text-danger" @click="bulkDelete"> Suppression en masse </a>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
+  </div>
 </template>
+
+<script setup>
+//import ImportEtudiantsModal from './Modal/importEtudiantModal.vue';
+
+const exportData = () => {
+  console.log('Export des étudiants');
+  // TODO: brancher vers store ou API pour exporter en Excel/PDF
+};
+
+const printData = () => {
+  window.print();
+};
+
+const downloadTemplate = () => {
+  console.log('Téléchargement du modèle CSV/Excel');
+  // TODO: utiliser la fonction downloadTemplate du composant ImportEtudiantsModal
+};
+
+const bulkDelete = () => {
+  console.log('Suppression en masse des étudiants sélectionnés');
+};
+
+const handleImport = (data) => {
+  console.log('Données importées:', data);
+  // TODO: envoyer à l’API ou insérer dans le store
+};
+</script>

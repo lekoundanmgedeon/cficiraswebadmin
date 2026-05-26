@@ -84,7 +84,8 @@ export const getActiveSemestres = () => academiqueService.get('/semestres/couran
 export const getSemestresByAnnee = (anneeId) =>
   academiqueService.get(`/semestres/annee/${anneeId}`);
 
-export const getSemestresOrganisation = () => academiqueService.get('/semestres/stats/organisations');
+export const getSemestresOrganisation = () =>
+  academiqueService.get('/semestres/stats/organisations');
 
 // On injecte directement la période dans l'URL grâce aux littéraux de gabarits (template literals)
 export const getSemestreAnalytics = (period) => {

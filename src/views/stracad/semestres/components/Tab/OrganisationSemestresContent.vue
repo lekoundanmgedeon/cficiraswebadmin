@@ -5,7 +5,8 @@
         <div>
           <h3 class="fw-bold text-dark mb-1">Architecture des Maquettes & Semestres</h3>
           <p class="text-muted text-sm mb-0">
-            Gestion des volumes de crédits, répartition des Unités d'Enseignement (UE) et statuts d'activation.
+            Gestion des volumes de crédits, répartition des Unités d'Enseignement (UE) et statuts
+            d'activation.
           </p>
         </div>
 
@@ -88,7 +89,9 @@
               <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                   <div>
-                    <span class="badge bg-primary-subtle text-primary font-monospace px-2 py-1.5 fw-bold fs-6 me-2">
+                    <span
+                      class="badge bg-primary-subtle text-primary font-monospace px-2 py-1.5 fw-bold fs-6 me-2"
+                    >
                       {{ semestre.code }}
                     </span>
                     <strong class="text-dark fs-6">{{ semestre.filiere }}</strong>
@@ -98,17 +101,26 @@
                   </div>
                   <span
                     class="badge px-2.5 py-1.5 rounded-pill text-xs font-semibold"
-                    :class="semestre.actif ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'"
+                    :class="
+                      semestre.actif
+                        ? 'bg-success-subtle text-success border border-success-subtle'
+                        : 'bg-secondary-subtle text-secondary border border-secondary-subtle'
+                    "
                   >
                     {{ semestre.actif ? 'Semestre Activé' : 'Semestre Inactivé' }}
                   </span>
                 </div>
 
-                <div class="mb-3 py-2 px-3 bg-light-subtle rounded border d-flex justify-content-between align-items-center text-sm">
+                <div
+                  class="mb-3 py-2 px-3 bg-light-subtle rounded border d-flex justify-content-between align-items-center text-sm"
+                >
                   <span class="text-secondary">
                     <i class="mdi mdi-star-circle-outline me-1"></i> Valeur totale des crédits :
                   </span>
-                  <strong :class="semestre.credits >= 30 ? 'text-success' : 'text-dark'" class="font-monospace fs-6">
+                  <strong
+                    :class="semestre.credits >= 30 ? 'text-success' : 'text-dark'"
+                    class="font-monospace fs-6"
+                  >
                     {{ semestre.credits }} ECTS
                   </strong>
                 </div>
@@ -173,9 +185,9 @@ const filteredSemestres = computed(() => {
       (s.code || '').toLowerCase().includes(filterQuery.value.toLowerCase()) ||
       (s.filiere || '').toLowerCase().includes(filterQuery.value.toLowerCase()) ||
       (s.ues || []).some((ue) => ue.toLowerCase().includes(filterQuery.value.toLowerCase()));
-      
+
     const matchesFiliere = filterFiliere.value === '' || s.filiere === filterFiliere.value;
-    
+
     const matchesStatut =
       filterStatut.value === 'tous' ||
       (filterStatut.value === 'actif' && s.actif) ||
@@ -213,7 +225,7 @@ const highlightText = (text) => {
     Actions Utilitaires
 ======================================================== */
 const ouvrirModalCreation = () => {
-  console.log("Ouverture du module de configuration de semestre");
+  console.log('Ouverture du module de configuration de semestre');
 };
 
 /* ========================================================

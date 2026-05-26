@@ -1,19 +1,24 @@
 <template>
   <div class="container-fluid py-4 animate__animated animate__fadeIn">
-    
     <!-- En-tête de la page -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
+    >
       <div>
         <h4 class="fw-bold text-dark mb-1">
           <i class="bi bi-clock-history text-secondary me-2"></i>Journal d'Audit & Historique
         </h4>
         <p class="text-muted small mb-0">
-          Consultez la traçabilité complète des modifications de notes, publications de PV et actions administratives.
+          Consultez la traçabilité complète des modifications de notes, publications de PV et
+          actions administratives.
         </p>
       </div>
 
       <!-- Actions de rafraîchissement rapide -->
-      <button class="btn btn-sm btn-white border text-secondary d-inline-flex align-items-center gap-1.5" @click="refreshLogs">
+      <button
+        class="btn btn-sm btn-white border text-secondary d-inline-flex align-items-center gap-1.5"
+        @click="refreshLogs"
+      >
         <i class="bi bi-arrow-clockwise"></i>
         <span>Actualiser les logs</span>
       </button>
@@ -29,18 +34,21 @@
               <span class="input-group-text bg-light text-muted border-end-0">
                 <i class="bi bi-search"></i>
               </span>
-              <input 
-                v-model="filters.search" 
-                type="text" 
-                class="form-control form-control-sm border-start-0" 
-                placeholder="Rechercher un auteur, une cible, une table..." 
+              <input
+                v-model="filters.search"
+                type="text"
+                class="form-control form-control-sm border-start-0"
+                placeholder="Rechercher un auteur, une cible, une table..."
               />
             </div>
           </div>
 
           <!-- Filtre par Niveau de Gravité / Type d'Action -->
           <div class="col-12 class col-sm-6 col-md-3">
-            <select v-model="filters.severity" class="form-select form-select-sm fw-medium text-secondary">
+            <select
+              v-model="filters.severity"
+              class="form-select form-select-sm fw-medium text-secondary"
+            >
               <option value="">Toutes les actions</option>
               <option value="CRITICAL">Critiques (Modifications, Suppressions)</option>
               <option value="INFO">Informations (Publications, Consultations)</option>
@@ -49,7 +57,10 @@
 
           <!-- Filtre par Module Impacté -->
           <div class="col-12 col-sm-6 col-md-3">
-            <select v-model="filters.module" class="form-select form-select-sm fw-medium text-secondary">
+            <select
+              v-model="filters.module"
+              class="form-select form-select-sm fw-medium text-secondary"
+            >
               <option value="">Tous les modules</option>
               <option value="Saisie de notes">Saisie de notes</option>
               <option value="Délibération">Délibération</option>
@@ -81,9 +92,13 @@
                 <th class="text-end pe-4" style="width: 15%">Adresse IP</th>
               </tr>
             </thead>
-            
+
             <tbody>
-              <tr v-for="log in filteredLogs" :key="log.id" :class="{'table-warning-subtle': log.severite === 'CRITICAL'}">
+              <tr
+                v-for="log in filteredLogs"
+                :key="log.id"
+                :class="{ 'table-warning-subtle': log.severite === 'CRITICAL' }"
+              >
                 <!-- Horodatage complet -->
                 <td class="ps-4 font-monospace text-xs text-secondary">
                   <span class="d-block fw-bold text-dark">{{ formatTime(log.date) }}</span>
@@ -114,11 +129,18 @@
                 <td>
                   <div class="text-dark fw-medium mb-0 line-clamp-2">
                     <!-- Icone de Criticité -->
-                    <i v-if="log.severite === 'CRITICAL'" class="bi bi-shield-fill-exclamation text-warning me-1.5" title="Action sensible"></i>
+                    <i
+                      v-if="log.severite === 'CRITICAL'"
+                      class="bi bi-shield-fill-exclamation text-warning me-1.5"
+                      title="Action sensible"
+                    ></i>
                     <span>{{ log.description }}</span>
                   </div>
                   <!-- Métadonnées additionnelles issues du champ JSONB -->
-                  <small v-if="log.details" class="text-xs text-muted font-monospace bg-light px-1.5 py-0.5 rounded d-inline-block mt-1">
+                  <small
+                    v-if="log.details"
+                    class="text-xs text-muted font-monospace bg-light px-1.5 py-0.5 rounded d-inline-block mt-1"
+                  >
                     {{ log.details }}
                   </small>
                 </td>
@@ -141,7 +163,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 <script setup>
@@ -170,8 +191,9 @@ const loadLogs = async () => {
 };
 
 const filteredLogs = computed(() => {
-  return logs.value.filter(log => {
-    const matchSearch = !filters.value.search || 
+  return logs.value.filter((log) => {
+    const matchSearch =
+      !filters.value.search ||
       log.utilisateur.toLowerCase().includes(filters.value.search.toLowerCase()) ||
       log.description.toLowerCase().includes(filters.value.search.toLowerCase()) ||
       (log.details && log.details.toLowerCase().includes(filters.value.search.toLowerCase()));
@@ -184,11 +206,19 @@ const filteredLogs = computed(() => {
 });
 
 const formatTime = (isoString) => {
-  return new Date(isoString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date(isoString).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 };
 
 const formatDate = (isoString) => {
-  return new Date(isoString).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(isoString).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 };
 
 const resetFilters = () => {
@@ -201,11 +231,13 @@ const refreshLogs = () => {
 };
 </script>
 
-
-
 <style scoped>
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.875rem; }
+.text-xs {
+  font-size: 0.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+}
 
 /* Mini conteneur d'initiales pour l'avatar de l'opérateur */
 .avatar-placeholder {
@@ -230,7 +262,14 @@ const refreshLogs = () => {
   background-color: rgba(255, 193, 7, 0.06) !important;
 }
 
-.gap-1\.5 { gap: 0.375rem; }
-.me-1\.5 { margin-right: 0.375rem; }
-.px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+.gap-1\.5 {
+  gap: 0.375rem;
+}
+.me-1\.5 {
+  margin-right: 0.375rem;
+}
+.px-1\.5 {
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
 </style>
