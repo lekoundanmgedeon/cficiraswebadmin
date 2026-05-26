@@ -38,11 +38,11 @@
           aria-controls="rapports"
           aria-selected="false"
         >
-           Rapports
+          Rapports
         </a>
       </li>
       <!-- Assistant Ai -->
-     <li class="nav-item">
+      <li class="nav-item">
         <a
           class="nav-link"
           id="assistant-tab"
@@ -52,11 +52,11 @@
           aria-controls="assistant"
           aria-selected="false"
         >
-           Assistant IA
+          Assistant IA
         </a>
-     </li>
+      </li>
     </ul>
-    
+
     <!-- Contenu des onglets -->
     <div class="tab-content p-4">
       <div
@@ -77,21 +77,11 @@
         <!-- Composant spécifique à la proclamation -->
         <Proclamation />
       </div>
-      <div
-        class="tab-pane fade"
-        id="rapports"
-        role="tabpanel"
-        aria-labelledby="rapports-tab"
-      >
+      <div class="tab-pane fade" id="rapports" role="tabpanel" aria-labelledby="rapports-tab">
         <!-- Composant spécifique aux rapports -->
         <Rapports />
       </div>
-      <div
-        class="tab-pane fade"
-        id="assistant"
-        role="tabpanel"
-        aria-labelledby="assistant-tab"
-      >
+      <div class="tab-pane fade" id="assistant" role="tabpanel" aria-labelledby="assistant-tab">
         <!-- Composant spécifique à l'assistant IA -->
         <AssistantIA />
       </div>

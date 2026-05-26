@@ -13,12 +13,12 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-3" style="width: 15%;">Code Classe</th>
-            <th style="width: 35%;">Filière Affectée</th>
-            <th class="text-center" style="width: 12%;">Semestre</th>
-            <th class="text-center" style="width: 13%;">Type Évaluation</th>
-            <th class="text-center" style="width: 15%;">État de Saisie</th>
-            <th class="text-end pe-3" style="width: 10%;">Actions</th>
+            <th class="ps-3" style="width: 15%">Code Classe</th>
+            <th style="width: 35%">Filière Affectée</th>
+            <th class="text-center" style="width: 12%">Semestre</th>
+            <th class="text-center" style="width: 13%">Type Évaluation</th>
+            <th class="text-center" style="width: 15%">État de Saisie</th>
+            <th class="text-end pe-3" style="width: 10%">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -42,7 +42,14 @@
                     : 'text-warning bg-warning bg-opacity-10',
                 ]"
               >
-                <i :class="['bi me-1', classe.effectif_actuel % 2 === 0 ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill']"></i>
+                <i
+                  :class="[
+                    'bi me-1',
+                    classe.effectif_actuel % 2 === 0
+                      ? 'bi-check-circle-fill'
+                      : 'bi-exclamation-circle-fill',
+                  ]"
+                ></i>
                 {{ classe.effectif_actuel % 2 === 0 ? 'Validé & Clos' : 'En cours' }}
               </span>
             </td>
@@ -69,7 +76,11 @@
                   </li>
                   <li><hr class="dropdown-divider" /></li>
                   <li>
-                    <a class="dropdown-item text-success" href="#" @click.prevent="validerNotesSession(classe)">
+                    <a
+                      class="dropdown-item text-success"
+                      href="#"
+                      @click.prevent="validerNotesSession(classe)"
+                    >
                       <i class="bi bi-lock-fill me-2"></i>Clôturer la session
                     </a>
                   </li>
@@ -81,7 +92,9 @@
           <tr v-if="filteredClasses.length === 0">
             <td colspan="6" class="text-center py-5">
               <i class="bi bi-inbox text-muted display-6 d-block mb-2"></i>
-              <p class="text-muted mb-0">Aucune session d'examen ne correspond à votre recherche.</p>
+              <p class="text-muted mb-0">
+                Aucune session d'examen ne correspond à votre recherche.
+              </p>
             </td>
           </tr>
         </tbody>
@@ -99,19 +112,19 @@ import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 const props = defineProps({
   searchQuery: {
     type: String,
-    default: ''
+    default: '',
   },
   semestre: {
     type: Number,
-    default: 1
-  }
+    default: 1,
+  },
 });
 
 const classeStore = useClasseStore();
 const router = useRouter();
 
 // Contexte figé pour ce composant (Contrôles Continus / Devoirs)
-const activeTab = 'SESSION_ORDINAIRE'; 
+const activeTab = 'SESSION_ORDINAIRE';
 const currentTabLabel = 'Examens Partiels (Ordinaires)';
 
 // Récupération réactive des classes depuis le store Pinia
@@ -121,7 +134,7 @@ const classes = computed(() => (Array.isArray(classeStore.classes) ? classeStore
 const filteredClasses = computed(() => {
   return classes.value.filter((c) => {
     const q = props.searchQuery.toLowerCase().trim();
-    
+
     // Sécurité pour tolérer les deux variantes de clés d'objets
     const codeClasse = (c.classe_code || c.code || '').toLowerCase();
     const nomFiliere = (c.filiere_nom || '').toLowerCase();
@@ -147,8 +160,8 @@ const consulterNotes = (classe) => {
     params: {
       classeId: id,
       semestre: props.semestre,
-      type: activeTab
-    }
+      type: activeTab,
+    },
   });
 };
 
@@ -160,8 +173,8 @@ const ouvrirSaisieRapide = (classe) => {
     params: {
       classeId: id,
       semestre: props.semestre,
-      type: activeTab
-    }
+      type: activeTab,
+    },
   });
 };
 

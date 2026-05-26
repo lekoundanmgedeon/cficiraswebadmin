@@ -39,12 +39,8 @@
           <!-- Actions principales -->
           <div class="btn-group">
             <!-- Délibérer -->
-            <button
-              type="button"
-              class="btn btn-success"
-              @click="delibererNotes"
-            >
-            Délibération
+            <button type="button" class="btn btn-success" @click="delibererNotes">
+              Délibération
             </button>
 
             <!-- Dropdown -->

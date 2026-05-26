@@ -5,7 +5,9 @@
         <h4 class="fw-bold mb-1">Saisie Manuelle des Notes</h4>
         <p class="text-muted small mb-0">
           <i class="bi bi-journal-check me-1"></i>
-          Enregistrez les évaluations, saisissez les notes et analysez les performances du <strong>Semestre {{ semestre }}</strong>.
+          Enregistrez les évaluations, saisissez les notes et analysez les performances du
+          <strong>Semestre {{ semestre }}</strong
+          >.
         </p>
       </div>
     </div>
@@ -25,9 +27,11 @@
                 <option :value="classeCodeAffiche">{{ classeCodeAffiche }}</option>
               </select>
             </div>
-            
+
             <div class="col-md-3">
-              <label class="form-label small fw-semibold text-muted mb-1">Matière (Pondération)</label>
+              <label class="form-label small fw-semibold text-muted mb-1"
+                >Matière (Pondération)</label
+              >
               <select
                 class="form-select border-0 shadow-sm"
                 v-model="session.matiere"
@@ -41,10 +45,12 @@
             </div>
 
             <div class="col-md-3">
-              <label class="form-label small fw-semibold text-muted mb-1">Nature de l'Évaluation</label>
-              <select 
-                class="form-select border-0 shadow-sm bg-white" 
-                :value="props.typeEvaluation" 
+              <label class="form-label small fw-semibold text-muted mb-1"
+                >Nature de l'Évaluation</label
+              >
+              <select
+                class="form-select border-0 shadow-sm bg-white"
+                :value="props.typeEvaluation"
                 disabled
               >
                 <option value="CC">Contrôle Continu (CC)</option>
@@ -113,14 +119,23 @@
               </thead>
 
               <tbody>
-                <tr v-for="student in mockStudentsList" :key="student.matricule" class="transition-all">
+                <tr
+                  v-for="student in mockStudentsList"
+                  :key="student.matricule"
+                  class="transition-all"
+                >
                   <td class="ps-4">
-                    <span class="badge bg-light text-dark border font-monospace">{{ student.matricule }}</span>
+                    <span class="badge bg-light text-dark border font-monospace">{{
+                      student.matricule
+                    }}</span>
                   </td>
                   <td class="fw-bold text-dark">{{ student.nom }}</td>
-                  
+
                   <td class="text-center">
-                    <div class="input-group input-group-sm mx-auto shadow-sm rounded" style="width: 110px">
+                    <div
+                      class="input-group input-group-sm mx-auto shadow-sm rounded"
+                      style="width: 110px"
+                    >
                       <input
                         type="number"
                         class="form-control text-center border-0 fw-bold"
@@ -129,9 +144,17 @@
                         max="20"
                         step="0.25"
                         placeholder="--"
-                        :class="isNoteEliminatoire(student.note) ? 'text-danger bg-danger bg-opacity-10' : 'text-dark bg-light'"
+                        :class="
+                          isNoteEliminatoire(student.note)
+                            ? 'text-danger bg-danger bg-opacity-10'
+                            : 'text-dark bg-light'
+                        "
                       />
-                      <span class="input-group-text bg-light border-0 text-muted" style="font-size: 11px">/20</span>
+                      <span
+                        class="input-group-text bg-light border-0 text-muted"
+                        style="font-size: 11px"
+                        >/20</span
+                      >
                     </div>
                   </td>
 
@@ -170,16 +193,16 @@ const classeStore = useClasseStore();
 const props = defineProps({
   classeId: {
     type: String,
-    required: true
+    required: true,
   },
   semestre: {
     type: String,
-    required: true
+    required: true,
   },
   typeEvaluation: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 });
 
 // Configuration de la session de notation
@@ -214,9 +237,9 @@ const mockStudentsList = ref([]);
 // Cycle de vie : Initialisation automatique par rapport aux paramètres de la route
 onMounted(() => {
   // Optionnel : Idéalement, ici tu feras un fetch sur ton Store pour récupérer le nom réel de la classe via son ID
-  session.value.classe = props.classeId; 
+  session.value.classe = props.classeId;
   session.value.typeDevoir = evaluationLabel.value;
-  
+
   // Chargement immédiat du registre d'étudiants
   loadStudents();
 });
@@ -248,7 +271,9 @@ const statsSession = computed(() => {
   const total = notesValides.reduce((acc, curr) => acc + curr, 0);
   const moy = total / notesValides.length;
   const max = Math.max(...notesValides);
-  const alertes = mockStudentsList.value.filter((s) => s.note !== null && isNoteEliminatoire(s.note)).length;
+  const alertes = mockStudentsList.value.filter(
+    (s) => s.note !== null && isNoteEliminatoire(s.note)
+  ).length;
 
   return {
     moyenne: moy.toFixed(2),
@@ -259,16 +284,15 @@ const statsSession = computed(() => {
 
 const classeCodeAffiche = computed(() => {
   const listeClasses = Array.isArray(classeStore.classes) ? classeStore.classes : [];
-  
+
   // On cherche la classe dont l'id (ou classe_id) correspond à l'UUID reçu dans props.classeId
   const classeTrouvee = listeClasses.find(
     (c) => String(c.id || c.classe_id) === String(props.classeId)
   );
 
   // Si on la trouve, on affiche son code lisible. Sinon, on affiche l'UUID en attendant le chargement
-  return classeTrouvee ? (classeTrouvee.classe_code || classeTrouvee.code) : props.classeId;
+  return classeTrouvee ? classeTrouvee.classe_code || classeTrouvee.code : props.classeId;
 });
-
 
 const saveAllNotes = () => {
   alert(

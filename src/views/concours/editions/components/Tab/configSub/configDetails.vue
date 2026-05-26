@@ -5,7 +5,7 @@
         <!-- En-tête -->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2 class="page-title">Editions concours -- </h2>
+            <h2 class="page-title">Editions concours --</h2>
             <p class="page-subtitle text-muted">
               Details des concours et editions candidatss, epreuves et resultats
             </p>

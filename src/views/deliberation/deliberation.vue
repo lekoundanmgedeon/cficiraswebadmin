@@ -1,6 +1,6 @@
 <template>
   <div>
-    <DeliberationHeader/>
+    <DeliberationHeader />
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
@@ -16,7 +16,6 @@
 <script setup>
 import DeliberationHeader from './components/DeliberationHeader.vue';
 import NotesTabs from './components/DeliberationTab.vue';
-
 </script>
 
 <style scoped>
