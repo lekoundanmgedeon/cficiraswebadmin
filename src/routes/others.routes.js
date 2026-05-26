@@ -21,6 +21,7 @@ export default [
     component: () => import('@/views/notes/components/EditNotes.vue'),
     props: true,
   },
+  { path: '/deliberations', name: 'Deiberations', component: () => import('@/views/deliberations/deliberation.vue') },
   {
     path: '/dossiers-scolaires',
     name: 'DossiersScolaires',

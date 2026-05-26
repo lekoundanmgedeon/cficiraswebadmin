@@ -8,9 +8,6 @@
           Enregistrez les évaluations, saisissez les notes et analysez les performances du <strong>Semestre {{ semestre }}</strong>.
         </p>
       </div>
-      <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" @click="$router.back()">
-        <i class="bi bi-arrow-left me-1"></i> Retour aux classes
-      </button>
     </div>
 
     <div class="col-12 mb-4">

@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div class="table-responsive bg-white rounded shadow-sm">
+    <div class="table-responsive bg-white rounded">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>

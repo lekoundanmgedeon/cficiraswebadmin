@@ -1,15 +1,15 @@
 <template>
   <div class="container-fluid py-2">
     <div class="row mb-3">
-      <div class="col-12 d-flex justify-content-end">
-        <button 
-          class="btn btn-sm btn-light border shadow-sm rounded-pill px-3" 
-          @click="$router.back()"
-        >
-          <i class="bi bi-arrow-left-short fs-5 align-middle"></i>
-          <span class="align-middle ms-1">Retour à la liste</span>
-        </button>
-      </div>
+        <div class="col-12 d-flex justify-content-start">
+            <button 
+            class="btn btn-sm btn-light border shadow-sm rounded-pill px-3" 
+            @click="$router.back()"
+            >
+            <i class="bi bi-arrow-left-short fs-5 align-middle"></i>
+            <span class="align-middle ms-1">Retour à la liste</span>
+            </button>
+        </div>
     </div>
 
     <div class="row">
