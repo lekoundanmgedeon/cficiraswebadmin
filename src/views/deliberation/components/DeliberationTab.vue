@@ -41,8 +41,22 @@
            Rapports
         </a>
       </li>
+      <!-- Assistant Ai -->
+     <li class="nav-item">
+        <a
+          class="nav-link"
+          id="assistant-tab"
+          data-bs-toggle="tab"
+          href="#assistant"
+          role="tab"
+          aria-controls="assistant"
+          aria-selected="false"
+        >
+           Assistant IA
+        </a>
+     </li>
     </ul>
-
+    
     <!-- Contenu des onglets -->
     <div class="tab-content p-4">
       <div
@@ -72,6 +86,15 @@
         <!-- Composant spécifique aux rapports -->
         <Rapports />
       </div>
+      <div
+        class="tab-pane fade"
+        id="assistant"
+        role="tabpanel"
+        aria-labelledby="assistant-tab"
+      >
+        <!-- Composant spécifique à l'assistant IA -->
+        <AssistantIA />
+      </div>
     </div>
   </div>
 </template>
@@ -80,4 +103,5 @@
 import Deliberations from './DeliberationsContent.vue';
 import Proclamation from './ProclamationContent.vue';
 import Rapports from './RapportContents.vue';
+import AssistantIA from './AssistantIAContent.vue';
 </script>

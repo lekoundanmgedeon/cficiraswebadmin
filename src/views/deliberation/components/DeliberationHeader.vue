@@ -44,7 +44,7 @@
               class="btn btn-success"
               @click="delibererNotes"
             >
-              <i class="mdi mdi-scale-balance me-1"></i> Délibérer
+            Délibération
             </button>
 
             <!-- Dropdown -->
