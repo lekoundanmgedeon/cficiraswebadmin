@@ -118,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useNiveauStore } from '@/stores/academiqueStore/niveauStore';
 import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
@@ -140,10 +140,45 @@ const form = ref({
   frais_scolarite: null,
 });
 const cycles = ref([]);
-const loading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const isEdit = ref(false);
+
+// Liaison directe avec le loading global du store
+const loading = computed(() => niveauStore.loading || cycleStore.loading);
+
+/* 1. Déclaration de resetForm en premier pour éviter l'erreur d'initialisation */
+const resetForm = () => {
+  form.value = {
+    cycle_id: '',
+    code: '',
+    ordre: '',
+    frais_scolarite: null,
+  };
+  isEdit.value = false;
+  errorMessage.value = '';
+  successMessage.value = '';
+};
+
+/* 2. Watcher pour l'édition placé après la déclaration de resetForm */
+watch(
+  () => props.niveauToEdit,
+  (val) => {
+    if (val) {
+      isEdit.value = true;
+      form.value = {
+        id: val.id,
+        cycle_id: val.cycle_id || '', // Garde l'UUID tel quel
+        code: val.code || '',
+        ordre: val.ordre || '',
+        frais_scolarite: val.frais_scolarite ?? null,
+      };
+    } else {
+      resetForm();
+    }
+  },
+  { immediate: true }
+);
 
 /* Lifecycle */
 onMounted(async () => {
@@ -152,29 +187,14 @@ onMounted(async () => {
 
 /* Charger cycles depuis le store */
 const loadCycles = async () => {
-  loading.value = true;
   try {
     await cycleStore.fetchCycles();
     cycles.value = cycleStore.cycles || [];
   } catch (error) {
     errorMessage.value = 'Impossible de charger les cycles.';
     notifyError(errorMessage.value);
-  } finally {
-    loading.value = false;
   }
 };
-
-/* Watch edit */
-watch(
-  () => props.niveauToEdit,
-  (val) => {
-    if (val) {
-      isEdit.value = true;
-      form.value = { ...val };
-    }
-  },
-  { immediate: true }
-);
 
 /* Helpers */
 const getPreview = () => {
@@ -192,7 +212,7 @@ const validateForm = () => {
     errorMessage.value = 'Le code est obligatoire.';
     return false;
   }
-  if (!form.value.ordre || form.value.ordre < 1) {
+  if (form.value.ordre === null || form.value.ordre === '' || form.value.ordre < 1) {
     errorMessage.value = 'L’ordre doit être supérieur à 0.';
     return false;
   }
@@ -207,13 +227,12 @@ const submitNiveau = async () => {
 
   if (!validateForm()) return;
 
-  loading.value = true;
-
+  // Configuration propre du payload en accord avec l'INSERT ($1 à $4)
   const payload = {
-    cycle_id: parseInt(form.value.cycle_id),
     code: form.value.code.trim().toUpperCase(),
-    ordre: parseInt(form.value.ordre),
-    frais_scolarite: form.value.frais_scolarite ?? null,
+    cycle_id: form.value.cycle_id, // Envoyé en String pure (UUID)
+    ordre: parseInt(form.value.ordre, 10), // Reste un entier pour le tri
+    frais_scolarite: form.value.frais_scolarite ? parseFloat(form.value.frais_scolarite) : null,
   };
 
   try {
@@ -231,8 +250,6 @@ const submitNiveau = async () => {
   } catch (error) {
     errorMessage.value = error.message || 'Erreur lors de l’enregistrement.';
     notifyError(errorMessage.value);
-  } finally {
-    loading.value = false;
   }
 };
 
@@ -240,20 +257,8 @@ const submitNiveau = async () => {
 const closeModal = () => {
   const el = document.getElementById('niveauModal');
   const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
-  modal.hide();
+  if (modal) modal.hide();
   resetForm();
-};
-
-const resetForm = () => {
-  form.value = {
-    cycle_id: '',
-    code: '',
-    ordre: '',
-    frais_scolarite: null,
-  };
-  isEdit.value = false;
-  errorMessage.value = '';
-  successMessage.value = '';
 };
 
 /* Expose */
@@ -265,3 +270,85 @@ defineExpose({
   },
 });
 </script>
+
+<style scoped>
+.modal-header.bg-primary {
+  background-color: #007bff !important;
+}
+
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 2px solid #e9ecef;
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  border-top: 2px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.btn {
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+}
+
+.btn i {
+  margin-right: 0.5rem;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+h6 i {
+  color: #007bff;
+  margin-right: 0.5rem;
+}
+
+.form-select {
+  cursor: pointer;
+}
+</style>

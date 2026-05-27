@@ -5,19 +5,19 @@ export function useNotifier() {
   const messageStore = useMessageStore();
 
   const notifySuccess = (message) => {
-    messageStore.addMessage(message, 'success');
+    messageStore.notifySuccess(message);
   };
 
-  const notifyError = (message) => {
-    messageStore.addMessage(message, 'error');
+  const notifyError = (errorOrMessage, fallback = 'Une erreur est survenue.') => {
+    messageStore.notifyError(errorOrMessage, fallback);
   };
 
   const notifyInfo = (message) => {
-    messageStore.addMessage(message, 'info');
+    messageStore.notifyInfo(message);
   };
 
   const notifyWarning = (message) => {
-    messageStore.addMessage(message, 'warning');
+    messageStore.notifyWarning(message);
   };
 
   return {
@@ -27,3 +27,5 @@ export function useNotifier() {
     notifyWarning,
   };
 }
+
+

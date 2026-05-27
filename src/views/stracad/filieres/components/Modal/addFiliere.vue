@@ -77,16 +77,6 @@
                     >Nombre total de crédits ECTS pour obtenir le diplôme</small
                   >
                 </div>
-
-                <div class="col-md-12 mb-3">
-                  <label class="form-label">Description</label>
-                  <textarea
-                    v-model="form.description"
-                    class="form-control"
-                    rows="3"
-                    placeholder="Description de la filière, objectifs, débouchés..."
-                  ></textarea>
-                </div>
               </div>
             </div>
 
@@ -128,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
 import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
@@ -150,53 +140,59 @@ const form = ref({
   designation: '',
   cycle_id: '',
   credit_total: '',
-  description: '',
 });
 const cycles = ref([]);
-const loading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const isEdit = ref(false);
 
-// Charger les cycles depuis le store
-onMounted(async () => {
-  await loadCycles();
-});
+// Liaison avec le loading du store Pinia
+const loading = computed(() => filiereStore.loading);
 
-// Fonction pour charger les cycles
-const loadCycles = async () => {
-  try {
-    await cycleStore.fetchCycles();
-    cycles.value = cycleStore.cycles; // récupérer la liste du store
-  } catch (error) {
-    notifyError('Impossible de charger les cycles disponibles.');
-  }
+// 1. Déclarer resetForm ICI avant le watch pour éviter l'erreur de portée lexicologique
+const resetForm = () => {
+  form.value = { 
+    code: '', 
+    designation: '', 
+    cycle_id: '', 
+    credit_total: '' 
+  };
+  errorMessage.value = '';
+  successMessage.value = '';
+  isEdit.value = false;
 };
 
-// Watch pour l'édition
+// 2. Watcher pour l'édition (Placé après la définition de resetForm)
 watch(
   () => props.filiereToEdit,
   (newVal) => {
     if (newVal) {
       isEdit.value = true;
       form.value = {
-        code: newVal.code,
-        designation: newVal.designation,
-        cycle_id: newVal.cycle_id,
+        code: newVal.code || '',
+        designation: newVal.designation || '',
+        cycle_id: newVal.cycle_id || '',
         credit_total: newVal.credit_total || null,
-        description: newVal.description || null,
       };
+    } else {
+      resetForm();
     }
   },
   { immediate: true }
 );
 
-// Reset du formulaire
-const resetForm = () => {
-  form.value = { code: '', designation: '', cycle_id: '', credit_total: '' };
-  errorMessage.value = '';
-  successMessage.value = '';
-  isEdit.value = false;
+// Charger les cycles depuis le store au montage du composant
+onMounted(async () => {
+  await loadCycles();
+});
+
+const loadCycles = async () => {
+  try {
+    await cycleStore.fetchCycles();
+    cycles.value = cycleStore.cycles;
+  } catch (error) {
+    notifyError('Impossible de charger les cycles disponibles.');
+  }
 };
 
 // Validation
@@ -235,16 +231,15 @@ const submitFiliere = async () => {
   errorMessage.value = '';
   successMessage.value = '';
 
+  // 1. Validation côté client
   if (!validateForm()) return;
 
-  loading.value = true;
-
+  // 2. Construction de l'objet (cycle_id reste une String/UUID)
   const dataToSend = {
     code: form.value.code.trim().toUpperCase(),
     designation: form.value.designation.trim(),
-    cycle_id: parseInt(form.value.cycle_id),
-    credit_total: form.value.credit_total || null,
-    description: form.value.description || null,
+    cycle_id: form.value.cycle_id, // Envoyé directement en tant que chaîne UUID
+    credit_total: form.value.credit_total ? parseInt(form.value.credit_total, 10) : null,
   };
 
   try {
@@ -253,6 +248,7 @@ const submitFiliere = async () => {
       successMessage.value = 'Filière modifiée avec succès !';
       emit('filiereUpdated', { id: props.filiereToEdit.id, ...dataToSend });
     } else {
+      // Cette fois, le contrôleur backend recevra bien l'UUID et validera la requête
       await filiereStore.addFiliere(dataToSend);
       successMessage.value = 'Filière créée avec succès !';
       emit('filiereCreated', dataToSend);
@@ -262,8 +258,6 @@ const submitFiliere = async () => {
   } catch (error) {
     errorMessage.value = error.message || "Erreur lors de l'enregistrement.";
     notifyError(errorMessage.value);
-  } finally {
-    loading.value = false;
   }
 };
 
@@ -367,50 +361,3 @@ h6 i {
   cursor: pointer;
 }
 </style>
-
-<!-- Exemple d'utilisation dans le composant parent -->
-<!--
-<template>
-  <div>
-    <button 
-      class="btn btn-primary" 
-      data-bs-toggle="modal" 
-      data-bs-target="#filiereModal"
-    >
-      <i class="mdi mdi-plus"></i> Ajouter une filière
-    </button>
-
-    <AddFiliere 
-      @filiereCreated="handleFiliereCreated"
-      @filiereUpdated="handleFiliereUpdated"
-      :filiereToEdit="selectedFiliere"
-    />
-  </div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import AddFiliere from './AddFiliere.vue';
-
-const selectedFiliere = ref(null);
-
-const handleFiliereCreated = (newFiliere) => {
-  console.log('Nouvelle filière créée:', newFiliere);
-  // Actualiser votre liste de filières
-  // Ex: refreshFilieresList();
-};
-
-const handleFiliereUpdated = (updatedFiliere) => {
-  console.log('Filière modifiée:', updatedFiliere);
-  // Actualiser votre liste de filières
-};
-
-// Pour éditer une filière
-const editFiliere = (filiere) => {
-  selectedFiliere.value = filiere;
-  const modalEl = document.getElementById('filiereModal');
-  const modal = new bootstrap.Modal(modalEl);
-  modal.show();
-};
-</script>
--->

@@ -8,9 +8,9 @@
         <thead>
           <tr>
             <th class="ps-4">#</th>
-            <th>Référence</th>
-            <th>Désignation du Cycle</th>
-            <th>Diplôme Délivré</th>
+            <th>REF</th>
+            <th>Désignation</th>
+            <th>Diplôme</th>
             <th class="text-center">Cursus</th>
             <th class="text-center">Volume (Crédits)</th>
             <th class="text-end pe-4">Actions</th>

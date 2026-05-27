@@ -22,7 +22,7 @@
             </li>
             <li v-for="cycle in cycles" :key="cycle.id">
               <button class="dropdown-item" @click="filterByCycle(cycle.id)">
-                {{ cycle.cycle_code }}
+                {{ cycle.code }}
               </button>
             </li>
           </ul>

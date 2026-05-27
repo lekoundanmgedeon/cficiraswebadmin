@@ -6,8 +6,7 @@
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
-          <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="1" />
-          <div v-else class="card-body dashboard-tabs p-0">
+          <div class="card-body dashboard-tabs p-0">
             <CycleTab />
           </div>
         </div>
@@ -18,7 +17,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import SkeletonLoader from '@/components/SkeletonLoader.vue';
 import CycleHeader from './components/CycleHeader.vue';
 import CycleTab from './components/CycleTab.vue';
 
