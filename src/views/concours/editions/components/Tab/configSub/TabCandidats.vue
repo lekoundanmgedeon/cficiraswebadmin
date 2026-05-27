@@ -1,5 +1,6 @@
 <template>
   <div class="animate__animated animate__fadeIn">
+    <!-- En-tête de page -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h5 class="fw-bold mb-1 text-dark">Registre des Candidatures</h5>
@@ -21,9 +22,10 @@
     </div>
 
     <div class="row g-4">
+      <!-- Zone Latérale Gauche : Upload de fichier par Lot -->
       <div class="col-12 col-lg-4">
         <div
-          class="card border border-dashed rounded-4 p-4 text-center bg-light-subtle h-100 d-flex flex-column justify-content-center min-h-dropzone"
+          class="card border border-dashed rounded-4 p-4 text-center bg-light-subtle h-100 d-flex flex-column justify-content-center min-h-dropzone shadow-sm"
         >
           <input
             type="file"
@@ -33,13 +35,14 @@
             class="d-none"
           />
 
+          <!-- État initial : Zone de Drag & Drop ou Clic -->
           <div v-if="!selectedFile">
             <div class="mb-3 text-primary">
               <i class="bi bi-cloud-arrow-up display-4"></i>
             </div>
             <h6 class="fw-bold text-dark">Importer la liste des candidats</h6>
             <p class="text-muted small px-3">
-              Glissez-déposez votre fichier ici, ou
+              Glissez-deposez votre fichier ici, ou
               <a
                 href="#"
                 @click.prevent="triggerFileSelect"
@@ -52,6 +55,7 @@
             </div>
           </div>
 
+          <!-- État Fichier sélectionné prêt à l'envoi -->
           <div v-else class="animate__animated animate__fadeIn">
             <div class="mb-3 text-success">
               <i class="bi bi-file-earmark-check display-4"></i>
@@ -65,20 +69,20 @@
               <button
                 class="btn btn-success btn-sm d-flex align-items-center justify-content-center gap-2"
                 @click="uploadFile"
-                :disabled="isUploading"
+                :disabled="loading"
               >
                 <span
-                  v-if="isUploading"
+                  v-if="loading"
                   class="spinner-border spinner-border-sm"
                   role="status"
                 ></span>
                 <i v-else class="bi bi-check-circle"></i>
-                <span>{{ isUploading ? 'Traitement...' : "Valider l'importation" }}</span>
+                <span>{{ loading ? 'Traitement en cours...' : "Valider l'importation" }}</span>
               </button>
               <button
                 class="btn btn-link btn-sm text-danger text-decoration-none"
                 @click="cancelSelection"
-                :disabled="isUploading"
+                :disabled="loading"
               >
                 Annuler
               </button>
@@ -87,6 +91,7 @@
         </div>
       </div>
 
+      <!-- Zone Latérale Droite : Statistiques et Tableau des Inscrits -->
       <div class="col-12 col-lg-8">
         <div class="row g-3">
           <div class="col-12 col-sm-6">
@@ -95,7 +100,7 @@
                 Candidats Validés
               </div>
               <div class="d-flex align-items-center gap-2">
-                <h3 class="fw-bold text-dark mb-0 font-monospace">{{ candidats.length }}</h3>
+                <h3 class="fw-bold text-dark mb-0 font-monospace">{{ listCandidats.length }}</h3>
                 <span class="badge bg-success-subtle text-success text-xs rounded-pill"
                   >Inscrits</span
                 >
@@ -119,15 +124,24 @@
             <thead class="table-light text-uppercase font-monospace text-xs">
               <tr>
                 <th class="ps-3" style="width: 15%">N° Table</th>
-                <th style="width: 25%">Nom & Prénoms</th>
+                <th style="width: 30%">Nom & Prénoms</th>
                 <th style="width: 25%">Email</th>
                 <th style="width: 20%">Téléphone</th>
-                <th class="text-end pe-3" style="width: 15%">Actions</th>
+                <th class="text-end pe-3" style="width: 10%">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              <tr v-for="(candidat, index) in candidats" :key="index">
+              <!-- État de chargement asynchrone du store -->
+              <tr v-if="loading && listCandidats.length === 0">
+                <td colspan="5" class="text-center py-5">
+                  <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                  <span class="text-muted text-xs">Synchronisation des candidats...</span>
+                </td>
+              </tr>
+
+              <!-- Liste des lignes candidats -->
+              <tr v-for="(candidat, index) in listCandidats" :key="candidat.id || index">
                 <td class="ps-3 font-monospace fw-bold text-primary">
                   {{ candidat.num_table || `N°${1000 + index}` }}
                 </td>
@@ -140,9 +154,10 @@
                 <td class="text-muted font-monospace text-xs">{{ candidat.email || '—' }}</td>
                 <td class="font-monospace text-xs">{{ candidat.telephone || '—' }}</td>
                 <td class="text-end pe-3">
+                  <!-- L'API ne possédant pas de suppression individuelle d'un candidat, action locale/informationnelle -->
                   <button
-                    class="btn btn-sm btn-link text-danger p-1"
-                    @click="deleteCandidat(candidat.id, index)"
+                    class="btn btn-sm btn-link text-danger p-1 shadow-none"
+                    @click="deleteCandidat(candidat, index)"
                     title="Retirer ce candidat"
                   >
                     <i class="bi bi-person-x"></i>
@@ -150,7 +165,8 @@
                 </td>
               </tr>
 
-              <tr v-if="candidats.length === 0">
+              <!-- Liste vide -->
+              <tr v-if="listCandidats.length === 0 && !loading">
                 <td colspan="5" class="text-center text-muted py-5">
                   <i class="bi bi-people text-muted display-6 d-block mb-2"></i>
                   Aucun candidat sur la liste pour le moment. Intégrez votre fichier CSV ou Excel
@@ -166,51 +182,66 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useCandidatStore } from '@/stores/gestionStores/candidatStore'; // Adaptez le chemin si besoin
 import { useNotifier } from '@/stores/messages/useNotifier';
-import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
-
-// Props reçues depuis le parent global contenant le concours sélectionné
-const props = defineProps({
-  concours: { type: Object, default: () => ({}) },
-});
 
 const route = useRoute();
-const concoursId = Number(route.params.id);
+const candidatStore = useCandidatStore();
 const { notifySuccess, notifyError } = useNotifier();
 
+/* Récupération réactive de l'ID du concours depuis l'URL */
+const concoursId = computed(() => route.params.id);
+
+/* State local & Liaisons Store */
 const fileInputRef = ref(null);
 const selectedFile = ref(null);
-const isUploading = ref(false);
-const candidats = ref([]);
 const dernierImportDate = ref('');
 
-onMounted(() => {
-  fetchCandidatsConcours();
+// Lecture directe de la liste des candidats et du spinner depuis l'état global Pinia
+const listCandidats = computed(() => candidatStore.candidats || []);
+const loading = computed(() => candidatStore.loading);
+
+/* Cycles de vie et surveillance */
+onMounted(async () => {
+  await fetchCandidatsConcours();
 });
 
-// Récupération des candidats via le Store ou une API locale
+// En cas de changement de concours à chaud dans l'URL
+watch(
+  () => route.params.id,
+  async (newId) => {
+    if (newId) {
+      cancelSelection();
+      await fetchCandidatsConcours();
+    }
+  }
+);
+
+/* Appel API : Récupération des inscrits */
 const fetchCandidatsConcours = async () => {
   try {
-    // Remplacer par l'appel réel de ton store :
-    // await concourStore.fetchCandidats(concoursId)
-    // candidats.value = concourStore.candidatsList
-    candidats.value = []; // Valeur par défaut
+    if (concoursId.value) {
+      await candidatStore.fetchCandidatsByConcours(concoursId.value);
+    }
   } catch (err) {
-    notifyError('Erreur lors de la récupération des candidats.');
+    console.error('Erreur lors de la récupération des candidats:', err);
   }
 };
 
+/* Gestion de la sélection du fichier */
 const triggerFileSelect = () => {
-  fileInputRef.value.click();
+  if (fileInputRef.value) {
+    fileInputRef.value.click();
+  }
 };
 
 const handleFileChange = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validation basique de la taille (ex: 5Mo)
+  // Validation restrictive de la taille (5 Mo max)
   if (file.size > 5 * 1024 * 1024) {
     notifyError('Le fichier est trop lourd. Limite fixée à 5 Mo.');
     return;
@@ -220,26 +251,28 @@ const handleFileChange = (event) => {
 
 const cancelSelection = () => {
   selectedFile.value = null;
-  fileInputRef.value.value = '';
+  if (fileInputRef.value) {
+    fileInputRef.value.value = '';
+  }
 };
 
+/* Traitement de l'import par lot */
 const uploadFile = async () => {
   if (!selectedFile.value) return;
 
-  isUploading.value = true;
-
-  // Préparation du FormData pour l'envoi API du fichier brut
+  // Encapsulation en objet FormData conforme pour l'envoi de fichiers vers le backend
   const formData = new FormData();
   formData.append('file', selectedFile.value);
-  formData.append('concours_id', concoursId);
+  formData.append('concours_id', concoursId.value);
 
   try {
-    // Insérer ici l'appel vers ton store dédié aux téléversements, ex :
-    // await concourStore.importCandidatsExcel(formData)
+    // Appel de l'action du store : importCandidatsFile
+    await candidatStore.importCandidatsFile(formData);
 
-    notifySuccess('Fichier traité et liste des candidats mise à jour avec succès.');
+    // Si l'appel réussit, on rafraîchit la table et l'état de l'interface
     cancelSelection();
     await fetchCandidatsConcours();
+    
     dernierImportDate.value = new Date().toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'short',
@@ -247,30 +280,47 @@ const uploadFile = async () => {
       minute: '2-digit',
     });
   } catch (err) {
-    notifyError(
-      extractErrorMessage(err, 'Le format du fichier ou la structure des colonnes est incorrect.')
-    );
-  } finally {
-    isUploading.value = false;
+    console.error("Échec lors de l'upload du lot de candidats:", err);
   }
 };
 
-const deleteCandidat = async (id, index) => {
-  if (confirm("Voulez-vous retirer ce candidat de la liste d'inscription ?")) {
-    try {
-      candidats.value.splice(index, 1);
-      notifySuccess('Candidat retiré.');
-    } catch (err) {
-      notifyError('Erreur lors du retrait.');
-    }
+/* Retrait d'un candidat de la liste (Visuel / Local) */
+const deleteCandidat = async (candidat, index) => {
+  const nomComplet = `${candidat.nom} ${candidat.prenom}`;
+  if (confirm(`Voulez-vous retirer le candidat "${nomComplet}" de la liste d'inscription ?`)) {
+    // Note: Votre store ne possède pas d'action deleteCandidat explicite pour le moment.
+    // Nous effectuons donc une modification visuelle locale par sécurité.
+    listCandidats.value.splice(index, 1);
+    notifySuccess('Candidat masqué de la liste locale.');
   }
 };
 
 const downloadTemplate = () => {
-  console.log('Téléchargement du modèle de structure xlsx');
-  // Logique de téléchargement d'un fichier statique
+  console.log('Téléchargement du modèle structurel au format Excel (.xlsx)');
+  // Logique optionnelle d'ouverture de fichier de structure
 };
 </script>
+
+<style scoped>
+.min-h-dropzone {
+  min-height: 220px;
+}
+.border-dashed {
+  border-style: dashed !important;
+}
+.bg-light-subtle {
+  background-color: #fdfdfd;
+}
+.text-xs {
+  font-size: 11px !important;
+}
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+}
+</style>
 
 <style scoped>
 .text-xs {
