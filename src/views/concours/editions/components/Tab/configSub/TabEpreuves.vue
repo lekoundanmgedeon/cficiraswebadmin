@@ -174,10 +174,10 @@
             </td>
           </tr>
 
-          <tr v-if="epreuves.length === 0">
-            <td colspan="7" class="text-center text-muted py-5">
-              <i class="bi bi-journal-x fs-2 d-block text-muted mb-2"></i>
-              Aucune épreuve configurée pour le moment. Cliquez sur le bouton pour démarrer.
+          <tr v-if="loading && epreuves.length === 0">
+            <td colspan="7" class="text-center py-5">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+              <span class="text-muted text-xs">Synchronisation des épreuves avec le serveur...</span>
             </td>
           </tr>
         </tbody>
@@ -202,20 +202,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useConcoursStore } from '@/stores/gestionStores/concourStore';
+import { useConcoursStore } from '@/stores/gestionStores/concourStore'; // Vérifiez bien le chemin de l'import
 import { useNotifier } from '@/stores/messages/useNotifier';
-import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 
+
+//update
 const route = useRoute();
 const concourStore = useConcoursStore();
-const concoursId = Number(route.params.id);
+
+const concoursId = computed(() => route.params.id); 
 
 const { notifySuccess, notifyError } = useNotifier();
 
 const epreuves = ref([]);
 const activeEditIndex = ref(null); // Gère quelle ligne est en train d'être modifiée
+
+// Liaison dynamique avec le spinner global du store Pinia
+const loading = computed(() => concourStore.loading);
 
 // Somme calculée automatiquement des coefficients du tableau
 const totalCoefficients = computed(() => {
@@ -226,19 +231,33 @@ onMounted(async () => {
   await loadEpreuvesData();
 });
 
+/* 1. Chargement des épreuves depuis le Store */
 const loadEpreuvesData = async () => {
   try {
-    if (concoursId) {
-      await concourStore.fetchEpreuvesConcours(concoursId);
-      epreuves.value = JSON.parse(JSON.stringify(concourStore.epreuves)); // Deep copy pour éviter de muter le store directement
+    if (concoursId.value) {
+      //  Action corrigée selon votre store : fetchEpreuvesByConcours
+      await concourStore.fetchEpreuvesByConcours(concoursId.value); 
+      
+      //  Variable d'état corrigée selon votre store : epreuvesList
+      epreuves.value = JSON.parse(JSON.stringify(concourStore.epreuvesList || [])); 
     }
   } catch (err) {
-    notifyError(extractErrorMessage(err, 'Échec lors du chargement des épreuves.'));
+    console.error('Erreur lors du chargement des épreuves:', err);
   }
 };
 
+watch(
+  () => route.params.id,
+  async (newId) => {
+    if (newId) {
+      activeEditIndex.value = null; // On ferme une éventuelle édition en cours
+      await loadEpreuvesData();
+    }
+  }
+);
+
+/* 2. Initialisation d'une nouvelle ligne épreuve (en mémoire locale) */
 const addEpreuve = () => {
-  // S'il y a déjà une édition en cours, on force sa validation d'abord
   if (activeEditIndex.value !== null) {
     notifyError("Veuillez d'abord enregistrer l'épreuve en cours de modification.");
     return;
@@ -251,67 +270,91 @@ const addEpreuve = () => {
     heure_debut: '',
     heure_fin: '',
     type_epreuve: 'écrit',
-    ordre: epreuves.value.length + 1,
-    description: 'N/A',
-    isNew: true, // Drapeau temporaire local
+    isNew: true, // Drapeau temporaire local pour distinguer l'INSERT de l'UPDATE
   });
 
-  // Ouvre automatiquement le mode édition sur la ligne nouvellement ajoutée
+  // Ouvre automatiquement le mode édition sur la ligne neuve
   activeEditIndex.value = epreuves.value.length - 1;
 };
 
+/* 3. Annulation de l'action d'écriture */
 const cancelEdit = (index) => {
-  // Si c'était un ajout non sauvegardé, on supprime la ligne vide
   if (epreuves.value[index].isNew) {
     epreuves.value.splice(index, 1);
   } else {
-    // Sinon on réinitialise l'état avec les valeurs propres du store
-    epreuves.value = JSON.parse(JSON.stringify(concourStore.epreuves));
+    // Restauration de la ligne grâce aux données saines du store Pinia
+    epreuves.value = JSON.parse(JSON.stringify(concourStore.epreuvesList || []));
   }
   activeEditIndex.value = null;
 };
 
+/* 4. Enregistrement (Création OU Modification) */
+const saveEpreuve = async (epreuve, index) => {
+  const error = validateEpreuve(epreuve);
+  if (error) return notifyError(error);
+
+  let typeNormalise = epreuve.type_epreuve.toUpperCase().trim();
+  if (typeNormalise === 'ÉCRIT' || typeNormalise === 'ÉCRITE') {
+    typeNormalise = 'ECRIT';
+  }
+
+  // Préparation du payload attendu par le Back-end (avec clefs d'injection)
+  const payload = { 
+    code: epreuve.code.trim().toUpperCase(),
+    designation: epreuve.designation.trim(),
+    coefficient: Number(epreuve.coefficient),
+    heure_debut: epreuve.heure_debut,
+    heure_fin: epreuve.heure_fin,
+    type_epreuve: typeNormalise,
+    concours_id: concoursId.value // Clé d'association parentale
+  };
+
+  try {
+    if (epreuve.isNew) {
+      await concourStore.addEpreuve(payload);
+    } else {
+      await concourStore.editEpreuve(epreuve.id, payload);
+    }
+    
+    // Rechargement de l'état réactif et fermeture de la ligne éditable
+    await loadEpreuvesData();
+    activeEditIndex.value = null;
+  } catch (err) {
+    console.error("Échec de la sauvegarde", err);
+  }
+};
+
+/* 5. Suppression d'une épreuve */
 const removeEpreuve = async (index) => {
   const item = epreuves.value[index];
+  
   if (confirm(`Êtes-vous sûr de vouloir retirer l'épreuve "${item.designation || item.code}" ?`)) {
     try {
-      // Intègre ici ton action store DELETE si nécessaire, sinon locale :
-      epreuves.value.splice(index, 1);
+      if (item.id) {
+        // Alignement Action Store : removeEpreuve(id, currentConcoursId)
+        await concourStore.removeEpreuve(item.id, concoursId);
+      } else {
+        epreuves.value.splice(index, 1);
+      }
+      await loadEpreuvesData();
       activeEditIndex.value = null;
-      notifySuccess('Épreuve retirée avec succès.');
     } catch (err) {
-      notifyError('Impossible de supprimer cette matière.');
+      console.error("Échec de la suppression", err);
     }
   }
 };
 
+/* Validation des contraintes métiers */
 const validateEpreuve = (epreuve) => {
   if (!epreuve.code?.trim() || !epreuve.designation?.trim())
     return "Le code et l'intitulé de la matière sont obligatoires.";
   if (!epreuve.heure_debut || !epreuve.heure_fin)
     return 'Les horaires de début et de fin sont obligatoires.';
   if (epreuve.heure_debut >= epreuve.heure_fin)
-    return "L'heure de fin doit impérativement être après l'heure de début.";
-  if (!epreuve.coefficient || epreuve.coefficient <= 0)
+    return "L'heure de fin doit impérativement être postérieure à l'heure de début.";
+  if (!epreuve.coefficient || Number(epreuve.coefficient) <= 0)
     return 'Le coefficient doit être un entier supérieur à 0.';
   return null;
-};
-
-const saveEpreuve = async (epreuve, index) => {
-  const error = validateEpreuve(epreuve);
-  if (error) return notifyError(error);
-
-  const payload = { ...epreuve, concours_id: concoursId };
-  delete payload.isNew; // Nettoyage de la variable locale
-
-  try {
-    await concourStore.addEpreuvesConcours(concoursId, payload);
-    await loadEpreuvesData();
-    activeEditIndex.value = null;
-    notifySuccess('Épreuve enregistrée avec succès.');
-  } catch (err) {
-    notifyError(extractErrorMessage(err, "Erreur lors de la sauvegarde de l'épreuve."));
-  }
 };
 
 const getTypeBadgeClass = (type) => {
@@ -321,7 +364,7 @@ const getTypeBadgeClass = (type) => {
   return 'bg-purple-subtle text-purple border border-purple-subtle';
 };
 
-const exportExcel = () => console.log('Exportation Excel lancé...');
+const exportExcel = () => console.log('Exportation Excel lancée pour le concours :', concoursId);
 </script>
 
 <style scoped>
