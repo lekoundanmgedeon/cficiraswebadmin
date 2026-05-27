@@ -37,6 +37,7 @@ export const useClasseStore = defineStore('classeStore', {
   state: () => ({
     classes: [],
     classesNiveau: [],
+    classesFiliere : [],
     classe: null,
     organisationTree: null,
     analytics: null,
@@ -139,7 +140,7 @@ export const useClasseStore = defineStore('classeStore', {
       this.loading = true;
       try {
         const response = await getClassesByFiliere(filiereId);
-        this.classes = response.data;
+        this.classesFiliere = response.data;
       } catch (error) {
         messageStore.notifyError(
           extractErrorMessage(error, 'Erreur lors du chargement des classes par filière.')

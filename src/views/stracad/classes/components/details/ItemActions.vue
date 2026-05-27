@@ -57,11 +57,11 @@
             <ul class="list-group list-group-flush">
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Code :</strong>
-                <span class="fw-bold text-primary">{{ item.classe_code }}</span>
+                <span class="fw-bold text-primary">{{ item.code }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Capacité :</strong>
-                <span class="badge bg-info">{{ item.classe_capacite }}</span>
+                <span class="badge bg-info">{{ item.capacite_max }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Niveau :</strong>

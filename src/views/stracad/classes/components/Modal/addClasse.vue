@@ -137,140 +137,64 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { useClasseStore } from '@/stores/academiqueStore/classeStore'; // À adapter selon vos chemins
+import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
+import { useNiveauStore } from '@/stores/academiqueStore/niveauStore';
+import { useNotifier } from '@/stores/messages/useNotifier';
 
-// Props
+// Props & Emits
 const props = defineProps({
-  classeToEdit: {
-    type: Object,
-    default: null,
-  },
+  classeToEdit: { type: Object, default: null },
 });
-
-// Emits
 const emit = defineEmits(['classeCreated', 'classeUpdated']);
 
-// État
+// Stores
+const classeStore = useClasseStore();
+const filiereStore = useFiliereStore();
+const niveauStore = useNiveauStore();
+const { notifyError } = useNotifier();
+
+// États du Formulaire (Strictement limité aux besoins de l'application et de la BDD)
 const form = ref({
   code: '',
   niveau_id: '',
   filiere_id: '',
   capacite_max: null,
-  annee_academique_id: '',
-  responsable: '',
-  salle: '',
-  effectif_actuel: 0,
-  observations: '',
-  est_active: true,
 });
 
 const filieres = ref([]);
 const niveaux = ref([]);
-const anneesAcademiques = ref([]);
-const loading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const isEdit = ref(false);
 
-// Computed - Filtrer les niveaux selon la filière sélectionnée
+// Liaison dynamique avec le chargement global de Pinia
+const loading = computed(() => classeStore.loading);
+
+// Filtrer dynamiquement les niveaux selon la filière sélectionnée
 const filteredNiveaux = computed(() => {
   if (!form.value.filiere_id) return [];
-
-  // Trouver la filière sélectionnée
   const selectedFiliere = filieres.value.find((f) => f.id === form.value.filiere_id);
-  if (!selectedFiliere || !selectedFiliere.cycle) return niveaux.value;
-
-  // Filtrer les niveaux du même cycle
-  return niveaux.value.filter((n) => n.cycle_id === selectedFiliere.cycle.id);
+  if (!selectedFiliere || !selectedFiliere.cycle_id) return niveaux.value;
+  
+  // Filtrage par le cycle associé (liaison UUID)
+  return niveaux.value.filter((n) => n.cycle_id === selectedFiliere.cycle_id);
 });
 
-// Charger les données au montage
-onMounted(async () => {
-  await Promise.all([loadFilieres(), loadNiveaux(), loadAnneesAcademiques()]);
-});
-
-// Charger la liste des filières
-const loadFilieres = async () => {
-  try {
-    // Simuler un appel API
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Exemple d'appel API réel (décommenter et adapter)
-    /*
-    const response = await fetch('/api/filieres', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    
-    if (!response.ok) throw new Error('Erreur lors du chargement des filières');
-    
-    filieres.value = await response.json();
-    */
-
-    // Simulation de données
-    filieres.value = [
-      {
-        id: 1,
-        code: 'INFO',
-        designation: 'Informatique',
-        cycle: { id: 1, code: 'L', designation: 'Licence' },
-      },
-      {
-        id: 2,
-        code: 'GC',
-        designation: 'Génie Civil',
-        cycle: { id: 1, code: 'L', designation: 'Licence' },
-      },
-      {
-        id: 3,
-        code: 'IA',
-        designation: 'Intelligence Artificielle',
-        cycle: { id: 2, code: 'M', designation: 'Master' },
-      },
-    ];
-  } catch (error) {
-    console.error('Erreur lors du chargement des filières:', error);
-    errorMessage.value = 'Impossible de charger les filières disponibles.';
-  }
+/* 1. Déclaration de resetForm en premier */
+const resetForm = () => {
+  form.value = {
+    code: '',
+    niveau_id: '',
+    filiere_id: '',
+    capacite_max: null,
+  };
+  errorMessage.value = '';
+  successMessage.value = '';
+  isEdit.value = false;
 };
 
-// Charger la liste des niveaux
-const loadNiveaux = async () => {
-  try {
-    // Simuler un appel API
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Simulation de données
-    niveaux.value = [
-      { id: 1, code: 'L1', designation: 'Première année Licence', cycle_id: 1 },
-      { id: 2, code: 'L2', designation: 'Deuxième année Licence', cycle_id: 1 },
-      { id: 3, code: 'L3', designation: 'Troisième année Licence', cycle_id: 1 },
-      { id: 4, code: 'M1', designation: 'Première année Master', cycle_id: 2 },
-      { id: 5, code: 'M2', designation: 'Deuxième année Master', cycle_id: 2 },
-    ];
-  } catch (error) {
-    console.error('Erreur lors du chargement des niveaux:', error);
-    errorMessage.value = 'Impossible de charger les niveaux disponibles.';
-  }
-};
-
-// Charger les années académiques
-const loadAnneesAcademiques = async () => {
-  try {
-    // Simuler un appel API
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Simulation de données
-    anneesAcademiques.value = [
-      { id: 1, code: '2024-2025', est_active: true },
-      { id: 2, code: '2023-2024', est_active: false },
-    ];
-  } catch (error) {
-    console.error('Erreur lors du chargement des années académiques:', error);
-  }
-};
-
-// Watch pour l'édition
+/* 2. Watcher pour l'édition placé après resetForm */
 watch(
   () => props.classeToEdit,
   (newVal) => {
@@ -278,189 +202,125 @@ watch(
       isEdit.value = true;
       form.value = {
         id: newVal.id,
-        code: newVal.code,
-        niveau_id: newVal.niveau_id,
-        filiere_id: newVal.filiere_id,
+        code: newVal.code || '',
+        niveau_id: newVal.niveau_id || '', // UUID (String)
+        filiere_id: newVal.filiere_id || '', // UUID (String)
         capacite_max: newVal.capacite_max || null,
-        annee_academique_id: newVal.annee_academique_id || '',
-        responsable: newVal.responsable || '',
-        salle: newVal.salle || '',
-        effectif_actuel: newVal.effectif_actuel || 0,
-        observations: newVal.observations || '',
-        est_active: newVal.est_active !== undefined ? newVal.est_active : true,
       };
+    } else {
+      resetForm();
     }
-  }
+  },
+  { immediate: true }
 );
 
-// Méthodes
-const resetForm = () => {
-  form.value = {
-    code: '',
-    niveau_id: '',
-    filiere_id: '',
-    capacite_max: null,
-    annee_academique_id: '',
-    responsable: '',
-    salle: '',
-    effectif_actuel: 0,
-    observations: '',
-    est_active: true,
-  };
-  errorMessage.value = '';
-  successMessage.value = '';
-  isEdit.value = false;
+// Chargement initial des dépendances depuis les stores réels
+onMounted(async () => {
+  await Promise.all([loadFilieres(), loadNiveaux()]);
+});
+
+const loadFilieres = async () => {
+  try {
+    await filiereStore.fetchFilieres();
+    filieres.value = filiereStore.filieres || [];
+  } catch (error) {
+    notifyError('Impossible de charger les filières.');
+  }
 };
 
+const loadNiveaux = async () => {
+  try {
+    await niveauStore.fetchNiveaux();
+    niveaux.value = niveauStore.niveaux || [];
+  } catch (error) {
+    notifyError('Impossible de charger les niveaux.');
+  }
+};
+
+// Actions utilisateurs
 const onFiliereChange = () => {
-  // Réinitialiser le niveau si la filière change
   form.value.niveau_id = '';
 };
 
 const getClassePreview = () => {
   const filiere = filieres.value.find((f) => f.id === form.value.filiere_id);
   const niveau = niveaux.value.find((n) => n.id === form.value.niveau_id);
-
   if (filiere && niveau) {
-    return `${niveau.code} ${filiere.designation} (${filiere.cycle?.code || ''})`;
+    return `${niveau.code} - ${filiere.designation}`;
   }
   return '';
 };
 
 const validateForm = () => {
-  // Vérifier les champs obligatoires
   if (!form.value.code.trim()) {
     errorMessage.value = 'Le code est obligatoire.';
     return false;
   }
-
   if (!form.value.filiere_id) {
     errorMessage.value = 'Veuillez sélectionner une filière.';
     return false;
   }
-
   if (!form.value.niveau_id) {
     errorMessage.value = 'Veuillez sélectionner un niveau.';
     return false;
   }
-
-  // Vérifier la longueur du code
   if (form.value.code.length > 10) {
     errorMessage.value = 'Le code ne doit pas dépasser 10 caractères.';
     return false;
   }
-
-  // Vérifier la capacité si renseignée
   if (form.value.capacite_max && form.value.capacite_max < 1) {
     errorMessage.value = 'La capacité maximale doit être supérieure à 0.';
     return false;
   }
-
   errorMessage.value = '';
   return true;
 };
 
+// Soumission harmonisée avec la méthode create de votre modèle de données
 const submitClasse = async () => {
-  // Réinitialiser les messages
   errorMessage.value = '';
   successMessage.value = '';
 
-  // Validation
-  if (!validateForm()) {
-    return;
-  }
+  if (!validateForm()) return;
 
-  loading.value = true;
+  // Création du payload strict attendu par le modèle PostgreSQL ($1 à $4)
+  const dataToSend = {
+    code: form.value.code.trim().toUpperCase(),
+    niveau_id: form.value.niveau_id, // Transmission directe de l'UUID (String)
+    filiere_id: form.value.filiere_id, // Transmission directe de l'UUID (String)
+    capacite_max: form.value.capacite_max ? parseInt(form.value.capacite_max, 10) : null,
+  };
 
   try {
-    // Préparer les données pour l'API (selon le schéma SQL)
-    const dataToSend = {
-      code: form.value.code.trim().toUpperCase(), // Normaliser en majuscules
-      niveau_id: parseInt(form.value.niveau_id),
-      filiere_id: parseInt(form.value.filiere_id),
-      capacite_max: form.value.capacite_max || null,
-    };
-
-    // Ajouter les champs optionnels s'ils sont renseignés
-    if (form.value.annee_academique_id)
-      dataToSend.annee_academique_id = parseInt(form.value.annee_academique_id);
-    if (form.value.responsable) dataToSend.responsable = form.value.responsable.trim();
-    if (form.value.salle) dataToSend.salle = form.value.salle.trim();
-    if (form.value.effectif_actuel) dataToSend.effectif_actuel = form.value.effectif_actuel;
-    if (form.value.observations) dataToSend.observations = form.value.observations.trim();
-    if (form.value.est_active !== undefined) dataToSend.est_active = form.value.est_active;
-
-    // Simuler un appel API
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Exemple d'appel API réel (décommenter et adapter)
-    /*
-    const url = isEdit.value 
-      ? `/api/classes/${form.value.id}` 
-      : '/api/classes';
-    
-    const method = isEdit.value ? 'PUT' : 'POST';
-    
-    const response = await fetch(url, {
-      method: method,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify(dataToSend),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Erreur lors de l\'enregistrement');
-    }
-
-    const result = await response.json();
-    */
-
-    // Simulation de réponse
-    const result = {
-      ...dataToSend,
-      id: isEdit.value ? form.value.id : Date.now(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    successMessage.value = isEdit.value
-      ? 'Classe modifiée avec succès !'
-      : 'Classe créée avec succès !';
-
-    // Émettre l'événement
     if (isEdit.value) {
-      emit('classeUpdated', result);
+      await classeStore.editClasse(form.value.id, dataToSend);
+      successMessage.value = 'Classe modifiée avec succès !';
+      emit('classeUpdated', { id: form.value.id, ...dataToSend });
     } else {
-      emit('classeCreated', result);
+      // Appel à l'action réelle de votre store Pinia
+      await classeStore.addClasse(dataToSend);
+      successMessage.value = 'Classe créée avec succès !';
+      emit('classeCreated', dataToSend);
     }
 
-    // Fermer le modal après 1 seconde
     setTimeout(() => {
       closeModal();
     }, 1000);
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error(error);
     errorMessage.value = error.message || "Une erreur est survenue lors de l'enregistrement.";
-  } finally {
-    loading.value = false;
+    notifyError(errorMessage.value);
   }
 };
 
 const closeModal = () => {
   const modalEl = document.getElementById('classeModal');
   const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-  modal.hide();
-
-  // Réinitialiser le formulaire après fermeture
-  setTimeout(() => {
-    resetForm();
-  }, 300);
+  if (modal) modal.hide();
+  setTimeout(() => resetForm(), 300);
 };
 
-// Exposer les méthodes pour utilisation externe
+// Fonctions exposées
 defineExpose({
   resetForm,
   openForEdit: (classe) => {
