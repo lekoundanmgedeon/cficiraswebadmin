@@ -2,6 +2,7 @@ import buildService from '../config/serviceApi';
 import { gestionApi, gestionFormApi } from '../config/apiClients';
 
 const gestionService = buildService(gestionApi);
+const gestionFormService = buildService(gestionFormApi);
 
 // CRUD
 export const getConcours = () => gestionService.get('/concours');
@@ -50,22 +51,17 @@ export const addPieceCandidat = (id, data) =>
   gestionService.post(`/candidats/${id}/pieces`, data);
 
 // Importation par lot des candidats
-export const importCandidats = (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  return gestionService.post('/candidats/import', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const importCandidats = (formData) => {
+  // 2. On utilise 'gestionFormService' et on passe directement le formData reçu
+  return gestionFormService.post('/candidats/import', formData);
 };
 
 // Importation par lot des notes
-export const importNotesCandidats = (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  return gestionService.post('/candidats/import/notes', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const importNotesCandidats = (formData) => {
+  // 2. On utilise 'gestionFormService' et on passe directement le formData reçu
+  return gestionFormService.post('/candidats/import/notes', formData);
 };
+
 
 // 3. Enregistrer une note d’épreuve
 export const addNoteEpreuve = (numTable, data) =>

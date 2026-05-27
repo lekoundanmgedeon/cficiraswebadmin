@@ -50,11 +50,11 @@ export const useCandidatStore = defineStore('candidatStore', {
     },
 
     // Importer candidats par lot
-    async importCandidatsFile(file) {
+    async importCandidatsFile(formData) {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
-        await importCandidats(file);
+        await importCandidats(formData);
         messageStore.notifySuccess('Import des candidats réussi.');
       } catch (error) {
         messageStore.notifyError(

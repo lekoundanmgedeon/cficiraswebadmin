@@ -193,7 +193,6 @@ const { notifySuccess, notifyError } = useNotifier();
 
 /* Récupération réactive de l'ID du concours depuis l'URL */
 const concoursId = computed(() => route.params.id);
-
 /* State local & Liaisons Store */
 const fileInputRef = ref(null);
 const selectedFile = ref(null);
@@ -262,8 +261,9 @@ const uploadFile = async () => {
 
   // Encapsulation en objet FormData conforme pour l'envoi de fichiers vers le backend
   const formData = new FormData();
+  formData.append('concours_id', concoursId.value); // L'id est bien là !
   formData.append('file', selectedFile.value);
-  formData.append('concours_id', concoursId.value);
+
 
   try {
     // Appel de l'action du store : importCandidatsFile

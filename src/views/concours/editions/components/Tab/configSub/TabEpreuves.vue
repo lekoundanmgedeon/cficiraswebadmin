@@ -403,4 +403,18 @@ const exportExcel = () => console.log('Exportation Excel lancée pour le concour
 .form-select-sm {
   border-radius: 0.375rem;
 }
+
+.custom-note-input {
+  max-width: 90px;
+  font-size: 14px;
+}
+.min-h-dropzone {
+  min-height: 180px;
+}
+.border-dashed {
+  border-style: dashed !important;
+}
+.text-xs {
+  font-size: 11px !important;
+}
 </style>
