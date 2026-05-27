@@ -1,6 +1,5 @@
 <template>
   <div class="animate__animated animate__fadeIn">
-    <!-- En-tête de page -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h5 class="fw-bold mb-1 text-dark">Registre des Candidatures</h5>
@@ -14,7 +13,7 @@
         <button
           class="btn btn-sm btn-light border text-secondary"
           @click="downloadTemplate"
-          title="Télécharger le modèle Excel de base"
+          title="Télécharger le modèle Excel avec les en-têtes requis"
         >
           <i class="bi bi-file-earmark-arrow-down me-1"></i> Télécharger le modèle (.xlsx)
         </button>
@@ -22,7 +21,6 @@
     </div>
 
     <div class="row g-4">
-      <!-- Zone Latérale Gauche : Upload de fichier par Lot -->
       <div class="col-12 col-lg-4">
         <div
           class="card border border-dashed rounded-4 p-4 text-center bg-light-subtle h-100 d-flex flex-column justify-content-center min-h-dropzone shadow-sm"
@@ -35,14 +33,13 @@
             class="d-none"
           />
 
-          <!-- État initial : Zone de Drag & Drop ou Clic -->
           <div v-if="!selectedFile">
             <div class="mb-3 text-primary">
               <i class="bi bi-cloud-arrow-up display-4"></i>
             </div>
             <h6 class="fw-bold text-dark">Importer la liste des candidats</h6>
             <p class="text-muted small px-3">
-              Glissez-deposez votre fichier ici, ou
+              Glissez-déposez votre fichier ici, ou
               <a
                 href="#"
                 @click.prevent="triggerFileSelect"
@@ -55,7 +52,6 @@
             </div>
           </div>
 
-          <!-- État Fichier sélectionné prêt à l'envoi -->
           <div v-else class="animate__animated animate__fadeIn">
             <div class="mb-3 text-success">
               <i class="bi bi-file-earmark-check display-4"></i>
@@ -91,7 +87,6 @@
         </div>
       </div>
 
-      <!-- Zone Latérale Droite : Statistiques et Tableau des Inscrits -->
       <div class="col-12 col-lg-8">
         <div class="row g-3">
           <div class="col-12 col-sm-6">
@@ -132,7 +127,6 @@
             </thead>
 
             <tbody>
-              <!-- État de chargement asynchrone du store -->
               <tr v-if="loading && listCandidats.length === 0">
                 <td colspan="5" class="text-center py-5">
                   <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
@@ -140,10 +134,9 @@
                 </td>
               </tr>
 
-              <!-- Liste des lignes candidats -->
-              <tr v-for="(candidat, index) in listCandidats" :key="candidat.id || index">
+              <tr v-for="(candidat, index) in paginatedCandidats" :key="candidat.id || index">
                 <td class="ps-3 font-monospace fw-bold text-primary">
-                  {{ candidat.num_table || `N°${1000 + index}` }}
+                  {{ candidat.num_table || `N°${1000 + (currentPage - 1) * itemsPerPage + index}` }}
                 </td>
                 <td>
                   <div class="fw-semibold text-dark">{{ candidat.nom }} {{ candidat.prenom }}</div>
@@ -152,9 +145,8 @@
                   >
                 </td>
                 <td class="text-muted font-monospace text-xs">{{ candidat.email || '—' }}</td>
-                <td class="font-monospace text-xs">{{ candidat.telephone || '—' }}</td>
+                <td class="font-monospace text-xs">{{ candidat.telephone || candidat.tel || '—' }}</td>
                 <td class="text-end pe-3">
-                  <!-- L'API ne possédant pas de suppression individuelle d'un candidat, action locale/informationnelle -->
                   <button
                     class="btn btn-sm btn-link text-danger p-1 shadow-none"
                     @click="deleteCandidat(candidat, index)"
@@ -165,8 +157,7 @@
                 </td>
               </tr>
 
-              <!-- Liste vide -->
-              <tr v-if="listCandidats.length === 0 && !loading">
+              <tr v-if="paginatedCandidats.length === 0 && !loading">
                 <td colspan="5" class="text-center text-muted py-5">
                   <i class="bi bi-people text-muted display-6 d-block mb-2"></i>
                   Aucun candidat sur la liste pour le moment. Intégrez votre fichier CSV ou Excel
@@ -175,6 +166,41 @@
               </tr>
             </tbody>
           </table>
+
+          <div v-if="listCandidats.length > 0" class="d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 border-top bg-light-subtle gap-2">
+            <div class="d-flex align-items-center gap-2 text-muted small">
+              <span>Afficher</span>
+              <select v-model="itemsPerPage" @change="currentPage = 1" class="form-select form-select-sm w-auto py-0">
+                <option :value="10">10</option>
+                <option :value="20">20</option>
+              </select>
+              <span>éléments sur {{ listCandidats.length }}</span>
+            </div>
+
+            <nav v-if="totalPages > 1" aria-label="Navigation des pages">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                  <button class="page-link shadow-none" @click="currentPage--" :disabled="currentPage === 1">
+                    Précédent
+                  </button>
+                </li>
+                <li 
+                  v-for="page in totalPages" 
+                  :key="page" 
+                  class="page-item" 
+                  :class="{ active: currentPage === page }"
+                >
+                  <button class="page-link shadow-none" @click="currentPage = page">{{ page }}</button>
+                </li>
+                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                  <button class="page-link shadow-none" @click="currentPage++" :disabled="currentPage === totalPages">
+                    Suivant
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
         </div>
       </div>
     </div>
@@ -184,7 +210,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useCandidatStore } from '@/stores/gestionStores/candidatStore'; // Adaptez le chemin si besoin
+import { useCandidatStore } from '@/stores/gestionStores/candidatStore'; 
 import { useNotifier } from '@/stores/messages/useNotifier';
 
 const route = useRoute();
@@ -193,14 +219,28 @@ const { notifySuccess, notifyError } = useNotifier();
 
 /* Récupération réactive de l'ID du concours depuis l'URL */
 const concoursId = computed(() => route.params.id);
+
 /* State local & Liaisons Store */
 const fileInputRef = ref(null);
 const selectedFile = ref(null);
 const dernierImportDate = ref('');
 
-// Lecture directe de la liste des candidats et du spinner depuis l'état global Pinia
+/* State de Pagination */
+const currentPage = ref(1);
+const itemsPerPage = ref(10); // Valeur par défaut (Sélecteur 10-20)
+
+// Lecture directe depuis l'état global Pinia
 const listCandidats = computed(() => candidatStore.candidats || []);
 const loading = computed(() => candidatStore.loading);
+
+/* Computeds de calcul de pagination */
+const totalPages = computed(() => Math.ceil(listCandidats.value.length / itemsPerPage.value));
+
+const paginatedCandidats = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return listCandidats.value.slice(start, end);
+});
 
 /* Cycles de vie et surveillance */
 onMounted(async () => {
@@ -213,6 +253,7 @@ watch(
   async (newId) => {
     if (newId) {
       cancelSelection();
+      currentPage.value = 1;
       await fetchCandidatsConcours();
     }
   }
@@ -240,7 +281,6 @@ const handleFileChange = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validation restrictive de la taille (5 Mo max)
   if (file.size > 5 * 1024 * 1024) {
     notifyError('Le fichier est trop lourd. Limite fixée à 5 Mo.');
     return;
@@ -259,18 +299,14 @@ const cancelSelection = () => {
 const uploadFile = async () => {
   if (!selectedFile.value) return;
 
-  // Encapsulation en objet FormData conforme pour l'envoi de fichiers vers le backend
   const formData = new FormData();
-  formData.append('concours_id', concoursId.value); // L'id est bien là !
+  formData.append('concours_id', concoursId.value); 
   formData.append('file', selectedFile.value);
 
-
   try {
-    // Appel de l'action du store : importCandidatsFile
     await candidatStore.importCandidatsFile(formData);
-
-    // Si l'appel réussit, on rafraîchit la table et l'état de l'interface
     cancelSelection();
+    currentPage.value = 1; // Retour en page 1 pour voir les nouveaux éléments
     await fetchCandidatsConcours();
     
     dernierImportDate.value = new Date().toLocaleDateString('fr-FR', {
@@ -288,39 +324,64 @@ const uploadFile = async () => {
 const deleteCandidat = async (candidat, index) => {
   const nomComplet = `${candidat.nom} ${candidat.prenom}`;
   if (confirm(`Voulez-vous retirer le candidat "${nomComplet}" de la liste d'inscription ?`)) {
-    // Note: Votre store ne possède pas d'action deleteCandidat explicite pour le moment.
-    // Nous effectuons donc une modification visuelle locale par sécurité.
-    listCandidats.value.splice(index, 1);
+    listCandidats.value.splice((currentPage.value - 1) * itemsPerPage.value + index, 1);
     notifySuccess('Candidat masqué de la liste locale.');
   }
 };
 
+/* Génération et Téléchargement du Modèle Excel Standardisé */
 const downloadTemplate = () => {
-  console.log('Téléchargement du modèle structurel au format Excel (.xlsx)');
-  // Logique optionnelle d'ouverture de fichier de structure
+  const headers = [
+    'nom',
+    'prenom',
+    'sexe',
+    'date_naissance',
+    'lieu_naissance',
+    'telephone',
+    'email',
+    'ville',
+    'code_filiere',
+    'chemin_photo'
+  ];
+
+  // Construction d'un fichier XML de feuille de calcul compatible nativement avec Microsoft Excel (.xlsx / .xls)
+  let xmlContent = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Worksheet ss:Name="Modèle Importation">
+    <Table>
+      <Row>`;
+  
+  // Injection des en-têtes requis en cellules de tableau Excel
+  headers.forEach(header => {
+    xmlContent += `<Cell><Data ss:Type="String">${header}</Data></Cell>`;
+  });
+
+  xmlContent += `</Row>
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+  // Création du conteneur Blob et déclenchement du téléchargement navigateur
+  const blob = new Blob([xmlContent], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'modele_import_candidats.xlsx');
+  document.body.appendChild(link);
+  link.click();
+  
+  // Nettoyage mémoire
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+  notifySuccess('Modèle de structure Excel généré avec succès.');
 };
 </script>
 
-<style scoped>
-.min-h-dropzone {
-  min-height: 220px;
-}
-.border-dashed {
-  border-style: dashed !important;
-}
-.bg-light-subtle {
-  background-color: #fdfdfd;
-}
-.text-xs {
-  font-size: 11px !important;
-}
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;  
-  overflow: hidden;
-}
-</style>
 
 <style scoped>
 .text-xs {
@@ -328,10 +389,6 @@ const downloadTemplate = () => {
 }
 .text-sm {
   font-size: 0.875rem;
-}
-
-.min-h-dropzone {
-  min-height: 260px;
 }
 
 .border-dashed {
@@ -350,5 +407,24 @@ const downloadTemplate = () => {
 
 .btn-link:hover {
   text-decoration: underline !important;
+}
+
+.min-h-dropzone {
+  min-height: 220px;
+}
+.border-dashed {
+  border-style: dashed !important;
+}
+.bg-light-subtle {
+  background-color: #fdfdfd;
+}
+.text-xs {
+  font-size: 11px !important;
+}
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
 }
 </style>

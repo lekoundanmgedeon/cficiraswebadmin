@@ -52,7 +52,6 @@ export const addPieceCandidat = (id, data) =>
 
 // Importation par lot des candidats
 export const importCandidats = (formData) => {
-  // 2. On utilise 'gestionFormService' et on passe directement le formData reçu
   return gestionFormService.post('/candidats/import', formData);
 };
 
