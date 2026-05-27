@@ -73,16 +73,16 @@
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Statut :</strong>
                 <span :class="item.actif ? 'text-success' : 'text-secondary'">
-                  {{ item.est_actif ? 'Actif' : 'Inactif' }}
+                  {{ item.actif ? 'Actif' : 'Inactif' }}
                 </span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
-                <strong>Nombre de classes :</strong>
-                <span class="badge bg-info">{{ item.nbClasses }}</span>
+                <strong>Année académique :</strong>
+                <span class="badge bg-info">{{ item.annee }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
-                <strong>Nombre de modules :</strong>
-                <span class="badge bg-warning text-dark">{{ item.nbModules }}</span>
+                <strong>Année active :</strong>
+                <span class="badge bg-warning text-dark">{{ item.anneeActive ? 'Oui' : 'Non' }}</span>
               </li>
             </ul>
           </div>
