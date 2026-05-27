@@ -2,7 +2,6 @@ import buildService from '../config/serviceApi';
 import { gestionApi, gestionFormApi } from '../config/apiClients';
 
 const gestionService = buildService(gestionApi);
-const gestionFormService = buildService(gestionFormApi);
 
 // CRUD
 export const getConcours = () => gestionService.get('/concours');
@@ -17,6 +16,21 @@ export const changeConcoursStatut = (id, data) =>
   gestionService.patch(`/concours/${id}/statut`, data);
 
 export const deleteConcours = (id) => gestionService.delete(`/concours/${id}`);
+
+export const getEpreuvesByConcours = (concoursId) => 
+  gestionService.get(`/concours/${concoursId}/epreuves`);
+
+export const getEpreuveById = (id) => 
+  gestionService.get(`/concours/epreuves/${id}`);
+
+export const createEpreuve = (data) => 
+  gestionService.post('/concours/epreuves', data);
+
+export const updateEpreuve = (id, data) => 
+  gestionService.put(`/gestions/concours/epreuves/${id}`, data);
+
+export const deleteEpreuve = (id) => 
+  gestionService.delete(`/gestions/concours/epreuves/${id}`);
 
 // Calculer moyennes et rangs
 export const calculerMoyennesEtRangs = (id) => gestionService.get(`/concours/${id}/moyennes-rangs`);
@@ -64,35 +78,4 @@ export const getCandidatsByConcours = (concoursId) =>
 // 6. Récupérer un candidat par ID
 export const getCandidatById = (id) => academiqueService.get(`/candidats/${id}`);
 
-/**
- * export const importCandidats = async (file, concoursId) => {
-  try {
-    if (!file) throw new Error('Fichier manquant');
-    if (!concoursId) throw new Error('ID Concours manquant');
 
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    formData.append('concours_id', concoursId);
-    return await gestionFormService.post('/candidat/importv2', formData);
-  } catch (error) {
-    console.error('Erreur import:', error);
-    throw error;
-  }
-};
-
-export const importNotesCandidats = async (file, concoursId) => {
-  try {
-    if (!file) throw new Error('Fichier manquant');
-    if (!concoursId) throw new Error('ID Concours manquant');
-
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    formData.append('concours_id', concoursId);
-    return await gestionFormService.post('/candidat/importNotes', formData);
-  } catch (error) {
-    console.error('Erreur import:', error);
-    throw error;
-  }
-};
-
- */

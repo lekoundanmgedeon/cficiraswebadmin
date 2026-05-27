@@ -6,6 +6,11 @@ import {
   updateConcours,
   changeConcoursStatut,
   deleteConcours,
+  getEpreuvesByConcours,
+  getEpreuveById,
+  createEpreuve,
+  updateEpreuve,
+  deleteEpreuve,
   calculerMoyennesEtRangs,
   proclamerAdmissions,
   downloadAdmis,
@@ -17,12 +22,16 @@ export const useConcoursStore = defineStore('concoursStore', {
   state: () => ({
     concoursList: [],
     concours: null,
+    epreuvesList: [], // Liste des épreuves du concours sélectionné
+    epreuve: null,     // Épreuve active pour consultation/édition
     moyennesRangs: null,
     loading: false,
   }),
 
   actions: {
-    // Récupérer tous les concours
+    // =========================================================================
+    // ACTIONS CONCOURS
+    // =========================================================================
     async fetchConcours() {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -38,7 +47,6 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Récupérer un concours par ID
     async fetchConcoursById(id) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -54,7 +62,6 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Créer un concours
     async addConcours(data) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -71,7 +78,6 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Modifier un concours
     async editConcours(id, data) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -88,7 +94,6 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Modifier le statut d’un concours
     async changeStatut(id, data) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -105,7 +110,6 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Supprimer un concours
     async removeConcours(id) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -122,7 +126,106 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Calculer moyennes et rangs
+    // =========================================================================
+    // ACTIONS ÉPREUVES (Ajoutées pour s'aligner sur les routes)
+    // =========================================================================
+    
+    // Récupérer toutes les épreuves d'un concours spécifique
+    async fetchEpreuvesByConcours(concoursId) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getEpreuvesByConcours(concoursId);
+        this.epreuvesList = response.data;
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des épreuves.')
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Récupérer une épreuve spécifique par son ID
+    async fetchEpreuveById(id) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getEpreuveById(id);
+        this.epreuve = response.data;
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, "Erreur lors du chargement de l'épreuve.")
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Créer une épreuve
+    // Note : Pense à passer le `concours_id` (ou concoursId) dans ton objet payload `data`
+    async addEpreuve(data) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        await createEpreuve(data);
+        messageStore.notifySuccess('Épreuve ajoutée avec succès.');
+        // Rafraîchit la liste si un concours est actuellement ciblé dans le payload
+        if (data.concoursId || data.concours_id) {
+          await this.fetchEpreuvesByConcours(data.concoursId || data.concours_id);
+        }
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, "Erreur lors de l'ajout de l'épreuve.")
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Mettre à jour une épreuve
+    async editEpreuve(id, data) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        await updateEpreuve(id, data);
+        messageStore.notifySuccess('Épreuve mise à jour avec succès.');
+        // Rafraîchit la liste pour le concours ciblé
+        if (data.concoursId || data.concours_id) {
+          await this.fetchEpreuvesByConcours(data.concoursId || data.concours_id);
+        }
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, "Erreur lors de la modification de l'épreuve.")
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Supprimer une épreuve
+    // `currentConcoursId` permet de recharger la liste des épreuves du concours parent juste après la suppression
+    async removeEpreuve(id, currentConcoursId = null) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        await deleteEpreuve(id);
+        messageStore.notifySuccess('Épreuve supprimée avec succès.');
+        if (currentConcoursId) {
+          await this.fetchEpreuvesByConcours(currentConcoursId);
+        }
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, "Erreur lors de la suppression de l'épreuve.")
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // =========================================================================
+    // ACTIONS CLASSEMENTS & RÉSULTATS
+    // =========================================================================
     async fetchMoyennesRangs(id) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -138,7 +241,6 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Proclamer admissions
     async proclaimAdmissions(id) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -155,18 +257,19 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    // Télécharger liste des admis
     async downloadAdmisList(id) {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
         const response = await downloadAdmis(id);
+        // Utilisation propre du blob pour forcer le téléchargement du PDF retourné
         const blob = new Blob([response.data], { type: 'application/pdf' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = `admis_concours_${id}.pdf`;
         link.click();
+        window.URL.revokeObjectURL(url); // Libère la mémoire
         messageStore.notifySuccess('Liste des admis téléchargée.');
       } catch (error) {
         messageStore.notifyError(
