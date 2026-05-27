@@ -27,11 +27,6 @@ export default [
     component: () => import('@/views/deliberation/deliberation.vue'),
   },
   {
-    path: '/dossiers-scolaires',
-    name: 'DossiersScolaires',
-    component: () => import('@/views/parcours/DossierAcademique.vue'),
-  },
-  {
     path: '/administration',
     name: 'Administration',
     component: () => import('@/views/admin/Administration.vue'),

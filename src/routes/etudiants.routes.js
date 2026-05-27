@@ -11,8 +11,19 @@ export default [
     props: true,
   },
   {
+    path: '/dossiers-scolaires',
+    name: 'DossiersScolaires',
+    component: () => import('@/views/parcours/DossierAcademique.vue'),
+  },
+  {
+    path: '/dossiers-scolaires/:id/global-informations',
+    name: 'ListesAffichage',
+    component: () => import('@/views/parcours/DossierAcademique.vue'),
+  },
+  {
     path: '/inscriptions',
     name: 'Inscriptions',
     component: () => import('@/views/inscriptions/Inscription.vue'),
   },
+
 ];
