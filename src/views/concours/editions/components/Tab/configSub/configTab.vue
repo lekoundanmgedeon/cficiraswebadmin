@@ -12,7 +12,7 @@
           aria-selected="true"
         >
           <i class="bi bi-journal-text"></i>
-          1. Épreuves & Coeffs
+          1. Épreuves
         </a>
       </li>
 

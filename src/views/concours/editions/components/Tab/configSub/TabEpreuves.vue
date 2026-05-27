@@ -21,8 +21,7 @@
           class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5"
           @click="addEpreuve"
         >
-          <i class="bi bi-plus-lg"></i>
-          <span>Ajouter une épreuve</span>
+          <span>+ Ajouter une épreuve</span>
         </button>
       </div>
     </div>
