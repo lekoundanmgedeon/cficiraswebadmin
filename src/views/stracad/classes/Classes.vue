@@ -6,8 +6,7 @@
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
-          <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="1" />
-          <div v-else class="card-body dashboard-tabs p-0">
+          <div class="card-body dashboard-tabs p-0">
             <ClasseTab />
           </div>
         </div>
@@ -17,37 +16,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import SkeletonLoader from '@/components/SkeletonLoader.vue';
 import ClasseHeader from './components/ClasseHeader.vue';
 import ClasseTab from './components/ClasseTab.vue';
-
-const loading = ref(true);
-const formateurs = ref([]);
-
-onMounted(() => {
-  setTimeout(() => {
-    formateurs.value = [
-      {
-        id: 1,
-        matricule: 'F001',
-        nom: 'Doe',
-        prenom: 'John',
-        email: 'john@example.com',
-        telephone: '0123456789',
-      },
-      {
-        id: 2,
-        matricule: 'F002',
-        nom: 'Smith',
-        prenom: 'Anna',
-        email: 'anna@example.com',
-        telephone: '0987654321',
-      },
-    ];
-    loading.value = false;
-  }, 3000);
-});
 </script>
 <style scoped>
 .drag-drop-area {

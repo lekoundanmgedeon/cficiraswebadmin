@@ -29,16 +29,14 @@
               <label class="form-label">
                 Année académique <span class="text-danger">*</span>
               </label>
-              <select v-model="form.annee_id" class="form-select" required>
-                <option value="">-- Sélectionner une année --</option>
+              <select v-model="form.annee_id" class="form-select" :disabled="!isEdit" required>
+                <option value="" disabled>-- Année académique --</option>
                 <option v-for="annee in anneesAcademiques" :key="annee.id" :value="annee.id">
-                  {{ annee.code }}
-                  <span v-if="annee.est_active"> (active)</span>
+                  {{ annee.code }} (Année active)
                 </option>
               </select>
-              <small class="text-muted"> Année académique du semestre </small>
+              <small class="text-muted">Le semestre est automatiquement rattaché à l'année active en cours.</small>
             </div>
-
             <!-- Code -->
             <div class="mb-3">
               <label class="form-label">
@@ -54,20 +52,17 @@
               />
               <small class="text-muted"> Code unique par année académique </small>
             </div>
-
-            <!-- Dates -->
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label">Date de début</label>
-                <input v-model="form.date_debut" type="date" class="form-control" />
+                <label class="form-label">Date de début <span class="text-danger">*</span></label>
+                <input v-model="form.date_debut" type="date" class="form-control" required />
               </div>
 
               <div class="col-md-6 mb-3">
-                <label class="form-label">Date de fin</label>
-                <input v-model="form.date_fin" type="date" class="form-control" />
+                <label class="form-label">Date de fin <span class="text-danger">*</span></label>
+                <input v-model="form.date_fin" type="date" class="form-control" required />
               </div>
             </div>
-
             <!-- Actif -->
             <div class="mb-3">
               <div class="d-flex align-items-start">
@@ -125,18 +120,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
+import { useSemestreStore } from '@/stores/academiqueStore/semestreStore'; // À adapter selon vos chemins
+import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
+import { useNotifier } from '@/stores/messages/useNotifier';
 
-/* Props */
+/* Props & Emits */
 const props = defineProps({
-  semestreToEdit: {
-    type: Object,
-    default: null,
-  },
+  semestreToEdit: { type: Object, default: null },
 });
-
-/* Emits */
 const emit = defineEmits(['semestreCreated', 'semestreUpdated']);
+
+/* Stores */
+const semestreStore = useSemestreStore();
+const anneeStore = useAnneeStore();
+const { notifyError } = useNotifier();
 
 /* State */
 const form = ref({
@@ -148,40 +146,83 @@ const form = ref({
 });
 
 const anneesAcademiques = ref([]);
-const loading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const isEdit = ref(false);
+
+// Liaison avec le loading global du store Pinia
+const loading = computed(() => semestreStore.loading);
+
+/* 1. Déclaration de resetForm en premier */
+/* Reset du formulaire */
+const resetForm = () => {
+  form.value = {
+    annee_id: '',
+    code: '',
+    date_debut: '',
+    date_fin: '',
+    est_actif: false,
+  };
+  isEdit.value = false;
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  // Après le reset, on re-sélectionne immédiatement l'année active disponible dans notre liste filtrée
+  if (anneesAcademiques.value.length === 1) {
+    form.value.annee_id = anneesAcademiques.value[0].id;
+  }
+};
+
+/* 2. Watcher pour l'édition placé juste après resetForm */
+watch(
+  () => props.semestreToEdit,
+  (val) => {
+    if (val) {
+      isEdit.value = true;
+      form.value = {
+        id: val.id,
+        annee_id: val.annee_id || '', // UUID (String)
+        code: val.code || '',
+        date_debut: val.date_debut ? val.date_debut.split('T')[0] : '', // Format YYYY-MM-DD
+        date_fin: val.date_fin ? val.date_fin.split('T')[0] : '',
+        est_actif: val.est_actif ?? false,
+      };
+    } else {
+      resetForm();
+    }
+  },
+  { immediate: true }
+);
 
 /* Lifecycle */
 onMounted(async () => {
   await loadAnneesAcademiques();
 });
 
-/* Load années */
+/* Charger les vraies années académiques depuis le store */
 const loadAnneesAcademiques = async () => {
   try {
-    await new Promise((r) => setTimeout(r, 400));
+    await anneeStore.fetchAnneesAcademiques();
+    const toutesLesAnnees = anneeStore.anneesAcademiques || [];
 
-    anneesAcademiques.value = [
-      { id: 1, code: '2024-2025', est_active: true },
-      { id: 2, code: '2023-2024', est_active: false },
-    ];
-  } catch {
+    if (isEdit.value) {
+      anneesAcademiques.value = toutesLesAnnees;
+    } else {
+      const anneeActive = toutesLesAnnees.find(annee => annee.est_active);
+      
+      if (anneeActive) {
+        anneesAcademiques.value = [anneeActive];
+        form.value.annee_id = anneeActive.id;
+      } else {
+        anneesAcademiques.value = [];
+        errorMessage.value = "Attention : Aucune année académique n'est active actuellement. Impossible de créer un semestre.";
+      }
+    }
+  } catch (error) {
     errorMessage.value = 'Impossible de charger les années académiques.';
+    notifyError(errorMessage.value);
   }
 };
-
-/* Watch edit */
-watch(
-  () => props.semestreToEdit,
-  (val) => {
-    if (val) {
-      isEdit.value = true;
-      form.value = { ...val };
-    }
-  }
-);
 
 /* Helpers */
 const getPreview = () => {
@@ -194,19 +235,18 @@ const validateForm = () => {
     errorMessage.value = 'Veuillez sélectionner une année académique.';
     return false;
   }
-
   if (!form.value.code.trim()) {
     errorMessage.value = 'Le code du semestre est obligatoire.';
     return false;
   }
-
-  if (form.value.date_debut && form.value.date_fin) {
-    if (new Date(form.value.date_fin) <= new Date(form.value.date_debut)) {
-      errorMessage.value = 'La date de fin doit être supérieure à la date de début.';
-      return false;
-    }
+  if (!form.value.date_debut || !form.value.date_fin) {
+    errorMessage.value = 'Les dates de début et de fin sont obligatoires.';
+    return false;
   }
-
+  if (new Date(form.value.date_fin) <= new Date(form.value.date_debut)) {
+    errorMessage.value = 'La date de fin doit être strictement supérieure à la date de début.';
+    return false;
+  }
   return true;
 };
 
@@ -217,35 +257,30 @@ const submitSemestre = async () => {
 
   if (!validateForm()) return;
 
-  loading.value = true;
+  // Payload parfaitement propre et synchronisé avec ton nouveau contrôleur
+  const payload = {
+    code: form.value.code.trim().toUpperCase(),
+    annee_id: form.value.annee_id, // L'UUID de l'année, attendu par le contrôleur et l'INSERT
+    date_debut: form.value.date_debut,
+    date_fin: form.value.date_fin,
+    est_actif: form.value.est_actif ?? false,
+  };
 
   try {
-    const payload = {
-      annee_id: parseInt(form.value.annee_id),
-      code: form.value.code.trim().toUpperCase(),
-      date_debut: form.value.date_debut || null,
-      date_fin: form.value.date_fin || null,
-      est_actif: form.value.est_actif,
-    };
-
-    await new Promise((r) => setTimeout(r, 1200));
-
-    const result = {
-      ...payload,
-      id: isEdit.value ? form.value.id : Date.now(),
-    };
-
-    successMessage.value = isEdit.value
-      ? 'Semestre modifié avec succès.'
-      : 'Semestre créé avec succès.';
-
-    emit(isEdit.value ? 'semestreUpdated' : 'semestreCreated', result);
+    if (isEdit.value) {
+      await semestreStore.editSemestre(form.value.id, payload);
+      successMessage.value = 'Semestre modifié avec succès.';
+      emit('semestreUpdated', { id: form.value.id, ...payload });
+    } else {
+      await semestreStore.addSemestre(payload);
+      successMessage.value = 'Semestre créé avec succès.';
+      emit('semestreCreated', payload); // Correction mineure du nom de l'émit pour rester standard
+    }
 
     setTimeout(closeModal, 1000);
-  } catch (e) {
-    errorMessage.value = 'Erreur lors de l’enregistrement.';
-  } finally {
-    loading.value = false;
+  } catch (error) {
+    errorMessage.value = error.message || 'Erreur lors de l’enregistrement.';
+    notifyError(errorMessage.value);
   }
 };
 
@@ -253,21 +288,8 @@ const submitSemestre = async () => {
 const closeModal = () => {
   const el = document.getElementById('semestreModal');
   const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
-  modal.hide();
-  resetForm();
-};
-
-const resetForm = () => {
-  form.value = {
-    annee_id: '',
-    code: '',
-    date_debut: '',
-    date_fin: '',
-    est_actif: false,
-  };
-  isEdit.value = false;
-  errorMessage.value = '';
-  successMessage.value = '';
+  if (modal) modal.hide();
+  setTimeout(() => resetForm(), 300);
 };
 
 /* Expose */
@@ -279,3 +301,84 @@ defineExpose({
   },
 });
 </script>
+<style scoped>
+.modal-header.bg-primary {
+  background-color: #007bff !important;
+}
+
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 2px solid #e9ecef;
+  padding: 1.25rem 1.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  border-top: 2px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.btn {
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+}
+
+.btn i {
+  margin-right: 0.5rem;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+h6 i {
+  color: #007bff;
+  margin-right: 0.5rem;
+}
+
+.form-select {
+  cursor: pointer;
+}
+</style>
