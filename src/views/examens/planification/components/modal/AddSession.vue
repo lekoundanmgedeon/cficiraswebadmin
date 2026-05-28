@@ -25,54 +25,54 @@
         <form @submit.prevent="handleSubmit">
           <div class="modal-body p-4">
             <div class="row g-3">
-              
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Année Académique *</label>
-                <select 
-                  v-model="form.annee_id" 
-                  class="form-select fw-semibold text-dark" 
+                <select
+                  v-model="form.annee_id"
+                  class="form-select fw-semibold text-dark"
                   required
                   :disabled="loading"
                 >
                   <option value="" disabled>— Sélectionnez une année —</option>
-                  <option 
-                    v-for="annee in anneesAcademiques" 
-                    :key="annee.id" 
-                    :value="annee.id"
-                  >
-                    {{ annee.code || annee.nom }} 
-                    <span v-if="anneeAcademique && annee.id === anneeAcademique.id"> (Courante)</span>
+                  <option v-for="annee in anneesAcademiques" :key="annee.id" :value="annee.id">
+                    {{ annee.code || annee.nom }}
+                    <span v-if="anneeAcademique && annee.id === anneeAcademique.id">
+                      (Courante)</span
+                    >
                   </option>
                 </select>
                 <div class="form-text text-muted text-xs">
-                  <i class="bi bi-info-circle me-1"></i> Les semestres se chargeront automatiquement après sélection.
+                  <i class="bi bi-info-circle me-1"></i> Les semestres se chargeront automatiquement
+                  après sélection.
                 </div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Semestre *</label>
-                <select 
-                  v-model="form.semestre_id" 
-                  class="form-select" 
-                  required 
+                <select
+                  v-model="form.semestre_id"
+                  class="form-select"
+                  required
                   :disabled="loading || !form.annee_id || semestresLoading"
                 >
-                  <option value="" disabled v-if="semestresLoading">Chargement des semestres...</option>
+                  <option value="" disabled v-if="semestresLoading">
+                    Chargement des semestres...
+                  </option>
                   <option value="" disabled v-else>— Sélectionnez un semestre —</option>
-                  
-                  <option 
-                    v-for="sem in semestres" 
-                    :key="sem.id" 
-                    :value="sem.id"
-                  >
+
+                  <option v-for="sem in semestres" :key="sem.id" :value="sem.id">
                     {{ sem.code }} - {{ sem.designation || sem.nom }}
                   </option>
                 </select>
                 <div v-if="!form.annee_id" class="form-text text-warning text-xs">
                   Veuillez d'abord choisir une année académique.
                 </div>
-                <div v-else-if="semestres.length === 0 && !semestresLoading" class="form-text text-danger text-xs">
-                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Aucun semestre configuré pour cette année.
+                <div
+                  v-else-if="semestres.length === 0 && !semestresLoading"
+                  class="form-text text-danger text-xs"
+                >
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i> Aucun semestre configuré pour
+                  cette année.
                 </div>
               </div>
 
@@ -102,7 +102,12 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Type de Session *</label>
-                <select v-model="form.type_session" class="form-select" required :disabled="loading">
+                <select
+                  v-model="form.type_session"
+                  class="form-select"
+                  required
+                  :disabled="loading"
+                >
                   <option value="NORMALE">NORMALE</option>
                   <option value="RATTRAPAGE">RATTRAPAGE</option>
                 </select>
@@ -156,7 +161,6 @@
                   :disabled="loading"
                 />
               </div>
-
             </div>
           </div>
 
@@ -169,18 +173,21 @@
             >
               Annuler
             </button>
-            <button 
-              type="submit" 
-              class="btn btn-sm btn-primary px-3" 
+            <button
+              type="submit"
+              class="btn btn-sm btn-primary px-3"
               :disabled="loading || dateError || semestresLoading"
             >
-              <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              <span
+                v-if="loading"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+              ></span>
               <i v-else class="bi bi-cloud-check me-1"></i>
               Enregistrer la Session
             </button>
           </div>
         </form>
-
       </div>
     </div>
   </div>
@@ -190,8 +197,8 @@
 import { ref, reactive, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSessionStore } from '@/stores/evaluationStore/sessionStore.js';
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore.js'; 
-import { useSemestreStore } from '@/stores/academiqueStore/semestreStore.js'; 
+import { useAnneeStore } from '@/stores/academiqueStore/anneStore.js';
+import { useSemestreStore } from '@/stores/academiqueStore/semestreStore.js';
 import { useNotifier } from '@/stores/messages/useNotifier';
 
 // Initialisation des Stores
@@ -232,7 +239,7 @@ onMounted(async () => {
   try {
     // Charge toutes les années pour le menu déroulant complet
     await anneeStore.fetchAnneesAcademiques();
-    
+
     // Identifie également l'année active par défaut pour pré-remplir la liste
     await anneeStore.fetchCurrentAnnee();
     if (anneeAcademique.value?.id) {
@@ -244,21 +251,24 @@ onMounted(async () => {
 });
 
 // Écouteur réactif sur l'année sélectionnée (Au clic/changement de l'option)
-watch(() => form.annee_id, async (newAnneeId) => {
-  form.semestre_id = ''; // Réinitialisation immédiate du semestre sélectionné
-  
-  if (newAnneeId) {
-    semestresLoading.value = true;
-    try {
-      // Chargement depuis le serveur des semestres rattachés à cette année spécifique
-      await semestreStore.fetchSemestresByAnnee(newAnneeId);
-    } catch (err) {
-      console.error("Erreur d'actualisation des semestres pour l'année cliquée :", err);
-    } finally {
-      semestresLoading.value = false;
+watch(
+  () => form.annee_id,
+  async (newAnneeId) => {
+    form.semestre_id = ''; // Réinitialisation immédiate du semestre sélectionné
+
+    if (newAnneeId) {
+      semestresLoading.value = true;
+      try {
+        // Chargement depuis le serveur des semestres rattachés à cette année spécifique
+        await semestreStore.fetchSemestresByAnnee(newAnneeId);
+      } catch (err) {
+        console.error("Erreur d'actualisation des semestres pour l'année cliquée :", err);
+      } finally {
+        semestresLoading.value = false;
+      }
     }
   }
-});
+);
 
 /* =========================================================================
    ⏳ CONTRÔLE DE COHÉRENCE CHRONOLOGIQUE (DATES)
@@ -267,7 +277,7 @@ const validateDates = () => {
   if (form.date_debut && form.date_fin) {
     const debut = new Date(form.date_debut);
     const fin = new Date(form.date_fin);
-    
+
     dateError.value = fin < debut;
   } else {
     dateError.value = false;
@@ -280,7 +290,9 @@ const validateDates = () => {
 const handleSubmit = async () => {
   validateDates();
   if (dateError.value) {
-    return notifyError("Action interrompue : La date de fin ne peut pas être antérieure à la date de début.");
+    return notifyError(
+      'Action interrompue : La date de fin ne peut pas être antérieure à la date de début.'
+    );
   }
 
   try {
@@ -289,10 +301,10 @@ const handleSubmit = async () => {
 
     // Préservation de l'année pour éviter une reconfiguration lourde de l'utilisateur
     const currentSelectedAnnee = form.annee_id;
-    
+
     Object.assign(form, initialFormState);
     dateError.value = false;
-    
+
     // On réaffecte l'année après réinitialisation
     form.annee_id = currentSelectedAnnee;
 
@@ -301,7 +313,7 @@ const handleSubmit = async () => {
       modalInstance?.hide();
     }
   } catch (error) {
-    console.error("Erreur lors de la soumission de la session :", error);
+    console.error('Erreur lors de la soumission de la session :', error);
   }
 };
 </script>
@@ -316,7 +328,8 @@ const handleSubmit = async () => {
 .form-label {
   color: #495057;
 }
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: #0d6efd;
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
 }

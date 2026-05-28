@@ -1,7 +1,9 @@
 <template>
   <div class="animate__animated animate__fadeIn">
     <!-- En-tête et Menu de Sélection de l'épreuve -->
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+    <div
+      class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4"
+    >
       <div>
         <h5 class="fw-bold mb-1 text-dark">Saisie des Notes par Épreuve</h5>
         <p class="text-muted small mb-0">
@@ -11,7 +13,9 @@
       </div>
 
       <div class="d-flex align-items-center gap-2" style="min-width: 280px">
-        <label class="form-label text-nowrap fw-semibold text-secondary small mb-0">Épreuve :</label>
+        <label class="form-label text-nowrap fw-semibold text-secondary small mb-0"
+          >Épreuve :</label
+        >
         <select
           v-model="selectedEpreuveId"
           @change="handleEpreuveChange"
@@ -33,11 +37,12 @@
           <div>
             <h6 class="fw-bold text-dark mb-0">Importation rapide par fichier Excel</h6>
             <p class="text-muted small mb-0">
-              Téléversez une feuille contenant les colonnes : <code>num_table</code> et <code>note</code>.
+              Téléversez une feuille contenant les colonnes : <code>num_table</code> et
+              <code>note</code>.
             </p>
           </div>
         </div>
-        
+
         <div>
           <input
             type="file"
@@ -46,7 +51,7 @@
             accept=".csv, .xlsx, .xls"
             class="d-none"
           />
-          <button 
+          <button
             class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2"
             @click="triggerExcelNotesSelect"
             :disabled="storeLoading"
@@ -66,17 +71,27 @@
       <i class="bi bi-pencil-square text-muted display-6 d-block mb-2"></i>
       <h6 class="fw-bold text-secondary">Aucune matière sélectionnée</h6>
       <p class="text-muted small mb-0">
-        Veuillez choisir une épreuve dans le menu déroulant ci-dessus pour charger la liste des candidats.
+        Veuillez choisir une épreuve dans le menu déroulant ci-dessus pour charger la liste des
+        candidats.
       </p>
     </div>
 
     <!-- Grille de notation active -->
     <div v-else class="animate__animated animate__fadeIn animate__fast">
-      <div class="d-flex justify-content-between align-items-center bg-light p-3 border rounded-top-3 border-bottom-0">
-        <div class="d-flex align-items-center gap-3 text-xs fw-semibold text-uppercase font-monospace text-secondary">
-          <span>Candidats : <strong class="text-dark">{{ notesRows.length }}</strong></span>
+      <div
+        class="d-flex justify-content-between align-items-center bg-light p-3 border rounded-top-3 border-bottom-0"
+      >
+        <div
+          class="d-flex align-items-center gap-3 text-xs fw-semibold text-uppercase font-monospace text-secondary"
+        >
+          <span
+            >Candidats : <strong class="text-dark">{{ notesRows.length }}</strong></span
+          >
           <span>•</span>
-          <span>Saisies : <strong class="text-success">{{ totalSaisies }} / {{ notesRows.length }}</strong></span>
+          <span
+            >Saisies :
+            <strong class="text-success">{{ totalSaisies }} / {{ notesRows.length }}</strong></span
+          >
         </div>
 
         <div class="d-flex gap-2">
@@ -149,13 +164,22 @@
               </td>
 
               <td class="text-end pe-3">
-                <span v-if="row.error" class="badge bg-danger-subtle text-danger text-xs border border-danger-subtle">
+                <span
+                  v-if="row.error"
+                  class="badge bg-danger-subtle text-danger text-xs border border-danger-subtle"
+                >
                   <i class="bi bi-exclamation-triangle-fill me-1"></i> Max 20
                 </span>
-                <span v-else-if="row.note !== null && row.note !== '' && !row.isModified" class="badge bg-success-subtle text-success text-xs rounded-pill">
+                <span
+                  v-else-if="row.note !== null && row.note !== '' && !row.isModified"
+                  class="badge bg-success-subtle text-success text-xs rounded-pill"
+                >
                   <i class="bi bi-check-circle-fill me-1"></i> Enregistré
                 </span>
-                <span v-else-if="row.isModified" class="badge bg-warning-subtle text-warning text-xs rounded-pill">
+                <span
+                  v-else-if="row.isModified"
+                  class="badge bg-warning-subtle text-warning text-xs rounded-pill"
+                >
                   <i class="bi bi-pencil-fill me-1"></i> En attente
                 </span>
                 <span v-else class="badge bg-light text-muted border text-xs font-monospace">
@@ -168,7 +192,8 @@
             <tr v-if="notesRows.length === 0 && !storeLoading">
               <td colspan="4" class="text-center text-muted py-5">
                 <i class="bi bi-people text-muted display-6 d-block mb-2"></i>
-                Aucun candidat inscrit à ce concours. Ajoutez des candidats avant de saisir des notes.
+                Aucun candidat inscrit à ce concours. Ajoutez des candidats avant de saisir des
+                notes.
               </td>
             </tr>
           </tbody>
@@ -200,7 +225,7 @@ const concoursId = computed(() => route.params.id);
 /* State local */
 const selectedEpreuveId = ref(null);
 const notesRows = ref([]);
-const inputRefs = ref([]); 
+const inputRefs = ref([]);
 
 /* Getters synchronisés avec les Stores Pinia */
 const epreuvesList = computed(() => concoursStore.epreuvesList || []);
@@ -253,11 +278,11 @@ const loadCandidatsEtNotes = async () => {
     const candidatsDuConcours = candidatStore.candidats || [];
 
     // Étape B : Mapping vers la structure visuelle d'édition
-    notesRows.value = candidatsDuConcours.map(candidat => {
+    notesRows.value = candidatsDuConcours.map((candidat) => {
       // Extraction de la note si le candidat possède déjà un tableau de notes lié à cette épreuve
       // S'adapte selon la structure de votre entité Candidat (ex: candidat.notes)
-      const noteExistante = candidat.notes?.find(n => n.epreuve_id === selectedEpreuveId.value);
-      
+      const noteExistante = candidat.notes?.find((n) => n.epreuve_id === selectedEpreuveId.value);
+
       return {
         candidat_id: candidat.id,
         num_table: candidat.num_table || `CAND-${candidat.id}`,
@@ -296,11 +321,13 @@ const focusNextInput = (currentIndex) => {
 const saveAllNotes = async () => {
   const hasErrors = notesRows.value.some((r) => r.error);
   if (hasErrors) {
-    return notifyError("Veuillez corriger les notes invalides (hors de [0, 20]) avant de sauvegarder.");
+    return notifyError(
+      'Veuillez corriger les notes invalides (hors de [0, 20]) avant de sauvegarder.'
+    );
   }
 
   // Filtrer pour ne sauvegarder que les lignes réellement modifiées par l'utilisateur
-  const lignesAEnregistrer = notesRows.value.filter(r => r.isModified);
+  const lignesAEnregistrer = notesRows.value.filter((r) => r.isModified);
 
   if (lignesAEnregistrer.length === 0) {
     return notifySuccess('Aucune modification détectée dans la grille.');
@@ -312,21 +339,20 @@ const saveAllNotes = async () => {
     for (const row of lignesAEnregistrer) {
       const payload = {
         epreuve_id: selectedEpreuveId.value,
-        note: row.note === '' ? null : Number(row.note)
+        note: row.note === '' ? null : Number(row.note),
       };
-      
+
       await candidatStore.addNote(row.num_table, payload);
     }
 
     notifySuccess('Toutes les notes modifiées ont été enregistrées avec succès.');
-    
+
     // Étape finale : Rafraîchissement complet pour remettre à jour le State global
     await loadCandidatsEtNotes();
   } catch (err) {
     console.error('Erreur lors du traitement séquentiel des notes:', err);
   }
 };
-
 
 // 1. Référence pour le nouvel input File (à mettre avec vos autres refs)
 const excelNotesRef = ref(null);
@@ -351,7 +377,7 @@ const handleExcelNotesChange = async (event) => {
   // Préparation du FormData (requis pour envoyer un fichier brut au backend Node.js)
   const formData = new FormData();
   formData.append('file', file);
-  
+
   // Si votre backend a besoin de savoir à quelle épreuve lier ces notes :
   if (selectedEpreuveId.value) {
     formData.append('epreuve_id', selectedEpreuveId.value);
@@ -359,19 +385,17 @@ const handleExcelNotesChange = async (event) => {
 
   try {
     await candidatStore.importNotesFile(formData);
-    
+
     // Réinitialisation de l'input pour les prochains imports
     if (excelNotesRef.value) excelNotesRef.value.value = '';
-    
+
     // Rechargement immédiat de la grille à l'écran pour afficher les notes importées !
     await loadCandidatsEtNotes();
-    
   } catch (err) {
     console.error("Erreur lors de l'import global des notes :", err);
   }
 };
 </script>
-
 
 <style scoped>
 .text-xs {

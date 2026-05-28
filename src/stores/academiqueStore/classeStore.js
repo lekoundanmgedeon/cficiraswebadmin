@@ -37,7 +37,7 @@ export const useClasseStore = defineStore('classeStore', {
   state: () => ({
     classes: [],
     classesNiveau: [],
-    classesFiliere : [],
+    classesFiliere: [],
     classe: null,
     organisationTree: null,
     analytics: null,

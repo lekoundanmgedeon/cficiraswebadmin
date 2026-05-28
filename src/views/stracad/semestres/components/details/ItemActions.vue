@@ -82,7 +82,9 @@
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Année active :</strong>
-                <span class="badge bg-warning text-dark">{{ item.anneeActive ? 'Oui' : 'Non' }}</span>
+                <span class="badge bg-warning text-dark">{{
+                  item.anneeActive ? 'Oui' : 'Non'
+                }}</span>
               </li>
             </ul>
           </div>

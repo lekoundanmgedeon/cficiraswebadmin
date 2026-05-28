@@ -151,11 +151,11 @@ const loading = computed(() => filiereStore.loading);
 
 // 1. Déclarer resetForm ICI avant le watch pour éviter l'erreur de portée lexicologique
 const resetForm = () => {
-  form.value = { 
-    code: '', 
-    designation: '', 
-    cycle_id: '', 
-    credit_total: '' 
+  form.value = {
+    code: '',
+    designation: '',
+    cycle_id: '',
+    credit_total: '',
   };
   errorMessage.value = '';
   successMessage.value = '';

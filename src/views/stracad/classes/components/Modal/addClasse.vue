@@ -176,7 +176,7 @@ const filteredNiveaux = computed(() => {
   if (!form.value.filiere_id) return [];
   const selectedFiliere = filieres.value.find((f) => f.id === form.value.filiere_id);
   if (!selectedFiliere || !selectedFiliere.cycle_id) return niveaux.value;
-  
+
   // Filtrage par le cycle associé (liaison UUID)
   return niveaux.value.filter((n) => n.cycle_id === selectedFiliere.cycle_id);
 });

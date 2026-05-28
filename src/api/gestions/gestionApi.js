@@ -18,20 +18,17 @@ export const changeConcoursStatut = (id, data) =>
 
 export const deleteConcours = (id) => gestionService.delete(`/concours/${id}`);
 
-export const getEpreuvesByConcours = (concoursId) => 
+export const getEpreuvesByConcours = (concoursId) =>
   gestionService.get(`/concours/${concoursId}/epreuves`);
 
-export const getEpreuveById = (id) => 
-  gestionService.get(`/concours/epreuves/${id}`);
+export const getEpreuveById = (id) => gestionService.get(`/concours/epreuves/${id}`);
 
-export const createEpreuve = (data) => 
-  gestionService.post('/concours/epreuves', data);
+export const createEpreuve = (data) => gestionService.post('/concours/epreuves', data);
 
-export const updateEpreuve = (id, data) => 
+export const updateEpreuve = (id, data) =>
   gestionService.put(`/gestions/concours/epreuves/${id}`, data);
 
-export const deleteEpreuve = (id) => 
-  gestionService.delete(`/gestions/concours/epreuves/${id}`);
+export const deleteEpreuve = (id) => gestionService.delete(`/gestions/concours/epreuves/${id}`);
 
 // Calculer moyennes et rangs
 export const calculerMoyennesEtRangs = (id) => gestionService.get(`/concours/${id}/moyennes-rangs`);
@@ -47,8 +44,7 @@ export const downloadAdmis = (id) =>
 export const createCandidat = (data) => gestionService.post('/candidats', data);
 
 // 2. Ajouter une pièce justificative
-export const addPieceCandidat = (id, data) =>
-  gestionService.post(`/candidats/${id}/pieces`, data);
+export const addPieceCandidat = (id, data) => gestionService.post(`/candidats/${id}/pieces`, data);
 
 // Importation par lot des candidats
 export const importCandidats = (formData) => {
@@ -61,7 +57,6 @@ export const importNotesCandidats = (formData) => {
   return gestionFormService.post('/candidats/import/notes', formData);
 };
 
-
 // 3. Enregistrer une note d’épreuve
 export const addNoteEpreuve = (numTable, data) =>
   gestionService.post(`/candidats/${numTable}/notes`, data);
@@ -72,5 +67,3 @@ export const getCandidatsByConcours = (concoursId) =>
 
 // 6. Récupérer un candidat par ID
 export const getCandidatById = (id) => gestionService.get(`/candidats/${id}`);
-
-

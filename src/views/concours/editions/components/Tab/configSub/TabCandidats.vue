@@ -67,11 +67,7 @@
                 @click="uploadFile"
                 :disabled="loading"
               >
-                <span
-                  v-if="loading"
-                  class="spinner-border spinner-border-sm"
-                  role="status"
-                ></span>
+                <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
                 <i v-else class="bi bi-check-circle"></i>
                 <span>{{ loading ? 'Traitement en cours...' : "Valider l'importation" }}</span>
               </button>
@@ -129,7 +125,10 @@
             <tbody>
               <tr v-if="loading && listCandidats.length === 0">
                 <td colspan="5" class="text-center py-5">
-                  <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                  <div
+                    class="spinner-border spinner-border-sm text-primary me-2"
+                    role="status"
+                  ></div>
                   <span class="text-muted text-xs">Synchronisation des candidats...</span>
                 </td>
               </tr>
@@ -145,7 +144,9 @@
                   >
                 </td>
                 <td class="text-muted font-monospace text-xs">{{ candidat.email || '—' }}</td>
-                <td class="font-monospace text-xs">{{ candidat.telephone || candidat.tel || '—' }}</td>
+                <td class="font-monospace text-xs">
+                  {{ candidat.telephone || candidat.tel || '—' }}
+                </td>
                 <td class="text-end pe-3">
                   <button
                     class="btn btn-sm btn-link text-danger p-1 shadow-none"
@@ -167,10 +168,17 @@
             </tbody>
           </table>
 
-          <div v-if="listCandidats.length > 0" class="d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 border-top bg-light-subtle gap-2">
+          <div
+            v-if="listCandidats.length > 0"
+            class="d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 border-top bg-light-subtle gap-2"
+          >
             <div class="d-flex align-items-center gap-2 text-muted small">
               <span>Afficher</span>
-              <select v-model="itemsPerPage" @change="currentPage = 1" class="form-select form-select-sm w-auto py-0">
+              <select
+                v-model="itemsPerPage"
+                @change="currentPage = 1"
+                class="form-select form-select-sm w-auto py-0"
+              >
                 <option :value="10">10</option>
                 <option :value="20">20</option>
               </select>
@@ -180,27 +188,36 @@
             <nav v-if="totalPages > 1" aria-label="Navigation des pages">
               <ul class="pagination pagination-sm mb-0">
                 <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                  <button class="page-link shadow-none" @click="currentPage--" :disabled="currentPage === 1">
+                  <button
+                    class="page-link shadow-none"
+                    @click="currentPage--"
+                    :disabled="currentPage === 1"
+                  >
                     Précédent
                   </button>
                 </li>
-                <li 
-                  v-for="page in totalPages" 
-                  :key="page" 
-                  class="page-item" 
+                <li
+                  v-for="page in totalPages"
+                  :key="page"
+                  class="page-item"
                   :class="{ active: currentPage === page }"
                 >
-                  <button class="page-link shadow-none" @click="currentPage = page">{{ page }}</button>
+                  <button class="page-link shadow-none" @click="currentPage = page">
+                    {{ page }}
+                  </button>
                 </li>
                 <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                  <button class="page-link shadow-none" @click="currentPage++" :disabled="currentPage === totalPages">
+                  <button
+                    class="page-link shadow-none"
+                    @click="currentPage++"
+                    :disabled="currentPage === totalPages"
+                  >
                     Suivant
                   </button>
                 </li>
               </ul>
             </nav>
           </div>
-
         </div>
       </div>
     </div>
@@ -210,7 +227,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useCandidatStore } from '@/stores/gestionStores/candidatStore'; 
+import { useCandidatStore } from '@/stores/gestionStores/candidatStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
 
 const route = useRoute();
@@ -300,7 +317,7 @@ const uploadFile = async () => {
   if (!selectedFile.value) return;
 
   const formData = new FormData();
-  formData.append('concours_id', concoursId.value); 
+  formData.append('concours_id', concoursId.value);
   formData.append('file', selectedFile.value);
 
   try {
@@ -308,7 +325,7 @@ const uploadFile = async () => {
     cancelSelection();
     currentPage.value = 1; // Retour en page 1 pour voir les nouveaux éléments
     await fetchCandidatsConcours();
-    
+
     dernierImportDate.value = new Date().toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'short',
@@ -341,7 +358,7 @@ const downloadTemplate = () => {
     'email',
     'ville',
     'code_filiere',
-    'chemin_photo'
+    'chemin_photo',
   ];
 
   // Construction d'un fichier XML de feuille de calcul compatible nativement avec Microsoft Excel (.xlsx / .xls)
@@ -355,9 +372,9 @@ const downloadTemplate = () => {
   <Worksheet ss:Name="Modèle Importation">
     <Table>
       <Row>`;
-  
+
   // Injection des en-têtes requis en cellules de tableau Excel
-  headers.forEach(header => {
+  headers.forEach((header) => {
     xmlContent += `<Cell><Data ss:Type="String">${header}</Data></Cell>`;
   });
 
@@ -367,21 +384,22 @@ const downloadTemplate = () => {
 </Workbook>`;
 
   // Création du conteneur Blob et déclenchement du téléchargement navigateur
-  const blob = new Blob([xmlContent], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([xmlContent], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.setAttribute('download', 'modele_import_candidats.xlsx');
   document.body.appendChild(link);
   link.click();
-  
+
   // Nettoyage mémoire
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
   notifySuccess('Modèle de structure Excel généré avec succès.');
 };
 </script>
-
 
 <style scoped>
 .text-xs {
@@ -424,7 +442,7 @@ const downloadTemplate = () => {
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;  
+  -webkit-box-orient: vertical;
   overflow: hidden;
 }
 </style>

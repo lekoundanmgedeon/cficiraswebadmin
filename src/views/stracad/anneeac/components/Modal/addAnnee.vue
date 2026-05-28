@@ -48,11 +48,7 @@
 
             <div class="mb-3">
               <label class="form-label"> Statut <span class="text-danger">*</span> </label>
-              <select 
-                v-model="form.statut" 
-                class="form-select" 
-                required
-              >
+              <select v-model="form.statut" class="form-select" required>
                 <option value="" disabled selected>Choisir un statut...</option>
                 <option value="PLANIFIEE">Planifiée</option>
                 <option value="OUVERTE">Ouverte</option>
@@ -136,7 +132,7 @@ const form = ref({
   code: '',
   date_debut: '',
   date_fin: '',
-  statut: 'PLANIFIEE', 
+  statut: 'PLANIFIEE',
   est_active: false,
 });
 
@@ -223,7 +219,6 @@ const submitAnnee = async () => {
       const modalInstance = bootstrap.Modal.getInstance(modalElement);
       if (modalInstance) modalInstance.hide();
     }, 1200);
-
   } catch (error) {
     console.error(error);
     errorMessage.value = error.message || "Une erreur est survenue lors de l'enregistrement.";

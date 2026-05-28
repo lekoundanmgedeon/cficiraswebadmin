@@ -23,7 +23,8 @@ export const getSessions = () => evaluationService.get('/sessions-evaluations/')
 
 export const getSessionById = (id) => evaluationService.get(`/sessions-evaluations/${id}`);
 
-export const updateSession = (id, data) => evaluationService.put(`/sessions-evaluations/${id}`, data);
+export const updateSession = (id, data) =>
+  evaluationService.put(`/sessions-evaluations/${id}`, data);
 
 export const deleteSession = (id) => evaluationService.delete(`/sessions-evaluations/${id}`);
 

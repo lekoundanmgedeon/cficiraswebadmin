@@ -10,7 +10,7 @@
         </button>
       </li>
       <li class="dropdown-divider"></li>
-      
+
       <li>
         <button class="dropdown-item" @click="isDetailsVisible = true">
           <i class="mdi mdi-information-outline me-2 text-info"></i> Détails
@@ -59,7 +59,6 @@
             <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
           <div class="modal-body">
-            
             <div class="row">
               <div class="col-md-6">
                 <div class="info-card mb-3">
@@ -75,12 +74,16 @@
                     </div>
                     <div class="info-item">
                       <span class="info-label">Type:</span>
-                      <span class="info-value badge bg-secondary-subtle text-secondary">{{ item.type_session }}</span>
+                      <span class="info-value badge bg-secondary-subtle text-secondary">{{
+                        item.type_session
+                      }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Semestre:</span>
                       <span class="info-value">
-                        <span class="badge bg-light text-dark border">{{ item.semestre_code }}</span>
+                        <span class="badge bg-light text-dark border">{{
+                          item.semestre_code
+                        }}</span>
                       </span>
                     </div>
                   </div>
@@ -122,19 +125,18 @@
               <div class="col-md-12">
                 <div class="info-card">
                   <h6 class="info-title">Résumé de la session</h6>
-                  <p class="text-muted small mb-0" style="line-height: 1.5;">
+                  <p class="text-muted small mb-0" style="line-height: 1.5">
                     {{ item.llm_summary }}
                   </p>
                 </div>
               </div>
             </div>
-
           </div>
           <div class="modal-footer">
             <button class="btn btn-outline-primary me-auto" @click="goToPlanningFromDetails">
               <i class="mdi mdi-calendar-clock me-2"></i> Planifier les examens
             </button>
-            
+
             <button class="btn btn-secondary" @click="closeDetails">
               <i class="mdi mdi-close me-2"></i> Fermer
             </button>
@@ -196,7 +198,7 @@ const handleEditFromDetails = () => {
 
 const getStatusClass = (status) => {
   if (!status) return 'bg-light text-dark';
-  
+
   switch (status.toLowerCase()) {
     case 'active':
       return 'bg-success';

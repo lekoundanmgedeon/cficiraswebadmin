@@ -12,12 +12,12 @@
           </div>
           <div class="d-flex gap-2">
             <button
-          class="btn btn-sm btn-light border shadow-sm rounded-pill px-3"
-          @click="$router.back()"
-        >
-          <i class="bi bi-arrow-left-short fs-5 align-middle"></i>
-          <span class="align-middle ms-1">Retour au concours</span>
-        </button>
+              class="btn btn-sm btn-light border shadow-sm rounded-pill px-3"
+              @click="$router.back()"
+            >
+              <i class="bi bi-arrow-left-short fs-5 align-middle"></i>
+              <span class="align-middle ms-1">Retour au concours</span>
+            </button>
           </div>
         </div>
         <!-- Carte Principale -->

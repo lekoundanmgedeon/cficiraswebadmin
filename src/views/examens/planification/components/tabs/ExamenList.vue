@@ -2,7 +2,7 @@
   <div class="d-flex flex-wrap justify-content-xl-between">
     <div class="card-body p-0">
       <h4 class="card-title">
-        Examens — 
+        Examens —
         <span v-if="semestreGroup === 0">Tous les semestres</span>
         <span v-else-if="semestreGroup === 1">Semestres Impairs</span>
         <span v-else>Semestres Pairs</span>
@@ -32,7 +32,7 @@
         <table class="table table-hover align-middle">
           <thead>
             <tr>
-              <th>Code </th> 
+              <th>Code</th>
               <th>Désignation</th>
               <th>État</th>
               <th>Date début</th>
@@ -69,7 +69,7 @@
                 />
               </td>
             </tr>
-            
+
             <tr v-if="filteredExams.length === 0">
               <td colspan="7" class="text-center py-4">
                 <div class="d-flex flex-column align-items-center">
@@ -103,7 +103,7 @@ const { sessions, loading } = storeToRefs(sessionStore);
 
 const types = [
   { label: 'Normal', value: 'NORMALE' },
-  { label: 'Rattrapage', value: 'RATTRAPAGE' }
+  { label: 'Rattrapage', value: 'RATTRAPAGE' },
 ];
 const selectedType = ref('NORMALE');
 

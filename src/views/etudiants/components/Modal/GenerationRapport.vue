@@ -20,9 +20,7 @@
               >
                 Générer un Rapport Étudiant
               </h6>
-              <small class="text-muted text-xs"
-                >Extraction et listes nominatives consolidées</small
-              >
+              <small class="text-muted text-xs">Extraction et listes nominatives consolidées</small>
             </div>
           </div>
           <button
@@ -113,7 +111,10 @@
                       id="checkPhoto"
                       v-model="form.inclure_photos"
                     />
-                    <label class="form-check-label text-xs text-dark cursor-pointer" for="checkPhoto">
+                    <label
+                      class="form-check-label text-xs text-dark cursor-pointer"
+                      for="checkPhoto"
+                    >
                       Inclure les photos de profil (Trombinoscope / Émargement)
                     </label>
                   </div>
@@ -141,7 +142,9 @@
                 >Format de téléchargement</label
               >
               <div class="d-flex gap-3">
-                <div class="form-check flex-fill p-2 bg-white rounded border text-center custom-radio-card">
+                <div
+                  class="form-check flex-fill p-2 bg-white rounded border text-center custom-radio-card"
+                >
                   <input
                     class="form-check-input d-none"
                     type="radio"
@@ -159,7 +162,9 @@
                     Document PDF (.pdf)
                   </label>
                 </div>
-                <div class="form-check flex-fill p-2 bg-white rounded border text-center custom-radio-card">
+                <div
+                  class="form-check flex-fill p-2 bg-white rounded border text-center custom-radio-card"
+                >
                   <input
                     class="form-check-input d-none"
                     type="radio"

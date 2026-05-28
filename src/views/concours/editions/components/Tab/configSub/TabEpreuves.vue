@@ -177,7 +177,9 @@
           <tr v-if="loading && epreuves.length === 0">
             <td colspan="7" class="text-center py-5">
               <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-              <span class="text-muted text-xs">Synchronisation des épreuves avec le serveur...</span>
+              <span class="text-muted text-xs"
+                >Synchronisation des épreuves avec le serveur...</span
+              >
             </td>
           </tr>
         </tbody>
@@ -207,12 +209,11 @@ import { useRoute } from 'vue-router';
 import { useConcoursStore } from '@/stores/gestionStores/concourStore'; // Vérifiez bien le chemin de l'import
 import { useNotifier } from '@/stores/messages/useNotifier';
 
-
 //update
 const route = useRoute();
 const concourStore = useConcoursStore();
 
-const concoursId = computed(() => route.params.id); 
+const concoursId = computed(() => route.params.id);
 
 const { notifySuccess, notifyError } = useNotifier();
 
@@ -236,10 +237,10 @@ const loadEpreuvesData = async () => {
   try {
     if (concoursId.value) {
       //  Action corrigée selon votre store : fetchEpreuvesByConcours
-      await concourStore.fetchEpreuvesByConcours(concoursId.value); 
-      
+      await concourStore.fetchEpreuvesByConcours(concoursId.value);
+
       //  Variable d'état corrigée selon votre store : epreuvesList
-      epreuves.value = JSON.parse(JSON.stringify(concourStore.epreuvesList || [])); 
+      epreuves.value = JSON.parse(JSON.stringify(concourStore.epreuvesList || []));
     }
   } catch (err) {
     console.error('Erreur lors du chargement des épreuves:', err);
@@ -299,14 +300,14 @@ const saveEpreuve = async (epreuve, index) => {
   }
 
   // Préparation du payload attendu par le Back-end (avec clefs d'injection)
-  const payload = { 
+  const payload = {
     code: epreuve.code.trim().toUpperCase(),
     designation: epreuve.designation.trim(),
     coefficient: Number(epreuve.coefficient),
     heure_debut: epreuve.heure_debut,
     heure_fin: epreuve.heure_fin,
     type_epreuve: typeNormalise,
-    concours_id: concoursId.value // Clé d'association parentale
+    concours_id: concoursId.value, // Clé d'association parentale
   };
 
   try {
@@ -315,19 +316,19 @@ const saveEpreuve = async (epreuve, index) => {
     } else {
       await concourStore.editEpreuve(epreuve.id, payload);
     }
-    
+
     // Rechargement de l'état réactif et fermeture de la ligne éditable
     await loadEpreuvesData();
     activeEditIndex.value = null;
   } catch (err) {
-    console.error("Échec de la sauvegarde", err);
+    console.error('Échec de la sauvegarde', err);
   }
 };
 
 /* 5. Suppression d'une épreuve */
 const removeEpreuve = async (index) => {
   const item = epreuves.value[index];
-  
+
   if (confirm(`Êtes-vous sûr de vouloir retirer l'épreuve "${item.designation || item.code}" ?`)) {
     try {
       if (item.id) {
@@ -339,7 +340,7 @@ const removeEpreuve = async (index) => {
       await loadEpreuvesData();
       activeEditIndex.value = null;
     } catch (err) {
-      console.error("Échec de la suppression", err);
+      console.error('Échec de la suppression', err);
     }
   }
 };

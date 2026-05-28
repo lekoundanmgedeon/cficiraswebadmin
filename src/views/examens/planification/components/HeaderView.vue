@@ -3,7 +3,6 @@
     <div class="row">
       <div class="col-md-12 grid-margin">
         <div class="d-flex justify-content-between flex-wrap">
-          
           <div class="d-flex align-items-end flex-wrap">
             <div class="me-md-3 me-xl-5">
               <h2>Planification des Évaluations</h2>
@@ -18,7 +17,11 @@
 
           <div class="d-flex justify-content-between align-items-end flex-wrap">
             <div class="dropdown me-2">
-              <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" aria-expanded="false">
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
                 <i class="mdi mdi-dots-vertical"></i>
               </button>
               <ul class="dropdown-menu dropdown-menu-end">
@@ -34,7 +37,9 @@
                 </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
-                  <a class="dropdown-item" href="#"><i class="mdi mdi-cog me-2"></i>Configuration</a>
+                  <a class="dropdown-item" href="#"
+                    ><i class="mdi mdi-cog me-2"></i>Configuration</a
+                  >
                 </li>
               </ul>
             </div>
@@ -49,7 +54,6 @@
 
             <CreateSessionModal />
           </div>
-
         </div>
       </div>
     </div>

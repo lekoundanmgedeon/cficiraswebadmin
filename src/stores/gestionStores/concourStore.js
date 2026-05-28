@@ -23,7 +23,7 @@ export const useConcoursStore = defineStore('concoursStore', {
     concoursList: [],
     concours: null,
     epreuvesList: [], // Liste des épreuves du concours sélectionné
-    epreuve: null,     // Épreuve active pour consultation/édition
+    epreuve: null, // Épreuve active pour consultation/édition
     moyennesRangs: null,
     loading: false,
   }),
@@ -129,7 +129,7 @@ export const useConcoursStore = defineStore('concoursStore', {
     // =========================================================================
     // ACTIONS ÉPREUVES (Ajoutées pour s'aligner sur les routes)
     // =========================================================================
-    
+
     // Récupérer toutes les épreuves d'un concours spécifique
     async fetchEpreuvesByConcours(concoursId) {
       const messageStore = useMessageStore();

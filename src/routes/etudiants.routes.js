@@ -25,5 +25,4 @@ export default [
     name: 'Inscriptions',
     component: () => import('@/views/inscriptions/Inscription.vue'),
   },
-
 ];

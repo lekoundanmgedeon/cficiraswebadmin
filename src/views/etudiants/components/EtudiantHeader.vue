@@ -38,7 +38,7 @@
               data-bs-toggle="modal"
               data-bs-target="#genererRapportModal"
             >
-               Générer un rapport
+              Générer un rapport
             </button>
           </div>
         </div>
@@ -52,7 +52,7 @@
 import GenererRapportModal from './Modal/GenerationRapport.vue'; // AJOUT : Importation du modal de rapport
 
 const handleRapportGenere = (payload) => {
-  console.log("Rapport demandé avec le filtre suivant :", payload);
+  console.log('Rapport demandé avec le filtre suivant :', payload);
   // Ici vous pouvez gérer des logs ou intercepter des téléchargements globaux si besoin
 };
 

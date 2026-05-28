@@ -35,7 +35,9 @@
                   {{ annee.code }} (Année active)
                 </option>
               </select>
-              <small class="text-muted">Le semestre est automatiquement rattaché à l'année active en cours.</small>
+              <small class="text-muted"
+                >Le semestre est automatiquement rattaché à l'année active en cours.</small
+              >
             </div>
             <!-- Code -->
             <div class="mb-3">
@@ -208,14 +210,15 @@ const loadAnneesAcademiques = async () => {
     if (isEdit.value) {
       anneesAcademiques.value = toutesLesAnnees;
     } else {
-      const anneeActive = toutesLesAnnees.find(annee => annee.est_active);
-      
+      const anneeActive = toutesLesAnnees.find((annee) => annee.est_active);
+
       if (anneeActive) {
         anneesAcademiques.value = [anneeActive];
         form.value.annee_id = anneeActive.id;
       } else {
         anneesAcademiques.value = [];
-        errorMessage.value = "Attention : Aucune année académique n'est active actuellement. Impossible de créer un semestre.";
+        errorMessage.value =
+          "Attention : Aucune année académique n'est active actuellement. Impossible de créer un semestre.";
       }
     }
   } catch (error) {
