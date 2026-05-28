@@ -182,9 +182,9 @@ const cycles = computed(() => cycleStore.Filierecycles);
 // Charger les données au montage
 onMounted(async () => {
   try {
-    await cycleStore.fetchFiliereCycle();
+    await cycleStore.fetchCycleFilieres();
   } catch (error) {
-    messageStore.error('Erreur lors du chargement des cycles et filières');
+    messageStore.notifyError('Erreur lors du chargement des cycles et filières');
   }
 });
 </script>

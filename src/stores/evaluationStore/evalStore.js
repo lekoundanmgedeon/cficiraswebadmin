@@ -5,7 +5,7 @@ import {
   getEvaluationById,
   updateEvaluation,
   deleteEvaluation,
-} from '@/api/academique/academiqueApi';
+} from '@/api/evaluations/evaluationApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
 

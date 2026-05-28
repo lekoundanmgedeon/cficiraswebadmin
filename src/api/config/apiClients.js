@@ -5,7 +5,7 @@ export const academiqueApi = createApiClient('/academique');
 export const gestionApi = createApiClient('/gestion');
 export const pedagogieApi = createApiClient('/pedagogie');
 export const financeApi = createApiClient('/finance');
-export const evaluationApi = createApiClient('/evaluation');
+export const evaluationApi = createApiClient('/evaluations');
 //prise en charges des API avec imports des fichiers
 export const gestionFormApi = createApiClient('/gestion', false);
 export const academiqueFormApi = createApiClient('/academique', false);
