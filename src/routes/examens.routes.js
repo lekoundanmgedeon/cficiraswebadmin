@@ -18,6 +18,11 @@ export default [
     component: () => import('@/views/examens/planification/Planification.vue'),
   },
   {
+    path: '/planification-examens/:id/evaluations',
+    name: 'EvaluationsExamens',
+    component: () => import('@/views/examens/planification/components/tabs/PlanExamen.vue'),
+  },
+  {
     path: '/calendrier-examens',
     name: 'CalendrierExamens',
     component: () => import('@/views/examens/calendrier/Calendrier.vue'),

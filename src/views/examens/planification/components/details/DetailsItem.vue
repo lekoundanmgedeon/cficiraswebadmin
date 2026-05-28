@@ -5,13 +5,20 @@
     </button>
     <ul class="dropdown-menu dropdown-menu-light">
       <li>
+        <button class="dropdown-item fw-semibold text-primary" @click="goToPlanning">
+          <i class="mdi mdi-calendar-clock me-2"></i> Planifier Examens
+        </button>
+      </li>
+      <li class="dropdown-divider"></li>
+      
+      <li>
         <button class="dropdown-item" @click="isDetailsVisible = true">
-          <i class="mdi mdi-information-outline me-2"></i> Détails
+          <i class="mdi mdi-information-outline me-2 text-info"></i> Détails
         </button>
       </li>
       <li v-if="showAdd">
         <button class="dropdown-item" @click="$emit('add', item)">
-          <i class="mdi mdi-plus-circle-outline me-2"></i> Ajouter
+          <i class="mdi mdi-plus-circle-outline me-2 text-success"></i> Ajouter
         </button>
       </li>
       <li>
@@ -21,7 +28,7 @@
           :data-bs-target="editModalTarget"
           @click="$emit('edit', item)"
         >
-          <i class="mdi mdi-pencil-outline me-2"></i> Modifier
+          <i class="mdi mdi-pencil-outline me-2 text-primary"></i> Modifier
         </button>
       </li>
       <li class="dropdown-divider"></li>
@@ -33,7 +40,6 @@
     </ul>
   </div>
 
-  <!-- Modal pour les détails -->
   <teleport to="body">
     <div
       v-if="isDetailsVisible"
@@ -53,6 +59,7 @@
             <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
           <div class="modal-body">
+            
             <div class="row">
               <div class="col-md-6">
                 <div class="info-card mb-3">
@@ -60,23 +67,21 @@
                   <div class="info-content">
                     <div class="info-item">
                       <span class="info-label">Code:</span>
-                      <span class="info-value">{{ item.code_session }}</span>
+                      <span class="info-value fw-bold">{{ item.code }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Désignation:</span>
-                      <span class="info-value">{{ item.nom_session }}</span>
+                      <span class="info-value">{{ item.designation }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Type:</span>
-                      <span class="info-value">{{ item.type_session }}</span>
+                      <span class="info-value badge bg-secondary-subtle text-secondary">{{ item.type_session }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Semestre:</span>
-                      <span class="info-value">{{ item.semestre }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Période:</span>
-                      <span class="info-value">{{ item.periode_semestre }}</span>
+                      <span class="info-value">
+                        <span class="badge bg-light text-dark border">{{ item.semestre_code }}</span>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -96,13 +101,13 @@
                     </div>
                     <div class="info-item">
                       <span class="info-label">Responsable:</span>
-                      <span class="info-value">{{ item.responsable }}</span>
+                      <span class="info-value">{{ item.responsable || 'Non assigné' }}</span>
                     </div>
                     <div class="info-item">
                       <span class="info-label">Année académique:</span>
-                      <span class="info-value">{{ item.annee_academique }}</span>
+                      <span class="info-value">{{ item.annee_code }}</span>
                     </div>
-                    <div class="info-item">
+                    <div class="info-item align-items-center">
                       <span class="info-label">État:</span>
                       <span class="badge" :class="getStatusClass(item.etat)">
                         {{ item.etat }}
@@ -113,60 +118,27 @@
               </div>
             </div>
 
-            <div class="row mt-3">
-              <div class="col-md-6">
+            <div v-if="item.llm_summary" class="row mt-2">
+              <div class="col-md-12">
                 <div class="info-card">
-                  <h6 class="info-title">Statistiques</h6>
-                  <div class="info-content">
-                    <div class="info-item">
-                      <span class="info-label">Modules évalués:</span>
-                      <span class="info-value">{{ item.modules_evalues || '0' }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Notes saisies:</span>
-                      <span class="info-value">{{ item.nombre_notes_saisies || '0' }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">Taux de saisie:</span>
-                      <div class="progress mt-2" style="height: 10px">
-                        <div
-                          class="progress-bar bg-success"
-                          role="progressbar"
-                          :style="{ width: calculateCompletionRate() + '%' }"
-                          :aria-valuenow="calculateCompletionRate()"
-                          aria-valuemin="0"
-                          aria-valuemax="100"
-                        ></div>
-                      </div>
-                      <small class="text-muted">{{ calculateCompletionRate() }}% complété</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <div class="info-card">
-                  <h6 class="info-title">Actions rapides</h6>
-                  <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary btn-sm">
-                      <i class="mdi mdi-file-document-outline me-2"></i> Voir les épreuves
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm">
-                      <i class="mdi mdi-clipboard-list-outline me-2"></i> Liste des participants
-                    </button>
-                    <button class="btn btn-outline-info btn-sm">
-                      <i class="mdi mdi-chart-bar me-2"></i> Statistiques complètes
-                    </button>
-                  </div>
+                  <h6 class="info-title">Résumé de la session</h6>
+                  <p class="text-muted small mb-0" style="line-height: 1.5;">
+                    {{ item.llm_summary }}
+                  </p>
                 </div>
               </div>
             </div>
+
           </div>
           <div class="modal-footer">
+            <button class="btn btn-outline-primary me-auto" @click="goToPlanningFromDetails">
+              <i class="mdi mdi-calendar-clock me-2"></i> Planifier les examens
+            </button>
+            
             <button class="btn btn-secondary" @click="closeDetails">
               <i class="mdi mdi-close me-2"></i> Fermer
             </button>
-            <button class="btn btn-primary" @click="$emit('edit', item)">
+            <button class="btn btn-primary" @click="handleEditFromDetails">
               <i class="mdi mdi-pencil me-2"></i> Modifier
             </button>
           </div>
@@ -177,13 +149,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router'; // 🚀 Importation du routeur Vue
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 
 const props = defineProps({
-  item: Object,
+  item: {
+    type: Object,
+    required: true,
+  },
   showAdd: {
     type: Boolean,
     default: false,
@@ -194,32 +170,51 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['add', 'edit', 'delete']);
+
+const router = useRouter(); // 🚀 Initialisation des routes de l'application
 const isDetailsVisible = ref(false);
 
 const closeDetails = () => {
   isDetailsVisible.value = false;
 };
 
-const calculateCompletionRate = () => {
-  const modules = parseInt(props.item.modules_evalues) || 1;
-  const notes = parseInt(props.item.nombre_notes_saisies) || 0;
-  return Math.min(Math.round((notes / modules) * 100), 100);
+// Actions de routage vers l'URL dynamique /planification-examens/:id/planning
+const goToPlanning = () => {
+  router.push(`/planification-examens/${props.item.id}/evaluations`);
+};
+
+const goToPlanningFromDetails = () => {
+  closeDetails();
+  goToPlanning();
+};
+
+const handleEditFromDetails = () => {
+  closeDetails();
+  emit('edit', props.item);
 };
 
 const getStatusClass = (status) => {
-  return (
-    {
-      active: 'bg-success',
-      inactive: 'bg-secondary',
-      draft: 'bg-warning text-dark',
-      completed: 'bg-info',
-    }[status] || 'bg-light text-dark'
-  );
+  if (!status) return 'bg-light text-dark';
+  
+  switch (status.toLowerCase()) {
+    case 'active':
+      return 'bg-success';
+    case 'inactive':
+      return 'bg-secondary';
+    case 'draft':
+    case 'brouillon':
+      return 'bg-warning text-dark';
+    default:
+      return 'bg-light text-dark';
+  }
 };
 
 dayjs.extend(localizedFormat);
-dayjs.locale('fr'); // Set the locale to French
+dayjs.locale('fr');
+
 function toInputDateFormat(dateString) {
+  if (!dateString) return 'Non défini';
   return dayjs(dateString).format('DD MMMM YYYY');
 }
 </script>
@@ -264,15 +259,10 @@ function toInputDateFormat(dateString) {
 }
 
 .badge {
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 50px;
   font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.progress {
-  border-radius: 5px;
-  background-color: #e9ecef;
+  font-weight: 600;
 }
 
 .btn-close:focus {
