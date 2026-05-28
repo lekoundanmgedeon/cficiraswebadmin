@@ -1,7 +1,6 @@
 <template>
-  <nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <nav class="sidebar sidebar-offcanvas" id="sidebar" :class="{ active: mobileOpen }">
     <ul class="nav">
-      <!-- Tableau de bord -->
       <li class="nav-item">
         <router-link class="nav-link" to="/home" :class="{ 'menu-active': isMenuActive('/home') }">
           <i class="mdi mdi-home menu-icon"></i>
@@ -681,8 +680,15 @@
 
 <script setup>
 import { useRoute } from 'vue-router';
-
 const route = useRoute();
+defineProps({
+  mobileOpen: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+defineEmits(['close-sidebar']);
 
 const menuGroups = {
   structure: [
@@ -778,5 +784,57 @@ const isParentActive = (childRoutes) => {
   background-color: #e6f3ff;
   transform: scale(0.98);
   transition: all 0.1s ease;
+}
+
+/* Repli desktop : garde seulement les icônes */
+@media (min-width: 992px) {
+  .sidebar-icon-only .sidebar {
+    width: 70px;
+  }
+
+  .sidebar-icon-only .sidebar .menu-title,
+  .sidebar-icon-only .sidebar .menu-arrow,
+  .sidebar-icon-only .sidebar .badge {
+    display: none !important;
+  }
+
+  .sidebar-icon-only .main-panel {
+    width: calc(100% - 70px);
+  }
+
+  .sidebar-icon-only .sidebar .nav .nav-item .nav-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sidebar-icon-only .sidebar .nav .nav-item .nav-link .menu-icon {
+    margin-right: 0;
+  }
+
+  .sidebar-icon-only .sidebar .collapse.show {
+    display: none;
+  }
+}
+
+/* Mobile : ouverture / fermeture de la sidebar */
+@media (max-width: 991px) {
+  .sidebar.sidebar-offcanvas {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 1030;
+    transition: left 0.25s ease;
+  }
+
+  .sidebar.sidebar-offcanvas.active {
+    left: 0;
+  }
+
+  .main-panel {
+    width: 100%;
+  }
 }
 </style>

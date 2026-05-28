@@ -99,9 +99,9 @@
         </li>
       </ul>
       <button
-        class="navbar-toggler navbar-toggler-right d-lg-none align-self-center"
+        class="navbar-toggler navbar-toggler align-self-center"
         type="button"
-        data-toggle="offcanvas"
+        @click="$emit('toggle-sidebar')"
       >
         <span class="mdi mdi-menu"></span>
       </button>
