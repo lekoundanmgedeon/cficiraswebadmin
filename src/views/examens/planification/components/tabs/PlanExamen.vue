@@ -38,7 +38,6 @@
       <div class="container my-2">
         <div class="card border-0 shadow-sm p-3 mb-1 bg-white">
           <div class="row g-3">
-            
             <div class="col-12 col-sm-6 col-md-4">
               <label class="form-label text-xs fw-semibold text-muted mb-1">Filière</label>
               <select
@@ -86,7 +85,6 @@
           <div class="card">
             <div class="card-body dashboard-tabs p-0">
               <div class="row">
-                
                 <div class="col-lg-4 col-md-5">
                   <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-0 py-3">
@@ -94,13 +92,16 @@
                         <i class="bi bi-collection me-2 text-secondary"></i>Matières à configurer
                       </h6>
                     </div>
-                    
+
                     <div v-if="!filters.classeId" class="text-center p-4 text-muted small">
                       <i class="bi bi-info-circle d-block mb-2 fs-4 text-warning"></i>
                       Veuillez sélectionner une filière et une classe pour charger les matières.
                     </div>
 
-                    <div v-else-if="filteredModules.length === 0" class="text-center p-4 text-muted small">
+                    <div
+                      v-else-if="filteredModules.length === 0"
+                      class="text-center p-4 text-muted small"
+                    >
                       Aucune matière disponible pour cette classe.
                     </div>
 
@@ -145,23 +146,32 @@
 
                 <div class="col-lg-8 col-md-7">
                   <div class="card border-0 shadow-sm h-100" v-if="selectedModule">
-                    <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center">
+                    <div
+                      class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center"
+                    >
                       <div>
-                        <span class="text-xs text-uppercase fw-bold text-primary">Configuration active</span>
+                        <span class="text-xs text-uppercase fw-bold text-primary"
+                          >Configuration active</span
+                        >
                         <h5 class="fw-bold text-dark mb-0">{{ selectedModule.nom }}</h5>
                       </div>
-                      <span class="badge bg-white text-dark border font-monospace text-xs px-2 py-1">
+                      <span
+                        class="badge bg-white text-dark border font-monospace text-xs px-2 py-1"
+                      >
                         {{ selectedModule.code }}
                       </span>
                     </div>
 
                     <div class="card-body p-4">
-                      <div class="alert alert-warning-subtle border border-warning-subtle text-dark p-2 rounded mb-4 text-xs d-flex align-items-center">
+                      <div
+                        class="alert alert-warning-subtle border border-warning-subtle text-dark p-2 rounded mb-4 text-xs d-flex align-items-center"
+                      >
                         <i class="bi bi-exclamation-circle-fill text-warning me-2 fs-5"></i>
                         <div>
                           Toutes les dates d'évaluation doivent être programmées entre le
                           <strong>{{ formatDate(currentSession?.date_debut) }}</strong> et le
-                          <strong>{{ formatDate(currentSession?.date_fin) }}</strong>.
+                          <strong>{{ formatDate(currentSession?.date_fin) }}</strong
+                          >.
                         </div>
                       </div>
 
@@ -170,7 +180,9 @@
                         :key="type.key"
                         class="eval-card border p-3 rounded mb-3 bg-light-subtle"
                       >
-                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                        <div
+                          class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2"
+                        >
                           <div class="form-check form-switch mb-0">
                             <input
                               class="form-check-input cursor-pointer"
@@ -188,16 +200,24 @@
                           <span class="badge bg-light text-secondary text-xs">{{ type.key }}</span>
                         </div>
 
-                        <div class="row g-3" v-if="activeEvaluations[selectedModule.id][type.key].enabled">
+                        <div
+                          class="row g-3"
+                          v-if="activeEvaluations[selectedModule.id][type.key].enabled"
+                        >
                           <div class="col-md-4">
-                            <label class="form-label text-xs fw-semibold">Date de l'épreuve *</label>
+                            <label class="form-label text-xs fw-semibold"
+                              >Date de l'épreuve *</label
+                            >
                             <input
                               type="date"
                               class="form-control form-control-sm"
                               v-model="activeEvaluations[selectedModule.id][type.key].date"
                               :min="currentSession?.date_debut"
                               :max="currentSession?.date_fin"
-                              :class="{ 'is-invalid': activeEvaluations[selectedModule.id][type.key].dateError }"
+                              :class="{
+                                'is-invalid':
+                                  activeEvaluations[selectedModule.id][type.key].dateError,
+                              }"
                               @change="validateEvalDates(type.key)"
                               required
                             />
@@ -224,19 +244,25 @@
                             />
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label text-xs fw-semibold">Pondération / Pourcentage (%) *</label>
+                            <label class="form-label text-xs fw-semibold"
+                              >Pondération / Pourcentage (%) *</label
+                            >
                             <input
                               type="number"
                               class="form-control form-control-sm"
                               placeholder="Ex: 40"
-                              v-model.number="activeEvaluations[selectedModule.id][type.key].ponderation"
+                              v-model.number="
+                                activeEvaluations[selectedModule.id][type.key].ponderation
+                              "
                               min="0"
                               max="100"
                               required
                             />
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label text-xs fw-semibold">Lieu / Salle d'examen</label>
+                            <label class="form-label text-xs fw-semibold"
+                              >Lieu / Salle d'examen</label
+                            >
                             <input
                               type="text"
                               class="form-control form-control-sm"
@@ -246,7 +272,8 @@
                           </div>
                         </div>
                         <div class="text-muted text-xs px-2" v-else>
-                          <i class="bi bi-dash-circle me-1"></i> Ce type d'évaluation n'est pas programmé pour ce module.
+                          <i class="bi bi-dash-circle me-1"></i> Ce type d'évaluation n'est pas
+                          programmé pour ce module.
                         </div>
                       </div>
                     </div>
@@ -271,7 +298,8 @@
                     </div>
                     <h5 class="fw-bold text-dark">Aucune matière sélectionnée</h5>
                     <p class="text-muted small max-w-sm">
-                      Veuillez cliquer sur une matière dans la liste de gauche pour configurer ses évaluations.
+                      Veuillez cliquer sur une matière dans la liste de gauche pour configurer ses
+                      évaluations.
                     </p>
                   </div>
                 </div>
@@ -340,22 +368,50 @@ const fetchAcademicData = async () => {
   // 1. Simulation Filières
   filieres.value = [
     { id: 'f1', nom: 'Génie Logiciel' },
-    { id: 'f2', nom: 'Systèmes & Réseaux' }
+    { id: 'f2', nom: 'Systèmes & Réseaux' },
   ];
 
   // 2. Simulation Classes (Utilisation de code/niveau, pas de designation)
   allClasses.value = [
     { id: 'c1', filiere_id: 'f1', code: 'L3GL', niveau: 'Licence 3' },
     { id: 'c2', filiere_id: 'f1', code: 'M1GL', niveau: 'Master 1' },
-    { id: 'c3', filiere_id: 'f2', code: 'L3SR', niveau: 'Licence 3' }
+    { id: 'c3', filiere_id: 'f2', code: 'L3SR', niveau: 'Licence 3' },
   ];
 
   // 3. Simulation Matières rattachées aux IDs de classes
   allModules.value = [
-    { id: 'm1', classe_id: 'c1', code: 'INF110', nom: 'Algorithmique et Structures de Données', credits: 4, coefficient: 2 },
-    { id: 'm2', classe_id: 'c1', code: 'MTH111', nom: 'Analyse Mathématique I', credits: 3, coefficient: 1.5 },
-    { id: 'm3', classe_id: 'c2', code: 'INF112', nom: 'Systèmes d’Exploitation & Linux', credits: 4, coefficient: 2 },
-    { id: 'm4', classe_id: 'c3', code: 'ENG101', nom: 'Anglais Technique', credits: 2, coefficient: 1 },
+    {
+      id: 'm1',
+      classe_id: 'c1',
+      code: 'INF110',
+      nom: 'Algorithmique et Structures de Données',
+      credits: 4,
+      coefficient: 2,
+    },
+    {
+      id: 'm2',
+      classe_id: 'c1',
+      code: 'MTH111',
+      nom: 'Analyse Mathématique I',
+      credits: 3,
+      coefficient: 1.5,
+    },
+    {
+      id: 'm3',
+      classe_id: 'c2',
+      code: 'INF112',
+      nom: 'Systèmes d’Exploitation & Linux',
+      credits: 4,
+      coefficient: 2,
+    },
+    {
+      id: 'm4',
+      classe_id: 'c3',
+      code: 'ENG101',
+      nom: 'Anglais Technique',
+      credits: 2,
+      coefficient: 1,
+    },
   ];
 };
 
@@ -384,13 +440,13 @@ const initializeEvaluationsMap = () => {
 // 1. Filtrage des classes selon la filière sélectionnée
 const filteredClasses = computed(() => {
   if (!filters.value.filiereId) return [];
-  return allClasses.value.filter(c => c.filiere_id === filters.value.filiereId);
+  return allClasses.value.filter((c) => c.filiere_id === filters.value.filiereId);
 });
 
 // 2. Filtrage des matières selon la classe sélectionnée
 const filteredModules = computed(() => {
   if (!filters.value.classeId) return [];
-  return allModules.value.filter(m => m.classe_id === filters.value.classeId);
+  return allModules.value.filter((m) => m.classe_id === filters.value.classeId);
 });
 
 // Réinitialisations lors des changements de sélection
