@@ -36,7 +36,7 @@
         role="tabpanel"
         aria-labelledby="session-normal-tab"
       >
-        <CalendrierExamen/>
+        <CalendrierExamen />
       </div>
       <div
         class="tab-pane fade"

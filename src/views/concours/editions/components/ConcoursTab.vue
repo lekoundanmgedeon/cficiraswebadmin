@@ -73,17 +73,6 @@ import HistoriqueContent from './Tab/HistoriqueContent.vue';
 </script>
 
 <style scoped>
-.drag-drop-area {
-  background: #f8f9fa;
-  border: 2px dashed #007bff;
-  cursor: pointer;
-}
-.drag-drop-area.drag-over {
-  background: #e9ecef;
-}
-</style>
-
-<style scoped>
 body {
   background-color: #f8f9fa;
   color: #212529;

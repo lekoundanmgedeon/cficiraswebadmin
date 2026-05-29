@@ -6,9 +6,7 @@
           <div class="d-flex align-items-end flex-wrap">
             <div class="me-md-3 me-xl-5">
               <h3 class="fw-bold text-dark mb-1">Gestions Salles et Horaires</h3>
-                <p class="text-muted small mb-0">
-                  Gestion de repartitions automatiques des salles.
-                </p>
+              <p class="text-muted small mb-0">Gestion de repartitions automatiques des salles.</p>
             </div>
             <div class="d-flex privacy-breadcrumbs alignment-fix">
               <i class="mdi mdi-home text-muted hover-cursor"></i>
@@ -18,12 +16,11 @@
           </div>
           <div class="d-flex justify-content-between align-items-end flex-wrap">
             <button class="btn btn-outline-secondary btn-sm me-2" @click="goBack">
-                <i class="bi bi-arrow-left me-1"></i> Retour
-              </button>
-              <button class="btn btn-success btn-sm px-3" @click="refreshCalendar">
-                <i class="bi bi-arrow-clockwise me-1"></i> Actualiser
-              </button>
-
+              <i class="bi bi-arrow-left me-1"></i> Retour
+            </button>
+            <button class="btn btn-success btn-sm px-3" @click="refreshCalendar">
+              <i class="bi bi-arrow-clockwise me-1"></i> Actualiser
+            </button>
           </div>
         </div>
       </div>
@@ -41,7 +38,7 @@ const { notifySuccess, notifyError } = useNotifier();
 
 const refreshCalendar = async () => {
   await fetchCalendarEvents();
-  notifySuccess("Calendrier actualisé.");
+  notifySuccess('Calendrier actualisé.');
 };
 const goBack = () => router.back();
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row">
-      <CalendrierHeader/>
+      <CalendrierHeader />
     </div>
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
@@ -18,7 +18,6 @@
 <script setup>
 import CalendrierHeader from './components/HeaderView.vue';
 import CalendrierTab from './components/CalendrierTab.vue';
-
 </script>
 <style scoped>
 body {

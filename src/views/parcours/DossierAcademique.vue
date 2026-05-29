@@ -6,18 +6,26 @@
         <div class="col-md-8">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-2">
-              <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Étudiants</a></li>
+              <li class="breadcrumb-item">
+                <a href="#" class="text-decoration-none">Étudiants</a>
+              </li>
               <li class="breadcrumb-item active" aria-current="page">Dossier Académique</li>
             </ol>
           </nav>
           <!-- Affichage dynamique du nom de l'étudiant -->
           <h3 class="fw-bold text-dark mb-1">
-            {{ currentStudent ? `${currentStudent.nom} ${currentStudent.prenom}` : 'Chargement de l\'étudiant...' }}
+            {{
+              currentStudent
+                ? `${currentStudent.nom} ${currentStudent.prenom}`
+                : "Chargement de l'étudiant..."
+            }}
           </h3>
           <p class="text-muted small mb-0" v-if="currentStudent">
-            <span class="badge bg-light text-dark border me-2">Matricule: {{ currentStudent.matricule }}</span>
-            <i class="bi bi-mortarboard me-1"></i> Classe : 
-            <strong class="text-secondary me-2">{{ currentStudent.classe }}</strong> | Filière : 
+            <span class="badge bg-light text-dark border me-2"
+              >Matricule: {{ currentStudent.matricule }}</span
+            >
+            <i class="bi bi-mortarboard me-1"></i> Classe :
+            <strong class="text-secondary me-2">{{ currentStudent.classe }}</strong> | Filière :
             <strong class="text-secondary">{{ currentStudent.filiere }}</strong>
           </p>
         </div>
@@ -25,11 +33,7 @@
           <button class="btn btn-outline-secondary btn-sm me-2" @click="goBack">
             <i class="bi bi-arrow-left me-1"></i> Retour
           </button>
-          <button
-            class="btn btn-primary btn-sm px-3"
-            :disabled="isExporting"
-            @click="printDossier"
-          >
+          <button class="btn btn-primary btn-sm px-3" :disabled="isExporting" @click="printDossier">
             <span v-if="isExporting" class="spinner-border spinner-border-sm me-1"></span>
             <i v-else class="bi bi-printer me-1"></i> Imprimer le dossier
           </button>
@@ -56,7 +60,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import DossierTab from './components/tabs/ParcourTab.vue';
 // Importez votre SkeletonLoader s'il n'est pas global
-// import SkeletonLoader from '@/components/shared/SkeletonLoader.vue'; 
+// import SkeletonLoader from '@/components/shared/SkeletonLoader.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -99,7 +103,7 @@ onMounted(async () => {
       classe: 'INF-L3',
     };
   } catch (error) {
-    console.error("Impossible de charger le dossier", error);
+    console.error('Impossible de charger le dossier', error);
   } finally {
     loading.value = false;
   }

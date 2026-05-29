@@ -1,5 +1,2 @@
-<template>
-
-</template>
-<script lang="js" setup>
-</script>
+<template></template>
+<script lang="js" setup></script>

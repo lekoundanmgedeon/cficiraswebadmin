@@ -12,7 +12,9 @@
           {{ currentSession?.designation || 'Chargement du concours...' }}
         </h3>
         <p class="text-muted small mb-0" v-if="currentSession">
-          <span class="badge bg-light text-dark border me-2">Code: {{ currentSession.code_annee }}</span>
+          <span class="badge bg-light text-dark border me-2"
+            >Code: {{ currentSession.code_annee }}</span
+          >
           <i class="bi bi-clock me-1"></i> Période :
           <strong class="text-secondary">{{ formatDate(currentSession.date_debut) }}</strong> au
           <strong class="text-secondary">{{ formatDate(currentSession.date_fin) }}</strong>
@@ -101,8 +103,6 @@ onMounted(async () => {
   }
 });
 </script>
-
-
 
 <style scoped>
 .planification-container {

@@ -12,7 +12,11 @@
     <div class="row g-3">
       <div class="col-12 col-sm-6 col-md-3">
         <label class="form-label text-xs fw-semibold text-muted mb-1">Filière</label>
-        <select v-model="filters.filiereId" class="form-select form-select-sm text-secondary" @change="onFiliereChange">
+        <select
+          v-model="filters.filiereId"
+          class="form-select form-select-sm text-secondary"
+          @change="onFiliereChange"
+        >
           <option value="">Toutes les filières</option>
           <option v-for="filiere in filieres" :key="filiere.id" :value="filiere.id">
             {{ filiere.nom }}
@@ -22,7 +26,11 @@
 
       <div class="col-12 col-sm-6 col-md-3">
         <label class="form-label text-xs fw-semibold text-muted mb-1">Classe</label>
-        <select v-model="filters.classeId" class="form-select form-select-sm text-secondary" :disabled="!filters.filiereId">
+        <select
+          v-model="filters.classeId"
+          class="form-select form-select-sm text-secondary"
+          :disabled="!filters.filiereId"
+        >
           <option value="">Toutes les classes</option>
           <option v-for="classe in filteredClasses" :key="classe.id" :value="classe.id">
             {{ classe.code }} - {{ classe.niveau }}
@@ -43,7 +51,12 @@
         <label class="form-label text-xs fw-semibold text-muted mb-1">Recherche rapide</label>
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-          <input v-model="filters.search" type="text" class="form-control" placeholder="Salle, code matière..." />
+          <input
+            v-model="filters.search"
+            type="text"
+            class="form-control"
+            placeholder="Salle, code matière..."
+          />
         </div>
       </div>
     </div>
@@ -52,7 +65,9 @@
   <div class="row">
     <div class="col-md-12">
       <div class="card border-0 shadow-sm bg-white">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <div
+          class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center"
+        >
           <h6 class="fw-bold text-dark mb-0">
             <i class="bi bi-calendar3 me-2 text-primary"></i>Planning des épreuves planifiées
           </h6>
@@ -66,7 +81,8 @@
             <i class="bi bi-calendar-x d-block mb-3 fs-1 text-secondary"></i>
             <h5 class="fw-bold">Aucune épreuve planifiée</h5>
             <p class="small max-w-sm mx-auto">
-              Aucun examen ou rattrapage ne correspond aux critères de recherche ou n'a encore été généré pour cette session.
+              Aucun examen ou rattrapage ne correspond aux critères de recherche ou n'a encore été
+              généré pour cette session.
             </p>
           </div>
 
@@ -84,14 +100,18 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="event in sortedEvents" :key="event.id" :class="{'table-warning-subtle': event.type === 'RATTRAPAGE'}">
+                <tr
+                  v-for="event in sortedEvents"
+                  :key="event.id"
+                  :class="{ 'table-warning-subtle': event.type === 'RATTRAPAGE' }"
+                >
                   <td class="ps-4">
                     <div class="fw-bold text-dark">{{ formatDate(event.date) }}</div>
                     <small class="text-muted">
                       <i class="bi bi-clock me-1"></i>{{ event.heure_debut }}
                     </small>
                   </td>
-                  
+
                   <td>
                     <span class="badge bg-light text-dark border fw-medium">
                       {{ event.classeCode }}
@@ -104,7 +124,14 @@
                   </td>
 
                   <td>
-                    <span class="badge text-xs" :class="event.type === 'NORMAL' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'">
+                    <span
+                      class="badge text-xs"
+                      :class="
+                        event.type === 'NORMAL'
+                          ? 'bg-success-subtle text-success'
+                          : 'bg-warning-subtle text-warning'
+                      "
+                    >
                       {{ event.type === 'NORMAL' ? 'Session Normale' : 'Rattrapage' }}
                     </span>
                   </td>
@@ -119,10 +146,18 @@
                   </td>
 
                   <td class="text-end pe-4">
-                    <button class="btn btn-outline-primary btn-xs me-1" @click="editEvent(event)" title="Modifier">
+                    <button
+                      class="btn btn-outline-primary btn-xs me-1"
+                      @click="editEvent(event)"
+                      title="Modifier"
+                    >
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-outline-danger btn-xs" @click="deleteEvent(event)" title="Annuler l'épreuve">
+                    <button
+                      class="btn btn-outline-danger btn-xs"
+                      @click="deleteEvent(event)"
+                      title="Annuler l'épreuve"
+                    >
                       <i class="bi bi-trash"></i>
                     </button>
                   </td>
@@ -164,13 +199,13 @@ const fetchAcademicStructures = async () => {
   // Données de structures (Synchronisées avec votre arborescence globale)
   filieres.value = [
     { id: 'f1', nom: 'Génie Logiciel' },
-    { id: 'f2', nom: 'Systèmes & Réseaux' }
+    { id: 'f2', nom: 'Systèmes & Réseaux' },
   ];
 
   allClasses.value = [
     { id: 'c1', filiere_id: 'f1', code: 'L3GL', niveau: 'Licence 3' },
     { id: 'c2', filiere_id: 'f1', code: 'M1GL', niveau: 'Master 1' },
-    { id: 'c3', filiere_id: 'f2', code: 'L3SR', niveau: 'Licence 3' }
+    { id: 'c3', filiere_id: 'f2', code: 'L3SR', niveau: 'Licence 3' },
   ];
 };
 
@@ -188,7 +223,7 @@ const fetchCalendarEvents = async () => {
       date: '2026-06-05',
       heure_debut: '08:30',
       duree: 120,
-      salle: 'Amphi A'
+      salle: 'Amphi A',
     },
     {
       id: 'ev2',
@@ -201,7 +236,7 @@ const fetchCalendarEvents = async () => {
       date: '2026-06-08',
       heure_debut: '14:00',
       duree: 90,
-      salle: 'Salle 102'
+      salle: 'Salle 102',
     },
     {
       id: 'ev3',
@@ -214,8 +249,8 @@ const fetchCalendarEvents = async () => {
       date: '2026-06-20',
       heure_debut: '09:00',
       duree: 120,
-      salle: 'Amphi B'
-    }
+      salle: 'Amphi B',
+    },
   ];
 };
 
@@ -226,7 +261,7 @@ const fetchCalendarEvents = async () => {
 // Filtrage en cascade des classes
 const filteredClasses = computed(() => {
   if (!filters.value.filiereId) return [];
-  return allClasses.value.filter(c => c.filiere_id === filters.value.filiereId);
+  return allClasses.value.filter((c) => c.filiere_id === filters.value.filiereId);
 });
 
 const onFiliereChange = () => {
@@ -235,17 +270,18 @@ const onFiliereChange = () => {
 
 // Filtrage multi-critères des épreuves du calendrier
 const filteredEvents = computed(() => {
-  return calendarEvents.value.filter(event => {
+  return calendarEvents.value.filter((event) => {
     const matchFiliere = !filters.value.filiereId || event.filiereId === filters.value.filiereId;
     const matchClasse = !filters.value.classeId || event.classeId === filters.value.classeId;
     const matchType = !filters.value.typeEval || event.type === filters.value.typeEval;
-    
+
     // Recherche textuelle (Salle, Nom ou Code matière)
     const searchLower = filters.value.search.toLowerCase();
-    const matchSearch = !filters.value.search || 
-                        event.moduleNom.toLowerCase().includes(searchLower) ||
-                        event.moduleCode.toLowerCase().includes(searchLower) ||
-                        (event.salle && event.salle.toLowerCase().includes(searchLower));
+    const matchSearch =
+      !filters.value.search ||
+      event.moduleNom.toLowerCase().includes(searchLower) ||
+      event.moduleCode.toLowerCase().includes(searchLower) ||
+      (event.salle && event.salle.toLowerCase().includes(searchLower));
 
     return matchFiliere && matchClasse && matchType && matchSearch;
   });
@@ -265,22 +301,20 @@ const sortedEvents = computed(() => {
    ========================================================================= */
 const editEvent = (event) => {
   // Logique pour ouvrir un modal de modification rapide d'horaire ou de salle
-  console.log('Modification de l\'épreuve:', event);
+  console.log("Modification de l'épreuve:", event);
 };
 
 const deleteEvent = (event) => {
   if (confirm(`Voulez-vous vraiment annuler l'épreuve de ${event.moduleNom} ?`)) {
-    calendarEvents.value = calendarEvents.value.filter(ev => ev.id !== event.id);
-    notifySuccess("Épreuve retirée du calendrier avec succès.");
+    calendarEvents.value = calendarEvents.value.filter((ev) => ev.id !== event.id);
+    notifySuccess('Épreuve retirée du calendrier avec succès.');
   }
 };
 
 const refreshCalendar = async () => {
   await fetchCalendarEvents();
-  notifySuccess("Calendrier actualisé.");
+  notifySuccess('Calendrier actualisé.');
 };
-
-
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';

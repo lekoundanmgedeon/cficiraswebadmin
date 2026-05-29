@@ -16,15 +16,16 @@ export default [
     component: () => import('@/views/parcours/DossierView.vue'),
   },
   {
-    path: '/dossiers-scolaires/:id/details',
-    name: 'DetailScolaires',
-    component: () => import('@/views/parcours/DossierAcademique.vue'),
-  },
-  {
     path: '/dossiers-scolaires/:id/global-informations',
     name: 'ListesAffichage',
     component: () => import('@/views/parcours/DossierAcademique.vue'),
   },
+  {
+    path: '/absences',
+    name: 'Absences',
+    component: () => import('@/views/absence/AbscenceView.vue'),
+  },
+
   {
     path: '/inscriptions',
     name: 'Inscriptions',

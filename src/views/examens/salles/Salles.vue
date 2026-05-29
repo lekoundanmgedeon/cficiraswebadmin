@@ -3,11 +3,14 @@
   <div class="container-fluid my-4">
     <div class="row mb-4">
       <div class="col-12">
-        <div class="d-flex align-items-center justify-content-between bg-white p-3 rounded shadow-sm border-start border-primary border-4">
+        <div
+          class="d-flex align-items-center justify-content-between bg-white p-3 rounded shadow-sm border-start border-primary border-4"
+        >
           <div>
             <h4 class="fw-bold text-dark mb-1">Planification des Salles</h4>
             <p class="text-muted small mb-0">
-              Répartissez automatiquement vos listes d'étudiants (Excel/CSV) au sein de vos infrastructures d'examen.
+              Répartissez automatiquement vos listes d'étudiants (Excel/CSV) au sein de vos
+              infrastructures d'examen.
             </p>
           </div>
           <i class="bi bi-building-gear fs-2 text-primary-subtle"></i>
@@ -27,11 +30,21 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label text-xs fw-semibold">Salles Disponibles</label>
-                <input type="number" class="form-control form-control-sm" v-model.number="roomCount" min="1" />
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  v-model.number="roomCount"
+                  min="1"
+                />
               </div>
               <div class="col-md-6">
                 <label class="form-label text-xs fw-semibold">Capacité Maximale / Salle</label>
-                <input type="number" class="form-control form-control-sm" v-model.number="capacityPerRoom" min="1" />
+                <input
+                  type="number"
+                  class="form-control form-control-sm"
+                  v-model.number="capacityPerRoom"
+                  min="1"
+                />
               </div>
               <div class="col-12">
                 <label class="form-label text-xs fw-semibold">Mode de Répartition</label>
@@ -63,7 +76,8 @@
             >
               <i class="bi bi-cloud-arrow-up-fill text-primary fs-2 mb-2 d-block"></i>
               <p class="text-muted small mb-1">
-                Glissez-déposez vos fichiers Excel ici ou <span class="text-primary fw-semibold">parcourez</span>
+                Glissez-déposez vos fichiers Excel ici ou
+                <span class="text-primary fw-semibold">parcourez</span>
               </p>
               <span class="text-xs text-muted">Formats acceptés : .xlsx, .csv</span>
 
@@ -78,7 +92,9 @@
             </div>
 
             <div v-if="uploadedFiles.length > 0">
-              <span class="text-xs fw-bold text-secondary d-block mb-2">Fichiers Enregistrés ({{ uploadedFiles.length }}) :</span>
+              <span class="text-xs fw-bold text-secondary d-block mb-2"
+                >Fichiers Enregistrés ({{ uploadedFiles.length }}) :</span
+              >
               <div class="list-group list-group-flush border rounded overflow-hidden">
                 <div
                   class="list-group-item d-flex justify-content-between align-items-center p-2 text-sm"
@@ -109,40 +125,59 @@
             <div class="row g-3">
               <div class="col-sm-6">
                 <div class="p-3 border rounded bg-light">
-                  <span class="text-muted text-xs d-block text-uppercase fw-bold">Étudiants Importés</span>
+                  <span class="text-muted text-xs d-block text-uppercase fw-bold"
+                    >Étudiants Importés</span
+                  >
                   <span class="fs-3 fw-bold text-dark">{{ totalStudents }}</span>
                 </div>
               </div>
               <div class="col-sm-6">
                 <div class="p-3 border rounded bg-light">
-                  <span class="text-muted text-xs d-block text-uppercase fw-bold">Places Disponibles</span>
+                  <span class="text-muted text-xs d-block text-uppercase fw-bold"
+                    >Places Disponibles</span
+                  >
                   <span class="fs-3 fw-bold text-dark">{{ totalCapacity }}</span>
                 </div>
               </div>
 
               <div class="col-12">
-                <div v-if="totalStudents === 0" class="alert alert-light border text-center p-4 small text-muted">
-                  <i class="bi bi-hdd me-2"></i>En attente de chargement de listes d'étudiants pour exécuter l'analyse.
+                <div
+                  v-if="totalStudents === 0"
+                  class="alert alert-light border text-center p-4 small text-muted"
+                >
+                  <i class="bi bi-hdd me-2"></i>En attente de chargement de listes d'étudiants pour
+                  exécuter l'analyse.
                 </div>
-                <div v-else-if="hasCapacityOverflow" class="alert alert-danger-subtle border border-danger text-dark d-flex align-items-center">
+                <div
+                  v-else-if="hasCapacityOverflow"
+                  class="alert alert-danger-subtle border border-danger text-dark d-flex align-items-center"
+                >
                   <i class="bi bi-exclamation-triangle-fill text-danger me-3 fs-4"></i>
                   <div class="small">
-                    <strong class="text-danger">Capacité insuffisante !</strong> Votre volume d'étudiants ({{ totalStudents }}) excède la capacité globale configurée ({{ totalCapacity }} places). Veuillez augmenter le nombre de salles ou leur volume maximal.
+                    <strong class="text-danger">Capacité insuffisante !</strong> Votre volume
+                    d'étudiants ({{ totalStudents }}) excède la capacité globale configurée ({{
+                      totalCapacity
+                    }}
+                    places). Veuillez augmenter le nombre de salles ou leur volume maximal.
                   </div>
                 </div>
-                <div v-else class="alert alert-success-subtle border border-success text-dark d-flex align-items-center">
+                <div
+                  v-else
+                  class="alert alert-success-subtle border border-success text-dark d-flex align-items-center"
+                >
                   <i class="bi bi-check-circle-fill text-success me-3 fs-4"></i>
                   <div class="small">
-                    <strong>Taille conforme :</strong> Les infrastructures actuelles couvrent largement les listes d'étudiants importées.
+                    <strong>Taille conforme :</strong> Les infrastructures actuelles couvrent
+                    largement les listes d'étudiants importées.
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="pt-4 text-end border-top">
-              <button 
-                class="btn btn-primary px-4 fw-medium btn-sm" 
-                @click="distributeStudents" 
+              <button
+                class="btn btn-primary px-4 fw-medium btn-sm"
+                @click="distributeStudents"
                 :disabled="!canDistribute"
               >
                 <i class="bi bi-cpu me-2"></i>Lancer la Répartition Automatique
@@ -156,18 +191,25 @@
     <div v-if="distributionResults.length > 0" class="row mt-4">
       <div class="col-12">
         <div class="card border-0 shadow-sm bg-white">
-          <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <div
+            class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"
+          >
             <h6 class="fw-bold text-dark mb-0">
-              <i class="bi bi-check-all text-success me-2"></i>Résultats de la Répartition des Salles
+              <i class="bi bi-check-all text-success me-2"></i>Résultats de la Répartition des
+              Salles
             </h6>
             <button class="btn btn-success btn-sm px-3 font-semibold" @click="exportResults">
               <i class="bi bi-file-earmark-arrow-down me-1"></i> Exporter la feuille Excel (.xlsx)
             </button>
           </div>
-          
+
           <div class="card-body">
             <div class="accordion custom-accordion" id="distributionAccordion">
-              <div class="accordion-item border mb-2 rounded overflow-hidden" v-for="(room, index) in distributionResults" :key="index">
+              <div
+                class="accordion-item border mb-2 rounded overflow-hidden"
+                v-for="(room, index) in distributionResults"
+                :key="index"
+              >
                 <h2 class="accordion-header">
                   <button
                     class="accordion-button bg-light font-semibold text-dark text-sm py-2 px-3"
@@ -177,7 +219,10 @@
                     :aria-expanded="index === 0 ? 'true' : 'false'"
                   >
                     <div class="d-flex justify-content-between w-100 align-items-center pe-3">
-                      <span><i class="bi bi-door-closed me-2 text-secondary"></i>Salle {{ index + 1 }}</span>
+                      <span
+                        ><i class="bi bi-door-closed me-2 text-secondary"></i>Salle
+                        {{ index + 1 }}</span
+                      >
                       <span class="badge bg-secondary-subtle text-secondary rounded-pill text-xs">
                         {{ room.students.length }} / {{ capacityPerRoom }} Étudiants
                       </span>
@@ -195,7 +240,7 @@
                       <table class="table table-hover table-striped align-middle text-sm mb-0">
                         <thead class="table-light text-secondary text-uppercase text-xs">
                           <tr>
-                            <th class="ps-4" style="width: 80px;">N°</th>
+                            <th class="ps-4" style="width: 80px">N°</th>
                             <th>Nom & Prénoms</th>
                             <th>Classe Assignée</th>
                           </tr>
@@ -203,8 +248,14 @@
                         <tbody>
                           <tr v-for="(student, sIndex) in room.students" :key="sIndex">
                             <td class="ps-4 fw-medium text-secondary">{{ sIndex + 1 }}</td>
-                            <td class="fw-bold text-dark">{{ student.lastName }} {{ student.firstName }}</td>
-                            <td><span class="badge bg-light text-dark border fw-normal">{{ student.class }}</span></td>
+                            <td class="fw-bold text-dark">
+                              {{ student.lastName }} {{ student.firstName }}
+                            </td>
+                            <td>
+                              <span class="badge bg-light text-dark border fw-normal">{{
+                                student.class
+                              }}</span>
+                            </td>
                           </tr>
                         </tbody>
                       </table>
@@ -277,7 +328,7 @@ const parseStudentFile = async (file) => {
     const workbook = XLSX.read(data);
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-    
+
     const parsed = jsonData.map((row) => ({
       lastName: (row['Nom'] || row['nom'] || row['LASTNAME'] || '').toString().toUpperCase().trim(),
       firstName: (row['Prénom'] || row['prenom'] || row['FIRSTNAME'] || '').toString().trim(),
@@ -296,7 +347,7 @@ const parseStudentFile = async (file) => {
    ========================================================================= */
 const distributeStudents = () => {
   if (studentsList.value.length === 0) return;
-  
+
   let studentsToDistribute = [...studentsList.value];
   const results = [];
 
@@ -314,16 +365,18 @@ const distributeStudents = () => {
   } else if (distributionMode.value === 'byClassMixed') {
     // Séparer par classe, mélanger chaque classe indépendamment puis concaténer
     const classGroups = {};
-    studentsToDistribute.forEach(s => {
+    studentsToDistribute.forEach((s) => {
       if (!classGroups[s.class]) classGroups[s.class] = [];
       classGroups[s.class].push(s);
     });
-    
+
     studentsToDistribute = [];
-    Object.keys(classGroups).sort().forEach(cls => {
-      const shuffledClass = shuffleArray(classGroups[cls]);
-      studentsToDistribute.push(...shuffledClass);
-    });
+    Object.keys(classGroups)
+      .sort()
+      .forEach((cls) => {
+        const shuffledClass = shuffleArray(classGroups[cls]);
+        studentsToDistribute.push(...shuffledClass);
+      });
   }
 
   // 2. Remplissage des salles selon la capacité max configurée
@@ -336,11 +389,11 @@ const distributeStudents = () => {
       currentRoomIndex++;
       if (currentRoomIndex >= roomCount.value) break;
     }
-    
+
     results[currentRoomIndex].students.push(student);
   }
 
-  distributionResults.value = results.filter(r => r.students.length > 0);
+  distributionResults.value = results.filter((r) => r.students.length > 0);
 };
 
 const shuffleArray = (array) => {
@@ -362,9 +415,9 @@ const exportResults = () => {
       exportData.push({
         'Numéro de Table': idx + 1,
         'Salle Affectée': `Salle ${room.id}`,
-        'Nom': student.lastName,
-        'Prénom': student.firstName,
-        'Classe': student.class,
+        Nom: student.lastName,
+        Prénom: student.firstName,
+        Classe: student.class,
       });
     });
   });
@@ -381,7 +434,12 @@ const totalCapacity = computed(() => roomCount.value * capacityPerRoom.value);
 const hasCapacityOverflow = computed(() => totalStudents.value > totalCapacity.value);
 
 const canDistribute = computed(() => {
-  return studentsList.value.length > 0 && roomCount.value > 0 && capacityPerRoom.value > 0 && !hasCapacityOverflow.value;
+  return (
+    studentsList.value.length > 0 &&
+    roomCount.value > 0 &&
+    capacityPerRoom.value > 0 &&
+    !hasCapacityOverflow.value
+  );
 });
 </script>
 
