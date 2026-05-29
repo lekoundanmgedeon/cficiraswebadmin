@@ -116,11 +116,6 @@ onMounted(async () => {
   border: 1px solid #dee2e6;
   border-radius: 12px;
 }
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-  color: #fff;
-}
 .btn-primary:hover {
   background-color: #0056b3;
   border-color: #004080;

@@ -1,6 +1,6 @@
 <template>
   <HeaderView />
-  <div class="container-fluid my-4">
+  <div class="container-fluid my-2">
     <div class="row mb-4">
       <div class="col-12">
         <div
@@ -30,7 +30,7 @@
                     </h6>
                   </div>
                   <div class="card-body pt-0">
-                    <div class="row g-3">
+                    <div class="row g-2">
                       <div class="col-md-6">
                         <label class="form-label text-xs fw-semibold">Salles Disponibles</label>
                         <input
@@ -460,6 +460,11 @@ const canDistribute = computed(() => {
 </script>
 
 <style scoped>
+.card {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+}
 .text-xs {
   font-size: 0.75rem;
 }
