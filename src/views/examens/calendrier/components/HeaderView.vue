@@ -35,6 +35,10 @@
 import { useRouter } from 'vue-router';
 import { useNotifier } from '@/stores/messages/useNotifier';
 
+const router = useRouter();
+
+const { notifySuccess, notifyError } = useNotifier();
+
 const refreshCalendar = async () => {
   await fetchCalendarEvents();
   notifySuccess("Calendrier actualisé.");
