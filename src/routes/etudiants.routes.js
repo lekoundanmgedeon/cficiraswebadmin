@@ -13,6 +13,11 @@ export default [
   {
     path: '/dossiers-scolaires',
     name: 'DossiersScolaires',
+    component: () => import('@/views/parcours/DossierView.vue'),
+  },
+  {
+    path: '/dossiers-scolaires/:id/details',
+    name: 'DetailScolaires',
     component: () => import('@/views/parcours/DossierAcademique.vue'),
   },
   {
