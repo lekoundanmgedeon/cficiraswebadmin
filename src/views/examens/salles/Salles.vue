@@ -17,177 +17,193 @@
         </div>
       </div>
     </div>
-
-    <div class="row g-4">
-      <div class="col-lg-5 col-md-6">
-        <div class="card border-0 shadow-sm mb-4 bg-white">
-          <div class="card-header bg-white py-3 border-bottom-0">
-            <h6 class="fw-bold text-dark mb-0">
-              <i class="bi bi-sliders me-2 text-secondary"></i>1. Critères de Configuration
-            </h6>
-          </div>
-          <div class="card-body pt-0">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label text-xs fw-semibold">Salles Disponibles</label>
-                <input
-                  type="number"
-                  class="form-control form-control-sm"
-                  v-model.number="roomCount"
-                  min="1"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label text-xs fw-semibold">Capacité Maximale / Salle</label>
-                <input
-                  type="number"
-                  class="form-control form-control-sm"
-                  v-model.number="capacityPerRoom"
-                  min="1"
-                />
-              </div>
-              <div class="col-12">
-                <label class="form-label text-xs fw-semibold">Mode de Répartition</label>
-                <select class="form-select form-select-sm" v-model="distributionMode">
-                  <option value="mixed">Mélanger toutes les classes (Brassage complet)</option>
-                  <option value="byClass">Regrouper par classe (Blocs homogènes)</option>
-                  <option value="byClassMixed">Mélanger à l'intérieur de chaque classe</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card border-0 shadow-sm bg-white">
-          <div class="card-header bg-white py-3 border-bottom-0">
-            <h6 class="fw-bold text-dark mb-0">
-              <i class="bi bi-file-earmark-excel me-2 text-secondary"></i>2. Fichiers Étudiants
-            </h6>
-          </div>
-          <div class="card-body pt-0">
-            <div
-              class="drag-drop-area border border-dashed rounded p-4 text-center cursor-pointer mb-3"
-              @dragover.prevent
-              @dragenter.prevent="isDragging = true"
-              @dragleave="isDragging = false"
-              @drop.prevent="handleDrop"
-              @click="openFileInput"
-              :class="{ 'border-primary bg-primary-subtle': isDragging }"
-            >
-              <i class="bi bi-cloud-arrow-up-fill text-primary fs-2 mb-2 d-block"></i>
-              <p class="text-muted small mb-1">
-                Glissez-déposez vos fichiers Excel ici ou
-                <span class="text-primary fw-semibold">parcourez</span>
-              </p>
-              <span class="text-xs text-muted">Formats acceptés : .xlsx, .csv</span>
-
-              <input
-                type="file"
-                ref="fileInput"
-                hidden
-                multiple
-                @change="handleFileUpload"
-                accept=".csv, .xlsx"
-              />
-            </div>
-
-            <div v-if="uploadedFiles.length > 0">
-              <span class="text-xs fw-bold text-secondary d-block mb-2"
-                >Fichiers Enregistrés ({{ uploadedFiles.length }}) :</span
-              >
-              <div class="list-group list-group-flush border rounded overflow-hidden">
-                <div
-                  class="list-group-item d-flex justify-content-between align-items-center p-2 text-sm"
-                  v-for="(file, index) in uploadedFiles"
-                  :key="index"
-                >
-                  <div class="text-truncate me-2">
-                    <i class="bi bi-filetype-xlsx text-success me-2"></i>{{ file.name }}
+    <div class="row">
+      <div class="col-md-12 grid margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-lg-5 col-md-6">
+                <div class="card border-0 shadow-sm mb-4 bg-white">
+                  <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="fw-bold text-dark mb-0">
+                      <i class="bi bi-sliders me-2 text-secondary"></i>1. Critères de Configuration
+                    </h6>
                   </div>
-                  <button class="btn btn-link text-danger p-0" @click.stop="removeFile(index)">
-                    <i class="bi bi-trash-fill"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-7 col-md-6">
-        <div class="card border-0 shadow-sm h-100 bg-white">
-          <div class="card-header bg-white py-3 border-bottom-0">
-            <h6 class="fw-bold text-dark mb-0">
-              <i class="bi bi-pie-chart me-2 text-secondary"></i>3. Statut & Analyse Capacité
-            </h6>
-          </div>
-          <div class="card-body d-flex flex-column justify-content-between">
-            <div class="row g-3">
-              <div class="col-sm-6">
-                <div class="p-3 border rounded bg-light">
-                  <span class="text-muted text-xs d-block text-uppercase fw-bold"
-                    >Étudiants Importés</span
-                  >
-                  <span class="fs-3 fw-bold text-dark">{{ totalStudents }}</span>
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div class="p-3 border rounded bg-light">
-                  <span class="text-muted text-xs d-block text-uppercase fw-bold"
-                    >Places Disponibles</span
-                  >
-                  <span class="fs-3 fw-bold text-dark">{{ totalCapacity }}</span>
-                </div>
-              </div>
-
-              <div class="col-12">
-                <div
-                  v-if="totalStudents === 0"
-                  class="alert alert-light border text-center p-4 small text-muted"
-                >
-                  <i class="bi bi-hdd me-2"></i>En attente de chargement de listes d'étudiants pour
-                  exécuter l'analyse.
-                </div>
-                <div
-                  v-else-if="hasCapacityOverflow"
-                  class="alert alert-danger-subtle border border-danger text-dark d-flex align-items-center"
-                >
-                  <i class="bi bi-exclamation-triangle-fill text-danger me-3 fs-4"></i>
-                  <div class="small">
-                    <strong class="text-danger">Capacité insuffisante !</strong> Votre volume
-                    d'étudiants ({{ totalStudents }}) excède la capacité globale configurée ({{
-                      totalCapacity
-                    }}
-                    places). Veuillez augmenter le nombre de salles ou leur volume maximal.
+                  <div class="card-body pt-0">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label text-xs fw-semibold">Salles Disponibles</label>
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          v-model.number="roomCount"
+                          min="1"
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-xs fw-semibold"
+                          >Capacité Maximale / Salle</label
+                        >
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          v-model.number="capacityPerRoom"
+                          min="1"
+                        />
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label text-xs fw-semibold">Mode de Répartition</label>
+                        <select class="form-select form-select-sm" v-model="distributionMode">
+                          <option value="mixed">
+                            Mélanger toutes les classes (Brassage complet)
+                          </option>
+                          <option value="byClass">Regrouper par classe (Blocs homogènes)</option>
+                          <option value="byClassMixed">
+                            Mélanger à l'intérieur de chaque classe
+                          </option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div
-                  v-else
-                  class="alert alert-success-subtle border border-success text-dark d-flex align-items-center"
-                >
-                  <i class="bi bi-check-circle-fill text-success me-3 fs-4"></i>
-                  <div class="small">
-                    <strong>Taille conforme :</strong> Les infrastructures actuelles couvrent
-                    largement les listes d'étudiants importées.
+
+                <div class="card border-0 shadow-sm bg-white">
+                  <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="fw-bold text-dark mb-0">
+                      <i class="bi bi-file-earmark-excel me-2 text-secondary"></i>2. Fichiers
+                      Étudiants
+                    </h6>
+                  </div>
+                  <div class="card-body pt-0">
+                    <div
+                      class="drag-drop-area border border-dashed rounded p-4 text-center cursor-pointer mb-3"
+                      @dragover.prevent
+                      @dragenter.prevent="isDragging = true"
+                      @dragleave="isDragging = false"
+                      @drop.prevent="handleDrop"
+                      @click="openFileInput"
+                      :class="{ 'border-primary bg-primary-subtle': isDragging }"
+                    >
+                      <i class="bi bi-cloud-arrow-up-fill text-primary fs-2 mb-2 d-block"></i>
+                      <p class="text-muted small mb-1">
+                        Glissez-déposez vos fichiers Excel ici ou
+                        <span class="text-primary fw-semibold">parcourez</span>
+                      </p>
+                      <span class="text-xs text-muted">Formats acceptés : .xlsx, .csv</span>
+
+                      <input
+                        type="file"
+                        ref="fileInput"
+                        hidden
+                        multiple
+                        @change="handleFileUpload"
+                        accept=".csv, .xlsx"
+                      />
+                    </div>
+
+                    <div v-if="uploadedFiles.length > 0">
+                      <span class="text-xs fw-bold text-secondary d-block mb-2"
+                        >Fichiers Enregistrés ({{ uploadedFiles.length }}) :</span
+                      >
+                      <div class="list-group list-group-flush border rounded overflow-hidden">
+                        <div
+                          class="list-group-item d-flex justify-content-between align-items-center p-2 text-sm"
+                          v-for="(file, index) in uploadedFiles"
+                          :key="index"
+                        >
+                          <div class="text-truncate me-2">
+                            <i class="bi bi-filetype-xlsx text-success me-2"></i>{{ file.name }}
+                          </div>
+                          <button
+                            class="btn btn-link text-danger p-0"
+                            @click.stop="removeFile(index)"
+                          >
+                            <i class="bi bi-trash-fill"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="pt-4 text-end border-top">
-              <button
-                class="btn btn-primary px-4 fw-medium btn-sm"
-                @click="distributeStudents"
-                :disabled="!canDistribute"
-              >
-                <i class="bi bi-cpu me-2"></i>Lancer la Répartition Automatique
-              </button>
+              <div class="col-lg-7 col-md-6">
+                <div class="card border-0 shadow-sm h-100 bg-white">
+                  <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="fw-bold text-dark mb-0">
+                      <i class="bi bi-pie-chart me-2 text-secondary"></i>3. Statut & Analyse
+                      Capacité
+                    </h6>
+                  </div>
+                  <div class="card-body d-flex flex-column justify-content-between">
+                    <div class="row g-3">
+                      <div class="col-sm-6">
+                        <div class="p-3 border rounded bg-light">
+                          <span class="text-muted text-xs d-block text-uppercase fw-bold"
+                            >Étudiants Importés</span
+                          >
+                          <span class="fs-3 fw-bold text-dark">{{ totalStudents }}</span>
+                        </div>
+                      </div>
+                      <div class="col-sm-6">
+                        <div class="p-3 border rounded bg-light">
+                          <span class="text-muted text-xs d-block text-uppercase fw-bold"
+                            >Places Disponibles</span
+                          >
+                          <span class="fs-3 fw-bold text-dark">{{ totalCapacity }}</span>
+                        </div>
+                      </div>
+
+                      <div class="col-12">
+                        <div
+                          v-if="totalStudents === 0"
+                          class="alert alert-light border text-center p-4 small text-muted"
+                        >
+                          <i class="bi bi-hdd me-2"></i>En attente de chargement de listes
+                          d'étudiants pour exécuter l'analyse.
+                        </div>
+                        <div
+                          v-else-if="hasCapacityOverflow"
+                          class="alert alert-danger-subtle border border-danger text-dark d-flex align-items-center"
+                        >
+                          <i class="bi bi-exclamation-triangle-fill text-danger me-3 fs-4"></i>
+                          <div class="small">
+                            <strong class="text-danger">Capacité insuffisante !</strong> Votre
+                            volume d'étudiants ({{ totalStudents }}) excède la capacité globale
+                            configurée ({{ totalCapacity }}
+                            places). Veuillez augmenter le nombre de salles ou leur volume maximal.
+                          </div>
+                        </div>
+                        <div
+                          v-else
+                          class="alert alert-success-subtle border border-success text-dark d-flex align-items-center"
+                        >
+                          <i class="bi bi-check-circle-fill text-success me-3 fs-4"></i>
+                          <div class="small">
+                            <strong>Taille conforme :</strong> Les infrastructures actuelles
+                            couvrent largement les listes d'étudiants importées.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="pt-4 text-end border-top">
+                      <button
+                        class="btn btn-primary px-4 fw-medium btn-sm"
+                        @click="distributeStudents"
+                        :disabled="!canDistribute"
+                      >
+                        <i class="bi bi-cpu me-2"></i>Lancer la Répartition Automatique
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
     <div v-if="distributionResults.length > 0" class="row mt-4">
       <div class="col-12">
         <div class="card border-0 shadow-sm bg-white">
