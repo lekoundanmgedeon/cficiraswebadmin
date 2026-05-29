@@ -5,47 +5,49 @@
         <div class="d-flex justify-content-between flex-wrap">
           <div class="d-flex align-items-end flex-wrap">
             <div class="me-md-3 me-xl-5">
-              <h2>Calendrier des Examens</h2>
-              <p class="mb-md-0">Planifications examens et salles de classes</p>
+              <h3 class="fw-bold text-dark mb-1">Calendrier des Évaluations</h3>
+                <p class="text-muted small mb-0">
+                  Visualisation et gestion chronologique des Examens Normaux et Rattrapages.
+                </p>
             </div>
-            <div class="d-flex">
+            <div class="d-flex privacy-breadcrumbs alignment-fix">
               <i class="mdi mdi-home text-muted hover-cursor"></i>
               <p class="text-muted mb-0 hover-cursor">&nbsp;/&nbsp;Examens&nbsp;/&nbsp;</p>
-              <p class="text-primary mb-0 hover-cursor">Planification</p>
+              <p class="text-primary mb-0 hover-cursor">Calendrier</p>
             </div>
           </div>
           <div class="d-flex justify-content-between align-items-end flex-wrap">
-            <button class="btn btn-outline-dark me-2">Imprimer</button>
-            <div class="btn-group">
-              <button
-                type="button"
-                class="btn btn-primary mt-2 mt-xl-0"
-                data-bs-toggle="modal"
-                data-bs-target="#exampleModal"
-                aria-hidden="true"
-                data-bs-backdrop="static"
-                data-bs-keyboard="false"
-              >
-                + Ajouter
+            <button class="btn btn-outline-secondary btn-sm me-2" @click="goBack">
+                <i class="bi bi-arrow-left me-1"></i> Retour
               </button>
-              <button
-                type="button"
-                class="btn btn-primary dropdown-toggle dropdown-toggle-split"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <span class="visually-hidden">Toggle Dropdown</span>
+              <button class="btn btn-success btn-sm px-3" @click="refreshCalendar">
+                <i class="bi bi-arrow-clockwise me-1"></i> Actualiser
               </button>
-              <ul class="dropdown-menu">
-                <li>
-                  <a class="dropdown-item" href="#drag-drop-area">Importer fichier</a>
-                </li>
-              </ul>
-            </div>
+
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-<script setup></script>
+
+<script setup>
+import { useRouter } from 'vue-router';
+import { useNotifier } from '@/stores/messages/useNotifier';
+
+const refreshCalendar = async () => {
+  await fetchCalendarEvents();
+  notifySuccess("Calendrier actualisé.");
+};
+const goBack = () => router.back();
+</script>
+
+<style scoped>
+.hover-cursor {
+  cursor: pointer;
+}
+.alignment-fix {
+  align-items: center;
+  padding-bottom: 2px;
+}
+</style>
