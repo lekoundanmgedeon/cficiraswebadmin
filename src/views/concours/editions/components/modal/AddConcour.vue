@@ -7,81 +7,124 @@
     aria-labelledby="exampleModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Ouverture d'un concour</h5>
-          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+    <div class="modal-dialog modal-lg" role="document"> <div class="modal-content border-0 shadow">
+        
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold text-dark" id="exampleModalLabel">
+            <i class="mdi mdi-plus-box text-primary me-2"></i>Ouverture d'un concours
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
+
+        <div class="modal-body p-4">
           <form @submit.prevent="submitConcour">
-            <div class="mb-3">
-              <label class="form-label">Désignation</label>
-              <input v-model="form.designation" type="text" class="form-control" required />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Type concours</label>
-              <select v-model="form.type_concours" class="form-select" required>
-                <option value="">Sélectionner</option>
-                <option value="ENTREE">ENTREE</option>
-                <option value="TEST">TEST</option>
-                <option value="PASSERELLE">PASSERELLE</option>
-                <option value="SPECIAL">SPECIAL</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Date début</label>
-              <input v-model="form.date_debut" type="date" class="form-control" required />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Date fin</label>
-              <input v-model="form.date_fin" type="date" class="form-control" required />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Date limite dossier</label>
-              <input
-                v-model="form.date_limite_inscription"
-                type="date"
-                class="form-control"
-                required
+            
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-secondary">
+                <i class="mdi mdi-format-text me-1"></i>Désignation
+              </label>
+              <input 
+                v-model="form.designation" 
+                type="text" 
+                class="form-control form-control-lg fs-6" 
+                placeholder="Ex: Concours d'Entrée en 1ère Année" 
+                required 
               />
             </div>
-            <div class="mb-3">
-              <label class="form-label">Année académique</label>
-              <select v-model="form.annee_id" class="form-select" required>
-                <option value="">Sélectionner</option>
-                <option v-for="annee in anneesAcademiques" :key="annee.id" :value="annee.id">
-                  {{ annee.code }}
-                </option>
-              </select>
+
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary">
+                  <i class="mdi mdi-tag-outline me-1"></i>Type concours
+                </label>
+                <select v-model="form.type_concours" class="form-select form-select-lg fs-6" required>
+                  <option value="">Sélectionner</option>
+                  <option value="ENTREE">ENTREE</option>
+                  <option value="TEST">TEST</option>
+                  <option value="PASSERELLE">PASSERELLE</option>
+                  <option value="SPECIAL">SPECIAL</option>
+                </select>
+              </div>
+              <div class="col-md-6 mt-3 mt-md-0">
+                <label class="form-label fw-semibold text-secondary">
+                  <i class="mdi mdi-toggle-switch-outline me-1"></i>Statut initial
+                </label>
+                <select v-model="form.statut" class="form-select form-select-lg fs-6" required>
+                  <option value="">Sélectionner</option>
+                  <option value="PLANIFIE">Planifié</option>
+                  <option value="OUVERT">Ouvert</option>
+                  <option value="CLOTURE">Clôturé</option>
+                  <option value="ANNULE">Annulé</option>
+                </select>
+              </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Statut</label>
-              <select v-model="form.statut" class="form-select" required>
-                <option value="">Sélectionner</option>
-                <option value="planifié">Planifié</option>
-                <option value="ouvert">Ouvert</option>
-                <option value="clôturé">Cloturer</option>
-              </select>
+
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-secondary">
+                  <i class="mdi mdi-calendar-start me-1"></i>Date début
+                </label>
+                <input v-model="form.date_debut" type="date" class="form-control form-control-lg fs-6" required />
+              </div>
+              <div class="col-md-6 mt-3 mt-md-0">
+                <label class="form-label fw-semibold text-secondary">
+                  <i class="mdi mdi-calendar-end me-1"></i>Date fin
+                </label>
+                <input v-model="form.date_fin" type="date" class="form-control form-control-lg fs-6" required />
+              </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Description</label>
-              <textarea v-model="form.description" class="form-control" rows="2"></textarea>
+
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold text-danger">
+                  <i class="mdi mdi-calendar-clock me-1"></i>Date limite dossier
+                </label>
+                <input v-model="form.date_limite_inscription" type="date" class="form-control form-control-lg fs-6" required />
+              </div>
+              <div class="col-md-6 mt-3 mt-md-0">
+                <label class="form-label fw-semibold text-secondary">
+                  <i class="mdi mdi-school-outline me-1"></i>Année académique
+                </label>
+                <select v-model="form.annee_id" class="form-select form-select-lg fs-6" required>
+                  <option value="">Sélectionner</option>
+                  <option 
+                    v-if="anneeStore.anneeAcademique" 
+                    :value="anneeStore.anneeAcademique.id"
+                  >
+                    {{ anneeStore.anneeAcademique.code }}
+                  </option>
+                </select>
+              </div>
             </div>
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-success" :disabled="loading">
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold text-secondary">
+                <i class="mdi mdi-text-box-outline me-1"></i>Description / Remarques
+              </label>
+              <textarea 
+                v-model="form.description" 
+                class="form-control" 
+                rows="3" 
+                placeholder="Ajouter des détails ou critères spécifiques liés à ce concours..."
+              ></textarea>
+            </div>
+
+            <div class="modal-footer border-top-0 pt-0">
+              <button type="button" class="btn btn-light btn-lg px-4 fs-6 me-2" data-bs-dismiss="modal">
+                Annuler
+              </button>
+              <button type="submit" class="btn btn-primary btn-lg px-4 fs-6" :disabled="concoursStore.loading">
                 <span
-                  v-if="loading"
-                  class="spinner-border spinner-border-sm"
+                  v-if="concoursStore.loading"
+                  class="spinner-border spinner-border-sm me-2"
                   role="status"
                   aria-hidden="true"
                 ></span>
-                {{ loading ? 'En cours...' : 'Enregistrer' }}
+                <i v-else class="mdi mdi-check-circle-outline me-1"></i>
+                {{ concoursStore.loading ? 'En cours...' : 'Enregistrer le concours' }}
               </button>
-              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
             </div>
+
           </form>
         </div>
       </div>
@@ -90,35 +133,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useConcoursStore } from '@/stores/gestionStores/concourStore';
+import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
 
-// =========================
-// LOADING
-// =========================
-const loading = ref(false);
+const concoursStore = useConcoursStore();
+const anneeStore = useAnneeStore();
 
-// =========================
-// MOCK ANNEES ACADEMIQUES
-// =========================
-const anneesAcademiques = ref([
-  {
-    id: 1,
-    code: '2025-2026',
-  },
-  {
-    id: 2,
-    code: '2026-2027',
-  },
-  {
-    id: 3,
-    code: '2027-2028',
-  },
-]);
-
-// =========================
-// FORM DATA
-// =========================
-const form = ref({
+const initialFormState = () => ({
   designation: '',
   type_concours: '',
   date_debut: '',
@@ -129,46 +151,45 @@ const form = ref({
   description: '',
 });
 
-// =========================
-// SUBMIT
-// =========================
-async function submitConcour() {
-  loading.value = true;
+const form = ref(initialFormState());
 
-  try {
-    // simulation API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+onMounted(async () => {
+  await anneeStore.fetchCurrentAnnee();
+});
 
-    console.log('Concours enregistré :', form.value);
-
-    alert('Concours ajouté avec succès');
-
-    // reset form
-    form.value = {
-      designation: '',
-      type_concours: '',
-      date_debut: '',
-      date_fin: '',
-      date_limite_inscription: '',
-      annee_id: '',
-      statut: '',
-      description: '',
-    };
-
-    // close modal bootstrap
-    const modalElement = document.getElementById('exampleModal');
-
-    if (modalElement) {
-      const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-
-      modal.hide();
+watch(
+  () => anneeStore.anneeAcademique,
+  (newAnnee) => {
+    if (newAnnee && newAnnee.id) {
+      form.value.annee_id = newAnnee.id;
     }
-  } catch (error) {
-    console.error("Erreur lors de l'ajout du concours", error);
+  },
+  { immediate: true }
+);
 
-    alert('Erreur lors de l’enregistrement');
-  } finally {
-    loading.value = false;
+async function submitConcour() {
+  const payload = {
+    ...form.value,
+    annee_id: form.value.annee_id ? Number(form.value.annee_id) : null
+  };
+
+  await concoursStore.addConcours(payload);
+  resetForm();
+  closeModal();
+}
+
+function resetForm() {
+  form.value = initialFormState();
+  if (anneeStore.anneeAcademique) {
+    form.value.annee_id = anneeStore.anneeAcademique.id;
+  }
+}
+
+function closeModal() {
+  const modalElement = document.getElementById('exampleModal');
+  if (modalElement) {
+    const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+    modal.hide();
   }
 }
 </script>

@@ -2,7 +2,6 @@
   <div class="row">
     <div class="col-md-12 grid-margin">
       <div class="d-flex justify-content-between flex-wrap">
-        <!-- Partie gauche : titre + breadcrumb -->
         <div class="d-flex align-items-end flex-wrap">
           <div class="me-md-3 me-xl-5">
             <h2>Gestion de concours</h2>
@@ -15,9 +14,7 @@
           </div>
         </div>
 
-        <!-- Partie droite : actions -->
         <div class="d-flex justify-content-between align-items-end flex-wrap">
-          <!-- Export -->
           <button
             type="button"
             @click="exportData"
@@ -26,7 +23,6 @@
             <i class="mdi mdi-download text-muted"></i>
           </button>
 
-          <!-- Impression -->
           <button
             type="button"
             @click="printData"
@@ -35,10 +31,10 @@
             <i class="mdi mdi-printer text-muted"></i>
           </button>
 
-          <!-- Ajouter -->
           <button class="btn btn-primary mt-2 mt-xl-0" @click="openAddModal">
-            + Ajouter un concours
+            + Ajouter un nouveau
           </button>
+          
           <AddConcour />
         </div>
       </div>
@@ -51,14 +47,23 @@ import AddConcour from './modal/AddConcour.vue';
 
 const exportData = () => {
   console.log('Export des concours');
-  // TODO: brancher vers store ou API pour exporter en Excel/PDF
 };
 
 const printData = () => {
   window.print();
 };
 
+// Fonction pour ouvrir le modal Bootstrap
 const openAddModal = () => {
-  // TODO: ouvrir modal d’ajout
+  // Cibler le modal par son ID défini dans AddConcour.vue
+  const modalElement = document.getElementById('exampleModal');
+  
+  if (modalElement) {
+    // Récupérer l'instance existante ou en créer une nouvelle, puis l'afficher
+    const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+    modal.show();
+  } else {
+    console.error("Le modal avec l'ID 'exampleModal' est introuvable.");
+  }
 };
 </script>

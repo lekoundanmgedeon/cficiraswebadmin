@@ -10,7 +10,7 @@
           role="tab"
           aria-controls="editions"
           aria-selected="true"
-          >Listes concours</a
+          >Concours</a
         >
       </li>
       <li class="nav-item">
