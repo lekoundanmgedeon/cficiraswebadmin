@@ -34,7 +34,7 @@
           <button class="btn btn-primary mt-2 mt-xl-0" @click="openAddModal">
             + Ajouter un nouveau
           </button>
-          
+
           <AddConcour />
         </div>
       </div>
@@ -57,7 +57,7 @@ const printData = () => {
 const openAddModal = () => {
   // Cibler le modal par son ID défini dans AddConcour.vue
   const modalElement = document.getElementById('exampleModal');
-  
+
   if (modalElement) {
     // Récupérer l'instance existante ou en créer une nouvelle, puis l'afficher
     const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
