@@ -46,7 +46,7 @@
         <div class="col-md-4">
           <div class="stat-card bg-white border-0 shadow-sm p-3 rounded-4">
             <div class="d-flex align-items-center">
-              <div class="stat-icon bg-soft-warning text-warning me-3">
+              <div class="stat-icon bg-soft-danger text-danger me-3">
                 <i class="mdi mdi-alert-circle-outline fs-4"></i>
               </div>
               <div>
@@ -106,48 +106,45 @@
               <tbody>
                 <tr v-if="loading">
                   <td colspan="6" class="text-center py-5">
-                    <div class="spinner-border text-primary spinner-border-sm me-2"></div>
-                    Chargement des classes...
+                    <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                    <span class="text-muted small">Chargement des classes en cours...</span>
                   </td>
                 </tr>
 
                 <tr
                   v-else
                   v-for="(classe, index) in paginatedClasses"
-                  :key="classe.classe_id"
+                  :key="classe.id || classe.classe_id"
                   class="transition-all"
                 >
-                  <td class="ps-4 text-muted small">{{ startIndex + index + 1 }}</td>
+                  <td class="ps-4 text-muted small font-monospace">{{ startIndex + index + 1 }}</td>
                   <td>
-                    <span class="fw-bold text-primary">{{ classe.code }}</span>
+                    <span class="fw-bold text-primary font-monospace">{{ classe.code || classe.classe_code || 'N/A' }}</span>
                   </td>
                   <td>
                     <div class="fw-semibold text-dark">
-                      {{ classe.filiere_nom || 'Filière non spécifiée' }}
+                      {{ classe.filiere_nom || classe.filiere_code || 'Filière non spécifiée' }}
                     </div>
-                    <small class="text-muted">{{ classe.annee_code || 'N/A' }} • Académique</small>
+                    <small class="text-muted">{{ classe.annee_code || classe.annee || 'N/A' }} • Académique</small>
                   </td>
                   <td class="text-center">
-                    <span class="badge bg-soft-info text-info px-3 py-2 rounded-pill">
-                      {{ classe.niveau_code }}
+                    <span class="badge bg-soft-info text-info px-3 py-2 rounded-pill font-monospace">
+                      {{ classe.niveau_code || classe.niveau || 'N/A' }}
                     </span>
                   </td>
                   <td class="text-center">
-                    <div
-                      class="d-flex align-items-center justify-content-center"
-                      style="min-width: 150px"
-                    >
-                      <span class="fw-bold me-2 small"
-                        >{{ classe.nb_etudiants || 0 }}/{{ classe.capacite_max }}</span
-                      >
+                    <div class="d-flex align-items-center justify-content-center mx-auto" style="max-width: 180px">
+                      <span class="fw-bold me-2 small font-monospace">
+                        {{ getEffectif(classe) }}/{{ getCapacite(classe) }}
+                      </span>
                       <div
-                        class="progress w-50"
-                        style="height: 6px"
+                        class="progress w-100 shadow-sm"
+                        style="height: 6px; background-color: #e9ecef;"
                         :title="`Taux d'occupation : ${calculateRate(classe)}%`"
                       >
                         <div
                           :class="[
-                            'progress-bar',
+                            'progress-bar rounded-pill',
                             calculateRate(classe) > 100 ? 'bg-danger' : 'bg-success',
                           ]"
                           :style="{ width: Math.min(calculateRate(classe), 100) + '%' }"
@@ -156,41 +153,21 @@
                     </div>
                   </td>
                   <td class="text-end pe-4">
-                    <div class="btn-group shadow-sm" role="group">
+                    <div class="btn-group shadow-sm border rounded bg-white" role="group">
                       <button
-                        class="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                        class="btn btn-sm btn-light border-0 text-secondary"
                         @click="voirEtudiants(classe)"
                         title="Voir la liste des étudiants"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          fill="currentColor"
-                          class="me-1"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            d="M16 11C17.66 11 18.99 9.66 18.99 8S17.66 5 16 5 13 6.34 13 8 14.34 11 16 11M8 11C9.66 11 10.99 9.66 10.99 8S9.66 5 8 5 5 6.34 5 8 6.34 11 8 11M8 13C5.33 13 0 14.34 0 17V19H16V17C16 14.34 10.67 13 8 13M16 13C15.5 13 14.96 13.04 14.39 13.1C15.78 14.03 17 15.35 17 17V19H24V17C24 14.34 18.67 13 16 13Z"
-                          />
-                        </svg>
-                        Étudiants
+                        <i class="mdi mdi-account-group-outline fs-6"></i>
                       </button>
 
                       <button
-                        class="btn btn-sm btn-outline-success"
+                        class="btn btn-sm btn-light border-0 text-success border-start"
                         @click="openImport(classe)"
                         title="Importer des étudiants (Excel/CSV)"
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M5 20H19V18H5V20M19 9H15V3H9V9H5L12 16L19 9Z" />
-                        </svg>
+                        <i class="mdi mdi-file-upload-outline fs-6"></i>
                       </button>
                     </div>
                   </td>
@@ -198,15 +175,12 @@
 
                 <tr v-if="!loading && filteredClasses.length === 0">
                   <td colspan="6" class="text-center py-5">
-                    <img
-                      src="/img/empty-box.svg"
-                      width="100"
-                      class="mb-3 opacity-50"
-                      onerror="this.style.display='none'"
-                    />
-                    <p class="text-muted mb-0">
-                      Aucune classe ne correspond à vos critères de recherche.
-                    </p>
+                    <div class="d-flex flex-column align-items-center py-3">
+                      <i class="mdi mdi-google-classroom text-muted opacity-25 display-4 mb-2"></i>
+                      <p class="text-muted mb-0 small">
+                        Aucune classe ne correspond à vos critères de recherche.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -216,11 +190,11 @@
 
         <div
           v-if="!loading && filteredClasses.length > 0"
-          class="card-footer bg-white border-0 py-3"
+          class="card-footer bg-white border-top py-2 px-4"
         >
-          <Pagination
+          <AppPagination
             v-model="currentPage"
-            :items-per-page="itemsPerPage"
+            v-model:itemsPerPage="itemsPerPage"
             :total-items="filteredClasses.length"
           />
         </div>
@@ -231,6 +205,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import AppPagination from '@/components/shared/Pagination.vue'; 
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 
 const classeStore = useClasseStore();
@@ -243,24 +218,28 @@ const filterFiliere = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
-/* ===================== Données du Store (Securisées) ===================== */
+/* ===================== Données du Store ===================== */
 const loading = computed(() => classeStore.loading);
 const classes = computed(() => (Array.isArray(classeStore.classes) ? classeStore.classes : []));
+
+/* ===================== Normalisation des données dynamiques ===================== */
+const getCapacite = (c) => Number(c.classe_capacite || c.capacite_max || c.capacite || 0);
+const getEffectif = (c) => Number(c.effectif_actuel || c.nb_etudiants || c.effectif || 0);
 
 /* ===================== KPI Réactifs ===================== */
 const totalClassesCount = computed(() => classes.value.length);
 
 const totalCapacite = computed(() => {
-  return classes.value.reduce((sum, c) => sum + (Number(c.classe_capacite) || 0), 0);
+  return classes.value.reduce((sum, c) => sum + getCapacite(c), 0);
 });
 
 const classesSurchargeesCount = computed(() => {
-  return classes.value.filter((c) => (c.effectif_actuel || 0) > (c.classe_capacite || 0)).length;
+  return classes.value.filter((c) => getEffectif(c) > getCapacite(c)).length;
 });
 
 /* ===================== Extraction des filières uniques ===================== */
 const filieresUniques = computed(() => {
-  const list = classes.value.map((c) => c.filiere_nom).filter(Boolean);
+  const list = classes.value.map((c) => c.filiere_nom || c.filiere_code).filter(Boolean);
   return [...new Set(list)].sort();
 });
 
@@ -268,11 +247,15 @@ const filieresUniques = computed(() => {
 const filteredClasses = computed(() => {
   return classes.value.filter((c) => {
     const search = searchQuery.value.toLowerCase().trim();
+    const code = c.code || c.classe_code || '';
+    const filiere = c.filiere_nom || c.filiere_code || '';
+
     const matchSearch =
       !search ||
-      c.classe_code?.toLowerCase().includes(search) ||
-      c.filiere_nom?.toLowerCase().includes(search);
-    const matchFiliere = !filterFiliere.value || c.filiere_nom === filterFiliere.value;
+      code.toLowerCase().includes(search) ||
+      filiere.toLowerCase().includes(search);
+      
+    const matchFiliere = !filterFiliere.value || filiere === filterFiliere.value;
     return matchSearch && matchFiliere;
   });
 });
@@ -285,32 +268,32 @@ const paginatedClasses = computed(() => {
 
 /* ===================== Calcul du Taux de Remplissage ===================== */
 const calculateRate = (classe) => {
-  if (!classe.classe_capacite) return 0;
-  return Math.round(((classe.effectif_actuel || 0) / classe.classe_capacite) * 100);
+  const cap = getCapacite(classe);
+  if (!cap) return 0;
+  return Math.round((getEffectif(classe) / cap) * 100);
 };
 
-/* ===================== Importation de Fichiers ===================== */
+/* ===================== Modaux Actions ===================== */
 const classeSelectionnee = ref(null);
 const showModalImport = ref(false);
+const showModalEtudiants = ref(false);
 
 const openImport = (classe) => {
   classeSelectionnee.value = classe;
   showModalImport.value = true;
 };
 
-/* ===================== Consultation Étudiants ===================== */
-const showModalEtudiants = ref(false);
-
 const voirEtudiants = async (classe) => {
   classeSelectionnee.value = classe;
   showModalEtudiants.value = true;
-  // Appel direct à l'action déclarée dans ton store classeStore
-  await classeStore.fetchClasseStudents(classe.classe_id);
+  const targetId = classe.id || classe.classe_id;
+  if (targetId) {
+    await classeStore.fetchClasseStudents(targetId);
+  }
 };
 
 /* ===================== Lifecycle & Watchers ===================== */
 onMounted(() => {
-  // Appel de l'action réelle définie dans le store fourni
   classeStore.fetchClasses();
 });
 
@@ -338,8 +321,12 @@ watch([searchQuery, filterFiliere], () => {
 .bg-soft-warning {
   background: rgba(255, 193, 7, 0.1);
 }
+.bg-soft-danger {
+  background: rgba(220, 53, 69, 0.1);
+}
 .bg-soft-info {
   background: rgba(13, 202, 240, 0.1);
+  color: #0dcaf0 !important;
 }
 
 .btn-white {
@@ -357,12 +344,15 @@ watch([searchQuery, filterFiliere], () => {
   letter-spacing: 0.8px;
   color: #6c757d;
   border: none;
+  padding-top: 14px;
+  padding-bottom: 14px;
 }
 .table tbody tr {
   transition: all 0.2s ease;
 }
 .table tbody tr:hover {
   background-color: #fcfdfe !important;
+  transform: scale(1.001);
 }
 .transition-all {
   transition: all 0.3s ease;
