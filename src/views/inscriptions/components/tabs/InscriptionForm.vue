@@ -83,15 +83,15 @@
                     {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                   </td>
                   <td>
-                    <span class="fw-bold text-primary font-monospace">{{ inscription.etudiant_matricule || 'N/A' }}</span>
+                    <span class="fw-bold text-primary font-monospace">{{ inscription.etudiant_matricule || inscription.matricule || 'N/A' }}</span>
                   </td>
                   <td>
                     <div class="d-flex flex-column">
                       <span class="fw-bold text-dark">
-                        {{ inscription.etudiant_nom }} {{ inscription.etudiant_prenom }}
+                        {{ inscription.etudiant_nom || inscription.nom }} {{ inscription.etudiant_prenom || inscription.prenom }}
                       </span>
                       <small class="text-muted" style="font-size: 11px">
-                        {{ inscription.created_at ? `Inscrit le ${new Date(inscription.created_at).toLocaleDateString()}` : 'Date inconnue' }}
+                        {{ formatInscriptionDate(inscription.created_at || inscription.date_inscription) }}
                       </small>
                     </div>
                   </td>
@@ -106,8 +106,8 @@
                     </div>
                   </td>
                   <td class="text-center">
-                    <span class="badge rounded-pill px-3 py-2 fw-semibold" :class="statutBadgeStyle(inscription.inscription_statut)">
-                      {{ formatStatutTexte(inscription.inscription_statut) }}
+                    <span class="badge rounded-pill px-3 py-2 fw-semibold" :class="statutBadgeStyle(inscription.inscription_statut || inscription.statut)">
+                      {{ formatStatutTexte(inscription.inscription_statut || inscription.statut) }}
                     </span>
                   </td>
                   <td class="text-end pe-4">
@@ -160,7 +160,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import AppPagination from '@/components/shared/Pagination.vue'; // Ajustez le chemin vers votre fichier de pagination optimisé
+import AppPagination from '@/components/shared/Pagination.vue';
 import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
 
 const store = useInscriptionStore();
@@ -206,18 +206,28 @@ const filteredInscriptions = computed(() => {
   return data.filter((i) => {
     const search = searchQuery.value.toLowerCase().trim();
     
-    // Correction ici : Recherche basée sur les véritables clés d'affichage de votre API
+    const nom = i.etudiant_nom || i.nom || '';
+    const prenom = i.etudiant_prenom || i.prenom || '';
+    const matricule = i.etudiant_matricule || i.matricule || '';
+
     const matchSearch =
       !search ||
-      i.etudiant_nom?.toLowerCase().includes(search) ||
-      i.etudiant_prenom?.toLowerCase().includes(search) ||
-      i.etudiant_matricule?.toLowerCase().includes(search);
+      nom.toLowerCase().includes(search) ||
+      prenom.toLowerCase().includes(search) ||
+      matricule.toLowerCase().includes(search);
 
     const matchFiliere = !selectedFiliere.value || i.filiere_code === selectedFiliere.value;
     
-    // Tolérance à la casse pour le statut
-    const currentStatut = i.inscription_statut || i.statut || '';
-    const matchStatut = !selectedStatut.value || currentStatut.toUpperCase() === selectedStatut.value.toUpperCase();
+    // Normalisation complète pour éviter les écarts d'écritures ou de clés d'API
+    const currentStatut = (i.inscription_statut || i.statut || '').toUpperCase();
+    let targetStatut = selectedStatut.value.toUpperCase();
+    
+    // Redirections de commodité de filtres
+    if (targetStatut === 'ACTIVE') targetStatut = 'VALID';
+    
+    const matchStatut = !selectedStatut.value || 
+                        currentStatut.includes(targetStatut) || 
+                        (targetStatut === 'VALID' && currentStatut.includes('VALI'));
 
     return matchSearch && matchFiliere && matchStatut;
   });
@@ -248,7 +258,6 @@ const supprimerInscription = async (id) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer définitivement cette inscription ?')) {
     if (typeof store.removeInscription === 'function') {
       await store.removeInscription(id);
-      // Ajustement de sécurité de pagination post-suppression
       if (paginatedInscriptions.value.length === 0 && currentPage.value > 1) {
         currentPage.value--;
       }
@@ -256,22 +265,37 @@ const supprimerInscription = async (id) => {
   }
 };
 
-// Design épuré des badges (Soft Colors)
+// Formatage sécurisé de l'affichage de la date
+const formatInscriptionDate = (date) => {
+  if (!date) return 'Date inconnue';
+  try {
+    return `Inscrit le ${new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric', year: 'numeric' })}`;
+  } catch (e) {
+    return 'Date invalide';
+  }
+};
+
+// Design épuré des badges (Soft Colors) prenant en compte les variations d'API
 const statutBadgeStyle = (statut) => {
   const format = (statut || '').toUpperCase();
-  return {
-    'bg-soft-success text-success': format === 'ACTIVE' || format === 'VALIDÉE',
-    'bg-soft-warning text-warning': format === 'EN_ATTENTE',
-    'bg-soft-danger text-danger': format === 'ANNULEE' || format === 'ANNULÉE',
-  };
+  if (format.includes('VALI') || format === 'ACTIVE' || format === 'VALIDÉE') {
+    return 'bg-soft-success text-success';
+  }
+  if (format.includes('ATTENTE')) {
+    return 'bg-soft-warning text-warning';
+  }
+  if (format.includes('ANNU') || format.includes('REJE')) {
+    return 'bg-soft-danger text-danger';
+  }
+  return 'bg-light text-secondary';
 };
 
 const formatStatutTexte = (statut) => {
   const format = (statut || '').toUpperCase();
-  if (format === 'ACTIVE') return 'Validée';
-  if (format === 'EN_ATTENTE') return 'En attente';
-  if (format === 'ANNULEE') return 'Annulée';
-  return statut;
+  if (format.includes('VALI') || format === 'ACTIVE' || format === 'VALIDÉE') return 'Validée';
+  if (format.includes('ATTENTE')) return 'En attente';
+  if (format.includes('ANNU') || format.includes('REJE')) return 'Annulée';
+  return statut || 'Inconnu';
 };
 
 // Réinitialisation automatique de la page lors d'une modification des filtres
@@ -282,17 +306,20 @@ watch([searchQuery, selectedFiliere, selectedStatut], () => {
 
 <style scoped>
 .bg-soft-info {
-  background-color: rgba(0, 192, 244, 0.12);
-  color: #00c0f4 !important;
+  background-color: rgba(13, 202, 240, 0.12);
+  color: #0dcaf0 !important;
 }
 .bg-soft-success {
   background-color: rgba(25, 135, 84, 0.12);
+  color: #198754 !important;
 }
 .bg-soft-warning {
-  background-color: rgba(255, 193, 7, 0.15);
+  background-color: rgba(255, 193, 7, 0.12);
+  color: #997404 !important;
 }
 .bg-soft-danger {
   background-color: rgba(220, 53, 69, 0.12);
+  color: #dc3545 !important;
 }
 
 .btn-white {
@@ -313,60 +340,17 @@ watch([searchQuery, selectedFiliere, selectedStatut], () => {
 }
 
 .transition-all {
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .table tbody tr:hover {
   background-color: #fcfdfe !important;
+  transform: scale(1.002);
 }
 
 .truncate-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-</style>
-
-<style scoped>
-/* Couleurs douces pour les badges */
-.bg-soft-info {
-  background: rgba(13, 202, 240, 0.12);
-  color: #0dcaf0;
-}
-.bg-soft-success {
-  background: rgba(25, 135, 84, 0.12);
-  color: #198754;
-}
-.bg-soft-warning {
-  background: rgba(255, 193, 7, 0.12);
-  color: #997404;
-}
-.bg-soft-danger {
-  background: rgba(220, 53, 69, 0.12);
-  color: #dc3545;
-}
-
-.btn-white {
-  background: #fff;
-  border: none;
-}
-.btn-white:hover {
-  background: #f8f9fa;
-}
-
-.transition-all {
-  transition: all 0.2s ease;
-}
-.table tbody tr:hover {
-  background-color: #fcfdfe;
-  transform: scale(1.002);
-}
-
-.table thead th {
-  border: none;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #888;
 }
 </style>
