@@ -8,6 +8,7 @@ import {
   importReinscriptions,
   importTuteurs,
   importInscriptions,
+  getInscriptionsFinances, // <-- Import à ajouter dans votre fichier API
 } from '@/api/academique/academiqueApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
@@ -32,6 +33,11 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
   state: () => ({
     inscriptions: [],
     inscription: null,
+    finances: [],        // <-- Ajout : Liste du suivi financier des inscriptions
+    financeTotals: {     // <-- Ajout : Totaux globaux (collecté et en attente)
+      total_collecte: 0,
+      total_attente: 0
+    },
     loading: false,
   }),
 
@@ -52,6 +58,33 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       } catch (error) {
         messageStore.notifyError(
           extractErrorMessage(error, 'Erreur lors du chargement des inscriptions.')
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchInscriptionsFinances() {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const cached = getCache('inscriptions_finances');
+        if (cached) {
+          this.finances = cached.inscriptions;
+          this.financeTotals = cached.totals;
+        } else {
+          const response = await getInscriptionsFinances();
+          // Le contrôleur renvoie un objet structure { totals, inscriptions }
+          const { totals, inscriptions } = response.data;
+          
+          this.finances = inscriptions;
+          this.financeTotals = totals;
+          
+          setCache('inscriptions_finances', response.data);
+        }
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement du suivi financier.')
         );
       } finally {
         this.loading = false;
@@ -82,6 +115,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         await createInscription(data);
         messageStore.notifySuccess('Inscription créée avec succès.');
         localStorage.removeItem('inscriptions');
+        localStorage.removeItem('inscriptions_finances'); // Invalider le cache financier
         await this.fetchInscriptions();
       } catch (error) {
         messageStore.notifyError(
@@ -100,6 +134,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         await updateInscription(id, data);
         messageStore.notifySuccess('Inscription mise à jour avec succès.');
         localStorage.removeItem('inscriptions');
+        localStorage.removeItem('inscriptions_finances');
         await this.fetchInscriptions();
       } catch (error) {
         messageStore.notifyError(
@@ -117,6 +152,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       try {
         await changeInscriptionStatus(id, data);
         messageStore.notifySuccess('Statut de l’inscription modifié avec succès.');
+        localStorage.removeItem('inscriptions_finances'); // Le changement de statut affecte les totaux financiers
         await this.fetchInscriptionById(id);
       } catch (error) {
         messageStore.notifyError(
@@ -134,6 +170,8 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       try {
         await importReinscriptions(file);
         messageStore.notifySuccess('Import des réinscriptions réussi.');
+        localStorage.removeItem('inscriptions');
+        localStorage.removeItem('inscriptions_finances'); // Invalider le cache financier
         await this.fetchInscriptions();
       } catch (error) {
         messageStore.notifyError(
@@ -166,18 +204,17 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       try {
         const response = await importInscriptions(formData);
         
-        // Notification personnalisée si votre backend renvoie des succès partiels
         if (response.data?.summary?.totalEchecs > 0) {
           messageStore.notifySuccess('Importation complétée avec des erreurs partielles.');
         } else {
           messageStore.notifySuccess('Toutes les inscriptions ont été importées avec succès.');
         }
 
-        // Nettoyage du cache et rechargement de la liste mise à jour
         localStorage.removeItem('inscriptions');
+        localStorage.removeItem('inscriptions_finances'); // Invalider le cache financier
         await this.fetchInscriptions();
         
-        return response.data; // Utile si vous voulez afficher le rapport détaillé dans votre composant Vue
+        return response.data;
       } catch (error) {
         messageStore.notifyError(
           extractErrorMessage(error, 'Erreur lors de l’importation par lot des inscriptions.')

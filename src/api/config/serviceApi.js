@@ -12,6 +12,7 @@ function handleApiError(error) {
 
   throw error; // Re-propagation pour traitement dans le composant si nécessaire
 }
+
 // /api/config/serviceApi.js
 const buildService = (client) => ({
   get: async (url, params = {}) => {
@@ -35,6 +36,16 @@ const buildService = (client) => ({
   put: async (url, data) => {
     try {
       const response = await client.put(url, data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // FIX : Ajout de la méthode PATCH manquante
+  patch: async (url, data) => {
+    try {
+      const response = await client.patch(url, data);
       return response.data;
     } catch (error) {
       throw error;

@@ -1,204 +1,223 @@
 <template>
-  <teleport to="body">
-    <transition name="fade">
-      <div v-if="modelValue" class="modal-mask" @click.self="close">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-bottom-0 pb-0">
-              <h5 class="modal-title fw-bold text-secondary">Détails de l'étudiant</h5>
-              <button type="button" class="btn-close shadow-none" @click="close"></button>
+  <div 
+    class="modal fade show d-block" 
+    tabindex="-1" 
+    style="background: rgba(0,0,0,0.5);"
+    @click.self="$emit('close')"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg">
+        
+        <div class="modal-header bg-light border-0 py-3">
+          <div class="d-flex align-items-center">
+            <div class="avatar-initials me-3 bg-primary text-white fw-bold">
+              {{ inscription?.nom?.[0] }}{{ inscription?.prenom?.[0] }}
             </div>
-
-            <div class="modal-body p-4" v-if="inscription">
-              <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
-                <div class="avatar-circle me-3 bg-light text-primary">
-                  {{ inscription.prenom[0] }}{{ inscription.nom[0] }}
-                </div>
-                <div>
-                  <h4 class="mb-0 fw-bold">{{ inscription.nom }} {{ inscription.prenom }}</h4>
-                  <span class="text-muted small"
-                    >Matricule:
-                    <span class="fw-medium text-dark">{{ inscription.matricule }}</span></span
-                  >
-                </div>
-                <div class="ms-auto text-end">
-                  <span
-                    class="badge rounded-pill px-3 py-2"
-                    :class="statutClass(inscription.statut)"
-                  >
-                    {{ inscription.statut.toUpperCase() }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="row g-4">
-                <div class="col-md-6">
-                  <div class="info-card">
-                    <label class="text-muted small text-uppercase fw-semibold mb-1 d-block"
-                      >Cursus & Classe</label
-                    >
-                    <div class="d-flex align-items-center">
-                      <span class="info-icon me-2 text-info">🎓</span>
-                      <span class="fw-bold">{{ inscription.classe_code }}</span>
-                      <span class="mx-2 text-muted">|</span>
-                      <span class="text-secondary">{{ inscription.filiere_code }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="info-card">
-                    <label class="text-muted small text-uppercase fw-semibold mb-1 d-block"
-                      >Année Académique</label
-                    >
-                    <div class="d-flex align-items-center">
-                      <span class="info-icon me-2 text-success">📅</span>
-                      <span class="fw-bold">{{ inscription.annee_code }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="info-card">
-                    <label class="text-muted small text-uppercase fw-semibold mb-1 d-block"
-                      >Sexe</label
-                    >
-                    <div class="d-flex align-items-center text-capitalize">
-                      <span class="info-icon me-2">{{
-                        inscription.sexe === 'M' ? '♂️' : '♀️'
-                      }}</span>
-                      <span>{{ inscription.sexe }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="info-card">
-                    <label class="text-muted small text-uppercase fw-semibold mb-1 d-block"
-                      >Date d'inscription</label
-                    >
-                    <div class="d-flex align-items-center text-secondary">
-                      <span class="info-icon me-2 text-warning">🕒</span>
-                      <span>{{ formatDate(inscription.date_inscription) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="modal-footer border-top-0 p-4">
-              <button class="btn btn-light px-4 fw-medium" @click="close">Fermer</button>
-              <button class="btn btn-primary px-4 shadow-sm fw-medium">Imprimer le reçu</button>
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0">
+                Dossier d'inscription
+              </h5>
+              <small class="text-muted">Réf #{{ inscription?.id }}</small>
             </div>
           </div>
+          <button 
+            type="button" 
+            class="btn-close shadow-none" 
+            @click="$emit('close')"
+          ></button>
         </div>
+
+        <div class="modal-body p-4">
+          <div class="row g-4 mb-4">
+            <div class="col-md-6 border-end">
+              <h6 class="text-uppercase text-primary fw-bold small mb-3">Profil Étudiant</h6>
+              <div class="mb-2">
+                <small class="text-muted d-block">Nom complet</small>
+                <span class="fw-semibold text-dark">{{ inscription?.prenom }} {{ inscription?.nom }}</span>
+              </div>
+              <div class="mb-2">
+                <small class="text-muted d-block">Matricule</small>
+                <span class="badge bg-soft-primary text-primary fw-bold">{{ inscription?.matricule }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-6 ps-md-4">
+              <h6 class="text-uppercase text-primary fw-bold small mb-3">Affectation Académique</h6>
+              <div class="mb-2">
+                <small class="text-muted d-block">Classe ciblée</small>
+                <span class="fw-semibold text-dark">{{ inscription?.classe_code }}</span>
+              </div>
+              <div class="mb-2">
+                <small class="text-muted d-block">Filière</small>
+                <span class="text-muted small">{{ inscription?.filiere_code }}</span>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4 opacity-25" />
+
+          <h6 class="text-uppercase text-primary fw-bold small mb-3">Situation Financière</h6>
+          <div class="row g-3 mb-4 text-center">
+            <div class="col-4">
+              <div class="bg-light p-3 rounded">
+                <small class="text-muted d-block mb-1">Frais Scolarité</small>
+                <span class="fw-bold text-dark">{{ formatMoney(inscription?.frais_scolarite) }}</span>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="bg-soft-success p-3 rounded">
+                <small class="text-success d-block mb-1">Montant Versé</small>
+                <span class="fw-bold text-success">+ {{ formatMoney(inscription?.montant_verse) }}</span>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="bg-soft-danger p-3 rounded">
+                <small class="text-danger d-block mb-1">Reste à payer</small>
+                <span class="fw-bold text-danger">{{ formatMoney(inscription?.reste) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4 opacity-25" />
+
+          <div v-if="estEnAttente" class="mb-2">
+            <label class="form-label fw-semibold text-dark">
+              Commentaire de décision <small class="text-muted">(Optionnel)</small>
+            </label>
+            <textarea 
+              class="form-control border shadow-sm" 
+              rows="3" 
+              placeholder="Ex: Conditions de paiement acceptées, justificatif manquant..."
+              v-model="commentaire"
+              :disabled="submitting"
+            ></textarea>
+          </div>
+          
+          <div v-else class="bg-light p-3 rounded d-flex align-items-center justify-content-between">
+            <div>
+              <small class="text-muted d-block">Statut actuel du dossier</small>
+              <span class="fw-bold text-uppercase">{{ inscription?.statut }}</span>
+            </div>
+            <span :class="['badge rounded-pill px-3 py-2', statutClass(inscription?.statut)]">
+              Dossier Traité
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light border-0 py-3">
+          <button 
+            type="button" 
+            class="btn btn-white border px-4" 
+            @click="$emit('close')"
+            :disabled="submitting"
+          >
+            Fermer
+          </button>
+          
+          <div v-if="estEnAttente" class="d-flex gap-2">
+            <button 
+              type="button" 
+              class="btn btn-outline-danger px-4" 
+              @click="traiterDossier('REJETEE')"
+              :disabled="submitting"
+            >
+              <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
+              Rejeter le dossier
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-success px-4 shadow-sm" 
+              @click="traiterDossier('VALIDEE')"
+              :disabled="submitting"
+            >
+              <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
+              Valider l'inscription
+            </button>
+          </div>
+        </div>
+
       </div>
-    </transition>
-  </teleport>
+    </div>
+  </div>
 </template>
 
-<style scoped>
-/* Overlay de la modal */
-.modal-mask {
-  position: fixed;
-  z-index: 1050;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(15, 23, 42, 0.6); /* Couleur plus foncée type Slate */
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Avatar stylisé */
-.avatar-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
-  border: 2px solid #e2e8f0;
-}
-
-/* Carte d'information */
-.info-card {
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #f1f5f9;
-}
-
-.info-icon {
-  font-size: 1.1rem;
-}
-
-/* Transition de la modal */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* Boutons et badges */
-.btn-primary {
-  background-color: #4f46e5;
-  border: none;
-}
-.btn-primary:hover {
-  background-color: #4338ca;
-}
-</style>
-
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { ref, computed } from 'vue';
+import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
 
 const props = defineProps({
-  modelValue: Boolean,
-  inscription: Object,
+  show: { type: Boolean, default: false },
+  inscription: { type: Object, required: true }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['close']);
+const store = useInscriptionStore();
 
-const close = () => {
-  emit('update:modelValue', false);
+const commentaire = ref('');
+const submitting = ref(false);
+
+// Vérifie si l'inscription est en attente (insensible à la casse)
+const estEnAttente = computed(() => {
+  return props.inscription?.statut?.toLowerCase() === 'en attente';
+});
+
+const traiterDossier = async (nouveauStatut) => {
+  const actionText = nouveauStatut === 'VALIDEE' ? 'valider' : 'rejeter';
+  if (!confirm(`Confirmez-vous le choix de ${actionText} cette inscription ?`)) return;
+
+  submitting.value = true;
+  try {
+    // Envoi au store Pinia (qui appelle l'API PATCH /:id/statut)
+    await store.changeStatus(props.inscription.id, {
+      statut: nouveauStatut,
+      commentaire: commentaire.value.trim() || null
+    });
+    
+    alert(`Le dossier a été mis à jour avec le statut : ${nouveauStatut}`);
+    
+    // Forcer la synchronisation globale des données financières en arrière-plan
+    await store.fetchInscriptionsFinances();
+    
+    emit('close');
+  } catch (error) {
+    console.error('Erreur lors du traitement du dossier:', error);
+    alert('Une erreur est survenue lors de la mise à jour.');
+  } finally {
+    submitting.value = false;
+  }
 };
 
-// Statut badge
-const statutClass = (statut) => ({
-  'bg-success': statut === 'validée',
-  'bg-warning text-dark': statut === 'en attente',
-  'bg-danger': statut === 'annulée',
-});
-
-// Format date propre
-const formatDate = (date) => {
-  if (!date) return '-';
-  return new Date(date).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+const formatMoney = (amount) => {
+  if (amount === undefined || amount === null) return '0 FCFA';
+  return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
 };
 
-// UX : ESC pour fermer
-const handleKeydown = (e) => {
-  if (e.key === 'Escape') close();
+const statutClass = (statut) => {
+  const s = statut?.toLowerCase();
+  return {
+    'bg-success text-white': s === 'validée' || s === 'validee' || s === 'active',
+    'bg-warning text-dark': s === 'en attente',
+    'bg-danger text-white': s === 'annulée' || s === 'annulee' || s === 'rejetee',
+  };
 };
-
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-});
 </script>
+
+<style scoped>
+.avatar-initials {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+.bg-soft-primary {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+.bg-soft-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+.bg-soft-success {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+</style>

@@ -105,6 +105,7 @@ export const getFilieresByAnnee = (anneeId) => academiqueService.get(`/filieres/
 
 // API pour gérer les inscriptions
 export const getInscriptions = () => academiqueService.get('/inscriptions');
+export const getInscriptionsFinances = () => academiqueService.get('/inscriptions/finances');
 export const getInscriptionById = (id) => academiqueService.get(`/inscriptions/${id}`);
 
 // Importation par lot des inscriptions

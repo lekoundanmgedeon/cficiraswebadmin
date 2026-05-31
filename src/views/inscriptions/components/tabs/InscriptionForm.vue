@@ -154,15 +154,12 @@
           />
         </div>
       </div>
-
-      <InscriptionDetailModal v-model="showModal" :inscription="selectedInscription" />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import InscriptionDetailModal from '../modal/InscriptionDetails.vue';
 import AppPagination from '@/components/shared/Pagination.vue'; // Ajustez le chemin vers votre fichier de pagination optimisé
 import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
 
