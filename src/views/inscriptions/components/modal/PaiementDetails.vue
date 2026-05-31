@@ -1,14 +1,15 @@
 <template>
   <div 
+    v-if="modelValue"
     class="modal fade show d-block" 
     tabindex="-1" 
-    style="background: rgba(0,0,0,0.5);"
-    @click.self="$emit('close')"
+    style="background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px);"
+    @click.self="proposerFermeture"
   >
     <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content border-0 shadow-lg">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
         
-        <div class="modal-header bg-light border-0 py-3">
+        <div class="modal-header bg-light border-0 py-3 px-4">
           <div class="d-flex align-items-center">
             <div class="avatar-initials me-3 bg-primary text-white fw-bold">
               {{ inscription?.nom?.[0] }}{{ inscription?.prenom?.[0] }}
@@ -23,7 +24,8 @@
           <button 
             type="button" 
             class="btn-close shadow-none" 
-            @click="$emit('close')"
+            @click="proposerFermeture"
+            :disabled="submitting"
           ></button>
         </div>
 
@@ -104,11 +106,11 @@
           </div>
         </div>
 
-        <div class="modal-footer bg-light border-0 py-3">
+        <div class="modal-footer bg-light border-0 py-3 px-4">
           <button 
             type="button" 
-            class="btn btn-white border px-4" 
-            @click="$emit('close')"
+            class="btn btn-secondary border rounded-pill px-4" 
+            @click="proposerFermeture"
             :disabled="submitting"
           >
             Fermer
@@ -117,16 +119,16 @@
           <div v-if="estEnAttente" class="d-flex gap-2">
             <button 
               type="button" 
-              class="btn btn-outline-danger px-4" 
+              class="btn btn-outline-danger rounded-pill px-4" 
               @click="traiterDossier('REJETEE')"
               :disabled="submitting"
             >
               <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
-              Rejeter le dossier
+              Rejeter
             </button>
             <button 
               type="button" 
-              class="btn btn-success px-4 shadow-sm" 
+              class="btn btn-success rounded-pill px-4 shadow-sm" 
               @click="traiterDossier('VALIDEE')"
               :disabled="submitting"
             >
@@ -146,17 +148,22 @@ import { ref, computed } from 'vue';
 import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
 
 const props = defineProps({
-  show: { type: Boolean, default: false },
+  modelValue: { type: Boolean, default: false }, // Harmonisation standard Vue 3 v-model
   inscription: { type: Object, required: true }
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['update:modelValue']); // Déclaration de l'émetteur de mise à jour v-model
 const store = useInscriptionStore();
 
 const commentaire = ref('');
 const submitting = ref(false);
 
-// Vérifie si l'inscription est en attente (insensible à la casse)
+const proposerFermeture = () => {
+  if (!submitting.value) {
+    emit('update:modelValue', false); // Notifie le parent de passer la variable à false
+  }
+};
+
 const estEnAttente = computed(() => {
   return props.inscription?.statut?.toLowerCase() === 'en attente';
 });
@@ -167,18 +174,15 @@ const traiterDossier = async (nouveauStatut) => {
 
   submitting.value = true;
   try {
-    // Envoi au store Pinia (qui appelle l'API PATCH /:id/statut)
     await store.changeStatus(props.inscription.id, {
       statut: nouveauStatut,
       commentaire: commentaire.value.trim() || null
     });
     
     alert(`Le dossier a été mis à jour avec le statut : ${nouveauStatut}`);
-    
-    // Forcer la synchronisation globale des données financières en arrière-plan
     await store.fetchInscriptionsFinances();
     
-    emit('close');
+    proposerFermeture(); // Fermeture propre
   } catch (error) {
     console.error('Erreur lors du traitement du dossier:', error);
     alert('Une erreur est survenue lors de la mise à jour.');
