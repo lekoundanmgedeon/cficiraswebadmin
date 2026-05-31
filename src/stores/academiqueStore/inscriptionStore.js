@@ -5,9 +5,9 @@ import {
   createInscription,
   updateInscription,
   changeInscriptionStatus,
-  importNouveauxEtudiants,
   importReinscriptions,
   importTuteurs,
+  importInscriptions,
 } from '@/api/academique/academiqueApi';
 import { useMessageStore } from '@/stores/messages/messageStore';
 import { extractErrorMessage } from '@/stores/messages/useErrorMessage';
@@ -127,24 +127,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       }
     },
 
-    // Importer nouveaux étudiants
-    async importEtudiants(file) {
-      const messageStore = useMessageStore();
-      this.loading = true;
-      try {
-        await importNouveauxEtudiants(file);
-        messageStore.notifySuccess('Import des nouveaux étudiants réussi.');
-        await this.fetchInscriptions();
-      } catch (error) {
-        messageStore.notifyError(
-          extractErrorMessage(error, 'Erreur lors de l’import des étudiants.')
-        );
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    // Importer réinscriptions
+   // Importer réinscriptions
     async importReinscriptions(file) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -172,6 +155,34 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         messageStore.notifyError(
           extractErrorMessage(error, 'Erreur lors de l’import des tuteurs.')
         );
+      } finally {
+        this.loading = false;
+      }
+    },
+    // Nouvelle action : Importation par lot des inscriptions
+    async bulkImportInscriptions(formData) {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await importInscriptions(formData);
+        
+        // Notification personnalisée si votre backend renvoie des succès partiels
+        if (response.data?.summary?.totalEchecs > 0) {
+          messageStore.notifySuccess('Importation complétée avec des erreurs partielles.');
+        } else {
+          messageStore.notifySuccess('Toutes les inscriptions ont été importées avec succès.');
+        }
+
+        // Nettoyage du cache et rechargement de la liste mise à jour
+        localStorage.removeItem('inscriptions');
+        await this.fetchInscriptions();
+        
+        return response.data; // Utile si vous voulez afficher le rapport détaillé dans votre composant Vue
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors de l’importation par lot des inscriptions.')
+        );
+        throw error;
       } finally {
         this.loading = false;
       }

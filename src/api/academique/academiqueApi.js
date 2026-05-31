@@ -2,6 +2,7 @@ import buildService from '../config/serviceApi';
 import { academiqueApi, academiqueFormApi } from '../config/apiClients';
 
 const academiqueService = buildService(academiqueApi);
+const academiqueFormService = buildService(academiqueFormApi);
 
 // API pour gérer les années académiques
 export const getAnneesAcademiques = () => academiqueService.get('/annees');
@@ -105,6 +106,11 @@ export const getFilieresByAnnee = (anneeId) => academiqueService.get(`/filieres/
 // API pour gérer les inscriptions
 export const getInscriptions = () => academiqueService.get('/inscriptions');
 export const getInscriptionById = (id) => academiqueService.get(`/inscriptions/${id}`);
+
+// Importation par lot des inscriptions
+export const importInscriptions = (formData) => {
+  return academiqueFormService.post('/inscriptions/import', formData);
+};
 
 export const createInscription = (data) => academiqueService.post('/inscriptions', data);
 export const updateInscription = (id, data) => academiqueService.put(`/inscriptions/${id}`, data);
