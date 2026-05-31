@@ -89,7 +89,7 @@
                 <tr>
                   <th class="ps-4">Étudiant / Matricule</th>
                   <th>Classe</th>
-                  <th>Frais Scolarité</th>
+                  <th>Frais Inscription</th>
                   <th>Montant Versé</th>
                   <th>Reste</th>
                   <th class="text-center">Statut</th>

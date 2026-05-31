@@ -63,7 +63,7 @@
           <div class="row g-3 mb-4 text-center">
             <div class="col-4">
               <div class="bg-light p-3 rounded">
-                <small class="text-muted d-block mb-1">Frais Scolarité</small>
+                <small class="text-muted d-block mb-1">Frais Inscriptions</small>
                 <span class="fw-bold text-dark">{{
                   formatMoney(inscription?.frais_scolarite)
                 }}</span>
