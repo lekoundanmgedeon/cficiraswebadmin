@@ -1,128 +1,117 @@
 <template>
-  <div class="pagination-wrapper">
-    <!-- Info et sélection du nombre d'éléments -->
+  <div class="pagination-wrapper pt-3">
     <div class="pagination-info">
-      <div class="items-per-page-selector">
-        <span class="text-muted me-2">Afficher</span>
+      <div class="items-per-page-selector d-flex align-items-center">
+        <span class="text-muted style-label me-2">Afficher</span>
         <select
           v-model="localItemsPerPage"
-          class="form-select form-select-sm"
-          @change="updateItemsPerPage"
-          style="width: auto"
+          class="form-select form-select-sm border border-secondary-subtle"
+          style="width: auto; min-width: 65px;"
         >
           <option v-for="n in itemsPerPageOptions" :key="n" :value="n">
             {{ n }}
           </option>
         </select>
-        <span class="text-muted ms-2">éléments</span>
+        <span class="text-muted style-label ms-2">éléments</span>
       </div>
 
-      <!-- Informations sur les résultats affichés -->
       <div class="results-info text-muted">
         <span v-if="totalItems > 0">
           Affichage de <strong>{{ startItem }}</strong> à <strong>{{ endItem }}</strong> sur
-          <strong>{{ totalItems }}</strong> résultat{{ totalItems > 1 ? 's' : '' }}
+          <strong class="text-dark">{{ totalItems }}</strong> résultat{{ totalItems > 1 ? 's' : '' }}
         </span>
-        <span v-else>Aucun résultat</span>
+        <span v-else class="text-muted italic">Aucun résultat à afficher</span>
       </div>
     </div>
 
-    <!-- Navigation de pagination -->
     <nav v-if="totalPages > 1" aria-label="Navigation de pagination">
-      <ul class="pagination pagination-sm mb-0">
-        <!-- Bouton Première page -->
+      <ul class="pagination pagination-sm mb-0 shadow-sm rounded">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <a
+          <button
             class="page-link"
-            href="#"
-            @click.prevent="goToPage(1)"
-            :tabindex="currentPage === 1 ? -1 : 0"
+            @click="goToPage(1)"
+            :disabled="currentPage === 1"
             title="Première page"
           >
             <i class="mdi mdi-chevron-double-left"></i>
-          </a>
+          </button>
         </li>
 
-        <!-- Bouton Précédent -->
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <a
+          <button
             class="page-link"
-            href="#"
-            @click.prevent="prevPage"
-            :tabindex="currentPage === 1 ? -1 : 0"
+            @click="prevPage"
+            :disabled="currentPage === 1"
             title="Page précédente"
           >
             <i class="mdi mdi-chevron-left"></i>
-          </a>
+          </button>
         </li>
 
-        <!-- Pages numérotées avec ellipses intelligentes -->
-        <template v-for="page in displayedPages" :key="page">
+        <template v-for="(page, idx) in displayedPages" :key="idx">
           <li
             v-if="page === 'ellipsis-start' || page === 'ellipsis-end'"
             class="page-item disabled"
           >
-            <span class="page-link">...</span>
+            <span class="page-link bg-light border-0">...</span>
           </li>
           <li v-else class="page-item" :class="{ active: page === currentPage }">
-            <a
-              class="page-link"
-              href="#"
-              @click.prevent="goToPage(page)"
+            <button
+              class="page-link font-monospace"
+              :class="{ 'fw-bold': page === currentPage }"
+              @click="goToPage(page)"
               :aria-current="page === currentPage ? 'page' : undefined"
             >
               {{ page }}
-            </a>
+            </button>
           </li>
         </template>
 
-        <!-- Bouton Suivant -->
         <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
-          <a
+          <button
             class="page-link"
-            href="#"
-            @click.prevent="nextPage"
-            :tabindex="currentPage >= totalPages ? -1 : 0"
+            @click="nextPage"
+            :disabled="currentPage >= totalPages"
             title="Page suivante"
           >
             <i class="mdi mdi-chevron-right"></i>
-          </a>
+          </button>
         </li>
 
-        <!-- Bouton Dernière page -->
         <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
-          <a
+          <button
             class="page-link"
-            href="#"
-            @click.prevent="goToPage(totalPages)"
-            :tabindex="currentPage >= totalPages ? -1 : 0"
+            @click="goToPage(totalPages)"
+            :disabled="currentPage >= totalPages"
             title="Dernière page"
           >
             <i class="mdi mdi-chevron-double-right"></i>
-          </a>
+          </button>
         </li>
       </ul>
     </nav>
 
-    <!-- Saut rapide à une page (optionnel, affiché si beaucoup de pages) -->
-    <div v-if="totalPages > 10" class="quick-jump">
-      <span class="text-muted me-2">Aller à la page</span>
-      <input
-        v-model.number="jumpToPageInput"
-        type="number"
-        class="form-control form-control-sm"
-        :min="1"
-        :max="totalPages"
-        @keyup.enter="jumpToPage"
-        style="width: 70px"
-      />
-      <button
-        class="btn btn-sm btn-outline-secondary ms-1"
-        @click="jumpToPage"
-        :disabled="!isValidPageJump"
-      >
-        <i class="mdi mdi-arrow-right"></i>
-      </button>
+    <div v-if="totalPages > 10" class="quick-jump d-flex align-items-center">
+      <span class="text-muted style-label me-2">Aller à</span>
+      <div class="input-group input-group-sm rounded shadow-sm bg-white" style="width: 110px">
+        <input
+          v-model.number="jumpToPageInput"
+          type="number"
+          class="form-control border border-secondary-subtle font-monospace text-center ps-3"
+          :min="1"
+          :max="totalPages"
+          placeholder="N°"
+          @keyup.enter="jumpToPage"
+        />
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          @click="jumpToPage"
+          :disabled="!isValidPageJump"
+        >
+          <i class="mdi mdi-arrow-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -130,7 +119,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 
-// Props
 const props = defineProps({
   totalItems: {
     type: Number,
@@ -153,116 +141,86 @@ const props = defineProps({
   },
   maxVisiblePages: {
     type: Number,
-    default: 7, // Nombre max de pages visibles avant d'afficher des ellipses
-    validator: (value) => value >= 5 && value % 2 === 1, // Doit être impair et >= 5
+    default: 5, // Réduit à 5 par défaut pour un rendu mobile/tablette plus compact
+    validator: (value) => value >= 5 && value % 2 === 1,
   },
 });
 
-// Émissions
 const emit = defineEmits(['update:modelValue', 'update:itemsPerPage']);
 
-// État interne
-const currentPage = ref(props.modelValue);
-const localItemsPerPage = ref(props.itemsPerPage);
 const jumpToPageInput = ref(null);
 
-// Nombre total de pages
-const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(props.totalItems / localItemsPerPage.value));
+// --- SOURCE SECURISEE UNIQUE DE VERITE (Calcul de la plage maximale) ---
+const totalPages = computed(() => Math.max(1, Math.ceil(props.totalItems / props.itemsPerPage)));
+
+// Définition de Writable Computeds pour le v-model natif en remplacement des watchers multiples
+const currentPage = computed({
+  get: () => {
+    // Sécurité au cas où la page externe dépasse le scope réel actuel
+    return Math.max(1, Math.min(props.modelValue, totalPages.value));
+  },
+  set: (val) => {
+    emit('update:modelValue', Math.max(1, Math.min(val, totalPages.value)));
+  }
 });
 
-// Calcul de l'index de départ et fin pour l'affichage
-const startItem = computed(() => {
-  if (props.totalItems === 0) return 0;
-  return (currentPage.value - 1) * localItemsPerPage.value + 1;
+const localItemsPerPage = computed({
+  get: () => props.itemsPerPage,
+  set: (val) => {
+    currentPage.value = 1; // Toujours reset à la page 1 si la taille de segment change
+    emit('update:itemsPerPage', val);
+  }
 });
 
-const endItem = computed(() => {
-  const end = currentPage.value * localItemsPerPage.value;
-  return Math.min(end, props.totalItems);
-});
+// Indexations calculées
+const startItem = computed(() => props.totalItems === 0 ? 0 : (currentPage.value - 1) * props.itemsPerPage + 1);
+const endItem = computed(() => Math.min(currentPage.value * props.itemsPerPage, props.totalItems));
 
-// Pages affichées avec ellipses intelligentes
+// Génération optimisée des ellipses sans variables d'état locales instables
 const displayedPages = computed(() => {
   const pages = [];
   const total = totalPages.value;
   const current = currentPage.value;
   const maxVisible = props.maxVisiblePages;
 
-  // Si peu de pages, afficher toutes
   if (total <= maxVisible) {
-    for (let i = 1; i <= total; i++) {
-      pages.push(i);
-    }
+    for (let i = 1; i <= total; i++) pages.push(i);
     return pages;
   }
 
-  // Logique avec ellipses
   const halfVisible = Math.floor(maxVisible / 2);
-
-  // Toujours afficher la première page
   pages.push(1);
 
-  // Calculer la plage autour de la page courante
   let startPage = Math.max(2, current - halfVisible);
   let endPage = Math.min(total - 1, current + halfVisible);
 
-  // Ajuster si on est proche du début
   if (current <= halfVisible + 1) {
     endPage = Math.min(maxVisible - 1, total - 1);
   }
-
-  // Ajuster si on est proche de la fin
   if (current >= total - halfVisible) {
     startPage = Math.max(2, total - maxVisible + 2);
   }
 
-  // Ajouter ellipse au début si nécessaire
-  if (startPage > 2) {
-    pages.push('ellipsis-start');
-  }
+  if (startPage > 2) pages.push('ellipsis-start');
+  for (let i = startPage; i <= endPage; i++) pages.push(i);
+  if (endPage < total - 1) pages.push('ellipsis-end');
 
-  // Ajouter les pages du milieu
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
-
-  // Ajouter ellipse à la fin si nécessaire
-  if (endPage < total - 1) {
-    pages.push('ellipsis-end');
-  }
-
-  // Toujours afficher la dernière page
-  if (total > 1) {
-    pages.push(total);
-  }
-
+  if (total > 1) pages.push(total);
   return pages;
 });
 
-// Validation du saut de page
 const isValidPageJump = computed(() => {
-  return jumpToPageInput.value >= 1 && jumpToPageInput.value <= totalPages.value;
+  return Number.isInteger(jumpToPageInput.value) && 
+         jumpToPageInput.value >= 1 && 
+         jumpToPageInput.value <= totalPages.value;
 });
 
-// Navigation
+// Actions de navigation épurées
 const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
-  }
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
 };
-
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-  }
-};
+const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
 
 const jumpToPage = () => {
   if (isValidPageJump.value) {
@@ -271,51 +229,12 @@ const jumpToPage = () => {
   }
 };
 
-// Mise à jour du nombre d'éléments par page
-const updateItemsPerPage = () => {
-  // Réinitialiser à la page 1 lors du changement
-  currentPage.value = 1;
-  emit('update:itemsPerPage', localItemsPerPage.value);
-};
-
-// Watchers pour synchronisation
-watch(currentPage, (val) => {
-  // S'assurer que la page est valide
-  const validPage = Math.max(1, Math.min(val, totalPages.value));
-  if (validPage !== val) {
-    currentPage.value = validPage;
-    return;
+// Sécurité supplémentaire : Si le total d'items se réduit (ex: application d'un filtre)
+watch(() => props.totalItems, () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = totalPages.value;
   }
-  emit('update:modelValue', val);
 });
-
-watch(
-  () => props.modelValue,
-  (val) => {
-    if (val !== currentPage.value) {
-      currentPage.value = val;
-    }
-  }
-);
-
-watch(
-  () => props.itemsPerPage,
-  (val) => {
-    if (val !== localItemsPerPage.value) {
-      localItemsPerPage.value = val;
-    }
-  }
-);
-
-// Réinitialiser à la page 1 si le total change drastiquement
-watch(
-  () => props.totalItems,
-  () => {
-    if (currentPage.value > totalPages.value) {
-      currentPage.value = Math.max(1, totalPages.value);
-    }
-  }
-);
 </script>
 
 <style scoped>
@@ -325,7 +244,6 @@ watch(
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  padding: 1rem 0;
 }
 
 .pagination-info {
@@ -335,69 +253,67 @@ watch(
   flex-wrap: wrap;
 }
 
-.items-per-page-selector {
-  display: flex;
-  align-items: center;
-}
-
 .results-info {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
-.quick-jump {
-  display: flex;
-  align-items: center;
-}
-
-.pagination {
-  margin: 0;
+.style-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .page-link {
-  cursor: pointer;
-  user-select: none;
+  border: 1px solid #e9ecef;
+  color: #6c757d;
+  background-color: #fff;
+  padding: 0.35rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.page-item.disabled .page-link {
-  cursor: not-allowed;
+.page-link:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  color: #4b49ac;
 }
 
 .page-item.active .page-link {
-  font-weight: 600;
+  background-color: #4b49ac;
+  border-color: #4b49ac;
+  color: #fff;
 }
 
-/* Responsive */
+/* Remplacement des ancres <a> par des boutons réels pour l'accessibilité */
+button.page-link {
+  outline: none;
+}
+button.page-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Chrome/Safari cache les flèches d'input type number */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Responsive UI */
 @media (max-width: 768px) {
   .pagination-wrapper {
     flex-direction: column;
     align-items: stretch;
   }
-
   .pagination-info {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.5rem;
   }
-
-  nav {
-    width: 100%;
-    overflow-x: auto;
-  }
-
-  .pagination {
-    justify-content: center;
-  }
-
-  .quick-jump {
+  nav, .pagination, .quick-jump {
     width: 100%;
     justify-content: center;
-  }
-}
-
-@media (max-width: 576px) {
-  .pagination-sm .page-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
   }
 }
 </style>

@@ -160,7 +160,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
-// Importation du modal de réinscription par lot
 import ImportReinscriptionsModal from '../modal/ReinscriptionModal.vue'; 
 
 const inscriptionStore = useInscriptionStore();
