@@ -59,16 +59,23 @@
         </div>
       </div>
 
-      <div class="d-flex justify-content-between mb-3 align-items-center">
-        <span class="text-muted small">
-          Affichage de <b>{{ filteredInscriptions.length }}</b> dossiers
-        </span>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-primary btn-sm px-3 shadow-sm bg-white">
-            <i class="mdi mdi-file-export-outline me-1"></i> Exporter
-          </button>
-        </div>
+    <div class="d-flex justify-content-between mb-3 align-items-center">
+      <span class="text-muted small">
+        Affichage de <b>{{ filteredInscriptions.length }}</b> dossiers
+      </span>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm px-3 shadow-sm bg-white">
+          <i class="mdi mdi-file-export-outline me-1"></i> Exporter
+        </button>
+        <button 
+          class="btn btn-primary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1"
+          @click="showBulkModal = true"
+        >
+          <i class="mdi mdi-file-excel-outline"></i> Validation par lots
+        </button>
+        <ValidationModal v-model="showBulkModal" />
       </div>
+    </div>
 
       <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
@@ -169,11 +176,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import PaiementDetailsModal from '../modal/PaiementDetails.vue';
-import Pagination from '@/components/shared/Pagination.vue'; // Ajustez le chemin vers votre Pagination globale
+import Pagination from '@/components/shared/Pagination.vue';
+import ValidationModal from '../modal/ValidationModal.vue';
+
 import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
 
 const store = useInscriptionStore();
-
+const showBulkModal = ref(false);
 // États locaux
 const searchQuery = ref('');
 const selectedFiliere = ref('');
