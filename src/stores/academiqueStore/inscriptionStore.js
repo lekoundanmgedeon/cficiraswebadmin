@@ -33,10 +33,11 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
   state: () => ({
     inscriptions: [],
     inscription: null,
-    finances: [],        // <-- Ajout : Liste du suivi financier des inscriptions
-    financeTotals: {     // <-- Ajout : Totaux globaux (collecté et en attente)
+    finances: [], // <-- Ajout : Liste du suivi financier des inscriptions
+    financeTotals: {
+      // <-- Ajout : Totaux globaux (collecté et en attente)
       total_collecte: 0,
-      total_attente: 0
+      total_attente: 0,
     },
     loading: false,
   }),
@@ -76,10 +77,10 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
           const response = await getInscriptionsFinances();
           // Le contrôleur renvoie un objet structure { totals, inscriptions }
           const { totals, inscriptions } = response.data;
-          
+
           this.finances = inscriptions;
           this.financeTotals = totals;
-          
+
           setCache('inscriptions_finances', response.data);
         }
       } catch (error) {
@@ -163,7 +164,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       }
     },
 
-   // Importer réinscriptions
+    // Importer réinscriptions
     async importReinscriptions(file) {
       const messageStore = useMessageStore();
       this.loading = true;
@@ -203,7 +204,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
       this.loading = true;
       try {
         const response = await importInscriptions(formData);
-        
+
         if (response.data?.summary?.totalEchecs > 0) {
           messageStore.notifySuccess('Importation complétée avec des erreurs partielles.');
         } else {
@@ -213,7 +214,7 @@ export const useInscriptionStore = defineStore('inscriptionStore', {
         localStorage.removeItem('inscriptions');
         localStorage.removeItem('inscriptions_finances'); // Invalider le cache financier
         await this.fetchInscriptions();
-        
+
         return response.data;
       } catch (error) {
         messageStore.notifyError(

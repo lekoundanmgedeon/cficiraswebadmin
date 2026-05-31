@@ -106,7 +106,10 @@
               <tbody>
                 <tr v-if="loading">
                   <td colspan="6" class="text-center py-5">
-                    <div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
+                    <div
+                      class="spinner-border text-primary spinner-border-sm me-2"
+                      role="status"
+                    ></div>
                     <span class="text-muted small">Chargement des classes en cours...</span>
                   </td>
                 </tr>
@@ -119,27 +122,36 @@
                 >
                   <td class="ps-4 text-muted small font-monospace">{{ startIndex + index + 1 }}</td>
                   <td>
-                    <span class="fw-bold text-primary font-monospace">{{ classe.code || classe.classe_code || 'N/A' }}</span>
+                    <span class="fw-bold text-primary font-monospace">{{
+                      classe.code || classe.classe_code || 'N/A'
+                    }}</span>
                   </td>
                   <td>
                     <div class="fw-semibold text-dark">
                       {{ classe.filiere_nom || classe.filiere_code || 'Filière non spécifiée' }}
                     </div>
-                    <small class="text-muted">{{ classe.annee_code || classe.annee || 'N/A' }} • Académique</small>
+                    <small class="text-muted"
+                      >{{ classe.annee_code || classe.annee || 'N/A' }} • Académique</small
+                    >
                   </td>
                   <td class="text-center">
-                    <span class="badge bg-soft-info text-info px-3 py-2 rounded-pill font-monospace">
+                    <span
+                      class="badge bg-soft-info text-info px-3 py-2 rounded-pill font-monospace"
+                    >
                       {{ classe.niveau_code || classe.niveau || 'N/A' }}
                     </span>
                   </td>
                   <td class="text-center">
-                    <div class="d-flex align-items-center justify-content-center mx-auto" style="max-width: 180px">
+                    <div
+                      class="d-flex align-items-center justify-content-center mx-auto"
+                      style="max-width: 180px"
+                    >
                       <span class="fw-bold me-2 small font-monospace">
                         {{ getEffectif(classe) }}/{{ getCapacite(classe) }}
                       </span>
                       <div
                         class="progress w-100 shadow-sm"
-                        style="height: 6px; background-color: #e9ecef;"
+                        style="height: 6px; background-color: #e9ecef"
                         :title="`Taux d'occupation : ${calculateRate(classe)}%`"
                       >
                         <div
@@ -183,6 +195,12 @@
                     </div>
                   </td>
                 </tr>
+                <ClasseStudentsModal
+                  v-model="showModalEtudiants"
+                  :classe="classeSelectionnee"
+                  :students-list="studentsFromStore"
+                  :loading="loading"
+                />
               </tbody>
             </table>
           </div>
@@ -205,8 +223,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import AppPagination from '@/components/shared/Pagination.vue'; 
+import AppPagination from '@/components/shared/Pagination.vue';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import ClasseStudentsModal from '../modal/ClasseEtudiantModal.vue';
 
 const classeStore = useClasseStore();
 
@@ -251,10 +270,8 @@ const filteredClasses = computed(() => {
     const filiere = c.filiere_nom || c.filiere_code || '';
 
     const matchSearch =
-      !search ||
-      code.toLowerCase().includes(search) ||
-      filiere.toLowerCase().includes(search);
-      
+      !search || code.toLowerCase().includes(search) || filiere.toLowerCase().includes(search);
+
     const matchFiliere = !filterFiliere.value || filiere === filterFiliere.value;
     return matchSearch && matchFiliere;
   });
@@ -275,19 +292,18 @@ const calculateRate = (classe) => {
 
 /* ===================== Modaux Actions ===================== */
 const classeSelectionnee = ref(null);
-const showModalImport = ref(false);
 const showModalEtudiants = ref(false);
 
-const openImport = (classe) => {
-  classeSelectionnee.value = classe;
-  showModalImport.value = true;
-};
+// 2. Lier dynamiquement la liste des étudiants du store
+const studentsOfClasse = computed(() => classeStore.students || []);
 
 const voirEtudiants = async (classe) => {
   classeSelectionnee.value = classe;
   showModalEtudiants.value = true;
+
   const targetId = classe.id || classe.classe_id;
   if (targetId) {
+    // Appel de votre store Pinia qui stocke le résultat dans classeStore.students
     await classeStore.fetchClasseStudents(targetId);
   }
 };

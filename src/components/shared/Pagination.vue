@@ -6,7 +6,7 @@
         <select
           v-model="localItemsPerPage"
           class="form-select form-select-sm border border-secondary-subtle"
-          style="width: auto; min-width: 65px;"
+          style="width: auto; min-width: 65px"
         >
           <option v-for="n in itemsPerPageOptions" :key="n" :value="n">
             {{ n }}
@@ -18,7 +18,9 @@
       <div class="results-info text-muted">
         <span v-if="totalItems > 0">
           Affichage de <strong>{{ startItem }}</strong> à <strong>{{ endItem }}</strong> sur
-          <strong class="text-dark">{{ totalItems }}</strong> résultat{{ totalItems > 1 ? 's' : '' }}
+          <strong class="text-dark">{{ totalItems }}</strong> résultat{{
+            totalItems > 1 ? 's' : ''
+          }}
         </span>
         <span v-else class="text-muted italic">Aucun résultat à afficher</span>
       </div>
@@ -161,7 +163,7 @@ const currentPage = computed({
   },
   set: (val) => {
     emit('update:modelValue', Math.max(1, Math.min(val, totalPages.value)));
-  }
+  },
 });
 
 const localItemsPerPage = computed({
@@ -169,11 +171,13 @@ const localItemsPerPage = computed({
   set: (val) => {
     currentPage.value = 1; // Toujours reset à la page 1 si la taille de segment change
     emit('update:itemsPerPage', val);
-  }
+  },
 });
 
 // Indexations calculées
-const startItem = computed(() => props.totalItems === 0 ? 0 : (currentPage.value - 1) * props.itemsPerPage + 1);
+const startItem = computed(() =>
+  props.totalItems === 0 ? 0 : (currentPage.value - 1) * props.itemsPerPage + 1
+);
 const endItem = computed(() => Math.min(currentPage.value * props.itemsPerPage, props.totalItems));
 
 // Génération optimisée des ellipses sans variables d'état locales instables
@@ -210,17 +214,23 @@ const displayedPages = computed(() => {
 });
 
 const isValidPageJump = computed(() => {
-  return Number.isInteger(jumpToPageInput.value) && 
-         jumpToPageInput.value >= 1 && 
-         jumpToPageInput.value <= totalPages.value;
+  return (
+    Number.isInteger(jumpToPageInput.value) &&
+    jumpToPageInput.value >= 1 &&
+    jumpToPageInput.value <= totalPages.value
+  );
 });
 
 // Actions de navigation épurées
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) currentPage.value = page;
 };
-const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
-const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
 
 const jumpToPage = () => {
   if (isValidPageJump.value) {
@@ -230,11 +240,14 @@ const jumpToPage = () => {
 };
 
 // Sécurité supplémentaire : Si le total d'items se réduit (ex: application d'un filtre)
-watch(() => props.totalItems, () => {
-  if (currentPage.value > totalPages.value) {
-    currentPage.value = totalPages.value;
+watch(
+  () => props.totalItems,
+  () => {
+    if (currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value;
+    }
   }
-});
+);
 </script>
 
 <style scoped>
@@ -311,7 +324,9 @@ input::-webkit-inner-spin-button {
     align-items: center;
     gap: 0.5rem;
   }
-  nav, .pagination, .quick-jump {
+  nav,
+  .pagination,
+  .quick-jump {
     width: 100%;
     justify-content: center;
   }

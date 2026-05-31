@@ -11,11 +11,15 @@
         <div class="d-flex gap-3 text-end" v-if="!store.loading">
           <div class="px-3 border-end">
             <small class="text-muted d-block">Total Collecté</small>
-            <span class="fw-bold text-success">{{ formatMoney(store.financeTotals.total_collecte) }}</span>
+            <span class="fw-bold text-success">{{
+              formatMoney(store.financeTotals.total_collecte)
+            }}</span>
           </div>
           <div class="px-3">
             <small class="text-muted d-block">En attente</small>
-            <span class="fw-bold text-warning">{{ formatMoney(store.financeTotals.total_attente) }}</span>
+            <span class="fw-bold text-warning">{{
+              formatMoney(store.financeTotals.total_attente)
+            }}</span>
           </div>
         </div>
       </div>
@@ -59,23 +63,23 @@
         </div>
       </div>
 
-    <div class="d-flex justify-content-between mb-3 align-items-center">
-      <span class="text-muted small">
-        Affichage de <b>{{ filteredInscriptions.length }}</b> dossiers
-      </span>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary btn-sm px-3 shadow-sm bg-white">
-          <i class="mdi mdi-file-export-outline me-1"></i> Exporter
-        </button>
-        <button 
-          class="btn btn-primary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1"
-          @click="showBulkModal = true"
-        >
-          <i class="mdi mdi-file-excel-outline"></i> Validation par lots
-        </button>
-        <ValidationModal v-model="showBulkModal" />
+      <div class="d-flex justify-content-between mb-3 align-items-center">
+        <span class="text-muted small">
+          Affichage de <b>{{ filteredInscriptions.length }}</b> dossiers
+        </span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary btn-sm px-3 shadow-sm bg-white">
+            <i class="mdi mdi-file-export-outline me-1"></i> Exporter
+          </button>
+          <button
+            class="btn btn-primary btn-sm px-3 shadow-sm d-inline-flex align-items-center gap-1"
+            @click="showBulkModal = true"
+          >
+            <i class="mdi mdi-file-excel-outline"></i> Validation par lots
+          </button>
+          <ValidationModal v-model="showBulkModal" />
+        </div>
       </div>
-    </div>
 
       <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
@@ -118,12 +122,21 @@
                       <div class="badge bg-light text-dark border">{{ ins.classe_code }}</div>
                       <div class="small text-muted mt-1">{{ ins.filiere_code }}</div>
                     </td>
-                    <td><span class="fw-bold">{{ formatMoney(ins.frais_scolarite) }}</span></td>
+                    <td>
+                      <span class="fw-bold">{{ formatMoney(ins.frais_scolarite) }}</span>
+                    </td>
                     <td>
                       <span class="text-success fw-bold">{{ formatMoney(ins.montant_verse) }}</span>
                     </td>
                     <td>
-                      <span :class="['badge px-2 py-1', ins.reste > 0 ? 'bg-soft-danger text-danger' : 'bg-soft-success text-success']">
+                      <span
+                        :class="[
+                          'badge px-2 py-1',
+                          ins.reste > 0
+                            ? 'bg-soft-danger text-danger'
+                            : 'bg-soft-success text-success',
+                        ]"
+                      >
                         {{ formatMoney(ins.reste) }}
                       </span>
                     </td>
@@ -133,7 +146,7 @@
                       </span>
                     </td>
                     <td class="text-end pe-4">
-                      <button 
+                      <button
                         class="btn btn-sm btn-light border text-primary fw-semibold"
                         @click="openPaiementModal(ins)"
                       >
@@ -166,7 +179,7 @@
     </div>
   </div>
 
- <PaiementDetailsModal
+  <PaiementDetailsModal
     v-if="showPaiementModal"
     v-model="showPaiementModal"
     :inscription="selectedPaiementInscription"
@@ -195,7 +208,7 @@ const itemsPerPage = ref(10);
 onMounted(() => {
   // Remplacement par la méthode financière du store
   store.fetchInscriptionsFinances();
-  
+
   const savedFilieres = localStorage.getItem('filieres');
   if (savedFilieres) {
     const parsed = JSON.parse(savedFilieres);
@@ -218,10 +231,11 @@ const filteredInscriptions = computed(() => {
       i.prenom?.toLowerCase().includes(search) ||
       i.matricule?.toLowerCase().includes(search);
     const matchFiliere = !selectedFiliere.value || i.filiere_code === selectedFiliere.value;
-    
+
     // Tolérance casse (ex: 'VALIDEE' vs 'validée')
-    const matchStatut = !selectedStatut.value || i.statut?.toLowerCase() === selectedStatut.value.toLowerCase();
-    
+    const matchStatut =
+      !selectedStatut.value || i.statut?.toLowerCase() === selectedStatut.value.toLowerCase();
+
     return matchSearch && matchFiliere && matchStatut;
   });
 });
@@ -235,12 +249,15 @@ const paginatedInscriptions = computed(() => {
 
 // Workflow de validation via store.changeStatus
 const validerInscription = async (id) => {
-  if (!confirm("Voulez-vous valider cette inscription et enregistrer le dossier ?")) return;
+  if (!confirm('Voulez-vous valider cette inscription et enregistrer le dossier ?')) return;
 
   try {
     // Appel du workflow générique de statut défini dans votre store
-    await store.changeStatus(id, { statut: 'VALIDEE', commentaire: 'Validation comptable automatique' });
-    alert("Inscription validée avec succès !");
+    await store.changeStatus(id, {
+      statut: 'VALIDEE',
+      commentaire: 'Validation comptable automatique',
+    });
+    alert('Inscription validée avec succès !');
     // Recharger les données financières pour mettre à jour les montants globaux
     await store.fetchInscriptionsFinances();
   } catch (error) {
@@ -287,7 +304,6 @@ watch([searchQuery, selectedFiliere, selectedStatut], () => {
   currentPage.value = 1;
 });
 </script>
-
 
 <style scoped>
 .avatar-initials {

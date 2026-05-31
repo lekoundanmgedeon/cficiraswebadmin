@@ -50,7 +50,11 @@
             </div>
 
             <div class="col-md-1">
-              <button class="btn btn-white w-100 shadow-sm border-0 h-100" @click="resetFilters" title="Réinitialiser">
+              <button
+                class="btn btn-white w-100 shadow-sm border-0 h-100"
+                @click="resetFilters"
+                title="Réinitialiser"
+              >
                 <i class="mdi mdi-refresh text-secondary"></i>
               </button>
             </div>
@@ -83,15 +87,22 @@
                     {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                   </td>
                   <td>
-                    <span class="fw-bold text-primary font-monospace">{{ inscription.etudiant_matricule || inscription.matricule || 'N/A' }}</span>
+                    <span class="fw-bold text-primary font-monospace">{{
+                      inscription.etudiant_matricule || inscription.matricule || 'N/A'
+                    }}</span>
                   </td>
                   <td>
                     <div class="d-flex flex-column">
                       <span class="fw-bold text-dark">
-                        {{ inscription.etudiant_nom || inscription.nom }} {{ inscription.etudiant_prenom || inscription.prenom }}
+                        {{ inscription.etudiant_nom || inscription.nom }}
+                        {{ inscription.etudiant_prenom || inscription.prenom }}
                       </span>
                       <small class="text-muted" style="font-size: 11px">
-                        {{ formatInscriptionDate(inscription.created_at || inscription.date_inscription) }}
+                        {{
+                          formatInscriptionDate(
+                            inscription.created_at || inscription.date_inscription
+                          )
+                        }}
                       </small>
                     </div>
                   </td>
@@ -100,13 +111,18 @@
                       <span class="badge bg-soft-info text-info me-2 fw-bold">
                         {{ inscription.classe_code || inscription.classe }}
                       </span>
-                      <small class="text-muted truncate-text" style="max-width: 180px;">
+                      <small class="text-muted truncate-text" style="max-width: 180px">
                         {{ inscription.filiere_nom || inscription.filiere_code }}
                       </small>
                     </div>
                   </td>
                   <td class="text-center">
-                    <span class="badge rounded-pill px-3 py-2 fw-semibold" :class="statutBadgeStyle(inscription.inscription_statut || inscription.statut)">
+                    <span
+                      class="badge rounded-pill px-3 py-2 fw-semibold"
+                      :class="
+                        statutBadgeStyle(inscription.inscription_statut || inscription.statut)
+                      "
+                    >
                       {{ formatStatutTexte(inscription.inscription_statut || inscription.statut) }}
                     </span>
                   </td>
@@ -133,9 +149,16 @@
                 <tr v-if="filteredInscriptions.length === 0">
                   <td colspan="6" class="text-center py-5">
                     <div class="d-flex flex-column align-items-center py-4">
-                      <i class="mdi mdi-account-search-outline display-4 text-muted opacity-25 mb-2"></i>
-                      <h6 class="text-muted mb-3">Aucune inscription ne correspond à vos critères</h6>
-                      <button class="btn btn-sm btn-primary rounded-pill px-4 shadow-sm" @click="resetFilters">
+                      <i
+                        class="mdi mdi-account-search-outline display-4 text-muted opacity-25 mb-2"
+                      ></i>
+                      <h6 class="text-muted mb-3">
+                        Aucune inscription ne correspond à vos critères
+                      </h6>
+                      <button
+                        class="btn btn-sm btn-primary rounded-pill px-4 shadow-sm"
+                        @click="resetFilters"
+                      >
                         Voir toutes les inscriptions
                       </button>
                     </div>
@@ -146,7 +169,10 @@
           </div>
         </div>
 
-        <div v-if="filteredInscriptions.length > 0" class="card-footer bg-white border-top py-2 px-4">
+        <div
+          v-if="filteredInscriptions.length > 0"
+          class="card-footer bg-white border-top py-2 px-4"
+        >
           <AppPagination
             v-model="currentPage"
             v-model:itemsPerPage="itemsPerPage"
@@ -205,7 +231,7 @@ const filteredInscriptions = computed(() => {
 
   return data.filter((i) => {
     const search = searchQuery.value.toLowerCase().trim();
-    
+
     const nom = i.etudiant_nom || i.nom || '';
     const prenom = i.etudiant_prenom || i.prenom || '';
     const matricule = i.etudiant_matricule || i.matricule || '';
@@ -217,17 +243,18 @@ const filteredInscriptions = computed(() => {
       matricule.toLowerCase().includes(search);
 
     const matchFiliere = !selectedFiliere.value || i.filiere_code === selectedFiliere.value;
-    
+
     // Normalisation complète pour éviter les écarts d'écritures ou de clés d'API
     const currentStatut = (i.inscription_statut || i.statut || '').toUpperCase();
     let targetStatut = selectedStatut.value.toUpperCase();
-    
+
     // Redirections de commodité de filtres
     if (targetStatut === 'ACTIVE') targetStatut = 'VALID';
-    
-    const matchStatut = !selectedStatut.value || 
-                        currentStatut.includes(targetStatut) || 
-                        (targetStatut === 'VALID' && currentStatut.includes('VALI'));
+
+    const matchStatut =
+      !selectedStatut.value ||
+      currentStatut.includes(targetStatut) ||
+      (targetStatut === 'VALID' && currentStatut.includes('VALI'));
 
     return matchSearch && matchFiliere && matchStatut;
   });

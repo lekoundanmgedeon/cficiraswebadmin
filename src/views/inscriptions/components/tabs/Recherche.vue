@@ -9,7 +9,10 @@
           </p>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-white shadow-sm border btn-sm px-3" :disabled="inscriptionStore.loading">
+          <button
+            class="btn btn-white shadow-sm border btn-sm px-3"
+            :disabled="inscriptionStore.loading"
+          >
             <i class="mdi mdi-export me-1"></i>Exporter
           </button>
           <button
@@ -96,15 +99,22 @@
                         {{ etudiant.nom?.charAt(0) }}{{ etudiant.prenom?.charAt(0) }}
                       </div>
                       <div class="d-flex flex-column">
-                        <span class="fw-bold text-dark">{{ etudiant.nom }} {{ etudiant.prenom }}</span>
+                        <span class="fw-bold text-dark"
+                          >{{ etudiant.nom }} {{ etudiant.prenom }}</span
+                        >
                         <small class="text-muted">{{ etudiant.telephone || 'N/A' }}</small>
                       </div>
                     </div>
                   </td>
                   <td>
                     <div class="d-flex flex-column">
-                      <span class="text-dark fw-semibold">{{ etudiant.classe_code || etudiant.classe }}</span>
-                      <small class="text-muted">{{ etudiant.annee_code || etudiant.annee }} • {{ etudiant.filiere_code || etudiant.filiere }}</small>
+                      <span class="text-dark fw-semibold">{{
+                        etudiant.classe_code || etudiant.classe
+                      }}</span>
+                      <small class="text-muted"
+                        >{{ etudiant.annee_code || etudiant.annee }} •
+                        {{ etudiant.filiere_code || etudiant.filiere }}</small
+                      >
                     </div>
                   </td>
                   <td class="text-center">
@@ -119,7 +129,9 @@
                       <i
                         class="mdi"
                         :class="
-                          etudiant.statut_paiement === 'Payé' || etudiant.statut === 'Payé' ? 'mdi-check-circle' : 'mdi-alert-circle'
+                          etudiant.statut_paiement === 'Payé' || etudiant.statut === 'Payé'
+                            ? 'mdi-check-circle'
+                            : 'mdi-alert-circle'
                         "
                       ></i>
                       {{ etudiant.statut_paiement || etudiant.statut || 'En attente' }}
@@ -139,7 +151,9 @@
                   <td colspan="5" class="text-center py-5">
                     <div class="py-4">
                       <i class="mdi mdi-account-search-outline display-4 text-muted opacity-25"></i>
-                      <p class="text-muted mt-2">Aucun candidat éligible trouvé pour ces critères.</p>
+                      <p class="text-muted mt-2">
+                        Aucun candidat éligible trouvé pour ces critères.
+                      </p>
                       <button class="btn btn-sm btn-link" @click="resetFilters">
                         Réinitialiser les filtres
                       </button>
@@ -160,18 +174,20 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
-import ImportReinscriptionsModal from '../modal/ReinscriptionModal.vue'; 
+import ImportReinscriptionsModal from '../modal/ReinscriptionModal.vue';
 
 const inscriptionStore = useInscriptionStore();
 
 // États des filtres
-const selectedAnnee = ref('2023-2024'); 
+const selectedAnnee = ref('2023-2024');
 const selectedFiliere = ref('');
 const searchQuery = ref('');
 const selectedClasseData = ref(null);
 
 // Branchement des données réelles réactives depuis l'état global du Store
-const academicYears = computed(() => inscriptionStore.academicYears || ['2023-2024', '2024-2025', '2025-2026']);
+const academicYears = computed(
+  () => inscriptionStore.academicYears || ['2023-2024', '2024-2025', '2025-2026']
+);
 const filieres = computed(() => inscriptionStore.filieres || ['GI', 'GTR', 'IDA']);
 const candidats = computed(() => inscriptionStore.candidatsPourReinscription || []);
 
@@ -179,15 +195,16 @@ const candidats = computed(() => inscriptionStore.candidatsPourReinscription || 
 const filteredCandidats = computed(() => {
   return candidats.value.filter((c) => {
     const matchYear = !selectedAnnee.value || (c.annee_code || c.annee) === selectedAnnee.value;
-    const matchFiliere = !selectedFiliere.value || (c.filiere_code || c.filiere) === selectedFiliere.value;
-    
+    const matchFiliere =
+      !selectedFiliere.value || (c.filiere_code || c.filiere) === selectedFiliere.value;
+
     const term = searchQuery.value.toLowerCase().trim();
     const matchSearch =
       !term ||
       c.nom.toLowerCase().includes(term) ||
       c.prenom.toLowerCase().includes(term) ||
       c.matricule.toLowerCase().includes(term);
-      
+
     return matchYear && matchFiliere && matchSearch;
   });
 });
@@ -201,9 +218,9 @@ const resetFilters = () => {
 // Logique unitaire par étudiant
 const openReinscriptionModal = (etudiant) => {
   // Optionnel : stocke l'étudiant sélectionné pour l'injection dynamique
-  selectedClasseData.value = { 
+  selectedClasseData.value = {
     classe_code: etudiant.classe_code || etudiant.classe,
-    filiere_code: etudiant.filiere_code || etudiant.filiere
+    filiere_code: etudiant.filiere_code || etudiant.filiere,
   };
   console.log('Ouverture réinscription unitaire pour:', etudiant.nom);
 };

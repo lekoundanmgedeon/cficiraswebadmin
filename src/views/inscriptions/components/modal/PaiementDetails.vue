@@ -1,29 +1,26 @@
 <template>
-  <div 
+  <div
     v-if="modelValue"
-    class="modal fade show d-block" 
-    tabindex="-1" 
-    style="background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px);"
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px)"
     @click.self="proposerFermeture"
   >
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-        
         <div class="modal-header bg-light border-0 py-3 px-4">
           <div class="d-flex align-items-center">
             <div class="avatar-initials me-3 bg-primary text-white fw-bold">
               {{ inscription?.nom?.[0] }}{{ inscription?.prenom?.[0] }}
             </div>
             <div>
-              <h5 class="modal-title fw-bold text-dark mb-0">
-                Dossier d'inscription
-              </h5>
+              <h5 class="modal-title fw-bold text-dark mb-0">Dossier d'inscription</h5>
               <small class="text-muted">Réf #{{ inscription?.id }}</small>
             </div>
           </div>
-          <button 
-            type="button" 
-            class="btn-close shadow-none" 
+          <button
+            type="button"
+            class="btn-close shadow-none"
             @click="proposerFermeture"
             :disabled="submitting"
           ></button>
@@ -35,11 +32,15 @@
               <h6 class="text-uppercase text-primary fw-bold small mb-3">Profil Étudiant</h6>
               <div class="mb-2">
                 <small class="text-muted d-block">Nom complet</small>
-                <span class="fw-semibold text-dark">{{ inscription?.prenom }} {{ inscription?.nom }}</span>
+                <span class="fw-semibold text-dark"
+                  >{{ inscription?.prenom }} {{ inscription?.nom }}</span
+                >
               </div>
               <div class="mb-2">
                 <small class="text-muted d-block">Matricule</small>
-                <span class="badge bg-soft-primary text-primary fw-bold">{{ inscription?.matricule }}</span>
+                <span class="badge bg-soft-primary text-primary fw-bold">{{
+                  inscription?.matricule
+                }}</span>
               </div>
             </div>
 
@@ -63,13 +64,17 @@
             <div class="col-4">
               <div class="bg-light p-3 rounded">
                 <small class="text-muted d-block mb-1">Frais Scolarité</small>
-                <span class="fw-bold text-dark">{{ formatMoney(inscription?.frais_scolarite) }}</span>
+                <span class="fw-bold text-dark">{{
+                  formatMoney(inscription?.frais_scolarite)
+                }}</span>
               </div>
             </div>
             <div class="col-4">
               <div class="bg-soft-success p-3 rounded">
                 <small class="text-success d-block mb-1">Montant Versé</small>
-                <span class="fw-bold text-success">+ {{ formatMoney(inscription?.montant_verse) }}</span>
+                <span class="fw-bold text-success"
+                  >+ {{ formatMoney(inscription?.montant_verse) }}</span
+                >
               </div>
             </div>
             <div class="col-4">
@@ -86,16 +91,19 @@
             <label class="form-label fw-semibold text-dark">
               Commentaire de décision <small class="text-muted">(Optionnel)</small>
             </label>
-            <textarea 
-              class="form-control border shadow-sm" 
-              rows="3" 
+            <textarea
+              class="form-control border shadow-sm"
+              rows="3"
               placeholder="Ex: Conditions de paiement acceptées, justificatif manquant..."
               v-model="commentaire"
               :disabled="submitting"
             ></textarea>
           </div>
-          
-          <div v-else class="bg-light p-3 rounded d-flex align-items-center justify-content-between">
+
+          <div
+            v-else
+            class="bg-light p-3 rounded d-flex align-items-center justify-content-between"
+          >
             <div>
               <small class="text-muted d-block">Statut actuel du dossier</small>
               <span class="fw-bold text-uppercase">{{ inscription?.statut }}</span>
@@ -107,28 +115,28 @@
         </div>
 
         <div class="modal-footer bg-light border-0 py-3 px-4">
-          <button 
-            type="button" 
-            class="btn btn-secondary border rounded-pill px-4" 
+          <button
+            type="button"
+            class="btn btn-secondary border rounded-pill px-4"
             @click="proposerFermeture"
             :disabled="submitting"
           >
             Fermer
           </button>
-          
+
           <div v-if="estEnAttente" class="d-flex gap-2">
-            <button 
-              type="button" 
-              class="btn btn-outline-danger rounded-pill px-4" 
+            <button
+              type="button"
+              class="btn btn-outline-danger rounded-pill px-4"
               @click="traiterDossier('REJETEE')"
               :disabled="submitting"
             >
               <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
               Rejeter
             </button>
-            <button 
-              type="button" 
-              class="btn btn-success rounded-pill px-4 shadow-sm" 
+            <button
+              type="button"
+              class="btn btn-success rounded-pill px-4 shadow-sm"
               @click="traiterDossier('VALIDEE')"
               :disabled="submitting"
             >
@@ -137,7 +145,6 @@
             </button>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -149,7 +156,7 @@ import { useInscriptionStore } from '@/stores/academiqueStore/inscriptionStore';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false }, // Harmonisation standard Vue 3 v-model
-  inscription: { type: Object, required: true }
+  inscription: { type: Object, required: true },
 });
 
 const emit = defineEmits(['update:modelValue']); // Déclaration de l'émetteur de mise à jour v-model
@@ -176,12 +183,12 @@ const traiterDossier = async (nouveauStatut) => {
   try {
     await store.changeStatus(props.inscription.id, {
       statut: nouveauStatut,
-      commentaire: commentaire.value.trim() || null
+      commentaire: commentaire.value.trim() || null,
     });
-    
+
     alert(`Le dossier a été mis à jour avec le statut : ${nouveauStatut}`);
     await store.fetchInscriptionsFinances();
-    
+
     proposerFermeture(); // Fermeture propre
   } catch (error) {
     console.error('Erreur lors du traitement du dossier:', error);

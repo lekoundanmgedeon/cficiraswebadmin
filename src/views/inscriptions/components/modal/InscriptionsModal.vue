@@ -1,53 +1,68 @@
 <template>
   <div class="modal fade" id="importInscriptionsModal" data-bs-backdrop="static" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable"> <!-- Largeur ajustée à modal-lg -->
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <!-- Largeur ajustée à modal-lg -->
       <div class="modal-content shadow-lg border-0">
-        
         <!-- HEADER -->
         <div class="modal-header bg-dark text-white py-3">
           <h5 class="modal-title d-flex align-items-center fs-6 fw-bold">
             <i class="bi bi-file-earmark-excel-fill text-success fs-5 me-2"></i>
             Importer des inscriptions par lot
           </h5>
-          <button 
-            type="button" 
-            class="btn-close btn-close-white" 
-            data-bs-dismiss="modal" 
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
             :disabled="inscriptionStore.loading"
           ></button>
         </div>
 
         <!-- BODY -->
         <div class="modal-body position-relative p-4">
-          
           <!-- OVERLAY DE CHARGEMENT -->
-          <div v-if="inscriptionStore.loading" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white bg-opacity-75" style="z-index: 10;">
-            <div class="spinner-border text-primary mb-2" style="width: 2.5rem; height: 2.5rem;" role="status"></div>
+          <div
+            v-if="inscriptionStore.loading"
+            class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white bg-opacity-75"
+            style="z-index: 10"
+          >
+            <div
+              class="spinner-border text-primary mb-2"
+              style="width: 2.5rem; height: 2.5rem"
+              role="status"
+            ></div>
             <h6 class="fw-bold text-dark small mb-1">Intégration des données en cours...</h6>
-            <p class="text-muted" style="font-size: 0.75rem;">Veuillez patienter, traitement de votre fichier.</p>
+            <p class="text-muted" style="font-size: 0.75rem">
+              Veuillez patienter, traitement de votre fichier.
+            </p>
           </div>
 
           <!-- ÉCRAN 1 : FORMULAIRE ET APERÇU -->
           <div v-if="!importReport">
-            
             <!-- PARAMÈTRES REQUIS -->
             <div class="row g-3 align-items-center mb-3 bg-light p-3 rounded border">
               <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary style-label mb-1">Année Académique Cible *</label>
+                <label class="form-label fw-bold text-secondary style-label mb-1"
+                  >Année Académique Cible *</label
+                >
                 <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar3 text-muted"></i></span>
-                  <input 
-                    v-model="codeAnnee" 
-                    type="text" 
-                    class="form-control border-start-0" 
+                  <span class="input-group-text bg-white border-end-0"
+                    ><i class="bi bi-calendar3 text-muted"></i
+                  ></span>
+                  <input
+                    v-model="codeAnnee"
+                    type="text"
+                    class="form-control border-start-0"
                     placeholder="Ex: 2025-2026"
                   />
                 </div>
               </div>
               <div class="col-md-6" v-if="props.classe">
-                <label class="form-label fw-bold text-secondary style-label mb-1">Classe détectée</label>
+                <label class="form-label fw-bold text-secondary style-label mb-1"
+                  >Classe détectée</label
+                >
                 <div class="form-control form-control-sm bg-white-50 text-muted text-truncate">
-                  <i class="bi bi-tags me-2"></i>{{ props.classe?.classe_nom || props.classe?.classe_code }}
+                  <i class="bi bi-tags me-2"></i
+                  >{{ props.classe?.classe_nom || props.classe?.classe_code }}
                 </div>
               </div>
             </div>
@@ -55,12 +70,16 @@
             <!-- ZONE DRAG & DROP -->
             <div
               class="dropzone border border-2 border-dashed rounded p-4 text-center position-relative transition-all"
-              :class="{ 'border-primary bg-primary bg-opacity-10': isDragging, 'bg-light': !isDragging && !selectedFile, 'bg-success bg-opacity-10 border-success': selectedFile }"
+              :class="{
+                'border-primary bg-primary bg-opacity-10': isDragging,
+                'bg-light': !isDragging && !selectedFile,
+                'bg-success bg-opacity-10 border-success': selectedFile,
+              }"
               @dragover.prevent="isDragging = true"
               @dragleave.prevent="isDragging = false"
               @drop.prevent="handleDrop"
               @click="$refs.fileInput.click()"
-              style="cursor: pointer;"
+              style="cursor: pointer"
             >
               <input
                 ref="fileInput"
@@ -73,17 +92,24 @@
               <div v-if="!selectedFile">
                 <i class="bi bi-cloud-arrow-up-fill fs-2 text-primary animate-bounce"></i>
                 <p class="fw-bold mt-2 mb-1 small">Glissez-déposez votre fichier ici</p>
-                <span class="text-muted" style="font-size: 0.75rem;">ou cliquez pour parcourir vos documents</span>
+                <span class="text-muted" style="font-size: 0.75rem"
+                  >ou cliquez pour parcourir vos documents</span
+                >
               </div>
               <div v-else>
                 <i class="bi bi-file-earmark-check-fill fs-2 text-success"></i>
                 <p class="fw-bold text-success mt-2 mb-1 small">Fichier prêt pour l'analyse</p>
-                <span class="badge bg-success px-2 py-1" style="font-size: 0.75rem;">{{ selectedFile.name }}</span>
+                <span class="badge bg-success px-2 py-1" style="font-size: 0.75rem">{{
+                  selectedFile.name
+                }}</span>
               </div>
             </div>
 
             <!-- ERREURS DE FICHIER LOCALES -->
-            <div v-if="hasErrors" class="alert alert-danger d-flex align-items-center mt-3 py-2 px-3 small shadow-sm">
+            <div
+              v-if="hasErrors"
+              class="alert alert-danger d-flex align-items-center mt-3 py-2 px-3 small shadow-sm"
+            >
               <i class="bi bi-exclamation-octagon-fill fs-6 me-2"></i>
               <div>Données non conformes détectées. Modifiez votre fichier avant de continuer.</div>
             </div>
@@ -92,13 +118,22 @@
             <div v-if="previewData.length" class="mt-4 animate-fade-in">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="fw-bold text-dark mb-0 style-title">
-                  <i class="bi bi-eye-fill me-1 text-muted"></i> Aperçu <small class="text-muted fw-normal">(5 lignes max)</small>
+                  <i class="bi bi-eye-fill me-1 text-muted"></i> Aperçu
+                  <small class="text-muted fw-normal">(5 lignes max)</small>
                 </h6>
-                <span class="badge bg-dark" style="font-size: 0.7rem;">Total fichier : {{ previewData.length }} ligne(s)</span>
+                <span class="badge bg-dark" style="font-size: 0.7rem"
+                  >Total fichier : {{ previewData.length }} ligne(s)</span
+                >
               </div>
               <div class="table-responsive border rounded shadow-sm">
-                <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.8rem;">
-                  <thead class="table-light text-uppercase font-monospace" style="font-size: 0.7rem;">
+                <table
+                  class="table table-sm table-hover align-middle mb-0"
+                  style="font-size: 0.8rem"
+                >
+                  <thead
+                    class="table-light text-uppercase font-monospace"
+                    style="font-size: 0.7rem"
+                  >
                     <tr>
                       <th class="ps-2">Étudiant</th>
                       <th>Sexe</th>
@@ -115,29 +150,64 @@
                       :class="{ 'table-danger bg-opacity-25': row._errors?.length }"
                     >
                       <td class="ps-2">
-                        <div class="fw-bold text-dark text-truncate" style="max-width: 140px;">{{ row.nom?.toUpperCase() }}</div>
-                        <div class="text-muted small text-truncate" style="max-width: 140px;">{{ row.prenom }}</div>
-                      </td>
-                      <td><span class="badge bg-light text-dark border">{{ row.sexe || 'N/A' }}</span></td>
-                      <td>
-                        <div style="font-size: 0.75rem;">{{ row.date_naissance ? formatDate(row.date_naissance) : '-' }}</div>
-                        <small class="text-muted text-truncate d-block" style="max-width: 100px;">{{ row.lieu_naissance || '-' }}</small>
-                      </td>
-                      <td>
-                        <div style="font-size: 0.75rem;"><i class="bi bi-telephone text-muted me-1"></i>{{ row.telephone || '-' }}</div>
-                        <div class="text-muted text-truncate" style="font-size: 0.75rem; max-width: 150px;"><i class="bi bi-envelope text-muted me-1"></i>{{ row.email || '-' }}</div>
+                        <div class="fw-bold text-dark text-truncate" style="max-width: 140px">
+                          {{ row.nom?.toUpperCase() }}
+                        </div>
+                        <div class="text-muted small text-truncate" style="max-width: 140px">
+                          {{ row.prenom }}
+                        </div>
                       </td>
                       <td>
-                        <div class="mb-1"><span class="badge bg-blue-subtle text-blue border border-blue-subtle">{{ row.code_filiere || '-' }}</span></div>
-                        <div><span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ row.code_classe || '-' }}</span></div>
+                        <span class="badge bg-light text-dark border">{{ row.sexe || 'N/A' }}</span>
+                      </td>
+                      <td>
+                        <div style="font-size: 0.75rem">
+                          {{ row.date_naissance ? formatDate(row.date_naissance) : '-' }}
+                        </div>
+                        <small class="text-muted text-truncate d-block" style="max-width: 100px">{{
+                          row.lieu_naissance || '-'
+                        }}</small>
+                      </td>
+                      <td>
+                        <div style="font-size: 0.75rem">
+                          <i class="bi bi-telephone text-muted me-1"></i>{{ row.telephone || '-' }}
+                        </div>
+                        <div
+                          class="text-muted text-truncate"
+                          style="font-size: 0.75rem; max-width: 150px"
+                        >
+                          <i class="bi bi-envelope text-muted me-1"></i>{{ row.email || '-' }}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="mb-1">
+                          <span class="badge bg-blue-subtle text-blue border border-blue-subtle">{{
+                            row.code_filiere || '-'
+                          }}</span>
+                        </div>
+                        <div>
+                          <span
+                            class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"
+                            >{{ row.code_classe || '-' }}</span
+                          >
+                        </div>
                       </td>
                       <td class="text-end pe-2">
-                        <span v-if="!row._errors?.length" class="badge bg-success-subtle text-success border border-success-subtle">
+                        <span
+                          v-if="!row._errors?.length"
+                          class="badge bg-success-subtle text-success border border-success-subtle"
+                        >
                           <i class="bi bi-check-circle"></i>
                         </span>
                         <div v-else>
-                          <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1">Incomplet</span>
-                          <div class="text-danger font-monospace text-start p-1 bg-white rounded border small-box shadow-sm" style="font-size: 0.65rem; max-width: 160px;">
+                          <span
+                            class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1"
+                            >Incomplet</span
+                          >
+                          <div
+                            class="text-danger font-monospace text-start p-1 bg-white rounded border small-box shadow-sm"
+                            style="font-size: 0.65rem; max-width: 160px"
+                          >
                             <div v-for="(e, i) in row._errors" :key="i">• {{ e }}</div>
                           </div>
                         </div>
@@ -167,26 +237,36 @@
               </div>
               <div class="col-4">
                 <div class="card bg-success-subtle border-success border text-center p-2">
-                  <div class="fw-bold text-success fs-5">{{ importReport.summary?.totalSucces }}</div>
+                  <div class="fw-bold text-success fs-5">
+                    {{ importReport.summary?.totalSucces }}
+                  </div>
                   <div class="text-success style-label fw-semibold">Créées</div>
                 </div>
               </div>
               <div class="col-4">
                 <div class="card bg-danger-subtle border-danger border text-center p-2">
-                  <div class="fw-bold text-danger fs-5">{{ importReport.summary?.totalEchecs }}</div>
+                  <div class="fw-bold text-danger fs-5">
+                    {{ importReport.summary?.totalEchecs }}
+                  </div>
                   <div class="text-danger style-label fw-semibold">Rejetées</div>
                 </div>
               </div>
             </div>
 
             <!-- LISTE DES ÉCHECS SUR LE SERVEUR SI EXISTANTS -->
-            <div v-if="importReport.details?.echecs?.length" class="border rounded p-3 bg-white shadow-sm">
+            <div
+              v-if="importReport.details?.echecs?.length"
+              class="border rounded p-3 bg-white shadow-sm"
+            >
               <h6 class="fw-bold text-danger mb-2 d-flex align-items-center style-title">
                 <i class="bi bi-exclamation-circle-fill me-2"></i>
                 Détails des rejets serveurs
               </h6>
-              <div class="table-responsive" style="max-height: 200px;">
-                <table class="table table-sm table-striped border align-middle mb-0" style="font-size: 0.75rem;">
+              <div class="table-responsive" style="max-height: 200px">
+                <table
+                  class="table table-sm table-striped border align-middle mb-0"
+                  style="font-size: 0.75rem"
+                >
                   <thead class="table-danger sticky-top">
                     <tr>
                       <th class="ps-2">Ligne Excel</th>
@@ -205,16 +285,25 @@
               </div>
             </div>
           </div>
-
         </div>
 
         <!-- FOOTER -->
         <div class="modal-footer bg-light py-2">
           <template v-if="!importReport">
-            <button class="btn btn-outline-secondary btn-xs me-auto" @click="downloadTemplate" :disabled="inscriptionStore.loading">
+            <button
+              class="btn btn-outline-secondary btn-xs me-auto"
+              @click="downloadTemplate"
+              :disabled="inscriptionStore.loading"
+            >
               <i class="bi bi-download me-1"></i> Modèle Excel
             </button>
-            <button class="btn btn-sm btn-light border" data-bs-dismiss="modal" :disabled="inscriptionStore.loading">Annuler</button>
+            <button
+              class="btn btn-sm btn-light border"
+              data-bs-dismiss="modal"
+              :disabled="inscriptionStore.loading"
+            >
+              Annuler
+            </button>
             <button
               class="btn btn-sm btn-primary px-3"
               :disabled="!selectedFile || hasErrors || !codeAnnee || inscriptionStore.loading"
@@ -231,7 +320,6 @@
             <button class="btn btn-sm btn-dark px-3" data-bs-dismiss="modal">Fermer</button>
           </template>
         </div>
-
       </div>
     </div>
   </div>
@@ -262,12 +350,12 @@ const validateRows = (rows) => {
     if (!row.email?.toString().trim()) errors.push('Email absent');
     if (!row.code_filiere?.toString().trim()) errors.push('Code filière absent');
     if (!row.code_classe?.toString().trim()) errors.push('Code classe absent');
-    
+
     if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email.toString().trim())) {
       errors.push('Format email erroné');
     }
     if (row.sexe && !['M', 'F'].includes(row.sexe.toString().toUpperCase().trim())) {
-      errors.push("Sexe invalide (M/F)");
+      errors.push('Sexe invalide (M/F)');
     }
     return { ...row, _errors: errors };
   });
@@ -305,12 +393,16 @@ const confirmImport = async () => {
 
   try {
     const report = await inscriptionStore.bulkImportInscriptions(formData);
-    importReport.value = report; 
+    importReport.value = report;
   } catch (error) {
     if (error.response?.data?.data) {
       importReport.value = {
-        summary: { totalTraite: previewData.value.length, totalSucces: 0, totalEchecs: previewData.value.length },
-        details: { echecs: error.response.data.data, succes: [] }
+        summary: {
+          totalTraite: previewData.value.length,
+          totalSucces: 0,
+          totalEchecs: previewData.value.length,
+        },
+        details: { echecs: error.response.data.data, succes: [] },
       };
     }
   }
@@ -332,13 +424,29 @@ const downloadTemplate = () => {
   const codeFiliere = codeClasse.split('-')[0] || 'GL';
 
   const headers = [
-    'nom', 'prenom', 'sexe', 'date_naissance', 'lieu_naissance',
-    'telephone', 'email', 'ville', 'code_filiere', 'code_classe'
+    'nom',
+    'prenom',
+    'sexe',
+    'date_naissance',
+    'lieu_naissance',
+    'telephone',
+    'email',
+    'ville',
+    'code_filiere',
+    'code_classe',
   ];
 
   const exempleRow = [
-    'DIOP', 'Awa', 'F', '2003-05-15', 'Dakar', 
-    '+221770000000', 'awa.diop@exemple.com', 'Dakar', codeFiliere, codeClasse
+    'DIOP',
+    'Awa',
+    'F',
+    '2003-05-15',
+    'Dakar',
+    '+221770000000',
+    'awa.diop@exemple.com',
+    'Dakar',
+    codeFiliere,
+    codeClasse,
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([headers, exempleRow]);
@@ -349,7 +457,9 @@ const downloadTemplate = () => {
 </script>
 
 <style scoped>
-.transition-all { transition: all 0.25s ease-in-out; }
+.transition-all {
+  transition: all 0.25s ease-in-out;
+}
 .dropzone:hover {
   border-color: #0d6efd !important;
   background-color: rgba(13, 110, 253, 0.01);
@@ -358,16 +468,33 @@ const downloadTemplate = () => {
   max-height: 80px;
   overflow-y: auto;
 }
-.bg-blue-subtle { background-color: #e7f1ff; }
-.text-blue { color: #0d6efd; }
-.style-label { font-size: 0.75rem;  }
-.style-title { font-size: 0.9rem; }
-.btn-xs { padding: 0.25rem 0.4rem; font-size: 0.75rem; border-radius: 0.2rem; }
+.bg-blue-subtle {
+  background-color: #e7f1ff;
+}
+.text-blue {
+  color: #0d6efd;
+}
+.style-label {
+  font-size: 0.75rem;
+}
+.style-title {
+  font-size: 0.9rem;
+}
+.btn-xs {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.75rem;
+  border-radius: 0.2rem;
+}
 .animate-bounce {
   animation: bounce 2s infinite;
 }
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 </style>
