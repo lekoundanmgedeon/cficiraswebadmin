@@ -60,8 +60,12 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(student, idx) in sortedStudents" :key="student.id">
-                      <td class="ps-4 font-monospace text-muted small">{{ idx + 1 }}</td>
+                    <!-- Modification : On boucle sur paginatedStudents au lieu de sortedStudents -->
+                    <tr v-for="(student, idx) in paginatedStudents" :key="student.id">
+                      <!-- La numérotation s'adapte à la page courante -->
+                      <td class="ps-4 font-monospace text-muted small">
+                        {{ startIndex + idx + 1 }}
+                      </td>
 
                       <td>
                         <span class="fw-bold text-primary font-monospace small">
@@ -115,7 +119,8 @@
               </div>
             </div>
 
-            <div class="modal-footer bg-light border-0 px-4 py-3">
+            <!-- Footer avec répartition flexible -->
+            <div class="modal-footer bg-light border-0 px-4 py-2 d-flex justify-content-between align-items-center">
               <button
                 type="button"
                 class="btn btn-secondary rounded-pill px-4"
@@ -123,6 +128,15 @@
               >
                 Fermer
               </button>
+
+              <!-- La pagination s'affiche uniquement si la liste dépasse 10 éléments -->
+              <div v-if="!loading && sortedStudents.length > itemsPerPage">
+                <AppPagination
+                  v-model="currentPage"
+                  v-model:itemsPerPage="itemsPerPage"
+                  :total-items="sortedStudents.length"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -132,28 +146,30 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import AppPagination from '@/components/shared/Pagination.vue'; // Ajustez le chemin si nécessaire
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   classe: { type: Object, default: () => ({}) },
-  students: { type: [Array, Object], default: () => [] }, // Accepte aussi l'objet de réponse brute
+  students: { type: [Array, Object], default: () => [] },
   loading: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
 
+/* ===================== États Pagination ===================== */
+const currentPage = ref(1);
+const itemsPerPage = ref(10); // Fixé à 10 éléments par page
+
 // Extraction ultra-sécurisée et réactive du tableau d'étudiants
 const extractedStudents = computed(() => {
-  // Cas 1 : Le parent a passé directement la réponse brute de l'API (qui contient .data)
   if (props.students && props.students.data && Array.isArray(props.students.data)) {
     return props.students.data;
   }
-  // Cas 2 : C'est déjà un tableau standard
   if (Array.isArray(props.students)) {
     return props.students;
   }
-  // Cas de secours
   return [];
 });
 
@@ -171,9 +187,21 @@ const sortedStudents = computed(() => {
   });
 });
 
+/* ===================== Découpage pour la Pagination ===================== */
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
+
+const paginatedStudents = computed(() => {
+  return sortedStudents.value.slice(startIndex.value, startIndex.value + itemsPerPage.value);
+});
+
 const fermerModal = () => {
   emit('update:modelValue', false);
 };
+
+// Remise à la première page à chaque ouverture du modal pour une classe
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) currentPage.value = 1;
+});
 </script>
 
 <style scoped>
