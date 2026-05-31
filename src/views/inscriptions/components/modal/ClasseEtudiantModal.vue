@@ -137,22 +137,36 @@ import { computed } from 'vue';
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   classe: { type: Object, default: () => ({}) },
-  students: { type: Array, default: () => [] },
+  students: { type: [Array, Object], default: () => [] }, // Accepte aussi l'objet de réponse brute
   loading: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
 
+// Extraction ultra-sécurisée et réactive du tableau d'étudiants
+const extractedStudents = computed(() => {
+  // Cas 1 : Le parent a passé directement la réponse brute de l'API (qui contient .data)
+  if (props.students && props.students.data && Array.isArray(props.students.data)) {
+    return props.students.data;
+  }
+  // Cas 2 : C'est déjà un tableau standard
+  if (Array.isArray(props.students)) {
+    return props.students;
+  }
+  // Cas de secours
+  return [];
+});
+
 // Tri des étudiants par ordre alphabétique (Nom puis Prénom)
 const sortedStudents = computed(() => {
-  const list = [...props.students];
+  const list = [...extractedStudents.value];
   return list.sort((a, b) => {
-    const nomA = (a.nom || a.etudiant_nom || '').toLowerCase();
-    const nomB = (b.nom || b.etudiant_nom || '').toLowerCase();
+    const nomA = (a.nom || '').toLowerCase().trim();
+    const nomB = (b.nom || '').toLowerCase().trim();
     if (nomA !== nomB) return nomA.localeCompare(nomB);
 
-    const prenomA = (a.prenom || a.etudiant_prenom || '').toLowerCase();
-    const prenomB = (b.prenom || b.etudiant_prenom || '').toLowerCase();
+    const prenomA = (a.prenom || '').toLowerCase().trim();
+    const prenomB = (b.prenom || '').toLowerCase().trim();
     return prenomA.localeCompare(prenomB);
   });
 });
