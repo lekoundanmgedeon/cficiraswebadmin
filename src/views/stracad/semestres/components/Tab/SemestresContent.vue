@@ -82,6 +82,7 @@
                     :showAdd="false"
                     @edit="editSemestre"
                     @delete="confirmDelete"
+                    @toggle-status="toggleSemestreStatus"
                   />
                 </td>
               </tr>
@@ -141,9 +142,11 @@ const editSemestre = (semestre) => {
 };
 
 const confirmDelete = (semestre) => {
-  if (confirm(`Voulez-vous vraiment supprimer le semestre ${semestre.code} ?`)) {
-    semestreStore.removeSemestre(semestre.id);
-  }
+  semestreStore.removeSemestre(semestre.id);
+};
+
+const toggleSemestreStatus = async (semestre) => {
+  await semestreStore.changeStatus(semestre.id, { est_actif: !semestre.actif });
 };
 
 const formatDate = (dateStr) => {
