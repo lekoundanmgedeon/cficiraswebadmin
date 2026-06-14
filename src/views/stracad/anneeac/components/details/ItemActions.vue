@@ -28,6 +28,12 @@
           <i class="mdi mdi-pencil-outline me-2"></i> Modifier
         </button>
       </li>
+      <li>
+        <button class="dropdown-item" @click="openToggleModal">
+          <i class="mdi mdi-toggle-switch me-2"></i>
+          {{ item?.est_active ? 'Désactiver' : 'Activer' }}
+        </button>
+      </li>
       <li class="dropdown-divider"></li>
       <li>
         <button class="dropdown-item text-danger" @click="openDeleteModal">
@@ -36,6 +42,38 @@
       </li>
     </ul>
   </div>
+
+  <!-- Modal de confirmation d'activation / désactivation -->
+  <teleport to="body">
+    <div
+      v-if="isToggleVisible"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+      style="background-color: rgba(0, 0, 0, 0.5)"
+    >
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg">
+          <div class="modal-header" :class="item?.est_active ? 'bg-warning text-dark' : 'bg-success text-white'">
+            <h5 class="modal-title">{{ item?.est_active ? 'Désactivation' : 'Activation' }}</h5>
+            <button type="button" class="btn-close" :class="item?.est_active ? '' : 'btn-close-white'" @click="closeToggleModal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-0">
+              Voulez-vous vraiment {{ item?.est_active ? 'désactiver' : 'activer' }}
+              <strong>{{ itemLabel }}</strong> ?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeToggleModal">Annuler</button>
+            <button class="btn" :class="item?.est_active ? 'btn-warning' : 'btn-success'" @click="confirmToggleStatus">
+              {{ item?.est_active ? 'Désactiver' : 'Activer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </teleport>
 
   <!-- Modal de confirmation de suppression -->
   <teleport to="body">
@@ -117,10 +155,11 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete']);
+const emit = defineEmits(['delete', 'toggle-status']);
 
 const isDetailsVisible = ref(false);
 const isDeleteVisible = ref(false);
+const isToggleVisible = ref(false);
 
 const closeDetails = () => {
   isDetailsVisible.value = false;
@@ -139,9 +178,22 @@ const closeDeleteModal = () => {
   isDeleteVisible.value = false;
 };
 
+const openToggleModal = () => {
+  isToggleVisible.value = true;
+};
+
+const closeToggleModal = () => {
+  isToggleVisible.value = false;
+};
+
 const confirmDelete = () => {
   emit('delete', props.item);
   closeDeleteModal();
+};
+
+const confirmToggleStatus = () => {
+  emit('toggle-status', props.item);
+  closeToggleModal();
 };
 
 // Helpers

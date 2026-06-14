@@ -53,6 +53,7 @@
                 :showAdd="false"
                 @edit="editAnnee"
                 @delete="confirmDelete"
+                @toggle-status="toggleAnneeStatus"
               />
             </td>
           </tr>
@@ -124,6 +125,11 @@ const saveAnnee = async () => {
   } else {
     await anneeStore.addAnneeAcademique(currentAnnee.value);
   }
+};
+
+// Activation / Désactivation
+const toggleAnneeStatus = async (annee) => {
+  await anneeStore.activateAnnee(annee.id);
 };
 
 // Suppression
