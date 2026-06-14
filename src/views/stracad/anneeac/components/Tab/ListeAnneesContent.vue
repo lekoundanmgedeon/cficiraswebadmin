@@ -128,8 +128,6 @@ const saveAnnee = async () => {
 
 // Suppression
 const confirmDelete = async (annee) => {
-  if (confirm(`Voulez-vous vraiment supprimer l'année ${annee.code} ?`)) {
-    await anneeStore.removeAnneeAcademique(annee.id);
-  }
+  await anneeStore.removeAnneeAcademique(annee.id);
 };
 </script>

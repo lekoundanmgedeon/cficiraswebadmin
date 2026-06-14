@@ -30,12 +30,43 @@
       </li>
       <li class="dropdown-divider"></li>
       <li>
-        <button class="dropdown-item text-danger" @click="$emit('delete', item)">
+        <button class="dropdown-item text-danger" @click="openDeleteModal">
           <i class="mdi mdi-delete-outline me-2"></i> Supprimer
         </button>
       </li>
     </ul>
   </div>
+
+  <!-- Modal de confirmation de suppression -->
+  <teleport to="body">
+    <div
+      v-if="isDeleteVisible"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+      style="background-color: rgba(0, 0, 0, 0.5)"
+    >
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Confirmation de suppression</h5>
+            <button type="button" class="btn-close btn-close-white" @click="closeDeleteModal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-0">
+              Voulez-vous vraiment supprimer
+              <strong>{{ itemLabel }}</strong> ?
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeDeleteModal">Annuler</button>
+            <button class="btn btn-danger" @click="confirmDelete">Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </teleport>
+
   <!-- Modal pour les détails -->
   <teleport to="body">
     <div
@@ -72,9 +103,9 @@
   </teleport>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
-defineProps({
+const props = defineProps({
   item: Object,
   showAdd: {
     type: Boolean,
@@ -86,10 +117,31 @@ defineProps({
   },
 });
 
+const emit = defineEmits(['delete']);
+
 const isDetailsVisible = ref(false);
+const isDeleteVisible = ref(false);
 
 const closeDetails = () => {
   isDetailsVisible.value = false;
+};
+
+const itemLabel = computed(() => {
+  if (!props.item) return 'cet élément';
+  return props.item.code || props.item.designation || props.item.nom || 'cet élément';
+});
+
+const openDeleteModal = () => {
+  isDeleteVisible.value = true;
+};
+
+const closeDeleteModal = () => {
+  isDeleteVisible.value = false;
+};
+
+const confirmDelete = () => {
+  emit('delete', props.item);
+  closeDeleteModal();
 };
 
 // Helpers
