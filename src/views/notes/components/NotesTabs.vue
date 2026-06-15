@@ -55,7 +55,7 @@
         <VueOverview />
       </div>
       <div
-        class="tab-pane fade show active"
+        class="tab-pane fade"
         id="semestre1"
         role="tabpanel"
         aria-labelledby="semestre1-tab"
