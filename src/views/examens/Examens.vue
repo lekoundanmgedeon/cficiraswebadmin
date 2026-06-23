@@ -1,6 +1,5 @@
 <script setup>
 import Planification from './planification/Planification.vue';
-import Salles from './salles/SalleExamen.vue';
 import Calendrier from './calendrier/Calendrier.vue';
 </script>
 
@@ -54,7 +53,6 @@ import Calendrier from './calendrier/Calendrier.vue';
     </div>
     <Planification />
     <Calendrier />
-    <Salles />
   </div>
 </template>
 
