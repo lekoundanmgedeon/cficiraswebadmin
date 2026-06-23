@@ -4,8 +4,10 @@
 # IMPORTANT : remplacer les URLs backend ci-dessous par les URLs Railway réelles
 # du cfibackend avant le commit.
 
-previews:
-  generation: automatic   # Active les PR previews (remplace pullRequestPreviewsEnabled)
+# Note : PR previews désactivées (réservées aux workspaces payants).
+# Pour les activer plus tard, ajouter :
+#   previews:
+#     generation: automatic
 
 services:
   # -------------------------------------------------------------------
