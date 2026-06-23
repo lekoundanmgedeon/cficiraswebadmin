@@ -1,40 +1,137 @@
+# Render Blueprint — CFI CIRAS Web Admin (Vue 3 + Vite)
+# Doc: https://render.com/docs/blueprint-spec
+#
+# Trois environnements :
+#   - isoprod (branche develop) : miroir de la prod, pointe vers le backend Railway isoprod
+#   - prod    (branche main)    : production
+#   - preview                   : PR previews automatiques sur develop
+#
+# IMPORTANT : remplacer les URLs backend ci-dessous par les URLs Railway réelles
+# une fois le déploiement Railway du cfibackend confirmé.
+
 services:
+  # -------------------------------------------------------------------
+  # ISOPROD — démo / staging miroir de la prod (branche develop)
+  # -------------------------------------------------------------------
   - type: static_site
-    name: cficiraswebadmin-demo
+    name: cficiraswebadmin-isoprod
     branch: develop
-    buildCommand: npm install && npm run build
-    publishPath: dist
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
     autoDeploy: true
-    redirects:
-      - source: "/*"
-        destination: "/index.html"
-        status: 200
+    pullRequestPreviewsEnabled: true
+
+    # SPA fallback — toutes les routes côté client → index.html (HTTP 200, pas 301)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    headers:
+      # Security headers (appliqués partout)
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=63072000; includeSubDomains; preload
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), interest-cohort=()
+      # CSP — adapter `connect-src` à votre domaine Railway exact
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://cfibackend-isoprod.up.railway.app https://*.up.railway.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+      # Cache long pour les assets fingerprintés produits par Vite (/assets/*)
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+      # Pas de cache sur index.html pour pousser les MAJ immédiatement
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+
     envVars:
+      - key: NODE_VERSION
+        value: 20.17.0
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"   # On a besoin des devDeps pour le build Vite
+      - key: NODE_ENV
+        value: production
       - key: VITE_API_URL
-        value: https://demo-api.example.com
+        value: https://cfibackend-isoprod.up.railway.app
       - key: VITE_APP_NAME
-        value: CFI RIAS Web Admin Demo
+        value: CFI CIRAS Web Admin — ISOPROD
       - key: VITE_DEBUG
         value: "true"
       - key: VITE_BASE_URL
         value: /
-      - key: NODE_ENV
-        value: production
+      - key: VITE_ENV
+        value: isoprod
 
+  # -------------------------------------------------------------------
+  # PROD — production (branche main)
+  # -------------------------------------------------------------------
   - type: static_site
     name: cficiraswebadmin-prod
     branch: main
-    buildCommand: npm install && npm run build
-    publishPath: dist
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
     autoDeploy: true
+
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    headers:
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=63072000; includeSubDomains; preload
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), interest-cohort=()
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://cfibackend.up.railway.app https://*.up.railway.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+
     envVars:
+      - key: NODE_VERSION
+        value: 20.17.0
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
+      - key: NODE_ENV
+        value: production
       - key: VITE_API_URL
-        value: https://api.cficiraswebadmin.example.com
+        value: https://cfibackend.up.railway.app
       - key: VITE_APP_NAME
-        value: CFI RIAS Web Admin
+        value: CFI CIRAS Web Admin
       - key: VITE_DEBUG
         value: "false"
       - key: VITE_BASE_URL
         value: /
-      - key: NODE_ENV
+      - key: VITE_ENV
         value: production

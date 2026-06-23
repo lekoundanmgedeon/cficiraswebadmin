@@ -3,12 +3,19 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.17.0 <21",
+    "npm": ">=10"
+  },
   "scripts": {
     "dev": "vite",
     "format": "prettier --write .",
     "lint-staged": "lint-staged",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:isoprod": "vite build --mode isoprod",
+    "build:prod": "vite build --mode production",
+    "preview": "vite preview",
+    "preview:isoprod": "vite preview --mode isoprod"
   },
   "dependencies": {
     "@bhplugin/vue3-datatable": "^2.0.2",
