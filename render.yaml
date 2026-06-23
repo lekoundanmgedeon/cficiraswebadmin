@@ -1,0 +1,40 @@
+services:
+  - type: static_site
+    name: cficiraswebadmin-demo
+    branch: develop
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    autoDeploy: true
+    redirects:
+      - source: "/*"
+        destination: "/index.html"
+        status: 200
+    envVars:
+      - key: VITE_API_URL
+        value: https://demo-api.example.com
+      - key: VITE_APP_NAME
+        value: CFI RIAS Web Admin Demo
+      - key: VITE_DEBUG
+        value: "true"
+      - key: VITE_BASE_URL
+        value: /
+      - key: NODE_ENV
+        value: production
+
+  - type: static_site
+    name: cficiraswebadmin-prod
+    branch: main
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.cficiraswebadmin.example.com
+      - key: VITE_APP_NAME
+        value: CFI RIAS Web Admin
+      - key: VITE_DEBUG
+        value: "false"
+      - key: VITE_BASE_URL
+        value: /
+      - key: NODE_ENV
+        value: production
