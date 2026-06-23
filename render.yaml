@@ -1,34 +1,33 @@
 # Render Blueprint — CFI CIRAS Web Admin (Vue 3 + Vite)
-# Doc: https://render.com/docs/blueprint-spec
-#
-# Trois environnements :
-#   - isoprod (branche develop) : miroir de la prod, pointe vers le backend Railway isoprod
-#   - prod    (branche main)    : production
-#   - preview                   : PR previews automatiques sur develop
+# Spec: https://render.com/docs/blueprint-spec
 #
 # IMPORTANT : remplacer les URLs backend ci-dessous par les URLs Railway réelles
-# une fois le déploiement Railway du cfibackend confirmé.
+# du cfibackend avant le commit.
+
+# Note : PR previews désactivées (réservées aux workspaces payants).
+# Pour les activer plus tard, ajouter :
+#   previews:
+#     generation: automatic
 
 services:
   # -------------------------------------------------------------------
   # ISOPROD — démo / staging miroir de la prod (branche develop)
   # -------------------------------------------------------------------
-  - type: static_site
+  - type: web
+    runtime: static
     name: cficiraswebadmin-isoprod
     branch: develop
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
-    autoDeploy: true
-    pullRequestPreviewsEnabled: true
+    autoDeployTrigger: commit
 
-    # SPA fallback — toutes les routes côté client → index.html (HTTP 200, pas 301)
+    # SPA fallback — toutes les routes côté client → index.html
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
 
     headers:
-      # Security headers (appliqués partout)
       - path: /*
         name: Strict-Transport-Security
         value: max-age=63072000; includeSubDomains; preload
@@ -44,17 +43,12 @@ services:
       - path: /*
         name: Permissions-Policy
         value: camera=(), microphone=(), geolocation=(), interest-cohort=()
-      # CSP — adapter `connect-src` à votre domaine Railway exact
       - path: /*
         name: Content-Security-Policy
         value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://cfibackend-isoprod.up.railway.app https://*.up.railway.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-
-      # Cache long pour les assets fingerprintés produits par Vite (/assets/*)
       - path: /assets/*
         name: Cache-Control
         value: public, max-age=31536000, immutable
-
-      # Pas de cache sur index.html pour pousser les MAJ immédiatement
       - path: /index.html
         name: Cache-Control
         value: no-cache, no-store, must-revalidate
@@ -63,7 +57,7 @@ services:
       - key: NODE_VERSION
         value: 20.17.0
       - key: NPM_CONFIG_PRODUCTION
-        value: "false"   # On a besoin des devDeps pour le build Vite
+        value: "false"
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
@@ -80,12 +74,13 @@ services:
   # -------------------------------------------------------------------
   # PROD — production (branche main)
   # -------------------------------------------------------------------
-  - type: static_site
+  - type: web
+    runtime: static
     name: cficiraswebadmin-prod
     branch: main
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
-    autoDeploy: true
+    autoDeployTrigger: commit
 
     routes:
       - type: rewrite
