@@ -17,4 +17,15 @@ export const uploadPhotoEtudiant = (etudiantId, file) => {
   });
 };
 
+export const getEtudiantById = (id) => etudiantService.get(`/etudiants/${id}`);
+
+export const getEtudiantsByClasseFiliereAnnee = (classeId, filiereId, anneeId) =>
+  etudiantService.get('/etudiants', {
+    params: {
+      classeId,
+      filiereId,
+      anneeId,
+    },
+  });
+
 export const getParcoursAcademique = (id) => etudiantService.get(`/etudiants/${id}/parcours`);
