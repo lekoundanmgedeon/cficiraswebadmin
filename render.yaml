@@ -61,7 +61,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://cfibackend-isoprod.up.railway.app
+        value: https://cfibackend-production.up.railway.app
       - key: VITE_APP_NAME
         value: CFI CIRAS Web Admin — ISOPROD
       - key: VITE_DEBUG
@@ -121,7 +121,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://cfibackend.up.railway.app
+        value: https://cfibackend-production.up.railway.app
       - key: VITE_APP_NAME
         value: CFI CIRAS Web Admin
       - key: VITE_DEBUG
