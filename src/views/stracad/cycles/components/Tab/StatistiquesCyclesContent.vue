@@ -1,74 +1,104 @@
 <template>
-  <div>
-    <div class="col-12 mb-2">
+  <div class="row g-4">
+    <div class="col-12">
       <h4>Statistiques des cycles</h4>
-      <p class="text-muted">
+      <p class="text-muted mb-0">
         Indicateurs globaux de distribution des étudiants par cycle académique.
       </p>
     </div>
 
-    <div class="table-responsive card border-light shadow-sm">
-      <table class="table align-middle mb-0 table-hover">
-        <thead>
-          <tr>
-            <th class="ps-4">Code / Cycle</th>
-            <th>Diplôme</th>
-            <th class="text-center">Effectif Étudiants</th>
-            <th class="text-end pe-4">Statut</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading">
-            <td colspan="4" class="text-center py-5">
-              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-              <span class="text-muted">Chargement des statistiques...</span>
-            </td>
-          </tr>
+    <div class="col-12 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+      <div class="col-sm-6 col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            class="form-control border-start-0 ps-0" 
+            placeholder="Rechercher un cycle ou diplôme..."
+          />
+        </div>
+      </div>
 
-          <tr v-else-if="filteredCycles.length === 0">
-            <td colspan="4" class="text-center py-5">
-              <div class="py-3">
-                <i
-                  class="mdi mdi-account-off-outline text-muted"
-                  style="font-size: 3rem; opacity: 0.3"
-                ></i>
-                <p class="text-muted mt-2">Aucune donnée statistique disponible</p>
-              </div>
-            </td>
-          </tr>
+      <div class="d-flex align-items-center bg-light border rounded px-3 py-2">
+        <div class="bg-primary-subtle text-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+          <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        <div>
+          <small class="text-muted d-block text-uppercase fw-semibold style-small">Total Étudiants</small>
+          <span class="fw-bold text-dark">{{ formatNumber(totalEtudiants) }}</span>
+        </div>
+      </div>
+    </div>
 
-          <tr v-else v-for="cycle in filteredCycles" :key="cycle.cycle_id">
-            <td class="ps-4">
-              <div class="d-flex align-items-center">
-                <span class="badge bg-primary-subtle text-primary me-3 px-2 py-1 fw-bold">
-                  {{ cycle.cycle_code }}
+    <div class="col-12">
+      <div class="table-responsive border rounded bg-white">
+        <table class="table align-middle mb-0 table-hover">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="py-3 ps-4" style="min-width: 180px;">Code / Cycle</th>
+              <th scope="col" class="py-3">Diplôme visé</th>
+              <th scope="col" class="py-3 text-center" style="width: 180px;">Effectif Étudiants</th>
+              <th scope="col" class="py-3 text-end pe-4" style="width: 120px;">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="4" class="text-center py-5">
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  <span class="text-muted small">Chargement des statistiques...</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr v-else-if="filteredCycles.length === 0">
+              <td colspan="4" class="text-center py-5">
+                <div class="py-3">
+                  <i class="bi bi-person-x text-muted opacity-50" style="font-size: 2.5rem;"></i>
+                  <p class="text-muted small mt-2 mb-0">Aucune donnée statistique disponible</p>
+                </div>
+              </td>
+            </tr>
+
+            <tr v-else v-for="cycle in filteredCycles" :key="cycle.cycle_id">
+              <td class="ps-4">
+                <div class="d-flex align-items-center">
+                  <span class="badge bg-primary-subtle text-primary me-3 px-2 py-1.5 fw-bold font-monospace">
+                    {{ cycle.cycle_code }}
+                  </span>
+                  <span class="fw-semibold text-dark">{{ cycle.cycle_nom || 'Cycle Académique' }}</span>
+                </div>
+              </td>
+
+              <td>
+                <span class="text-secondary small fw-medium">{{ cycle.diplome || 'N/A' }}</span>
+              </td>
+
+              <td class="text-center">
+                <span class="badge rounded-pill bg-light text-dark border px-3 py-1.5 fw-semibold">
+                  {{ formatNumber(cycle.nb_etudiants) }}
                 </span>
-                <span class="fw-bold text-dark">{{ cycle.cycle_code }}</span>
-              </div>
-            </td>
-            <td>
-              <span class="text-muted small fw-medium">{{ cycle.diplome || 'N/A' }}</span>
-            </td>
-            <td class="text-center">
-              <span class="badge rounded-pill bg-light text-dark border px-3 fw-semibold">
-                {{ formatNumber(cycle.nb_etudiants) }}
-              </span>
-            </td>
-            <td class="text-end pe-4">
-              <span
-                :class="
-                  Number(cycle.nb_etudiants) > 0
-                    ? 'badge bg-success-subtle text-success'
-                    : 'badge bg-secondary-subtle text-secondary'
-                "
-                class="px-2 py-1 rounded-pill small"
-              >
-                {{ Number(cycle.nb_etudiants) > 0 ? 'Actif' : 'Inactif' }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+
+              <td class="text-end pe-4">
+                <span
+                  :class="
+                    Number(cycle.nb_etudiants) > 0
+                      ? 'bg-success-subtle text-success'
+                      : 'bg-secondary-subtle text-secondary'
+                  "
+                  class="badge px-2.5 py-1.5 rounded-pill small fw-semibold"
+                >
+                  {{ Number(cycle.nb_etudiants) > 0 ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -96,8 +126,9 @@ const filteredCycles = computed(() => {
   return cyclesRaw.value.filter((cycle) => {
     const search = searchQuery.value.toLowerCase();
     return (
-      cycle.cycle_code.toLowerCase().includes(search) ||
-      cycle.diplome.toLowerCase().includes(search)
+      (cycle.cycle_code?.toLowerCase().includes(search) || false) ||
+      (cycle.diplome?.toLowerCase().includes(search) || false) ||
+      (cycle.cycle_nom?.toLowerCase().includes(search) || false)
     );
   });
 });
@@ -115,6 +146,19 @@ const formatNumber = (val) => {
 </script>
 
 <style scoped>
+.style-small {
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+}
+
+.table th {
+  font-size: 0.82rem;
+  letter-spacing: 0.3px;
+  font-weight: 700;
+  color: #5c677d;
+}
+
+/* Conservation et nettoyage de tes styles stat-cards globaux si réutilisés ailleurs */
 .stat-card {
   background: #fff;
   border-radius: 12px;
@@ -129,106 +173,5 @@ const formatNumber = (val) => {
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-icon i {
-  font-size: 28px;
-}
-
-.stat-content h3 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.stat-content p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 0.9rem;
-}
-
-.bg-primary-soft {
-  background-color: rgba(0, 123, 255, 0.1);
-}
-.bg-success-soft {
-  background-color: rgba(40, 167, 69, 0.1);
-}
-.bg-info-soft {
-  background-color: rgba(23, 162, 184, 0.1);
-}
-.bg-warning-soft {
-  background-color: rgba(255, 193, 7, 0.1);
-}
-
-.cycle-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 123, 255, 0.1);
-}
-
-.cycle-icon i {
-  font-size: 20px;
-}
-
-/* Table Style Uniforme */
-.custom-table-robust thead th {
-  background-color: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 18px 12px;
-  border-bottom: 2px solid #eef2f7;
-}
-
-.custom-table-robust tbody td {
-  padding: 16px 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-/* Tags et Badges */
-.code-tag-blue {
-  background: #0ea5e9;
-  color: white;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  font-weight: 800;
-  font-size: 0.8rem;
-}
-
-.status-pill-robust {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
-  text-transform: uppercase;
-}
-
-.status-active {
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #d1fae5;
-}
-
-.x-small {
-  font-size: 0.7rem;
 }
 </style>
