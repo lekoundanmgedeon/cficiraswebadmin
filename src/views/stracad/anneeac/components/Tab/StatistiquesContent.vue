@@ -70,12 +70,12 @@
 
               <div class="btn-group">
                 <button
+                  class="btn btn-outline-dark dropdown-toggle"
                   type="button"
-                  class="btn btn-sm btn-outline-primary border dropdown-toggle"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  <i class="mdi mdi-file-export me-1"></i> Exporter
+                  Exporter
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
@@ -180,17 +180,25 @@ import { exportPDF } from '@/utils/exportPDF';
 const anneeStore = useAnneeStore();
 const messageStore = useNotifier();
 
-// Récupération des stats depuis le store
+// Récupération des stats et de l'année active depuis le store
 const stats = computed(() => anneeStore.stats || {});
 const filieres = computed(() => stats.value.filieres ?? []);
+const currentAnnee = computed(() => anneeStore.anneeAcademique);
 
-// Charger les stats au montage (exemple avec ID courant)
+// Charger l'année active puis ses statistiques au montage
 onMounted(async () => {
   try {
-    // Ici tu peux passer l'ID de l'année courante ou sélectionnée
-    await anneeStore.fetchAnneeStats('ae71e0d4-88d2-43b8-aa68-c79fd925d2dd');
+    // 1. Récupérer automatiquement l'année active/courante
+    await anneeStore.fetchCurrentAnnee();
+
+    // 2. Vérifier si l'année a bien été récupérée avant de charger ses stats
+    if (currentAnnee.value && currentAnnee.value.id) {
+      await anneeStore.fetchAnneeStats(currentAnnee.value.id);
+    } else {
+      messageStore.error('Aucune année académique active n’a été trouvée.');
+    }
   } catch (error) {
-    messageStore.error('Erreur lors du chargement des statistiques.');
+    messageStore.error('Erreur lors du chargement des données académiques.');
   }
 });
 
@@ -262,10 +270,15 @@ const exportFilieresPDF = () => {
   });
 };
 
-// Export du rapport
+// Export du rapport en utilisant aussi l'ID dynamique de l'année active
 const exportRapport = async () => {
+  if (!currentAnnee.value || !currentAnnee.value.id) {
+    messageStore.error('Impossible d’exporter : aucune année active détectée.');
+    return;
+  }
+
   try {
-    await anneeStore.exportAnnee('ae71e0d4-88d2-43b8-aa68-c79fd925d2dd');
+    await anneeStore.exportAnnee(currentAnnee.value.id);
   } catch (error) {
     messageStore.error('Erreur lors de l’exportation du rapport.');
   }

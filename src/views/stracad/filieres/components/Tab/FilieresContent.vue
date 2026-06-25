@@ -1,7 +1,32 @@
 <template>
   <div class="row">
-    <h4>Liste des filières</h4>
-    <p class="text-muted">Listes de tout les filière ajoutées jusque là.</p>
+    <div class="col-12 mb-3 d-flex justify-content-between align-items-center">
+      <div>
+        <h4>Liste des filières</h4>
+        <p class="text-muted">Listes de tout les filière ajoutées jusque là.</p>
+      </div>
+      <div class="btn-group">
+        <button
+          class="btn btn-outline-dark dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        > Exporter
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <button class="dropdown-item" type="button" @click="exportFilieresExcel">
+              <i class="mdi mdi-file-excel-box me-2"></i> Excel
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item" type="button" @click="exportFilieresPDF">
+              <i class="mdi mdi-file-pdf-box me-2"></i> PDF
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <div class="table-responsive">
       <table class="table table-striped">
@@ -56,6 +81,9 @@ import { computed, onMounted } from 'vue';
 import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
 import FilieresItemActions from '../details/FilieresItemActions.vue';
+import logoCFI from '@/assets/logoBase64';
+import { exportExcel } from '@/utils/exportExcel';
+import { exportPDF } from '@/utils/exportPDF';
 
 // Stores
 const filiereStore = useFiliereStore();
@@ -81,5 +109,52 @@ const editFiliere = (filiere) => {
 
 const deleteFiliere = async (filiere) => {
   await filiereStore.removeFiliere(filiere.id);
+};
+
+const getExportFilieresData = () =>
+  filieres.value.map((filiere, index) => ({
+    Rang: index + 1,
+    Code: filiere.code,
+    Désignation: filiere.designation,
+    Cycle: filiere.cycle_nom || '-',
+    'Nombre de classes': filiere.nb_classes ?? 0,
+  }));
+
+const exportFilieresExcel = () => {
+  if (!filieres.value.length) {
+    messageStore.addMessage('Aucune filière disponible pour l’export.');
+    return;
+  }
+
+  exportExcel({
+    data: getExportFilieresData(),
+    sheetName: 'Filières',
+    fileName: `filieres_${new Date().getTime()}.xlsx`,
+  });
+};
+
+const exportFilieresPDF = () => {
+  if (!filieres.value.length) {
+    messageStore.addMessage('Aucune filière disponible pour l’export.');
+    return;
+  }
+
+  exportPDF({
+    logoBase64: logoCFI,
+    title: 'Liste des filières',
+    filters: [
+      { label: 'Total filières', value: filieres.value.length },
+      { label: 'Date', value: new Date().toLocaleDateString('fr-FR') },
+    ],
+    columns: ['Rang', 'Code', 'Désignation', 'Cycle', 'Nombre de classes'],
+    rows: filieres.value.map((filiere, index) => [
+      index + 1,
+      filiere.code,
+      filiere.designation,
+      filiere.cycle_nom || '-',
+      filiere.nb_classes ?? 0,
+    ]),
+    fileName: `filieres_${new Date().getTime()}.pdf`,
+  });
 };
 </script>

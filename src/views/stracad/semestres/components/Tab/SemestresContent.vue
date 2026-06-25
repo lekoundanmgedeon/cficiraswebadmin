@@ -1,10 +1,33 @@
 <template>
   <div class="row">
-    <div class="col-12 mb-3">
-      <h4>Liste des semestres</h4>
-      <p class="text-muted small">
-        Suivi et gestion de tous les semestres académiques enregistrés dans l'établissement.
-      </p>
+    <div class="col-12 mb-3 d-flex justify-content-between align-items-center">
+      <div>
+        <h4>Liste des semestres</h4>
+        <p class="text-muted small">
+          Suivi et gestion de tous les semestres académiques enregistrés dans l'établissement.
+        </p>
+      </div>
+      <div class="btn-group">
+        <button
+          class="btn btn-outline-dark dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        > Exporter
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <button class="dropdown-item" type="button" @click="exportSemestresExcel">
+              <i class="mdi mdi-file-excel-box me-2"></i> Excel
+            </button>
+          </li>
+          <li>
+            <button class="dropdown-item" type="button" @click="exportSemestresPDF">
+              <i class="mdi mdi-file-pdf-box me-2"></i> PDF
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="col-12">
@@ -110,6 +133,9 @@
 import { computed, onMounted } from 'vue';
 import ItemActions from '../details/ItemActions.vue';
 import { useSemestreStore } from '@/stores/academiqueStore/semestreStore';
+import logoCFI from '@/assets/logoBase64';
+import { exportExcel } from '@/utils/exportExcel';
+import { exportPDF } from '@/utils/exportPDF';
 
 /* =====================
    Store
@@ -147,6 +173,53 @@ const confirmDelete = (semestre) => {
 
 const toggleSemestreStatus = async (semestre) => {
   await semestreStore.changeStatus(semestre.id, { est_actif: !semestre.actif });
+};
+
+const getExportSemestresData = () =>
+  semestres.value.map((semestre, index) => ({
+    Rang: index + 1,
+    Code: semestre.code,
+    'Année académique': semestre.annee,
+    'Date début': formatDate(semestre.dateDebut),
+    'Date fin': formatDate(semestre.dateFin),
+    Statut: semestre.actif ? 'Activé' : 'Inactivé',
+  }));
+
+const exportSemestresExcel = () => {
+  if (!semestres.value.length) {
+    return;
+  }
+
+  exportExcel({
+    data: getExportSemestresData(),
+    sheetName: 'Semestres',
+    fileName: `semestres_${new Date().getTime()}.xlsx`,
+  });
+};
+
+const exportSemestresPDF = () => {
+  if (!semestres.value.length) {
+    return;
+  }
+
+  exportPDF({
+    logoBase64: logoCFI,
+    title: 'Liste des semestres',
+    filters: [
+      { label: 'Total semestres', value: semestres.value.length },
+      { label: 'Date', value: new Date().toLocaleDateString('fr-FR') },
+    ],
+    columns: ['Rang', 'Code', 'Année académique', 'Date début', 'Date fin', 'Statut'],
+    rows: semestres.value.map((semestre, index) => [
+      index + 1,
+      semestre.code,
+      semestre.annee,
+      formatDate(semestre.dateDebut),
+      formatDate(semestre.dateFin),
+      semestre.actif ? 'Activé' : 'Inactivé',
+    ]),
+    fileName: `semestres_${new Date().getTime()}.pdf`,
+  });
 };
 
 const formatDate = (dateStr) => {
