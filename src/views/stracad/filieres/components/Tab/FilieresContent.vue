@@ -37,7 +37,7 @@
               </span>
             </td>
             <td>
-              <ItemActions
+              <FilieresItemActions
                 :item="filiere"
                 :showAdd="false"
                 @edit="editFiliere"
@@ -55,7 +55,7 @@
 import { computed, onMounted } from 'vue';
 import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
-import ItemActions from '../details/ItemActions.vue'; // si tu veux gérer actions
+import FilieresItemActions from '../details/FilieresItemActions.vue';
 
 // Stores
 const filiereStore = useFiliereStore();

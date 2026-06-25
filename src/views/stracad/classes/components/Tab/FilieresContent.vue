@@ -105,7 +105,7 @@
                 {{ formatDate(item.updated_at) }}
               </td>
               <td class="text-end pe-3">
-                <ItemActions
+                <ClassesFiliereItemActions
                   :item="item"
                   :showAdd="false"
                   @edit="handleEdit"
@@ -124,7 +124,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
-import ItemActions from '../details/ItemActions.vue';
+import ClassesFiliereItemActions from '../details/ClassesFiliereItemActions.vue';
 
 const classeStore = useClasseStore();
 const filiereStore = useFiliereStore();

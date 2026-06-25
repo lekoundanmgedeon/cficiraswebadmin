@@ -73,7 +73,7 @@
                 </span>
               </td>
               <td>
-                <ItemActions
+                <NiveauxItemActions
                   :item="niveau"
                   :showAdd="false"
                   editModalTarget="#editModuleModal"
@@ -107,7 +107,7 @@ import { useNiveauStore } from '@/stores/academiqueStore/niveauStore';
 import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
 
 import NiveauFormModal from '../Modal/addNiveau.vue';
-import ItemActions from '../details/ItemActions.vue';
+import NiveauxItemActions from '../details/NiveauxItemActions.vue';
 
 const niveauStore = useNiveauStore();
 const cycleStore = useCycleStore();

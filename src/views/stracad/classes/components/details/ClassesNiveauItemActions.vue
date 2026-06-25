@@ -3,18 +3,15 @@
     <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
       ...
     </button>
+
     <ul class="dropdown-menu dropdown-menu-light">
       <li>
         <button class="dropdown-item" @click="isDetailsVisible = true">
           <i class="mdi mdi-information-outline me-2"></i> Détails
         </button>
       </li>
-      <li v-if="showAdd">
-        <RouterLink
-          class="dropdown-item"
-          :to="`/edition-concours/edit/${item.classe_id}`"
-          @click="$emit('add', item)"
-        >
+      <li v-if="showAdd && concourRoute">
+        <RouterLink class="dropdown-item" :to="`${concourRoute}edit/${itemId}`" @click="$emit('add', item)">
           <i class="mdi mdi-launch me-2"></i> Editer
         </RouterLink>
       </li>
@@ -37,7 +34,6 @@
     </ul>
   </div>
 
-  <!-- Modal de confirmation de suppression -->
   <teleport to="body">
     <div
       v-if="isDeleteVisible"
@@ -66,7 +62,6 @@
     </div>
   </teleport>
 
-  <!-- Modal pour les détails -->
   <teleport to="body">
     <div
       v-if="isDetailsVisible"
@@ -78,39 +73,37 @@
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">Détails de la classe</h5>
+            <h5 class="modal-title">Détails de la classe par niveau</h5>
             <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
-
           <div class="modal-body">
             <ul class="list-group list-group-flush">
               <li class="list-group-item d-flex justify-content-between">
-                <strong>Code :</strong>
-                <span class="fw-bold text-primary">{{ item.code }}</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <strong>Capacité :</strong>
-                <span class="badge bg-info">{{ item.capacite_max }}</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <strong>Niveau :</strong>
-                <span>{{ item.niveau_code }}</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <strong>Frais :</strong>
-                <span class="text-success">{{ item.niveau_frais }} FCFA</span>
+                <strong>Code classe :</strong>
+                <span class="fw-bold text-primary">{{ item.code || '-' }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Filière :</strong>
-                <span>{{ item.filiere_designation }}</span>
+                <span>{{ item.filiere_nom || item.filiere_code || item.filiere_designation || '-' }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
-                <strong>Cycle :</strong>
-                <span>{{ item.cycle_designation }}</span>
+                <strong>Capacité :</strong>
+                <span>{{ item.capacite_max ?? '-' }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Effectif actuel :</strong>
+                <span>{{ item.nb_etudiants ?? item.effectif_actuel ?? '-' }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Créé le :</strong>
+                <span>{{ formatDate(item.created_at || item.createdAt) }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Mis à jour le :</strong>
+                <span>{{ formatDate(item.updated_at || item.updatedAt) }}</span>
               </li>
             </ul>
           </div>
-
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeDetails">Fermer</button>
           </div>
@@ -121,13 +114,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
-  item: Object,
+  item: {
+    type: Object,
+    required: true,
+  },
   showAdd: {
     type: Boolean,
     default: false,
+  },
+  concourRoute: {
+    type: String,
+    default: '',
   },
   editModalTarget: {
     type: String,
@@ -135,7 +135,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete']);
+const emit = defineEmits(['delete', 'add', 'edit']);
 
 const isDetailsVisible = ref(false);
 const isDeleteVisible = ref(false);
@@ -155,5 +155,18 @@ const closeDeleteModal = () => {
 const confirmDelete = () => {
   emit('delete', props.item);
   closeDeleteModal();
+};
+
+const itemId = computed(() => props.item?.id || props.item?.classe_id || 'N/A');
+
+const formatDate = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 };
 </script>

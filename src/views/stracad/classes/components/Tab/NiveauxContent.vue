@@ -101,7 +101,7 @@
                 {{ formatDate(item.created_at) }}
               </td>
               <td class="text-end pe-3">
-                <ItemActions
+                <ClassesNiveauItemActions
                   :item="item"
                   :showAdd="false"
                   @edit="handleEdit"
@@ -120,7 +120,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 import { useNiveauStore } from '@/stores/academiqueStore/niveauStore';
-import ItemActions from '../details/ItemActions.vue';
+import ClassesNiveauItemActions from '../details/ClassesNiveauItemActions.vue';
 
 const classeStore = useClasseStore();
 const niveauStore = useNiveauStore();

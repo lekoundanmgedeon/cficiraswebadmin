@@ -50,7 +50,7 @@
                 </span>
               </td>
               <td class="text-end pe-3">
-                <ItemActions
+                <ClassesItemActions
                   :item="classe"
                   concourRoute="/edition-concours/"
                   :showAdd="false"
@@ -85,7 +85,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
-import ItemActions from '../details/ItemActions.vue';
+import ClassesItemActions from '../details/ClassesItemActions.vue';
 
 const classeStore = useClasseStore();
 
