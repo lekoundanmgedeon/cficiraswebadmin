@@ -63,9 +63,34 @@
         <div class="card-header bg-white py-3">
           <div class="d-flex justify-content-between align-items-center">
             <h6 class="mb-0 fw-bold text-dark">Rapport de Performance par Filière</h6>
-            <button class="btn btn-sm btn-light border" @click="exportRapport">
-              <i class="mdi mdi-download me-1"></i> Rapport complet
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-light border" @click="exportRapport">
+                <i class="mdi mdi-download me-1"></i> Rapport complet
+              </button>
+
+              <div class="btn-group">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary border dropdown-toggle"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <i class="mdi mdi-file-export me-1"></i> Exporter
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <button class="dropdown-item" type="button" @click="exportFilieresExcel">
+                      <i class="mdi mdi-file-excel-box me-2"></i> Excel
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item" type="button" @click="exportFilieresPDF">
+                      <i class="mdi mdi-file-pdf-box me-2"></i> PDF
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
         <div class="card-body p-0">
@@ -148,6 +173,9 @@
 import { computed, onMounted } from 'vue';
 import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
+import logoCFI from '@/assets/logoBase64';
+import { exportExcel } from '@/utils/exportExcel';
+import { exportPDF } from '@/utils/exportPDF';
 
 const anneeStore = useAnneeStore();
 const messageStore = useNotifier();
@@ -171,6 +199,67 @@ const getMoyenneColor = (moyenne) => {
   if (moyenne >= 14) return 'bg-success';
   if (moyenne >= 10) return 'bg-info';
   return 'bg-danger';
+};
+
+const getExportFilieresData = () => {
+  return filieres.value.map((filiere, index) => ({
+    Rang: index + 1,
+    Filière: filiere.designation,
+    Code: filiere.code || '-',
+    'Effectif étudiants': filiere.nb_etudiants ?? 0,
+    'Moyenne générale': filiere.moyenne_generale ?? '-',
+    Progression: filiere.progression || '-',
+    Statut: filiere.moyenne_generale ? 'Validé' : 'En cours',
+  }));
+};
+
+const exportFilieresExcel = () => {
+  if (!filieres.value.length) {
+    messageStore.error('Aucune donnée disponible pour l’export.');
+    return;
+  }
+
+  exportExcel({
+    data: getExportFilieresData(),
+    sheetName: 'Statistiques Filières',
+    fileName: `statistiques_filieres_${new Date().getTime()}.xlsx`,
+  });
+};
+
+const exportFilieresPDF = () => {
+  if (!filieres.value.length) {
+    messageStore.error('Aucune donnée disponible pour l’export.');
+    return;
+  }
+
+  exportPDF({
+    logoBase64: logoCFI,
+    title: 'Statistiques de performance par filière',
+    filters: [
+      { label: 'Année académique', value: stats.value.annee ?? '-' },
+      { label: 'Filères exportées', value: filieres.value.length },
+      { label: 'Date d’export', value: new Date().toLocaleDateString('fr-FR') },
+    ],
+    columns: [
+      'Rang',
+      'Filière',
+      'Code',
+      'Effectif étudiants',
+      'Moyenne générale',
+      'Progression',
+      'Statut',
+    ],
+    rows: filieres.value.map((filiere, index) => [
+      index + 1,
+      filiere.designation,
+      filiere.code || '-',
+      filiere.nb_etudiants ?? 0,
+      filiere.moyenne_generale ?? '-',
+      filiere.progression ?? '-',
+      filiere.moyenne_generale ? 'Validé' : 'En cours',
+    ]),
+    fileName: `statistiques_filieres_${new Date().getTime()}.pdf`,
+  });
 };
 
 // Export du rapport
