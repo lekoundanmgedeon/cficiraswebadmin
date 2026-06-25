@@ -18,6 +18,15 @@
           <i class="mdi mdi mdi-launch me-2"></i> Editer
         </RouterLink>
       </li>
+          <li v-if="showAdd && anneeRoute">
+        <RouterLink
+          class="dropdown-item"
+          :to="`${anneeRoute.replace(/\/$/, '')}/edit/${itemId}`"
+          @click="$emit('add', item)"
+        >
+          <i class="mdi mdi-launch me-2"></i> Editer
+        </RouterLink>
+      </li>
       <li>
         <button
           class="dropdown-item"
@@ -31,7 +40,7 @@
       <li>
         <button class="dropdown-item" @click="openToggleModal">
           <i class="mdi mdi-toggle-switch me-2"></i>
-          {{ item?.est_active ? 'Désactiver' : 'Activer' }}
+          {{ isActive ? 'Désactiver' : 'Activer' }}
         </button>
       </li>
       <li class="dropdown-divider"></li>
@@ -115,23 +124,41 @@
       style="background-color: rgba(0, 0, 0, 0.5)"
     >
       <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Détails</h5>
-            <button type="button" class="btn-close" @click="closeDetails"></button>
+        <div class="modal-content shadow-lg">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">Détails de l'année académique</h5>
+            <button type="button" class="btn-close btn-close-white" @click="closeDetails"></button>
           </div>
           <div class="modal-body">
-            <p><strong>Code:</strong> {{ item.code }}</p>
-            <p><strong>Date début:</strong> {{ formatDate(item.date_debut) }}</p>
-            <p><strong>Date fin:</strong> {{ formatDate(item.date_fin) }}</p>
-            <p>
-              <strong>Statut:</strong>
-              <span :class="mapStatut(item.est_actif).class">
-                {{ mapStatut(item.est_actif).label }}
-              </span>
-            </p>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Code :</strong>
+                <span class="fw-bold text-primary">{{ item.code || '-' }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Date de début :</strong>
+                <span>{{ formatDate(item.date_debut) }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Date de fin :</strong>
+                <span>{{ formatDate(item.date_fin) }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Statut :</strong>
+                <span :class="mapStatut(item.statut).class">{{ mapStatut(item.statut).label }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Active :</strong>
+                <span :class="isActive ? 'badge bg-success' : 'badge bg-secondary'">
+                  {{ isActive ? 'Oui' : 'Non' }}
+                </span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Durée :</strong>
+                <span>{{ displayDuration }}</span>
+              </li>
+            </ul>
           </div>
-
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeDetails">Fermer</button>
           </div>
@@ -170,6 +197,9 @@ const itemLabel = computed(() => {
   return props.item.code || props.item.designation || props.item.nom || 'cet élément';
 });
 
+const itemId = computed(() => props.item?.id || props.item?.annee_academique_id || 'N/A');
+const isActive = computed(() => Boolean(props.item?.est_active));
+
 const openDeleteModal = () => {
   isDeleteVisible.value = true;
 };
@@ -199,17 +229,35 @@ const confirmToggleStatus = () => {
 // Helpers
 const formatDate = (date) => {
   if (!date) return '-';
-  return new Date(date).toLocaleDateString('fr-FR', {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   });
 };
 
-const mapStatut = (estActif) => {
-  return {
-    label: estActif ? 'Actif' : 'Inactif',
-    class: estActif ? 'badge bg-success' : 'badge bg-secondary',
-  };
+const mapStatut = (statut) => {
+  switch (statut) {
+    case 'OUVERTE':
+      return { label: 'Ouverte', class: 'badge bg-success' };
+    case 'PLANIFIEE':
+      return { label: 'Planifiée', class: 'badge bg-warning text-dark' };
+    case 'CLOTUREE':
+      return { label: 'Clôturée', class: 'badge bg-danger' };
+    default:
+      return { label: statut || 'Inconnu', class: 'badge bg-secondary' };
+  }
 };
+
+const displayDuration = computed(() => {
+  if (!props.item?.date_debut || !props.item?.date_fin) return '-';
+  const start = new Date(props.item.date_debut);
+  const end = new Date(props.item.date_fin);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '-';
+
+  const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+  return `${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+});
 </script>
