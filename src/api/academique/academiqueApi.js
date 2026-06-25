@@ -46,6 +46,7 @@ export const deleteClasse = (id) => academiqueService.delete(`/classes/${id}`);
 export const getCycles = () => academiqueService.get('/cycles');
 export const getCycleById = (id) => academiqueService.get(`/cycles/${id}`);
 export const getCycleFilieres = (id) => academiqueService.get(`/cycles/${id}/filieres`);
+export const getCycleArchitecture = () => academiqueService.get(`/cycles/tree/filieres`);
 export const getCycleDistributionStats = () => academiqueService.get('/cycles/stats/distribution');
 export const getCycleOrganisation = () => academiqueService.get('/cycles/stats/organisations/');
 

@@ -87,6 +87,20 @@
     </div>
   </div>
 </template>
+<script setup>
+import { computed, onMounted } from 'vue';
+import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
+
+const cycleStore = useCycleStore();
+
+// Architecture des cycles et filières
+const cycles = computed(() => cycleStore.cycles_architecture);
+
+// Charger les données au montage
+onMounted(async () => {
+  await cycleStore.fetchCycleArchitecture();
+});
+</script>
 
 <style scoped>
 /* Structure Globale */
@@ -168,23 +182,3 @@
   border-color: #4b49ac !important;
 }
 </style>
-<script setup>
-import { computed, onMounted } from 'vue';
-import { useCycleStore } from '@/stores/academiqueStore/cycleStore';
-import { useNotifier } from '@/stores/messages/useNotifier';
-
-const cycleStore = useCycleStore();
-const messageStore = useNotifier();
-
-// Récupération des cycles + filières depuis le store
-const cycles = computed(() => cycleStore.Filierecycles);
-
-// Charger les données au montage
-onMounted(async () => {
-  try {
-    await cycleStore.fetchCycleFilieres();
-  } catch (error) {
-    messageStore.notifyError('Erreur lors du chargement des cycles et filières');
-  }
-});
-</script>

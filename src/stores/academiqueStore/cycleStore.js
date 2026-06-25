@@ -4,6 +4,7 @@ import {
   getCycleById,
   getCycleFilieres,
   getCycleOrganisation,
+  getCycleArchitecture, 
   getCycleDistributionStats,
   createCycle,
   updateCycle,
@@ -39,6 +40,7 @@ export const useCycleStore = defineStore('cycleStore', {
   state: () => ({
     cycles: [],
     cycle: null,
+    cycles_architecture: null,
     organisationStats: [],
     filieres: [],
     stats: null,
@@ -126,7 +128,21 @@ export const useCycleStore = defineStore('cycleStore', {
         this.loading = false;
       }
     },
-
+    // Récupérer l'architecture des cycles et filières
+    async fetchCycleArchitecture() {
+      const messageStore = useMessageStore();
+      this.loading = true;
+      try {
+        const response = await getCycleArchitecture();
+        this.cycles_architecture = response.data;
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, "Échec lors du chargement de l'architecture des cycles.")
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
     // Ajouter un nouveau cycle
     async addCycle(data) {
       const messageStore = useMessageStore();
