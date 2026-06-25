@@ -2,7 +2,10 @@
   <div class="row">
     <div class="col-12 mb-3">
       <h4>Vue d'ensemble de l'organisation</h4>
-      <p class="text-muted">Suivi opérationnel des effectifs, des capacités d'accueil et du taux de remplissage par cycle.</p>
+      <p class="text-muted">
+        Suivi opérationnel des effectifs, des capacités d'accueil et du taux de remplissage par
+        cycle.
+      </p>
     </div>
 
     <div class="col-12">
@@ -13,8 +16,8 @@
               <th scope="col" class="py-3 ps-3">Cycle</th>
               <th scope="col" class="py-3">Filières disponibles</th>
               <th scope="col" class="py-3 text-center">Effectifs / Capacité</th>
-              <th scope="col" class="py-3" style="width: 200px;">Taux de remplissage</th>
-              <th scope="col" class="py-3 text-center" style="width: 120px;">Statut</th>
+              <th scope="col" class="py-3" style="width: 200px">Taux de remplissage</th>
+              <th scope="col" class="py-3 text-center" style="width: 120px">Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -34,7 +37,7 @@
                     src="/img/empty-box.svg"
                     alt="Aucune donnée"
                     class="mb-2"
-                    style="width: 80px; opacity: 0.7;"
+                    style="width: 80px; opacity: 0.7"
                   />
                   <div class="text-muted small">Aucune donnée disponible pour le moment.</div>
                 </div>
@@ -44,18 +47,18 @@
             <tr v-for="item in organisations" :key="item.cycle_id">
               <td class="ps-3">
                 <div class="fw-bold text-dark">{{ item.cycle_designation }}</div>
-                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">
+                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem">
                   Codification : {{ item.cycle_code }}
                 </small>
               </td>
 
               <td>
                 <div class="d-flex flex-wrap gap-1">
-                  <span 
-                    v-for="(filiere, idx) in formatFilieres(item.filieres_disponibles)" 
+                  <span
+                    v-for="(filiere, idx) in formatFilieres(item.filieres_disponibles)"
                     :key="idx"
                     class="badge bg-light text-dark border px-2 py-1 fw-normal"
-                    style="font-size: 0.8rem;"
+                    style="font-size: 0.8rem"
                   >
                     {{ filiere }}
                   </span>
@@ -70,19 +73,21 @@
 
               <td>
                 <div v-if="Number(item.capacite_totale) > 0">
-                  <div class="d-flex align-items-center justify-content-between mb-1 small text-muted">
-                    <span class="fw-medium text-dark" style="font-size: 0.85rem;">
+                  <div
+                    class="d-flex align-items-center justify-content-between mb-1 small text-muted"
+                  >
+                    <span class="fw-medium text-dark" style="font-size: 0.85rem">
                       {{ item.taux_remplissage }}%
                     </span>
                   </div>
-                  <div class="progress" style="height: 6px;" title="Remplissage">
-                    <div 
-                      class="progress-bar rounded" 
-                      role="progressbar" 
-                      :style="{ width: Math.min(item.taux_remplissage, 100) + '%' }" 
+                  <div class="progress" style="height: 6px" title="Remplissage">
+                    <div
+                      class="progress-bar rounded"
+                      role="progressbar"
+                      :style="{ width: Math.min(item.taux_remplissage, 100) + '%' }"
                       :class="getProgressClass(item.taux_remplissage)"
-                      :aria-valuenow="item.taux_remplissage" 
-                      aria-valuemin="0" 
+                      :aria-valuenow="item.taux_remplissage"
+                      aria-valuemin="0"
                       aria-valuemax="100"
                     ></div>
                   </div>
@@ -96,9 +101,10 @@
                   :class="{
                     'bg-success-soft text-success': item.statut === 'Complet',
                     'bg-warning-soft text-warning': item.statut === 'Partiel',
-                    'bg-secondary-soft text-secondary': item.statut === 'Vide' || item.statut === 'Aucune capacité',
+                    'bg-secondary-soft text-secondary':
+                      item.statut === 'Vide' || item.statut === 'Aucune capacité',
                   }"
-                  style="font-size: 0.75rem; font-weight: 600;"
+                  style="font-size: 0.75rem; font-weight: 600"
                 >
                   {{ item.statut }}
                 </span>
@@ -136,7 +142,10 @@ const getProgressClass = (taux) => {
 const formatFilieres = (filieres) => {
   if (!filieres) return ['Aucune filière'];
   if (Array.isArray(filieres)) return filieres;
-  return filieres.split(',').map(f => f.trim()).filter(Boolean);
+  return filieres
+    .split(',')
+    .map((f) => f.trim())
+    .filter(Boolean);
 };
 </script>
 

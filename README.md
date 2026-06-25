@@ -21,4 +21,3 @@ Ce projet est prêt pour un déploiement Render en site statique.
    - `NODE_ENV=production`
 
 Le service Render inclut une règle SPA pour rediriger toutes les routes vers `index.html`.
-

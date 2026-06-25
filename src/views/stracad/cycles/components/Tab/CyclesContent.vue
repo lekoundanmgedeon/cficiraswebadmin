@@ -3,7 +3,9 @@
     <div class="col-12 mb-3 d-flex justify-content-between align-items-center">
       <div>
         <h4>Liste des cycles</h4>
-        <p>Vous pouvez consulter les détails de chaque examen en cliquant sur le lien correspondant.</p>
+        <p>
+          Vous pouvez consulter les détails de chaque examen en cliquant sur le lien correspondant.
+        </p>
       </div>
       <div class="btn-group">
         <button
@@ -11,7 +13,8 @@
           type="button"
           data-bs-toggle="dropdown"
           aria-expanded="false"
-        > Exporter
+        >
+          Exporter
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li>

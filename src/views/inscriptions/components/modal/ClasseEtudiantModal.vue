@@ -120,7 +120,9 @@
             </div>
 
             <!-- Footer avec répartition flexible -->
-            <div class="modal-footer bg-light border-0 px-4 py-2 d-flex justify-content-between align-items-center">
+            <div
+              class="modal-footer bg-light border-0 px-4 py-2 d-flex justify-content-between align-items-center"
+            >
               <button
                 type="button"
                 class="btn btn-secondary rounded-pill px-4"
@@ -199,9 +201,12 @@ const fermerModal = () => {
 };
 
 // Remise à la première page à chaque ouverture du modal pour une classe
-watch(() => props.modelValue, (newVal) => {
-  if (newVal) currentPage.value = 1;
-});
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    if (newVal) currentPage.value = 1;
+  }
+);
 </script>
 
 <style scoped>

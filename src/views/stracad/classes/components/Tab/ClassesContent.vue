@@ -11,7 +11,8 @@
           type="button"
           data-bs-toggle="dropdown"
           aria-expanded="false"
-        > Exporter
+        >
+          Exporter
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li>
@@ -149,7 +150,7 @@ const getExportClassesData = () =>
     Code: classe.code,
     Filière: classe.filiere_nom || '-',
     Niveau: classe.niveau_code || '-',
-    'Émarge': classe.nb_etudiants ?? 0,
+    Émarge: classe.nb_etudiants ?? 0,
     'Capacité max': classe.capacite_max ?? 0,
   }));
 

@@ -1,178 +1,385 @@
 <template>
-  <div class="container-fluid p-0">
-    <div class="row">
-      <div class="col-12 mb-3">
-        <h4 class="fw-bold mb-1">Résultats et Proclamations des Concours</h4>
-        <p class="text-muted">
-          Gérez les délibérations : calculez les moyennes, proclamez officiellement les résultats et
-          téléchargez les listes des admis.
+  <section class="container-fluid p-0">
+    <!-- Header -->
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
+    >
+      <div>
+        <h4 class="fw-bold text-dark mb-1">Résultats et proclamations des concours</h4>
+        <p class="text-muted mb-0">
+          Gérez les délibérations, calculez les moyennes, proclamez les résultats et téléchargez les
+          listes officielles des admis.
         </p>
       </div>
-
-      <div class="col-md-12 grid margin stretch-card">
-        <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="4" />
-
-        <table v-else class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th style="width: 5%">#</th>
-              <th>Désignation</th>
-              <th>Session</th>
-              <th>Date de Clôture</th>
-              <th class="text-center">Statut Actuel</th>
-              <th class="text-end" style="width: 25%">Actions de Délibération</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr v-for="(resultat, index) in concoursList" :key="resultat.id">
-              <td class="font-monospace">{{ index + 1 }}</td>
-
-              <td>
-                <div class="fw-semibold text-dark">{{ resultat.designation }}</div>
-                <small class="text-muted">{{ resultat.libelle_type }}</small>
-              </td>
-
-              <td>
-                <span class="badge bg-light text-secondary border font-monospace">
-                  {{ resultat.code_annee }}
-                </span>
-              </td>
-
-              <td class="font-monospace text-sm">
-                {{ formatDate(resultat.date_fin) }}
-              </td>
-
-              <td class="text-center">
-                <span
-                  :class="[
-                    'badge rounded-pill px-2.5 py-1.5 text-uppercase fw-bold text-xs',
-                    getStatusBadgeClass(resultat.statut),
-                  ]"
-                >
-                  {{ resultat.statut }}
-                </span>
-              </td>
-
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1.5">
-                  <button
-                    @click="handleCalculerRangs(resultat.id)"
-                    class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1"
-                    title="Calculer les moyennes et générer les rangs"
-                  >
-                    <i class="mdi mdi-calculator"></i> Rangs
-                  </button>
-
-                  <button
-                    v-if="resultat.statut !== 'PROCLAMÉ'"
-                    @click="handleProclamer(resultat.id)"
-                    class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
-                    title="Proclamer officiellement les admissions"
-                  >
-                    <i class="mdi mdi-bullhorn-outline"></i> Proclamer
-                  </button>
-
-                  <button
-                    @click="handleDownloadAdmis(resultat.id)"
-                    class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1"
-                    title="Télécharger la liste des admis en PDF"
-                  >
-                    <i class="mdi mdi-file-pdf-box"></i> PDF
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <tr v-if="concoursList.length === 0">
-              <td colspan="6" class="text-center text-muted py-4">
-                Aucun concours enregistré dans le système.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
-  </div>
+
+    <!-- Content -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <!-- Loading -->
+      <div v-if="loading" class="card-body">
+        <SkeletonLoader type="table" :rows="3" :columns="6" />
+      </div>
+
+      <template v-else>
+        <!-- Toolbar -->
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="row g-3 align-items-center justify-content-between">
+            <div class="col-12 col-md-5 col-lg-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="mdi mdi-magnify"></i>
+                </span>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  class="form-control bg-light border-start-0"
+                  placeholder="Rechercher par désignation, session ou statut..."
+                />
+              </div>
+            </div>
+
+            <div class="col-auto">
+              <span class="badge bg-light text-secondary border fw-medium">
+                {{ filteredConcours.length }} concours trouvé(s)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr class="text-uppercase small text-muted">
+                <th scope="col" class="ps-4" style="width: 5%">#</th>
+                <th scope="col">Désignation</th>
+                <th scope="col">Session</th>
+                <th scope="col">Date de clôture</th>
+                <th scope="col" class="text-center">Statut actuel</th>
+                <th scope="col" class="text-end pe-4" style="width: 28%">
+                  Actions de délibération
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="(resultat, index) in filteredConcours" :key="resultat.id">
+                <td class="ps-4 text-muted small">
+                  {{ index + 1 }}
+                </td>
+
+                <td>
+                  <div class="fw-semibold text-dark">
+                    {{ resultat.designation }}
+                  </div>
+                  <div class="text-muted small">
+                    {{ resultat.libelle_type || resultat.type_concours || 'Type non défini' }}
+                  </div>
+                </td>
+
+                <td>
+                  <span
+                    class="badge rounded-pill bg-light text-secondary border fw-medium px-3 py-2"
+                  >
+                    {{ resultat.code_annee || 'Non renseignée' }}
+                  </span>
+                </td>
+
+                <td class="small text-secondary">
+                  {{ formatDate(resultat.date_fin) }}
+                </td>
+
+                <td class="text-center">
+                  <span
+                    class="badge rounded-pill badge-status"
+                    :class="getStatusBadgeClass(resultat.statut)"
+                  >
+                    {{ getStatusLabel(resultat.statut) }}
+                  </span>
+                </td>
+
+                <td class="text-end pe-4">
+                  <div
+                    class="btn-group btn-group-sm"
+                    role="group"
+                    aria-label="Actions de délibération"
+                  >
+                    <button
+                      type="button"
+                      @click="handleCalculerRangs(resultat.id)"
+                      class="btn btn-outline-info d-inline-flex align-items-center gap-1"
+                      title="Calculer les moyennes et générer les rangs"
+                    >
+                      <i class="mdi mdi-calculator"></i>
+                      <span class="d-none d-xl-inline">Rangs</span>
+                    </button>
+
+                    <button
+                      v-if="canProclaim(resultat.statut)"
+                      type="button"
+                      @click="handleProclamer(resultat.id)"
+                      class="btn btn-outline-success d-inline-flex align-items-center gap-1"
+                      title="Proclamer officiellement les admissions"
+                    >
+                      <i class="mdi mdi-bullhorn-outline"></i>
+                      <span class="d-none d-xl-inline">Proclamer</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      @click="handleDownloadAdmis(resultat.id)"
+                      class="btn btn-outline-danger d-inline-flex align-items-center gap-1"
+                      title="Télécharger la liste des admis en PDF"
+                    >
+                      <i class="mdi mdi-file-pdf-box"></i>
+                      <span class="d-none d-xl-inline">PDF</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Empty State -->
+              <tr v-if="filteredConcours.length === 0">
+                <td colspan="6" class="text-center py-5">
+                  <div class="empty-state">
+                    <i class="mdi mdi-file-search-outline empty-icon"></i>
+                    <h6 class="fw-semibold text-dark mb-1">Aucun concours trouvé</h6>
+                    <p class="text-muted mb-0 small">
+                      Essayez de modifier votre recherche ou vérifiez les concours disponibles.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import dayjs from 'dayjs';
+
 import { useConcoursStore } from '@/stores/gestionStores/concourStore';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
 
-/* ========================================================
-    Store Pinia
-======================================================== */
 const concoursStore = useConcoursStore();
+
+const searchQuery = ref('');
 
 const loading = computed(() => concoursStore.loading);
 const concoursList = computed(() => concoursStore.concoursList || []);
 
-/* ========================================================
-    Formatages & Classes Graphiques
-======================================================== */
+const filteredConcours = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim();
+
+  if (!query) {
+    return concoursList.value;
+  }
+
+  return concoursList.value.filter((concours) => {
+    return [
+      concours.designation,
+      concours.libelle_type,
+      concours.type_concours,
+      concours.code_annee,
+      concours.statut,
+      getStatusLabel(concours.statut),
+    ]
+      .filter(Boolean)
+      .some((value) => value.toString().toLowerCase().includes(query));
+  });
+});
+
+const normalizeStatus = (status) => {
+  return status
+    ? status
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .trim()
+    : '';
+};
+
 const formatDate = (date) => {
   return date ? dayjs(date).format('DD/MM/YYYY') : 'Non définie';
 };
 
-// Alignement visuel sur les statuts réels du cycle de vie du concours
-const getStatusBadgeClass = (status) => {
-  switch (status?.toUpperCase()) {
-    case 'PROCLAMÉ':
-      return 'bg-success text-white'; // Clôturé et validé
-    case 'OUVERT':
-      return 'bg-warning text-dark'; // En cours de traitement / inscriptions actives
-    case 'FERMÉ':
-      return 'bg-danger text-white'; // Inscriptions closes, en attente de délibération
-    default:
-      return 'bg-secondary text-white';
-  }
+const getStatusLabel = (status) => {
+  const normalizedStatus = normalizeStatus(status);
+
+  const labels = {
+    PLANIFIE: 'Planifié',
+    OUVERT: 'Ouvert',
+    CLOTURE: 'Clôturé',
+    ANNULE: 'Annulé',
+    PROCLAME: 'Proclamé',
+  };
+
+  return labels[normalizedStatus] || 'Inconnu';
 };
 
-/* ========================================================
-    Traitements Métiers reliés au Store
-======================================================== */
+const getStatusBadgeClass = (status) => {
+  const normalizedStatus = normalizeStatus(status);
+
+  const classes = {
+    PLANIFIE: 'badge-planifie',
+    OUVERT: 'badge-ouvert',
+    CLOTURE: 'badge-cloture',
+    ANNULE: 'badge-annule',
+    PROCLAME: 'badge-proclame',
+  };
+
+  return classes[normalizedStatus] || 'badge-default';
+};
+
+const canProclaim = (status) => {
+  const normalizedStatus = normalizeStatus(status);
+
+  return normalizedStatus !== 'PROCLAME' && normalizedStatus !== 'ANNULE';
+};
+
 const handleCalculerRangs = async (id) => {
-  if (
-    confirm(
-      "Voulez-vous lancer l'algorithme de calcul des moyennes globales et d'attribution des rangs ?"
-    )
-  ) {
-    await concoursStore.fetchMoyennesRangs(id);
-  }
+  const confirmed = confirm(
+    "Voulez-vous lancer le calcul des moyennes globales et l'attribution des rangs ?"
+  );
+
+  if (!confirmed) return;
+
+  await concoursStore.fetchMoyennesRangs(id);
 };
 
 const handleProclamer = async (id) => {
-  if (
-    confirm(
-      '🚨 ATTENTION : Cette action va figer les notes et publier officiellement la liste des candidats admis. Continuer ?'
-    )
-  ) {
-    await concoursStore.proclaimAdmissions(id);
-  }
+  const confirmed = confirm(
+    'Attention : cette action va figer les notes et publier officiellement la liste des candidats admis. Continuer ?'
+  );
+
+  if (!confirmed) return;
+
+  await concoursStore.proclaimAdmissions(id);
 };
 
 const handleDownloadAdmis = async (id) => {
   await concoursStore.downloadAdmisList(id);
 };
 
-/* ========================================================
-    Cycle de vie
-======================================================== */
 onMounted(async () => {
-  // Charge la liste fraîche des concours à l'ouverture du volet des résultats
   await concoursStore.fetchConcours();
 });
 </script>
 
 <style scoped>
-.gap-1\.5 {
-  gap: 0.375rem;
+.card {
+  transition: box-shadow 0.2s ease;
 }
+
+.table thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.input-group-text,
+.form-control {
+  border-color: #e9ecef;
+}
+
+.form-control:focus {
+  box-shadow: none;
+  border-color: #86b7fe;
+}
+
 .btn-sm {
-  padding: 0.3rem 0.5rem;
-  font-size: 0.825rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.btn-group-sm > .btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.btn-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-group .mdi {
+  font-size: 1rem;
+}
+.empty-state {
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  color: #adb5bd;
+}
+
+/* Badges statut */
+.badge-status {
+  min-width: 92px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+
+/* PLANIFIE */
+.badge-planifie {
+  background-color: #e7f1ff;
+  color: #0d6efd;
+  border-color: #b6d4fe;
+}
+
+/* OUVERT */
+.badge-ouvert {
+  background-color: #e9f7ef;
+  color: #198754;
+  border-color: #badbcc;
+}
+
+/* CLOTURE */
+.badge-cloture {
+  background-color: #f1f3f5;
+  color: #495057;
+  border-color: #dee2e6;
+}
+
+/* ANNULE */
+.badge-annule {
+  background-color: #fdecea;
+  color: #dc3545;
+  border-color: #f5c2c7;
+}
+
+/* PROCLAME */
+.badge-proclame {
+  background-color: #e6f4ea;
+  color: #146c43;
+  border-color: #a3cfbb;
+}
+
+/* Statut inconnu */
+.badge-default {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border-color: #e9ecef;
 }
 </style>

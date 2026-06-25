@@ -7,27 +7,34 @@
       </p>
     </div>
 
-    <div class="col-12 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+    <div
+      class="col-12 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3"
+    >
       <div class="col-sm-6 col-md-4">
         <div class="input-group">
           <span class="input-group-text bg-white border-end-0 text-muted">
             <i class="bi bi-search"></i>
           </span>
-          <input 
+          <input
             v-model="searchQuery"
-            type="text" 
-            class="form-control border-start-0 ps-0" 
+            type="text"
+            class="form-control border-start-0 ps-0"
             placeholder="Rechercher un cycle ou diplôme..."
           />
         </div>
       </div>
 
       <div class="d-flex align-items-center bg-light border rounded px-3 py-2">
-        <div class="bg-primary-subtle text-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+        <div
+          class="bg-primary-subtle text-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center"
+          style="width: 35px; height: 35px"
+        >
           <i class="bi bi-mortarboard-fill"></i>
         </div>
         <div>
-          <small class="text-muted d-block text-uppercase fw-semibold style-small">Total Étudiants</small>
+          <small class="text-muted d-block text-uppercase fw-semibold style-small"
+            >Total Étudiants</small
+          >
           <span class="fw-bold text-dark">{{ formatNumber(totalEtudiants) }}</span>
         </div>
       </div>
@@ -38,10 +45,10 @@
         <table class="table align-middle mb-0 table-hover">
           <thead class="table-light">
             <tr>
-              <th scope="col" class="py-3 ps-4" style="min-width: 180px;">Code / Cycle</th>
+              <th scope="col" class="py-3 ps-4" style="min-width: 180px">Code / Cycle</th>
               <th scope="col" class="py-3">Diplôme visé</th>
-              <th scope="col" class="py-3 text-center" style="width: 180px;">Effectif Étudiants</th>
-              <th scope="col" class="py-3 text-end pe-4" style="width: 120px;">Statut</th>
+              <th scope="col" class="py-3 text-center" style="width: 180px">Effectif Étudiants</th>
+              <th scope="col" class="py-3 text-end pe-4" style="width: 120px">Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +64,7 @@
             <tr v-else-if="filteredCycles.length === 0">
               <td colspan="4" class="text-center py-5">
                 <div class="py-3">
-                  <i class="bi bi-person-x text-muted opacity-50" style="font-size: 2.5rem;"></i>
+                  <i class="bi bi-person-x text-muted opacity-50" style="font-size: 2.5rem"></i>
                   <p class="text-muted small mt-2 mb-0">Aucune donnée statistique disponible</p>
                 </div>
               </td>
@@ -66,10 +73,14 @@
             <tr v-else v-for="cycle in filteredCycles" :key="cycle.cycle_id">
               <td class="ps-4">
                 <div class="d-flex align-items-center">
-                  <span class="badge bg-primary-subtle text-primary me-3 px-2 py-1.5 fw-bold font-monospace">
+                  <span
+                    class="badge bg-primary-subtle text-primary me-3 px-2 py-1.5 fw-bold font-monospace"
+                  >
                     {{ cycle.cycle_code }}
                   </span>
-                  <span class="fw-semibold text-dark">{{ cycle.cycle_nom || 'Cycle Académique' }}</span>
+                  <span class="fw-semibold text-dark">{{
+                    cycle.cycle_nom || 'Cycle Académique'
+                  }}</span>
                 </div>
               </td>
 
@@ -126,9 +137,12 @@ const filteredCycles = computed(() => {
   return cyclesRaw.value.filter((cycle) => {
     const search = searchQuery.value.toLowerCase();
     return (
-      (cycle.cycle_code?.toLowerCase().includes(search) || false) ||
-      (cycle.diplome?.toLowerCase().includes(search) || false) ||
-      (cycle.cycle_nom?.toLowerCase().includes(search) || false)
+      cycle.cycle_code?.toLowerCase().includes(search) ||
+      false ||
+      cycle.diplome?.toLowerCase().includes(search) ||
+      false ||
+      cycle.cycle_nom?.toLowerCase().includes(search) ||
+      false
     );
   });
 });

@@ -29,14 +29,14 @@ la règle `routes` du `render.yaml`.
 
 ## 2. Pré-requis
 
-| Élément | Statut |
-|---|---|
-| Compte Render | requis |
-| Dépôt Git connecté (GitHub/GitLab) | requis |
-| Backend `cfibackend` déployé sur Railway (isoprod ET prod) | requis |
-| URL Railway publique du backend isoprod | à récupérer |
-| URL Railway publique du backend prod | à récupérer |
-| CORS configuré côté backend pour les domaines Render | à valider |
+| Élément                                                    | Statut      |
+| ---------------------------------------------------------- | ----------- |
+| Compte Render                                              | requis      |
+| Dépôt Git connecté (GitHub/GitLab)                         | requis      |
+| Backend `cfibackend` déployé sur Railway (isoprod ET prod) | requis      |
+| URL Railway publique du backend isoprod                    | à récupérer |
+| URL Railway publique du backend prod                       | à récupérer |
+| CORS configuré côté backend pour les domaines Render       | à valider   |
 
 ---
 
@@ -47,14 +47,16 @@ dans le middleware CORS :
 
 ```js
 // cfibackend/src/app.js (ou équivalent)
-app.use(cors({
-  origin: [
-    'https://cficiraswebadmin-isoprod.onrender.com',
-    'https://cficiraswebadmin-prod.onrender.com',
-    // + domaines custom une fois ajoutés
-  ],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      'https://cficiraswebadmin-isoprod.onrender.com',
+      'https://cficiraswebadmin-prod.onrender.com',
+      // + domaines custom une fois ajoutés
+    ],
+    credentials: true,
+  })
+);
 ```
 
 Sans ça, le frontend recevra des erreurs CORS dès le premier appel API.
@@ -69,6 +71,7 @@ automatiquement.
 ### Étapes
 
 1. **Committer** les fichiers livrés ici à la racine du repo :
+
    - `render.yaml`
    - `.nvmrc`
    - `.env.example`
@@ -78,17 +81,20 @@ automatiquement.
    - `package.json` (mis à jour)
 
 2. **Ajuster les URLs** dans `render.yaml` :
+
    - Remplacer `cfibackend-isoprod.up.railway.app` par l'URL Railway réelle
    - Remplacer `cfibackend.up.railway.app` par l'URL Railway prod réelle
    - Idem dans la directive `Content-Security-Policy` (`connect-src`)
 
 3. **Push** sur les branches concernées :
+
    ```bash
    git checkout develop && git push origin develop
    git checkout main    && git push origin main
    ```
 
 4. **Sur Render** :
+
    - Dashboard → **New +** → **Blueprint**
    - Sélectionner le repo
    - Render détecte `render.yaml` et propose les deux services
@@ -104,7 +110,7 @@ automatiquement.
 
 ## 5. Domaines personnalisés (optionnel mais recommandé pour la prod)
 
-1. Render → service → **Settings → Custom Domains** → *Add*
+1. Render → service → **Settings → Custom Domains** → _Add_
 2. Saisir le domaine (`admin.cfi-ciras.example.com`)
 3. Render donne un enregistrement `CNAME` à ajouter chez le registrar
 4. Une fois propagé (5–30 min), TLS Let's Encrypt automatique
@@ -139,6 +145,7 @@ fetch('https://cfibackend-isoprod.up.railway.app/health')
 ```
 
 Tests manuels dans le navigateur :
+
 - DevTools → Network : le bundle est chargé en gzip/brotli
 - DevTools → Application → SW : aucun service worker fantôme
 - DevTools → Console : aucune erreur CORS, aucune var `VITE_*` undefined
@@ -148,15 +155,15 @@ Tests manuels dans le navigateur :
 
 ## 7. Variables d'environnement Vite
 
-| Variable | isoprod | prod | Notes |
-|---|---|---|---|
-| `VITE_API_URL` | `https://cfibackend-isoprod.up.railway.app` | `https://cfibackend.up.railway.app` | Sans trailing slash |
-| `VITE_APP_NAME` | `CFI CIRAS Web Admin — ISOPROD` | `CFI CIRAS Web Admin` | Affiché en UI |
-| `VITE_DEBUG` | `true` | `false` | Active logs verbeux |
-| `VITE_BASE_URL` | `/` | `/` | Si servi sous sous-chemin |
-| `VITE_ENV` | `isoprod` | `production` | Tag pour Sentry/bandeaux |
-| `NODE_VERSION` | `20.17.0` | `20.17.0` | Pin Render |
-| `NODE_ENV` | `production` | `production` | Vite mode |
+| Variable        | isoprod                                     | prod                                | Notes                     |
+| --------------- | ------------------------------------------- | ----------------------------------- | ------------------------- |
+| `VITE_API_URL`  | `https://cfibackend-isoprod.up.railway.app` | `https://cfibackend.up.railway.app` | Sans trailing slash       |
+| `VITE_APP_NAME` | `CFI CIRAS Web Admin — ISOPROD`             | `CFI CIRAS Web Admin`               | Affiché en UI             |
+| `VITE_DEBUG`    | `true`                                      | `false`                             | Active logs verbeux       |
+| `VITE_BASE_URL` | `/`                                         | `/`                                 | Si servi sous sous-chemin |
+| `VITE_ENV`      | `isoprod`                                   | `production`                        | Tag pour Sentry/bandeaux  |
+| `NODE_VERSION`  | `20.17.0`                                   | `20.17.0`                           | Pin Render                |
+| `NODE_ENV`      | `production`                                | `production`                        | Vite mode                 |
 
 ⚠️ **Toutes** les `VITE_*` sont **inlinées dans le bundle** et donc lisibles
 publiquement. Aucune ne doit contenir de secret serveur.
@@ -186,10 +193,10 @@ Aucun re-build, bascule CDN quasi-immédiate (< 30s).
 
 ## 10. Coûts attendus
 
-| Plan | Coût | Limites pertinentes |
-|---|---|---|
-| Static Site Free | 0 $ | 100 GB bw / 500 build min / 100 sites |
-| Static Site Pro | inclus dans Team ($19/mois) | bandwidth illimité, support |
+| Plan             | Coût                        | Limites pertinentes                   |
+| ---------------- | --------------------------- | ------------------------------------- |
+| Static Site Free | 0 $                         | 100 GB bw / 500 build min / 100 sites |
+| Static Site Pro  | inclus dans Team ($19/mois) | bandwidth illimité, support           |
 
 Pour un usage isoprod + démo client, le tier gratuit suffit.
 

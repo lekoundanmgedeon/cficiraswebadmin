@@ -18,7 +18,7 @@
           <i class="mdi mdi mdi-launch me-2"></i> Editer
         </RouterLink>
       </li>
-          <li v-if="showAdd && anneeRoute">
+      <li v-if="showAdd && anneeRoute">
         <RouterLink
           class="dropdown-item"
           :to="`${anneeRoute.replace(/\/$/, '')}/edit/${itemId}`"
@@ -63,9 +63,17 @@
     >
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg">
-          <div class="modal-header" :class="item?.est_active ? 'bg-warning text-dark' : 'bg-success text-white'">
+          <div
+            class="modal-header"
+            :class="item?.est_active ? 'bg-warning text-dark' : 'bg-success text-white'"
+          >
             <h5 class="modal-title">{{ item?.est_active ? 'Désactivation' : 'Activation' }}</h5>
-            <button type="button" class="btn-close" :class="item?.est_active ? '' : 'btn-close-white'" @click="closeToggleModal"></button>
+            <button
+              type="button"
+              class="btn-close"
+              :class="item?.est_active ? '' : 'btn-close-white'"
+              @click="closeToggleModal"
+            ></button>
           </div>
           <div class="modal-body">
             <p class="mb-0">
@@ -75,7 +83,11 @@
           </div>
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeToggleModal">Annuler</button>
-            <button class="btn" :class="item?.est_active ? 'btn-warning' : 'btn-success'" @click="confirmToggleStatus">
+            <button
+              class="btn"
+              :class="item?.est_active ? 'btn-warning' : 'btn-success'"
+              @click="confirmToggleStatus"
+            >
               {{ item?.est_active ? 'Désactiver' : 'Activer' }}
             </button>
           </div>
@@ -97,7 +109,11 @@
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-danger text-white">
             <h5 class="modal-title">Confirmation de suppression</h5>
-            <button type="button" class="btn-close btn-close-white" @click="closeDeleteModal"></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              @click="closeDeleteModal"
+            ></button>
           </div>
           <div class="modal-body">
             <p class="mb-0">
@@ -145,7 +161,9 @@
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Statut :</strong>
-                <span :class="mapStatut(item.statut).class">{{ mapStatut(item.statut).label }}</span>
+                <span :class="mapStatut(item.statut).class">{{
+                  mapStatut(item.statut).label
+                }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Active :</strong>

@@ -198,7 +198,8 @@
                 <ClasseStudentsModal
                   v-model="showModalEtudiants"
                   :classe="classeSelectionnee"
-                  :students="classeStore.students" :loading="classeStore.loading"
+                  :students="classeStore.students"
+                  :loading="classeStore.loading"
                 />
               </tbody>
             </table>

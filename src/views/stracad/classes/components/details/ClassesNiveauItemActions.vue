@@ -11,7 +11,11 @@
         </button>
       </li>
       <li v-if="showAdd && concourRoute">
-        <RouterLink class="dropdown-item" :to="`${concourRoute}edit/${itemId}`" @click="$emit('add', item)">
+        <RouterLink
+          class="dropdown-item"
+          :to="`${concourRoute}edit/${itemId}`"
+          @click="$emit('add', item)"
+        >
           <i class="mdi mdi-launch me-2"></i> Editer
         </RouterLink>
       </li>
@@ -46,7 +50,11 @@
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-danger text-white">
             <h5 class="modal-title">Confirmation de suppression</h5>
-            <button type="button" class="btn-close btn-close-white" @click="closeDeleteModal"></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              @click="closeDeleteModal"
+            ></button>
           </div>
           <div class="modal-body">
             <p class="mb-0">
@@ -84,7 +92,9 @@
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Filière :</strong>
-                <span>{{ item.filiere_nom || item.filiere_code || item.filiere_designation || '-' }}</span>
+                <span>{{
+                  item.filiere_nom || item.filiere_code || item.filiere_designation || '-'
+                }}</span>
               </li>
               <li class="list-group-item d-flex justify-content-between">
                 <strong>Capacité :</strong>

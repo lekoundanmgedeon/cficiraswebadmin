@@ -54,7 +54,10 @@
     >
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg">
-          <div class="modal-header" :class="item?.actif ? 'bg-warning text-dark' : 'bg-success text-white'">
+          <div
+            class="modal-header"
+            :class="item?.actif ? 'bg-warning text-dark' : 'bg-success text-white'"
+          >
             <h5 class="modal-title">{{ item?.actif ? 'Désactivation' : 'Activation' }}</h5>
             <button
               type="button"
@@ -71,7 +74,11 @@
           </div>
           <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeToggleModal">Annuler</button>
-            <button class="btn" :class="item?.actif ? 'btn-warning' : 'btn-success'" @click="confirmToggleStatus">
+            <button
+              class="btn"
+              :class="item?.actif ? 'btn-warning' : 'btn-success'"
+              @click="confirmToggleStatus"
+            >
               {{ item?.actif ? 'Désactiver' : 'Activer' }}
             </button>
           </div>
@@ -93,7 +100,11 @@
         <div class="modal-content shadow-lg">
           <div class="modal-header bg-danger text-white">
             <h5 class="modal-title">Confirmation de suppression</h5>
-            <button type="button" class="btn-close btn-close-white" @click="closeDeleteModal"></button>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              @click="closeDeleteModal"
+            ></button>
           </div>
           <div class="modal-body">
             <p class="mb-0">

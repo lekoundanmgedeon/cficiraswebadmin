@@ -474,16 +474,7 @@ const exportStudentsPDF = () => {
       { label: 'Total étudiants', value: filteredEtudiants.value.length },
       { label: 'Date', value: new Date().toLocaleDateString('fr-FR') },
     ],
-    columns: [
-      'Rang',
-      'Nom',
-      'Matricule',
-      'Email',
-      'Téléphone',
-      'Filière',
-      'Année',
-      'Genre',
-    ],
+    columns: ['Rang', 'Nom', 'Matricule', 'Email', 'Téléphone', 'Filière', 'Année', 'Genre'],
     rows: filteredEtudiants.value.map((etudiant, index) => [
       index + 1,
       `${etudiant.nom} ${etudiant.prenom}`,
@@ -512,11 +503,7 @@ const exportCSV = () => {
   ]);
   const csvContent = [
     headers.join(','),
-    ...rows.map((row) =>
-      row
-        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
-        .join(',')
-    ),
+    ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
   ].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');

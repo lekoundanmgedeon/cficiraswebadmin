@@ -57,7 +57,7 @@ services:
       - key: NODE_VERSION
         value: 20.17.0
       - key: NPM_CONFIG_PRODUCTION
-        value: "false"
+        value: 'false'
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
@@ -65,7 +65,7 @@ services:
       - key: VITE_APP_NAME
         value: CFI CIRAS Web Admin — ISOPROD
       - key: VITE_DEBUG
-        value: "true"
+        value: 'true'
       - key: VITE_BASE_URL
         value: /
       - key: VITE_ENV
@@ -117,7 +117,7 @@ services:
       - key: NODE_VERSION
         value: 20.17.0
       - key: NPM_CONFIG_PRODUCTION
-        value: "false"
+        value: 'false'
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
@@ -125,7 +125,7 @@ services:
       - key: VITE_APP_NAME
         value: CFI CIRAS Web Admin
       - key: VITE_DEBUG
-        value: "false"
+        value: 'false'
       - key: VITE_BASE_URL
         value: /
       - key: VITE_ENV

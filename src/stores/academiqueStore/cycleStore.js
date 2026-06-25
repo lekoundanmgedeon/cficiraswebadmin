@@ -4,7 +4,7 @@ import {
   getCycleById,
   getCycleFilieres,
   getCycleOrganisation,
-  getCycleArchitecture, 
+  getCycleArchitecture,
   getCycleDistributionStats,
   createCycle,
   updateCycle,

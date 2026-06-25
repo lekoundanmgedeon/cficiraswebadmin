@@ -3,28 +3,24 @@
     <div class="col-12 mb-4">
       <h4>Statistiques des filières</h4>
       <p class="text-muted">Sélectionnez une filière pour consulter ses indicateurs clés.</p>
-      
+
       <div class="col-md-6 col-lg-4 mt-2">
         <label for="filiereSelect" class="form-label small fw-bold text-secondary">Filière</label>
-        <select 
-          id="filiereSelect" 
-          v-model="selectedFiliereId" 
+        <select
+          id="filiereSelect"
+          v-model="selectedFiliereId"
           class="form-select form-select-md"
           :disabled="filiereStore.loading"
         >
           <option value="" disabled>-- Choisir une filière --</option>
-          <option 
-            v-for="filiere in filiereStore.filieres" 
-            :key="filiere.id" 
-            :value="filiere.id"
-          >
+          <option v-for="filiere in filiereStore.filieres" :key="filiere.id" :value="filiere.id">
             {{ filiere.designation }} ({{ filiere.code }})
           </option>
         </select>
       </div>
     </div>
 
-    <hr class="my-3 opacity-25">
+    <hr class="my-3 opacity-25" />
 
     <div v-if="filiereStore.loading && selectedFiliereId" class="col-12 text-center py-5">
       <div class="spinner-border text-primary spinner-border-sm" role="status">
@@ -34,7 +30,6 @@
 
     <div v-else-if="selectedFiliereId && filiereStore.stats" class="col-12">
       <div class="row g-3">
-        
         <div class="col-md-6">
           <div class="stat-card">
             <div class="stat-icon bg-info-soft text-info">
@@ -58,14 +53,20 @@
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
     <div v-else class="col-12 text-center py-5">
       <div class="d-flex flex-column align-items-center">
-        <img src="/img/empty-box.svg" alt="Sélectionner" class="mb-2 text-muted" style="width: 80px; opacity: 0.6;" />
-        <p class="text-muted small">Veuillez sélectionner une filière dans la liste pour afficher ses statistiques.</p>
+        <img
+          src="/img/empty-box.svg"
+          alt="Sélectionner"
+          class="mb-2 text-muted"
+          style="width: 80px; opacity: 0.6"
+        />
+        <p class="text-muted small">
+          Veuillez sélectionner une filière dans la liste pour afficher ses statistiques.
+        </p>
       </div>
     </div>
   </div>
@@ -73,7 +74,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { useFiliereStore } from '@/stores/academiqueStore/filiereStore'; 
+import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
 
 const filiereStore = useFiliereStore();
 const selectedFiliereId = ref('');
@@ -81,7 +82,7 @@ const selectedFiliereId = ref('');
 onMounted(async () => {
   // 1. Charger la liste des filières via le store (qui gère le cache en interne)
   await filiereStore.fetchFilieres();
-  
+
   // 2. Sélectionner automatiquement la première filière par défaut
   if (filiereStore.filieres && filiereStore.filieres.length > 0) {
     selectedFiliereId.value = filiereStore.filieres[0].id;

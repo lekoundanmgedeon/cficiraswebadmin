@@ -4,13 +4,17 @@
       <h3 class="fw-bold mb-1">Copilote Académique & Opérationnel</h3>
       <p class="text-muted small mb-0">
         <i class="bi bi-cpu-fill text-primary me-1"></i>
-        Pilotez l'ensemble de votre établissement : suivez le statut des inscriptions, auditez la trésorerie et supervisez les performances académiques en temps réel.
+        Pilotez l'ensemble de votre établissement : suivez le statut des inscriptions, auditez la
+        trésorerie et supervisez les performances académiques en temps réel.
       </p>
     </div>
 
     <div class="row g-3">
       <div class="col-md-3 d-none d-md-flex flex-column">
-        <div class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100 d-flex flex-column" style="height: 650px">
+        <div
+          class="card border-0 shadow-sm rounded-4 bg-white p-3 h-100 d-flex flex-column"
+          style="height: 650px"
+        >
           <h6 class="fw-bold text-dark mb-3 small text-uppercase text-secondary tracking-wider">
             <i class="bi bi-clock-history text-primary me-2"></i>Analyses Récentes
           </h6>
@@ -22,7 +26,7 @@
                 :key="h.id"
                 @click="loadHistory(h)"
                 class="btn btn-light btn-sm text-start p-2 rounded text-secondary border-0 btn-prompt text-truncate"
-                style="font-size: 12px;"
+                style="font-size: 12px"
               >
                 <i class="bi bi-journal-text me-2 text-secondary opacity-75"></i> {{ h.title }}
               </button>
@@ -38,9 +42,13 @@
       </div>
 
       <div class="col-md-9">
-        <div class="card border-0 shadow-sm rounded-4 bg-white d-flex flex-column" style="height: 650px">
-          
-          <div class="card-header bg-white border-0 p-3 border-bottom d-flex justify-content-between align-items-center">
+        <div
+          class="card border-0 shadow-sm rounded-4 bg-white d-flex flex-column"
+          style="height: 650px"
+        >
+          <div
+            class="card-header bg-white border-0 p-3 border-bottom d-flex justify-content-between align-items-center"
+          >
             <div class="d-flex align-items-center">
               <div
                 class="bg-soft-primary rounded-circle p-2 me-3 d-flex align-items-center justify-content-center"
@@ -51,35 +59,55 @@
               <div>
                 <h6 class="mb-0 fw-bold text-dark">Intelligence Opérationnelle</h6>
                 <small class="text-success fw-medium">
-                  <i class="bi bi-circle-fill me-1 small animate-pulse" style="font-size: 8px"></i> 
+                  <i class="bi bi-circle-fill me-1 small animate-pulse" style="font-size: 8px"></i>
                   Données synchronisées en temps réel
                 </small>
               </div>
             </div>
-            <button class="btn btn-sm btn-light border rounded-3" @click="exportConversation" :disabled="messages.length === 0">
+            <button
+              class="btn btn-sm btn-light border rounded-3"
+              @click="exportConversation"
+              :disabled="messages.length === 0"
+            >
               <i class="bi bi-download me-1"></i> Exporter l'audit
             </button>
           </div>
 
           <div class="card-body overflow-auto p-4 flex-grow-1 bg-chat-canvas" ref="chatWindow">
-            
             <div class="d-flex mb-4 justify-content-start">
-              <div class="bg-soft-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center align-self-start" style="width: 32px; height: 32px">
+              <div
+                class="bg-soft-primary rounded-circle p-2 me-2 d-flex align-items-center justify-content-center align-self-start"
+                style="width: 32px; height: 32px"
+              >
                 <i class="bi bi-robot text-primary small"></i>
               </div>
               <div class="p-3 rounded-4 bg-light text-dark max-w-80 text-sm border-0 shadow-sm">
                 <div class="fw-semibold text-xs mb-1 text-secondary">Copilote IA</div>
-                <p class="mb-3">Bonjour Administrateur. Je suis prêt à analyser l'ensemble des opérations et indicateurs de la plateforme.</p>
-                
-                <div class="small text-muted mb-2 fw-medium" style="font-size: 11px;">Suggérer une analyse complexe :</div>
+                <p class="mb-3">
+                  Bonjour Administrateur. Je suis prêt à analyser l'ensemble des opérations et
+                  indicateurs de la plateforme.
+                </p>
+
+                <div class="small text-muted mb-2 fw-medium" style="font-size: 11px">
+                  Suggérer une analyse complexe :
+                </div>
                 <div class="d-flex flex-wrap gap-2">
-                  <button @click="askShortcut('Quel est le bénéfice net de ce mois ?')" class="btn btn-sm btn-pill-suggestion">
+                  <button
+                    @click="askShortcut('Quel est le bénéfice net de ce mois ?')"
+                    class="btn btn-sm btn-pill-suggestion"
+                  >
                     <i class="bi bi-cash-coin me-1 text-success"></i> Bénéfice net mensuel
                   </button>
-                  <button @click="askShortcut('Liste des impayés en Licence 1')" class="btn btn-sm btn-pill-suggestion">
+                  <button
+                    @click="askShortcut('Liste des impayés en Licence 1')"
+                    class="btn btn-sm btn-pill-suggestion"
+                  >
                     <i class="bi bi-exclamation-triangle me-1 text-danger"></i> Impayés L1
                   </button>
-                  <button @click="askShortcut('Prévision des honoraires pour le mois prochain')" class="btn btn-sm btn-pill-suggestion">
+                  <button
+                    @click="askShortcut('Prévision des honoraires pour le mois prochain')"
+                    class="btn btn-sm btn-pill-suggestion"
+                  >
                     <i class="bi bi-graph-up me-1 text-primary"></i> Prévisions Honoraires
                   </button>
                 </div>
@@ -102,7 +130,11 @@
 
               <div
                 class="p-3 rounded-4 max-w-80 text-sm"
-                :class="msg.role === 'user' ? 'bg-chat-user text-white shadow-sm' : 'bg-light text-dark border-0 shadow-sm'"
+                :class="
+                  msg.role === 'user'
+                    ? 'bg-chat-user text-white shadow-sm'
+                    : 'bg-light text-dark border-0 shadow-sm'
+                "
               >
                 <div
                   class="fw-semibold text-xs mb-1 opacity-75"
@@ -110,12 +142,19 @@
                 >
                   {{ msg.role === 'user' ? 'Vous' : 'Copilote IA' }}
                 </div>
-                
+
                 <div class="mb-0 markdown-body" v-html="renderMarkdown(msg.content)"></div>
-                
-                <div v-if="msg.stats" class="mt-2 pt-2 border-top border-secondary-subtle opacity-75 d-flex align-items-center gap-1" style="font-size: 10px;">
+
+                <div
+                  v-if="msg.stats"
+                  class="mt-2 pt-2 border-top border-secondary-subtle opacity-75 d-flex align-items-center gap-1"
+                  style="font-size: 10px"
+                >
                   <i class="bi bi-database-check text-success"></i>
-                  <span>Source : Module <strong class="text-primary">{{ msg.stats.module }}</strong></span>
+                  <span
+                    >Source : Module
+                    <strong class="text-primary">{{ msg.stats.module }}</strong></span
+                  >
                 </div>
               </div>
             </div>
@@ -134,7 +173,9 @@
           </div>
 
           <div class="card-footer bg-white border-0 px-4 pb-3 pt-2">
-            <div class="modern-input-wrapper position-relative shadow-sm border rounded-4 bg-light p-2">
+            <div
+              class="modern-input-wrapper position-relative shadow-sm border rounded-4 bg-light p-2"
+            >
               <textarea
                 v-model="userInput"
                 @keydown.enter.prevent="sendMessage"
@@ -143,9 +184,11 @@
                 class="form-control border-0 bg-transparent py-2 px-3 text-dark shadow-none resize-none text-sm"
                 placeholder="Demandez une analyse, un comparatif ou un audit..."
               ></textarea>
-              
-              <div class="d-flex justify-content-between align-items-center px-3 pt-2 border-top border-light-subtle">
-                <span class="text-muted opacity-50" style="font-size: 11px;">
+
+              <div
+                class="d-flex justify-content-between align-items-center px-3 pt-2 border-top border-light-subtle"
+              >
+                <span class="text-muted opacity-50" style="font-size: 11px">
                   <i class="bi bi-lightning-charge me-1"></i>Modèle Opérationnel v2.6
                 </span>
                 <button
@@ -158,10 +201,10 @@
               </div>
             </div>
             <p class="text-center text-muted mt-2 mb-0" style="font-size: 10px">
-              L'IA peut faire des erreurs. Vérifiez les chiffres importants dans vos modules financiers.
+              L'IA peut faire des erreurs. Vérifiez les chiffres importants dans vos modules
+              financiers.
             </p>
           </div>
-
         </div>
       </div>
     </div>
@@ -174,7 +217,7 @@ import { marked } from 'marked';
 
 marked.setOptions({
   breaks: true,
-  gfm: true
+  gfm: true,
 });
 
 const userInput = ref('');
@@ -183,8 +226,16 @@ const chatWindow = ref(null);
 const messages = ref([]);
 
 const history = ref([
-  { id: 1, title: 'Analyse Taux Recouvrement Oct.', query: 'Donne-moi un rapport sur le taux de recouvrement de l\'octobre.' },
-  { id: 2, title: 'Comparatif Dépenses Trimestrielles', query: 'Fais un comparatif des dépenses du dernier trimestre.' },
+  {
+    id: 1,
+    title: 'Analyse Taux Recouvrement Oct.',
+    query: "Donne-moi un rapport sur le taux de recouvrement de l'octobre.",
+  },
+  {
+    id: 2,
+    title: 'Comparatif Dépenses Trimestrielles',
+    query: 'Fais un comparatif des dépenses du dernier trimestre.',
+  },
 ]);
 
 const renderMarkdown = (text) => {
@@ -211,15 +262,16 @@ const sendMessage = () => {
 
   setTimeout(() => {
     isTyping.value = false;
-    
-    let aiMarkdownResponse = "D'après les données du module **Trésorerie** et **Paiements** :\n\n1. Les revenus ont augmenté de **15%** grâce aux inscriptions de Master.\n2. Cependant, le solde net est impacté par une hausse des charges opérationnelles (maintenance).\n\n**Décision recommandée :** Relancer les 42 étudiants de Licence 1 en retard de paiement pour stabiliser le cash-flow.";
-    
+
+    let aiMarkdownResponse =
+      "D'après les données du module **Trésorerie** et **Paiements** :\n\n1. Les revenus ont augmenté de **15%** grâce aux inscriptions de Master.\n2. Cependant, le solde net est impacté par une hausse des charges opérationnelles (maintenance).\n\n**Décision recommandée :** Relancer les 42 étudiants de Licence 1 en retard de paiement pour stabiliser le cash-flow.";
+
     messages.value.push({
       role: 'assistant',
       content: aiMarkdownResponse,
       stats: { module: 'Finances & Scolarité' },
     });
-    
+
     scrollToBottom();
   }, 1500);
 };
@@ -292,7 +344,9 @@ const exportConversation = () => {
 .modern-input-wrapper {
   background-color: #f8fafc !important;
   border: 1px solid #e2e8f0 !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .modern-input-wrapper:focus-within {
   border-color: #94a3b8 !important;
@@ -306,7 +360,9 @@ const exportConversation = () => {
   width: 32px;
   height: 32px;
   border: none;
-  transition: background-color 0.2s, transform 0.1s;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
 }
 .btn-chat-submit:hover:not(:disabled) {
   background-color: #1e293b;
@@ -328,8 +384,13 @@ const exportConversation = () => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 .animate-pulse {
   animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -341,9 +402,10 @@ const exportConversation = () => {
 
 /* Markdown généré par Marked */
 :deep(.markdown-body p) {
-  margin-bottom: 0px; 
+  margin-bottom: 0px;
 }
-:deep(.markdown-body ol), :deep(.markdown-body ul) {
+:deep(.markdown-body ol),
+:deep(.markdown-body ul) {
   padding-left: 1.25rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
