@@ -21,7 +21,7 @@
 
         <ul class="dropdown-menu">
           <li>
-            <button class="dropdown-item" @click="exportPDF">Export PDF</button>
+            <button class="dropdown-item" @click="exportStudentsPDF">Export PDF</button>
           </li>
 
           <li>
@@ -29,7 +29,7 @@
           </li>
 
           <li>
-            <button class="dropdown-item" @click="exportExcel">Export Excel</button>
+            <button class="dropdown-item" @click="exportStudentsExcel">Export Excel</button>
           </li>
 
           <li>
@@ -198,7 +198,7 @@
           <Pagination
             v-model="currentPage"
             :items-per-page="itemsPerPage"
-            :total-items="etudiants.length"
+            :total-items="filteredEtudiants.length"
           />
         </div>
       </div>
@@ -210,6 +210,14 @@
 import { computed, ref } from 'vue';
 import ItemActions from '../details/ItemActions.vue';
 import Pagination from '@/components/shared/Pagination.vue';
+import logoCFI from '@/assets/logoBase64';
+import { exportExcel } from '@/utils/exportExcel';
+import { exportPDF } from '@/utils/exportPDF';
+
+const searchQuery = ref('');
+const filterFiliere = ref('');
+const filterSexe = ref('');
+const loading = ref(false);
 
 // =========================
 // MOCK ETUDIANTS
@@ -405,8 +413,24 @@ const itemsPerPage = ref(10);
 
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
 
+const filteredEtudiants = computed(() => {
+  return etudiants.value.filter((etudiant) => {
+    const search = searchQuery.value.toLowerCase().trim();
+    const matchesSearch =
+      !search ||
+      etudiant.nom.toLowerCase().includes(search) ||
+      etudiant.prenom.toLowerCase().includes(search) ||
+      etudiant.matricule.toLowerCase().includes(search);
+
+    const matchesFiliere = !filterFiliere.value || etudiant.filiere === filterFiliere.value;
+    const matchesSexe = !filterSexe.value || etudiant.sexe === filterSexe.value;
+
+    return matchesSearch && matchesFiliere && matchesSexe;
+  });
+});
+
 const paginatedEtudiants = computed(() =>
-  etudiants.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
+  filteredEtudiants.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
 );
 
 // =========================
@@ -420,6 +444,118 @@ const confirmDelete = (etudiant) => {
   if (confirm(`Voulez-vous vraiment supprimer ${etudiant.nom} ${etudiant.prenom} ?`)) {
     etudiants.value = etudiants.value.filter((item) => item.id !== etudiant.id);
   }
+};
+
+const getExportStudentsData = () =>
+  filteredEtudiants.value.map((etudiant, index) => ({
+    Rang: index + 1,
+    Nom: `${etudiant.nom} ${etudiant.prenom}`,
+    Matricule: etudiant.matricule,
+    Email: etudiant.email,
+    Téléphone: etudiant.telephone,
+    Filière: etudiant.filiere,
+    Année: etudiant.annee_academique || '-',
+    Genre: etudiant.sexe || '-',
+  }));
+
+const exportStudentsExcel = () => {
+  exportExcel({
+    data: getExportStudentsData(),
+    sheetName: 'Étudiants',
+    fileName: `etudiants_${new Date().getTime()}.xlsx`,
+  });
+};
+
+const exportStudentsPDF = () => {
+  exportPDF({
+    logoBase64: logoCFI,
+    title: 'Liste des étudiants',
+    filters: [
+      { label: 'Total étudiants', value: filteredEtudiants.value.length },
+      { label: 'Date', value: new Date().toLocaleDateString('fr-FR') },
+    ],
+    columns: [
+      'Rang',
+      'Nom',
+      'Matricule',
+      'Email',
+      'Téléphone',
+      'Filière',
+      'Année',
+      'Genre',
+    ],
+    rows: filteredEtudiants.value.map((etudiant, index) => [
+      index + 1,
+      `${etudiant.nom} ${etudiant.prenom}`,
+      etudiant.matricule,
+      etudiant.email,
+      etudiant.telephone,
+      etudiant.filiere,
+      etudiant.annee_academique || '-',
+      etudiant.sexe || '-',
+    ]),
+    fileName: `etudiants_${new Date().getTime()}.pdf`,
+  });
+};
+
+const exportCSV = () => {
+  const headers = ['Rang', 'Nom', 'Matricule', 'Email', 'Téléphone', 'Filière', 'Année', 'Genre'];
+  const rows = filteredEtudiants.value.map((etudiant, index) => [
+    index + 1,
+    `${etudiant.nom} ${etudiant.prenom}`,
+    etudiant.matricule,
+    etudiant.email,
+    etudiant.telephone,
+    etudiant.filiere,
+    etudiant.annee_academique || '-',
+    etudiant.sexe || '-',
+  ]);
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) =>
+      row
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(',')
+    ),
+  ].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', `etudiants_${new Date().getTime()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const printTable = () => {
+  const printContent = document.querySelector('.table-responsive').innerHTML;
+  const printWindow = window.open('', '', 'width=900,height=650');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Impression des étudiants</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { padding: 8px 10px; border: 1px solid #ddd; }
+          th { background: #f8f9fa; }
+        </style>
+      </head>
+      <body>
+        <h3>Liste des étudiants</h3>
+        ${printContent}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+};
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  filterFiliere.value = '';
+  filterSexe.value = '';
 };
 </script>
 
