@@ -70,10 +70,12 @@ const currentSession = computed(() => {
 const goBack = () => router.back();
 
 // 3. Gestionnaire du bouton proclamation (Appel de l'API de téléchargement)
-const handleProclamations = async () => {
+// Dans le <script setup> de votre vue principale :
+const handleProclamations = async (format = 'pdf') => {
   if (!concoursId.value) return;
   try {
-    await concoursStore.downloadAdmisList(concoursId.value);
+    // On passe explicitement 'pdf' ou 'excel'
+    await concoursStore.downloadAdmisList(concoursId.value, format);
   } catch (error) {
     console.error('Erreur lors du téléchargement des proclamations:', error);
   }
