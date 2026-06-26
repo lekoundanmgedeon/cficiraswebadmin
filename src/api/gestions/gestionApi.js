@@ -53,7 +53,6 @@ export const importCandidats = (formData) => {
 
 // Importation par lot des notes
 export const importNotesCandidats = (formData) => {
-  // 2. On utilise 'gestionFormService' et on passe directement le formData reçu
   return gestionFormService.post('/candidats/import/notes', formData);
 };
 
@@ -67,3 +66,10 @@ export const getCandidatsByConcours = (concoursId) =>
 
 // 6. Récupérer un candidat par ID
 export const getCandidatById = (id) => gestionService.get(`/candidats/${id}`);
+
+// 7. Lister tous les candidats d’une épreuve spécifique
+export const getCandidatsByEpreuve = (concoursId, epreuve_code) =>
+  gestionService.get(
+    `/candidats/concours/${concoursId}/epreuve`,
+    { epreuve_code }
+);
