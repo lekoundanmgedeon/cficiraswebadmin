@@ -69,7 +69,4 @@ export const getCandidatById = (id) => gestionService.get(`/candidats/${id}`);
 
 // 7. Lister tous les candidats d’une épreuve spécifique
 export const getCandidatsByEpreuve = (concoursId, epreuve_code) =>
-  gestionService.get(
-    `/candidats/concours/${concoursId}/epreuve`,
-    { epreuve_code }
-);
+  gestionService.get(`/candidats/concours/${concoursId}/epreuve`, { epreuve_code });

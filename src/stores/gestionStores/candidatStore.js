@@ -71,11 +71,11 @@ export const useCandidatStore = defineStore('candidatStore', {
       this.loading = true;
       try {
         const formData = new FormData();
-        formData.append('file', file);
         formData.append('concours_id', concoursId);
+        formData.append('file', file);
         const response = await importNotesCandidats(formData);
         messageStore.notifySuccess('Import des notes réussi.');
-        return response.data; 
+        return response.data;
       } catch (error) {
         messageStore.notifyError(extractErrorMessage(error, 'Erreur lors de l’import des notes.'));
         throw error;
@@ -117,25 +117,22 @@ export const useCandidatStore = defineStore('candidatStore', {
         this.loading = false;
       }
     },
-  async fetchCandidatsByEpreuve(concoursId, epreuve_code) {
-  const messageStore = useMessageStore();
-  this.loading = true;
+    async fetchCandidatsByEpreuve(concoursId, epreuve_code) {
+      const messageStore = useMessageStore();
+      this.loading = true;
 
-  try {
-    const response = await getCandidatsByEpreuve(concoursId, epreuve_code);
-    this.candidats = response.data;
-  } catch (error) {
-    messageStore.notifyError(
-      extractErrorMessage(
-        error,
-        "Erreur lors du chargement des candidats de l’épreuve."
-      )
-    );
-    this.candidats = [];
-  } finally {
-    this.loading = false;
-  }
-},
+      try {
+        const response = await getCandidatsByEpreuve(concoursId, epreuve_code);
+        this.candidats = response.data;
+      } catch (error) {
+        messageStore.notifyError(
+          extractErrorMessage(error, 'Erreur lors du chargement des candidats de l’épreuve.')
+        );
+        this.candidats = [];
+      } finally {
+        this.loading = false;
+      }
+    },
 
     // Récupérer un candidat par ID
     async fetchCandidatById(id) {

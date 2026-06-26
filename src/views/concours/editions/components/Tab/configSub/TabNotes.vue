@@ -1,6 +1,8 @@
 <template>
   <div class="animate__animated animate__fadeIn">
-    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+    <div
+      class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4"
+    >
       <div>
         <h5 class="fw-bold mb-1 text-dark">Saisie des Notes par Épreuve</h5>
         <p class="text-muted small mb-0">
@@ -10,7 +12,9 @@
       </div>
 
       <div class="d-flex align-items-center gap-2" style="min-width: 280px">
-        <label class="form-label text-nowrap fw-semibold text-secondary small mb-0">Épreuve :</label>
+        <label class="form-label text-nowrap fw-semibold text-secondary small mb-0"
+          >Épreuve :</label
+        >
         <select
           v-model="selectedEpreuveId"
           @change="handleEpreuveChange"
@@ -76,10 +80,17 @@
       <div
         class="d-flex justify-content-between align-items-center bg-light p-3 border rounded-top-3 border-bottom-0"
       >
-        <div class="d-flex align-items-center gap-3 text-xs fw-semibold text-uppercase font-monospace text-secondary">
-          <span>Candidats : <strong class="text-dark">{{ notesRows.length }}</strong></span>
+        <div
+          class="d-flex align-items-center gap-3 text-xs fw-semibold text-uppercase font-monospace text-secondary"
+        >
+          <span
+            >Candidats : <strong class="text-dark">{{ notesRows.length }}</strong></span
+          >
           <span>•</span>
-          <span>Saisies : <strong class="text-success">{{ totalSaisies }} / {{ notesRows.length }}</strong></span>
+          <span
+            >Saisies :
+            <strong class="text-success">{{ totalSaisies }} / {{ notesRows.length }}</strong></span
+          >
         </div>
 
         <div class="d-flex gap-2">
@@ -219,7 +230,7 @@ const storeLoading = computed(() => candidatStore.loading || concoursStore.loadi
 
 // Objet Épreuve actuellement sélectionné pour extraire son code_epreuve
 const currentEpreuve = computed(() => {
-  return epreuvesList.value.find(ep => ep.id === selectedEpreuveId.value) || null;
+  return epreuvesList.value.find((ep) => ep.id === selectedEpreuveId.value) || null;
 });
 
 // Compteur dynamique basé sur les notes réelles valides
@@ -263,27 +274,26 @@ const handleEpreuveChange = () => {
 /* 2. Construction de la table d'édition (Candidats de l'épreuve chargée avec leurs notes) */
 const loadCandidatsEtNotes = async () => {
   if (!selectedEpreuveId.value || !currentEpreuve.value?.code) return;
-  
+
   try {
     // Appel de la méthode avec le code de l'épreuve
-    await candidatStore.fetchCandidatsByEpreuve(concoursId.value, currentEpreuve.value.code); 
-    const candidatsDeLEpreuve = candidatStore.candidats || []; 
+    await candidatStore.fetchCandidatsByEpreuve(concoursId.value, currentEpreuve.value.code);
+    const candidatsDeLEpreuve = candidatStore.candidats || [];
 
     notesRows.value = candidatsDeLEpreuve.map((item) => {
-      const noteValeur = item.note !== undefined && item.note !== null && item.note !== '' 
-        ? item.note 
-        : null; // 
+      const noteValeur =
+        item.note !== undefined && item.note !== null && item.note !== '' ? item.note : null; //
 
       return {
-        candidat_id: item.candidat_id, 
+        candidat_id: item.candidat_id,
         num_table: item.num_table || `CAND-${item.candidat_id}`,
         nom: item.nom,
-        prenom: item.prenom, 
+        prenom: item.prenom,
         note: noteValeur,
-        isModified: false, 
-        error: false, 
+        isModified: false,
+        error: false,
       };
-    }); // 
+    }); //
   } catch (err) {
     console.error('Erreur cartographie :', err);
     notifyError('Impossible de charger la grille de saisie.');
@@ -313,7 +323,9 @@ const focusNextInput = (currentIndex) => {
 const saveAllNotes = async () => {
   const hasErrors = notesRows.value.some((r) => r.error);
   if (hasErrors) {
-    return notifyError('Veuillez corriger les notes invalides (hors de [0, 20]) avant de sauvegarder.');
+    return notifyError(
+      'Veuillez corriger les notes invalides (hors de [0, 20]) avant de sauvegarder.'
+    );
   }
 
   const lignesAEnregistrer = notesRows.value.filter((r) => r.isModified);
@@ -332,7 +344,7 @@ const saveAllNotes = async () => {
         concours_id: concoursId.value,
         code_epreuve: currentEpreuve.value.code,
         note: row.note === '' ? null : Number(row.note),
-        appreciation: null
+        appreciation: null,
       };
       await candidatStore.addNote(row.num_table, payload);
     }
@@ -354,9 +366,10 @@ const handleExcelNotesChange = async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  if (!concoursId.value) {
+  // Sécurité stricte : s'assurer que la valeur existe et n'est pas une chaîne "undefined"
+  if (!concoursId.value || concoursId.value === 'undefined' || concoursId.value === 'null') {
     if (excelNotesRef.value) excelNotesRef.value.value = '';
-    return notifyError('Identifiant du concours introuvable.');
+    return notifyError('Identifiant du concours invalide ou introuvable.');
   }
 
   if (file.size > 5 * 1024 * 1024) {
@@ -366,10 +379,9 @@ const handleExcelNotesChange = async (event) => {
 
   try {
     // Appel du store Pinia avec le concours_id et le fichier binaire
-    await candidatStore.importNotesFile(Number(concoursId.value), file);
-
+    await candidatStore.importNotesFile(concoursId.value, file);
     if (excelNotesRef.value) excelNotesRef.value.value = '';
-    
+
     // Rechargement immédiat de la grille
     await loadCandidatsEtNotes();
   } catch (err) {
