@@ -26,10 +26,10 @@
         </button>
         <button
           class="btn btn-primary btn-sm px-3"
-          :disabled="globalSaving"
-          @click="saveAllPlanifications"
+          :disabled="concoursStore.loading"
+          @click="handleProclamations"
         >
-          <span v-if="globalSaving" class="spinner-border spinner-border-sm me-1"></span>
+          <span v-if="concoursStore.loading" class="spinner-border spinner-border-sm me-1"></span>
           <i v-else class="bi bi-cloud-arrow-up me-1"></i> Proclamations
         </button>
       </div>
@@ -48,19 +48,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useConcoursStore } from '@/stores/gestionStores/concourStore';
-import { useNotifier } from '@/stores/messages/useNotifier';
 import TabDetail from './configTab.vue';
 
 const route = useRoute();
 const router = useRouter();
 const concoursStore = useConcoursStore();
-const { notifyError, notifySuccess } = useNotifier();
-
-// États locaux requis par votre template
-const globalSaving = ref(false);
 
 // 1. Récupérer l'ID depuis les paramètres de la route URL
 const concoursId = computed(() => route.params.id);
@@ -74,15 +69,13 @@ const currentSession = computed(() => {
 
 const goBack = () => router.back();
 
-const saveAllPlanifications = async () => {
-  globalSaving.value = true;
+// 3. Gestionnaire du bouton proclamation (Appel de l'API de téléchargement)
+const handleProclamations = async () => {
+  if (!concoursId.value) return;
   try {
-    // Insérez votre logique de sauvegarde ici
-    notifySuccess('Planifications enregistrées avec succès !');
+    await concoursStore.downloadAdmisList(concoursId.value);
   } catch (error) {
-    notifyError('Erreur lors de la sauvegarde.');
-  } finally {
-    globalSaving.value = false;
+    console.error('Erreur lors du téléchargement des proclamations:', error);
   }
 };
 
@@ -95,8 +88,7 @@ const formatDate = (dateStr) => {
   });
 };
 
-// Sécurité : Si l'utilisateur actualise la page directement sur cette URL,
-// on s'assure que la liste du store est chargée.
+// Sécurité : Si l'utilisateur actualise la page directement sur cette URL
 onMounted(async () => {
   if (!concoursStore.concoursList || concoursStore.concoursList.length === 0) {
     await concoursStore.fetchConcours();

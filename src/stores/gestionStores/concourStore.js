@@ -257,20 +257,34 @@ export const useConcoursStore = defineStore('concoursStore', {
       }
     },
 
-    async downloadAdmisList(id) {
+    async downloadAdmisList(id, format = 'pdf') {
       const messageStore = useMessageStore();
       this.loading = true;
       try {
-        const response = await downloadAdmis(id);
-        // Utilisation propre du blob pour forcer le téléchargement du PDF retourné
-        const blob = new Blob([response.data], { type: 'application/pdf' });
+        // Passage du format à la fonction API
+        const response = await downloadAdmis(id, format);
+
+        // Détermination dynamique du Type MIME
+        const mimeType =
+          format === 'pdf'
+            ? 'application/pdf'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+        const blob = new Blob([response.data], { type: mimeType });
         const url = window.URL.createObjectURL(blob);
+
         const link = document.createElement('a');
         link.href = url;
-        link.download = `admis_concours_${id}.pdf`;
+
+        // Extension dynamique (.pdf ou .xlsx)
+        link.download = `admis_concours_${id}.${format}`;
+
         link.click();
-        window.URL.revokeObjectURL(url); // Libère la mémoire
-        messageStore.notifySuccess('Liste des admis téléchargée.');
+        window.URL.revokeObjectURL(url); // Libération de la mémoire
+
+        messageStore.notifySuccess(
+          `Liste des admis téléchargée au format ${format.toUpperCase()}.`
+        );
       } catch (error) {
         messageStore.notifyError(
           extractErrorMessage(error, 'Erreur lors du téléchargement de la liste des admis.')

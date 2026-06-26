@@ -37,9 +37,12 @@ export const calculerMoyennesEtRangs = (id) => gestionService.get(`/concours/${i
 export const proclamerAdmissions = (id) => gestionService.patch(`/concours/${id}/proclamer`);
 
 // Télécharger liste des admis
-export const downloadAdmis = (id) =>
-  gestionService.get(`/concours/${id}/admis/export`, { responseType: 'blob' });
-
+export const downloadAdmis = (concoursId, format = 'pdf') => {
+  return gestionService.get(`/concours/${concoursId}/admis/export`, {
+    params: { format }, // Envoie ?format=pdf ou ?format=excel
+    responseType: 'blob',
+  });
+};
 // 1. Créer un candidat
 export const createCandidat = (data) => gestionService.post('/candidats', data);
 
