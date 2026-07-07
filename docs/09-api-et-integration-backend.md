@@ -214,4 +214,5 @@
 
 - Le frontend contient des services API robustes qui couvrent un large éventail de parcours métier.
 - Certains endpoints sont présents dans le code sans association directe visible à une page.
+- Plusieurs pages de scolarité sont encore partiellement simulées : `/etudiants` utilise des données codées en dur et `/absences` ne lance pas d’appel backend visible.
 - L’API `src/api/userApi.js` existe mais n’est pas utilisée dans la base de code analysée.

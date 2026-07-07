@@ -28,10 +28,14 @@
 - `RM-08` : Gestion de l’organisation des classes
   - `getClassesOrganisationTree` et `getGlobalInfrastructureKPIs` offrent une vue organisationnelle des classes.
 
-- `RM-09` : Calcul des moyennes et rangs concours
+- `RM-09` : Gestion des présences
+  - `AbscenceView.vue` propose trois statuts d’émargement : `present`, `retard`, `absent`.
+  - Un commentaire est autorisé lorsque le statut est `retard` ou `absent`.
+
+- `RM-10` : Calcul des moyennes et rangs concours
   - `calculerMoyennesEtRangs` prépare le calcul des classements pour un concours.
 
-- `RM-10` : Répartition des salles
+- `RM-11` : Répartition des salles
   - La page `Salles.vue` valide la capacité avant de lancer la répartition.
   - La répartition est bloquée si `totalStudents > totalCapacity`.
 

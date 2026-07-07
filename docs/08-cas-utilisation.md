@@ -37,25 +37,47 @@ Objectif : Afficher puis filtrer les étudiants.
 Préconditions : Accès à `/etudiants`.
 Déclencheur : Ouverture de la page.
 Scénario nominal :
-1. Chargement des données.
-2. Application des filtres annexe/filière/niveau/classe.
-3. Affichage de la table.
-Exceptions : aucune donnée, erreur de chargement.
+1. Chargement de la page `Etudiants.vue`.
+2. Le composant affiche un loader puis une table d’étudiants.
+3. L’utilisateur applique des filtres sur l’année, la filière, le niveau et la classe.
+4. La liste se met à jour localement.
+5. L’utilisateur peut cliquer sur `Détails` pour consulter un étudiant.
+Exceptions : aucune donnée, erreurs d’affichage.
 Postconditions : liste filtrée visible.
-API concernée : utilisation prévue de `getEtudiantsByClasseFiliereAnnee`, mais page actuelle simule les données.
+API concernée : utilisation prévue de `getEtudiantsByClasseFiliereAnnee`, mais la page actuelle utilise des données simulées.
 
 ## UC-04 : Consultation du dossier scolaire d’un étudiant
 
 Acteur principal : Agent de scolarité
 Objectif : Voir le parcours d’un étudiant.
-Préconditions : Étudiant sélectionné.
+Préconditions : Étudiant présent dans la liste.
 Déclencheur : Clic sur `Détails` dans la liste.
 Scénario nominal :
-1. Navigation vers `/dossiers-scolaires/{id}/global-informations`.
-2. Affichage du dossier académique.
-Exceptions : étudiant non trouvé.
-Postconditions : dossier visible.
-API concernée : potentiellement `getParcoursAcademique(id)`.
+1. L’utilisateur clique sur `Détails` pour un étudiant.
+2. Le composant route vers `/dossiers-scolaires/{id}/global-informations`.
+3. La page charge l’ID de l’étudiant depuis `route.params.id`.
+4. Un loader s’affiche, puis le dossier académique et le composant `DossierTab` sont rendus.
+Exceptions : étudiant non trouvé, chemin invalide.
+Postconditions : dossier pédagogique visible.
+API concernée : potentiellement `getParcoursAcademique(id)` via `useEtudiantStore.fetchParcours(id)`.
+
+## UC-09 : Enregistrement d’une feuille de présence
+
+Acteur principal : Enseignant ou agent de scolarité
+Objectif : Enregistrer la présence des étudiants pour un cours.
+Préconditions : Accès à `/absences` et sélection d’une classe et d’un cours.
+Déclencheur : Clic sur `Enregistrer l'émergement`.
+Scénario nominal :
+1. L’utilisateur choisit la date, la classe, le cours et le créneau.
+2. La liste des étudiants apparaît.
+3. Il indique le statut de chaque étudiant (`Présent`, `Retard`, `Absent`).
+4. Il saisit des commentaires pour les retards ou absences.
+5. Il clique sur `Enregistrer l'émergement`.
+6. Le frontend construit un payload contenant la date, la classe, le cours, le créneau et le registre.
+7. Un message de succès s’affiche.
+Exceptions : données manquantes, statut non renseigné, erreur de réseau.
+Postconditions : fiche d’émargement enregistrée localement et confirmation affichée.
+API concernée : aucun endpoint backend visible dans la page actuelle.
 
 ## UC-05 : Chargement des sessions d’examen
 

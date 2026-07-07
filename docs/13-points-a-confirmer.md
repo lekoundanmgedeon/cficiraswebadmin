@@ -16,10 +16,13 @@
 - Le routeur marque `DefaultLayout` comme `requiresAuth` mais aucun `router.beforeEach` de protection n’est implémenté.
 - La page `/auth/register` contient un formulaire statique non connecté au store.
 - `/auth/new-password` redirige vers `Login.vue` sans écran dédié.
+- La page `/inscriptions` est structurée en onglets, mais la connexion aux stores backend n’est pas clairement visible.
 
 ## Données simulées
 
 - Plusieurs pages utilisent des listes et des chronos `setTimeout` pour simuler des réponses (`Etudiants.vue`, `Paiements.vue`, `Facturation.vue`, `RapportFinances.vue`, `Enseignants.vue`).
+- Le module `Scolarité` est partiellement simulé : `/etudiants` et `/dossiers-scolaires` n’appellent pas encore les stores backend correspondants.
+- La page `/absences` construit un payload de présence mais n’envoie pas d’appel API réel.
 - Il faut confirmer quelles pages sont des maquettes et lesquelles doivent être connectées au backend.
 
 ## Fonctionnalités implémentées côté API sans page correspondante

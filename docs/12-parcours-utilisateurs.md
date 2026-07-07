@@ -11,12 +11,13 @@
 ## Parcours Agent académique / Scolarité
 
 - Se connecte via `/auth/login`.
-- Consulte la gestion des étudiants `/etudiants`.
-- Filtre par année, filière, niveau et classe.
-- Accède aux dossiers scolaires `/dossiers-scolaires`.
-- Consulte les absences `/absences`.
-- Utilise le module `Notes` et les délibérations `/deliberations`.
-- Consulter les inscriptions `/inscriptions`.
+- Consulte la liste des étudiants sur `/etudiants`.
+- Filtre la population étudiante par année, filière, niveau et classe.
+- Accède au dossier académique d’un étudiant via `/dossiers-scolaires/{id}/global-informations`.
+- Affiche le parcours individuel, la situation financière et les documents d’un étudiant.
+- Enregistre une fiche d’émargement sur `/absences` en sélectionnant classe, cours et créneau.
+- Gère les inscriptions via l’interface à onglets de `/inscriptions`.
+- Consulte les notes et les délibérations via les modules prévus.
 
 ## Parcours Enseignant
 

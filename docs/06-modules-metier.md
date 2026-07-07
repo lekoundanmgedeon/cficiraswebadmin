@@ -44,12 +44,13 @@ Permettre aux utilisateurs autorisés de se connecter au portail ERP et de maint
 ## Structure Académique
 
 ### Objectif métier
-Gérer le référentiel académique : années, cycles, filières, classes et semestres.
+Gérer le référentiel académique : années, cycles, filières, classes, niveaux et semestres.
 
 ### Utilisateurs concernés
 - Administrateurs académiques
 - Responsable de cycle
-- Agent scolarité
+- Responsable pédagogique
+- Agent de scolarité
 
 ### Pages associées
 - `/annees-academiques` : `AnneeAcademique.vue`
@@ -59,22 +60,23 @@ Gérer le référentiel académique : années, cycles, filières, classes et sem
 - `/semestres` : `Semestre.vue`
 
 ### Données manipulées
-- Années académiques
-- Cycles et filières
-- Classes et niveaux
-- Semestres et statuts
-- Organisation et analytics
+- Années académiques (périodes d’enseignement)
+- Cycles d’études et filières associées
+- Niveaux LMD et classes (groupes étudiants)
+- Semestres et leur statut actif/inactif
+- Organisation pédagogique et indicateurs de remplissage
 
 ### Actions visibles dans le code
-- Créer / Modifier / Supprimer des années, cycles, filières, classes, semestres
-- Activer une année
+- Créer / modifier / supprimer des années académiques, des cycles, des filières, des classes et des semestres
+- Activer une année académique
 - Changer le statut d’un semestre
-- Assigner des modules à une classe
-- Importer des fichiers (etudiants, réinscriptions, tuteurs)
-- Consulter statistiques et organisation
+- Assigner des modules ou UE à une classe via `moduleStore.assignModule`
+- Charger l’organisation des cycles, filières, classes et semestres
+- Consulter des statistiques et indicateurs de répartition
+- Importer des étudiants, des réinscriptions et des tuteurs (API prévue)
 
 ### API et Stores
-- `useAnneeStore`, `useCycleStore`, `useFiliereStore`, `useClasseStore`, `useSemestreStore`, `useModuleStore`
+- Stores : `useAnneeStore`, `useCycleStore`, `useFiliereStore`, `useClasseStore`, `useSemestreStore`, `useModuleStore`
 - API : `src/api/academique/academiqueApi.js`, `src/api/academique/moduleApi.js`
 
 ### Composants impliqués
@@ -85,21 +87,27 @@ Gérer le référentiel académique : années, cycles, filières, classes et sem
 - `src/views/stracad/semestres/Semestre.vue`
 
 ### Observations spécifiques
-- Le module `Classes.vue` expose des onglets pour catégories et organisation.
-- `AnneeAcademique.vue` inclut l’édition et l’export via un composant modal.
+- Les stores académiques utilisent un cache local `localStorage` pour réduire les appels réseaux sur les listes de cycles, classes, filières et semestres.
+- `Classe.vue` présente des onglets d’organisation et des actions d’affectation de modules.
+- `AnneeAcademique.vue` est structuré avec un header et un onglet principal, mais l’interface ne révèle pas toutes les actions détaillées dans les stores.
 
 ### États possibles
 - `loading`
 - données chargées
-- erreur de chargement
-- succès création / modification / suppression
+- message d’erreur sur chargement
+- succès de création / modification / suppression
 
 ---
 
 ## Scolarité
 
 ### Objectif métier
-Gérer la population étudiante, les dossiers scolaires, les absences, les notes et les délibérations.
+Gérer la population étudiante, les dossiers scolaires, les absences et le suivi académique individuel.
+
+### Utilisateurs concernés
+- Agent de scolarité
+- Responsable pédagogique
+- Enseignant (consultation de présence et notes)
 
 ### Pages associées
 - `/etudiants` : `Etudiants.vue`
@@ -107,38 +115,43 @@ Gérer la population étudiante, les dossiers scolaires, les absences, les notes
 - `/dossiers-scolaires` : `DossierView.vue`
 - `/dossiers-scolaires/:id/global-informations` : `DossierAcademique.vue`
 - `/absences` : `AbscenceView.vue`
+- `/inscriptions` : `Inscription.vue`
 - `/notes` : `NotesView.vue`
 - `/notes/:classeId/:semestre/:type/edit` : `EditNotes.vue`
 - `/deliberations` : `deliberation.vue`
 
 ### Données manipulées
-- Étudiants et matricules
-- Filières, classes, niveaux, années académiques
-- Dossiers scolaires
-- Historique des parcours
-- Notes d’évaluation
-- Statuts de délibération
+- Étudiants, matricules et contacts
+- Filières, classes, niveaux et années académiques
+- Dossiers scolaires et parcours individuels
+- Présences et absences
+- Notes, bulletins et décisions de délibération
+- Statuts d’inscription et financiers
 
 ### Actions disponibles
-- Afficher liste des étudiants
-- Filtrer par année, filière, niveau, classe
-- Consulter dossier scolaire
-- Éditer des notes (via écran d’édition dédié)
-- Publication de notes (store `noteStore`)
+- Afficher et filtrer la liste des étudiants
+- Consulter le dossier académique complet d’un étudiant
+- Imprimer/exporter un dossier étudiant
+- Enregistrer une fiche d’émargement par classe, cours et créneau
+- Gérer les inscriptions, réinscriptions et paiements via l’interface tabulaire
+- Consulter et éditer des notes via les écrans dédiés
 
 ### API et Stores
-- Store : `useEtudiantStore`, `useNoteStore`, `useResultatStore`, `useSessionStore`
-- API : `src/api/academique/etudiantApi.js`, `src/api/evaluations/notesApi.js`, `src/api/evaluations/resultatApi.js`
+- Stores : `useEtudiantStore`, `useNoteStore`, `useResultatStore`, `useSessionStore`, `useInscriptionStore`
+- API : `src/api/academique/etudiantApi.js`, `src/api/academique/academiqueApi.js`, `src/api/evaluations/notesApi.js`, `src/api/evaluations/resultatApi.js`
 
-### Observations
-- Le composant `Etudiants.vue` utilise des données simulées et des filtres locaux.
-- Le store `useEtudiantStore` est conçu pour créer un étudiant, ajouter un tuteur, charger le parcours.
-- L’édition de notes est prévue via `notesApi` et `noteStore`, mais l’écran principal n’appelle pas nécessairement ces actions.
+### Observations spécifiques
+- `Etudiants.vue` charge actuellement des données fictives avec `setTimeout`, alors que le store `useEtudiantStore` existe pour appeler `getEtudiantsByClasseFiliereAnnee`.
+- Le dossier académique utilise un composant `DossierTab` avec 5 onglets : `Profil & Informations`, `Parcours & Notes`, `Assiduité & Discipline`, `Situation Financière`, `Documents & Archives`.
+- `AbscenceView.vue` propose un workflow d’émargement avec sélection de date, classe, cours et créneau, mais il n’appelle pas d’API backend visible. La validation actuelle est simulée par `alert`.
+- La page `/inscriptions` est structurée en onglets et inclut des composants pour inscriptions, réinscriptions, gestions de classes, paiements et rapports.
 
 ### États possibles
-- `notesEvaluation` / `notesEtudiant`
-- `publiees`
 - `loading`
+- `notes` à publier
+- `dossier étudiant chargé`
+- `présence définie` (`present`, `retard`, `absent`)
+- `inscription validée / en attente / modifiable`
 - erreurs backend
 
 ---
