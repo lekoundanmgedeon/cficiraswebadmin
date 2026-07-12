@@ -1,9 +1,10 @@
+/**
+ * Routes de la structure académique.
+ *
+ * La route « Années académiques » a rejoint `src/modules/annee-academique/routes.js`.
+ * Les entrées ci-dessous suivront au fil de la migration.
+ */
 export default [
-  {
-    path: '/annees-academiques',
-    name: 'AnneesAcademiques',
-    component: () => import('@/views/stracad/anneeac/AnneeAcademique.vue'),
-  },
   {
     path: '/cycles-academiques',
     name: 'CyclesAcademiques',

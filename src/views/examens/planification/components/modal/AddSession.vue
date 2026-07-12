@@ -197,7 +197,7 @@
 import { ref, reactive, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSessionStore } from '@/stores/evaluationStore/sessionStore.js';
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore.js';
+import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
 import { useSemestreStore } from '@/stores/academiqueStore/semestreStore.js';
 import { useNotifier } from '@/stores/messages/useNotifier';
 

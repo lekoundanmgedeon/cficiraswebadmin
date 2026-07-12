@@ -10,6 +10,10 @@
   "scripts": {
     "dev": "vite",
     "format": "prettier --write .",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint-staged": "lint-staged",
     "build": "vite build",
     "build:isoprod": "vite build --mode isoprod",
@@ -43,12 +47,20 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.11",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.9.2",
+    "globals": "^17.7.0",
     "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
     "lint-staged": "^16.1.2",
     "prettier": "^3.5.3",
     "unplugin-vue-components": "^28.8.0",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "vitest": "^4.1.10"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx,css,scss,html,json,md}": "prettier --write"

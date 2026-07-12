@@ -176,7 +176,7 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
+import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
 import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 import { useEtudiantStore } from '@/stores/etudiants/etudiantStore';

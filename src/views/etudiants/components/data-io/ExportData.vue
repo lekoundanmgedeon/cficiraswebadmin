@@ -55,7 +55,7 @@
 
 <script setup>
 import { onMounted, ref, watch, computed } from 'vue';
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
+import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
 import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
 import { useClasseStore } from '@/stores/academiqueStore/classeStore';
 import { getEtudiantsByClasseFiliereAnnee } from '@/api/academique/etudiantApi';

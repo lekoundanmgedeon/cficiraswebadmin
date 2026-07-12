@@ -109,7 +109,7 @@
   </nav>
 </template>
 <script setup>
-import { useAuthStore } from '@/stores/authStore/authStore';
+import { useAuthStore } from '@/core/auth/authStore';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
 

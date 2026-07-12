@@ -83,19 +83,21 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/authStore/authStore';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/core/auth/authStore';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 const credentials = ref({ email: '', password: '' });
 
 const handleLogin = async () => {
-  await authStore.loginUser(credentials.value);
-  // Appelle isAuthenticated comme une fonction
-  // Accède à isAuthenticated directement comme une propriété, pas comme une fonction
-  if (authStore.isAuthenticated) {
-    router.push('/dashboard'); // Redirection après connexion réussie
-  }
+  const success = await authStore.loginUser(credentials.value);
+  if (!success) return;
+
+  // Le guard de navigation dépose la page demandée dans `redirect` quand un
+  // utilisateur non connecté tente d'y accéder : on l'y ramène après connexion.
+  const redirect = /** @type {string|undefined} */ (route.query.redirect);
+  router.push(redirect ?? '/dashboard');
 };
 </script>

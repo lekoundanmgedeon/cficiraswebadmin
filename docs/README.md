@@ -4,6 +4,16 @@ Cette documentation décrit le frontend Vue.js 3 de la plateforme ERP académiqu
 
 Elle se base exclusivement sur l'analyse du code source présent dans le dépôt, sans extrapoler de fonctionnalités non codées.
 
+## Architecture (documents de référence)
+
+La refonte du frontend est en cours. Ces trois documents décrivent la **structure cible** et font
+autorité sur les fichiers `01` à `13`, qui décrivent l'application telle qu'elle était avant :
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** : structure par modules, noyau `core/`, règle de
+  dépendance. **À lire en premier.**
+- **[GUIDE-MODULE.md](./GUIDE-MODULE.md)** : comment ajouter ou migrer un module, pas à pas.
+- **[DETTE-TECHNIQUE.md](./DETTE-TECHNIQUE.md)** : anomalies identifiées dans le code non migré.
+
 ## Structure du dossier
 
 - `01-presentation-generale.md` : présentation générale de la plateforme.

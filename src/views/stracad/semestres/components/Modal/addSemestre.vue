@@ -124,7 +124,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
 import { useSemestreStore } from '@/stores/academiqueStore/semestreStore'; // À adapter selon vos chemins
-import { useAnneeStore } from '@/stores/academiqueStore/anneStore';
+import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
 import { useNotifier } from '@/stores/messages/useNotifier';
 
 /* Props & Emits */
