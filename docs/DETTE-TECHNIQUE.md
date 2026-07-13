@@ -59,6 +59,10 @@ gagnerait à se faire côté backend. À confirmer avec l'équipe API.
 
 | Anomalie | Où |
 |---|---|
+| **La connexion ne pouvait pas aboutir.** Le backend enveloppe sa charge utile dans `data` (`{ success, data: { token, user } }`), mais `authStore` lisait `response.token` — un cran trop haut. Le jeton ressortait `undefined` et la garde `if (!response.token)` faisait échouer le login **même sur une réponse 200 valide**. Même décalage sur `GET /api/auth/user` (profil dans `data`, pas dans `response.user`). | `core/auth/authStore.js` |
+| **Le formulaire de connexion envoyait `email`**, alors que `POST /api/auth/login` recherche l'utilisateur **uniquement par `username`** : aucun compte n'était jamais trouvé, d'où un « Identifiants incorrects. » systématique. Vérifié contre le backend : envoyer `username` seul fait progresser la requête jusqu'à la comparaison bcrypt, `email` seul non. | `views/auth/Login.vue` |
+| Le backend renvoie le rôle en majuscules (`"ADMIN"`) tandis que les getters le comparaient à `'admin'` : `isAdmin`, `isDirecteur`… renvoyaient **toujours `false`**, y compris pour un administrateur. Le rôle est désormais normalisé en minuscules dans `userRole`. | `core/auth/authStore.js` |
+| À la déconnexion, `$reset()` était appelé **avant** `clearToken()`. Or `$reset()` réexécute `state()`, dont `token` est initialisé depuis `getToken()` : le jeton était donc ressuscité dans le store juste après avoir été effacé. | `core/auth/authStore.js` |
 | `serviceApi.post(url, data)` ignorait silencieusement le 3ᵉ argument de configuration : les en-têtes `multipart/form-data` des 4 endpoints d'import de fichiers n'étaient jamais transmis. | `api/config/serviceApi.js`, `core/api/httpClient.js` |
 | `handleApiError()` défini mais jamais appelé — `errorStore` n'a donc jamais rien enregistré. | `api/config/serviceApi.js` |
 | Aucun `router.beforeEach` : le `meta.requiresAuth` des routes n'était lu par personne, toute URL interne s'ouvrait sans session. | `core/router/guards.js` |

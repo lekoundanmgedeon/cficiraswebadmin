@@ -52,30 +52,70 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => Boolean(state.token),
-    userRole: (state) => state.user?.role ?? null,
 
-    isAdmin: (state) => state.user?.role === 'admin',
-    isScolarite: (state) => state.user?.role === 'scolarite',
-    isPedagogie: (state) => state.user?.role === 'pedagogie',
-    isCCycle: (state) => state.user?.role === 'c_cycle',
-    isFinances: (state) => state.user?.role === 'finances',
-    isDirecteur: (state) => state.user?.role === 'directeur',
-    isEnseignant: (state) => state.user?.role === 'enseignant',
-    isGestionnaire: (state) => state.user?.role === 'gestionnaire',
+    /**
+     * Rôle normalisé en minuscules.
+     *
+     * Le backend renvoie le rôle en majuscules (`"ADMIN"`), alors que les
+     * getters ci-dessous le comparaient à des minuscules (`'admin'`) : tous
+     * renvoyaient donc `false`, y compris pour un administrateur. On normalise
+     * en un seul endroit plutôt que de dupliquer un `.toLowerCase()` partout.
+     */
+    userRole: (state) => state.user?.role?.toLowerCase() ?? null,
+
+    isAdmin() {
+      return this.userRole === 'admin';
+    },
+    isScolarite() {
+      return this.userRole === 'scolarite';
+    },
+    isPedagogie() {
+      return this.userRole === 'pedagogie';
+    },
+    isCCycle() {
+      return this.userRole === 'c_cycle';
+    },
+    isFinances() {
+      return this.userRole === 'finances';
+    },
+    isDirecteur() {
+      return this.userRole === 'directeur';
+    },
+    isEnseignant() {
+      return this.userRole === 'enseignant';
+    },
+    isGestionnaire() {
+      return this.userRole === 'gestionnaire';
+    },
   },
 
   actions: {
     /**
-     * Enregistre une session authentifiée.
-     * @param {{token: string, user: any}} response
+     * Enregistre une session à partir d'une réponse d'authentification.
+     *
+     * Le backend enveloppe systématiquement sa charge utile dans `data` :
+     *
+     *     { success: true, message: "…", data: { token, user }, meta: {…} }
+     *
+     * L'ancien code lisait `response.token` et `response.user`, c'est-à-dire un
+     * cran trop haut. Le jeton ressortait donc `undefined` et la garde
+     * `if (!response.token)` faisait échouer la connexion **y compris sur une
+     * réponse 200 parfaitement valide**.
+     *
+     * @param {{data?: {token: string, user: any}}} response
+     * @returns {boolean} `false` si la réponse ne contient pas de jeton.
      */
-    _startSession({ token, user }) {
+    _startSession(response) {
+      const { token, user } = response?.data ?? {};
+      if (!token) return false;
+
       this.token = token;
-      this.user = user;
+      this.user = user ?? null;
       this.status = 'success';
       this.error = null;
       this.lastFetch = Date.now();
       setToken(token);
+      return true;
     },
 
     /**
@@ -89,17 +129,16 @@ export const useAuthStore = defineStore('auth', {
       notifications.notifyError(error, fallback);
     },
 
-    /** @param {{email: string, password: string}} credentials */
+    /** @param {{username: string, password: string}} credentials */
     async loginUser(credentials) {
       this.status = 'loading';
       this.error = null;
 
       try {
         const response = await authClient.post(AUTH_ENDPOINTS.login, credentials);
-        if (!response?.success || !response.token) {
+        if (!this._startSession(response)) {
           throw new Error(response?.message || 'Identifiants invalides.');
         }
-        this._startSession(response);
         return true;
       } catch (error) {
         this._failSession(error, 'Erreur lors de la connexion.');
@@ -114,10 +153,9 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const response = await authClient.post(AUTH_ENDPOINTS.signup, data);
-        if (!response?.success || !response.token) {
+        if (!this._startSession(response)) {
           throw new Error(response?.message || "Erreur lors de l'inscription.");
         }
-        this._startSession(response);
         return true;
       } catch (error) {
         this._failSession(error, "Erreur lors de l'inscription.");
@@ -136,11 +174,14 @@ export const useAuthStore = defineStore('auth', {
         // locale : l'utilisateur a demandé à partir, on le déconnecte.
       }
 
-      this.$reset();
+      // L'ordre compte : `$reset()` réexécute `state()`, dont le champ `token`
+      // est initialisé depuis `getToken()`. Purger le stockage après le reset
+      // ressusciterait donc le jeton dans le store.
       clearToken();
       // Sans cette purge, les données mises en cache par l'utilisateur sortant
       // resteraient lisibles — et resservies au suivant sur le même poste.
       clearAllCache();
+      this.$reset();
     },
 
     /**
@@ -156,10 +197,13 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const response = await authClient.get(AUTH_ENDPOINTS.currentUser);
-        if (!response?.success) {
+        // Comme partout ailleurs, le profil est enveloppé dans `data` — et non
+        // exposé sous `response.user`, comme le supposait l'ancien code.
+        const user = response?.data;
+        if (!response?.success || !user) {
           throw new Error(response?.message || "Impossible de récupérer l'utilisateur.");
         }
-        this.user = response.user;
+        this.user = user;
         this.status = 'success';
         this.lastFetch = Date.now();
         return this.user;
