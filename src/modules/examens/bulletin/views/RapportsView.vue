@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
@@ -7,6 +7,8 @@ import ExportMenu from '@/shared/components/ExportMenu.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import ExamenHeader from '../../components/ExamenHeader.vue';
+import { decisionInfo, publicationInfo } from '../constants';
+import BulletinContexte from '../components/BulletinContexte.vue';
 import { useBulletinStore } from '../store';
 
 /**
@@ -21,8 +23,9 @@ import { useBulletinStore } from '../store';
  * endpoint, son store (`resultStore.js`) et les trois autres routes de résultats
  * existaient déjà : **aucune vue ne les appelait**.
  *
- * ⚠️ Les bulletins ne se listent qu'**au sein d'une classe** — d'où le sélecteur
- * en tête d'écran. Il n'existe pas d'endpoint « tous les bulletins ».
+ * ⚠️ Un bulletin appartient au triplet **(classe, semestre, année)** : le seul
+ * sélecteur de classe que servait cet écran valait un `400` à chaque requête —
+ * corrigé ici, avec le reste du module (voir `../api.js`).
  */
 
 const bulletinStore = useBulletinStore();
@@ -31,17 +34,26 @@ const classeStore = useClasseStore();
 const { items: bulletins, loading } = storeToRefs(bulletinStore);
 const { items: classes } = storeToRefs(classeStore);
 
-const classeId = ref('');
+const contexte = ref({ anneeId: '', semestreId: '', classeId: '' });
 
-onMounted(() => classeStore.fetchAll());
+const complet = computed(() =>
+  Boolean(contexte.value.anneeId && contexte.value.semestreId && contexte.value.classeId)
+);
 
-watch(classeId, (id) => bulletinStore.fetchByClasse(id));
+const charger = () =>
+  bulletinStore.fetchByClasse(
+    contexte.value.classeId,
+    contexte.value.semestreId,
+    contexte.value.anneeId
+  );
 
-const classe = computed(() => classes.value.find((item) => item.id === classeId.value));
+watch(contexte, charger, { deep: true });
 
-/** Classé par moyenne décroissante : c'est un palmarès. */
+const classe = computed(() => classes.value.find((item) => item.id === contexte.value.classeId));
+
+/** Classé par rang, tel que le serveur le calcule : c'est un palmarès. */
 const classement = computed(() =>
-  [...bulletins.value].sort((a, b) => Number(b.moyenne ?? 0) - Number(a.moyenne ?? 0))
+  [...bulletins.value].sort((a, b) => Number(a.rang_etudiant ?? 0) - Number(b.rang_etudiant ?? 0))
 );
 
 /** @param {any} value */
@@ -52,13 +64,13 @@ const moyenne = (value) => {
 
 const exportRows = computed(() =>
   classement.value.map((bulletin, index) => ({
-    Rang: index + 1,
+    Rang: bulletin.rang_etudiant ?? index + 1,
     Matricule: bulletin.matricule ?? '—',
     Nom: bulletin.nom ?? '—',
     Prénom: bulletin.prenom ?? '—',
-    Moyenne: moyenne(bulletin.moyenne),
-    Décision: bulletin.decision ?? 'En attente',
-    Statut: bulletin.publie ? 'Publié' : 'Non publié',
+    Moyenne: moyenne(bulletin.moyenne_generale),
+    Décision: decisionInfo(bulletin.decision).label,
+    Statut: publicationInfo(bulletin.statut_publication).label,
   }))
 );
 
@@ -73,7 +85,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
   ],
 });
 
-const refresh = () => bulletinStore.fetchByClasse(classeId.value);
+const refresh = () => bulletinStore.refresh();
 
 const publier = () => bulletinStore.publier();
 </script>
@@ -84,46 +96,38 @@ const publier = () => bulletinStore.publier();
       title="Rapports & résultats"
       subtitle="Palmarès et publication des bulletins, par classe."
       breadcrumb="Rapports"
-      :refresh="classeId ? refresh : null"
+      :refresh="complet ? refresh : null"
     />
 
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
           <div class="card-body">
-            <div class="row g-3 align-items-end mb-4">
-              <div class="col-md-5">
-                <label class="form-label text-xs fw-semibold text-muted mb-1">Classe</label>
-                <select v-model="classeId" class="form-select form-select-sm">
-                  <option value="">— Sélectionnez une classe —</option>
-                  <option v-for="item in classes" :key="item.id" :value="item.id">
-                    {{ item.code }} — {{ item.filiere_nom }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="col-md-7 text-md-end">
-                <ExportMenu
-                  :disabled="classement.length === 0"
-                  @excel="exportToExcel"
-                  @pdf="exportToPdf"
-                />
-                <button
-                  class="btn btn-success btn-sm px-3 ms-2"
-                  :disabled="classement.length === 0 || loading"
-                  @click="publier"
-                >
-                  <i class="bi bi-megaphone me-1"></i> Publier les bulletins
-                </button>
-              </div>
-            </div>
+            <BulletinContexte v-model="contexte">
+              <template #actions>
+                <div class="text-md-end">
+                  <ExportMenu
+                    :disabled="classement.length === 0"
+                    @excel="exportToExcel"
+                    @pdf="exportToPdf"
+                  />
+                  <button
+                    class="btn btn-success btn-sm px-3 ms-2"
+                    :disabled="classement.length === 0 || loading"
+                    @click="publier"
+                  >
+                    <i class="bi bi-megaphone me-1"></i> Publier
+                  </button>
+                </div>
+              </template>
+            </BulletinContexte>
 
             <LoadingSpinner v-if="loading" />
 
             <EmptyState
-              v-else-if="!classeId"
-              title="Choisissez une classe"
-              description="Les bulletins ne se consultent qu'au sein d'une classe."
+              v-else-if="!complet"
+              title="Choisissez une classe, un semestre et une année"
+              description="Un bulletin appartient au triplet (classe, semestre, année) : le serveur refuse toute requête incomplète."
             />
 
             <EmptyState
@@ -145,7 +149,9 @@ const publier = () => bulletinStore.publier();
                 </thead>
                 <tbody>
                   <tr v-for="(bulletin, index) in classement" :key="bulletin.id">
-                    <td class="ps-4 fw-bold text-secondary">{{ index + 1 }}</td>
+                    <td class="ps-4 fw-bold text-secondary">
+                      {{ bulletin.rang_etudiant ?? index + 1 }}
+                    </td>
                     <td>
                       <div class="fw-bold text-dark">
                         {{ bulletin.nom ?? '—' }} {{ bulletin.prenom ?? '' }}
@@ -154,22 +160,18 @@ const publier = () => bulletinStore.publier();
                         {{ bulletin.matricule ?? '' }}
                       </small>
                     </td>
-                    <td class="text-center fw-bold">{{ moyenne(bulletin.moyenne) }}</td>
+                    <td class="text-center fw-bold">{{ moyenne(bulletin.moyenne_generale) }}</td>
                     <td class="text-center">
                       <span class="badge bg-light text-dark border">
-                        {{ bulletin.decision ?? 'En attente' }}
+                        {{ decisionInfo(bulletin.decision).label }}
                       </span>
                     </td>
                     <td class="text-center pe-4">
                       <span
                         class="badge"
-                        :class="
-                          bulletin.publie
-                            ? 'bg-success-subtle text-success'
-                            : 'bg-secondary-subtle text-secondary'
-                        "
+                        :class="`bg-${publicationInfo(bulletin.statut_publication).variant}-subtle text-${publicationInfo(bulletin.statut_publication).variant}`"
                       >
-                        {{ bulletin.publie ? 'Publié' : 'Non publié' }}
+                        {{ publicationInfo(bulletin.statut_publication).label }}
                       </span>
                     </td>
                   </tr>

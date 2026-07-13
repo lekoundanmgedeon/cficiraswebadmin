@@ -6,19 +6,22 @@ import { getBulletinsByClasse, publierBulletinsClasse, updateDecisionJury } from
  * Store des bulletins.
  *
  * Il n'est pas bâti sur `createCrudStore` : les bulletins ne forment pas une
- * ressource REST. Ils ne se listent qu'**au sein d'une classe**
- * (`GET /resultats/classes/:classeId/bulletins`) et ne se créent pas depuis
- * l'application — ils résultent des notes.
+ * ressource REST. Ils ne se listent qu'au sein du triplet **(classe, semestre,
+ * année)** (`GET /resultats/classes/:classeId/bulletins?semestreId&anneeId`) et
+ * ne se créent pas depuis l'application — ils résultent des notes.
+ *
+ * Ce triplet est retenu dans l'état (`contexte`) : la publication le réclame à
+ * nouveau, cette fois dans le corps de la requête.
  *
  * L'ancien `resultStore.js` existait et fonctionnait ; **aucune vue ne
  * l'appelait**.
  */
 export const useBulletinStore = defineStore('bulletins', {
   state: () => ({
-    /** @type {any[]} Bulletins de la classe consultée. */
+    /** @type {any[]} Bulletins du contexte consulté. */
     items: [],
-    /** @type {string|null} */
-    classeId: null,
+    /** @type {{classeId: string, semestreId: string, anneeId: string}|null} */
+    contexte: null,
     loading: false,
     /** @type {import('@/core/api/apiError').ApiError|null} */
     error: null,
@@ -53,45 +56,57 @@ export const useBulletinStore = defineStore('bulletins', {
       }
     },
 
-    /** @param {string} classeId */
-    async fetchByClasse(classeId) {
-      if (!classeId) {
+    /**
+     * Charge les bulletins d'un triplet (classe, semestre, année). Le triplet
+     * doit être complet : le serveur refuse la requête sinon.
+     *
+     * @param {string} classeId @param {string} semestreId @param {string} anneeId
+     */
+    async fetchByClasse(classeId, semestreId, anneeId) {
+      if (!classeId || !semestreId || !anneeId) {
         this.items = [];
-        this.classeId = null;
+        this.contexte = null;
         return undefined;
       }
 
-      return this.run(() => getBulletinsByClasse(classeId), {
+      return this.run(() => getBulletinsByClasse(classeId, semestreId, anneeId), {
         failure: 'Erreur lors du chargement des bulletins.',
         onSuccess: (response) => {
           this.items = response.data ?? [];
-          this.classeId = classeId;
+          this.contexte = { classeId, semestreId, anneeId };
         },
       });
     },
 
+    /** Recharge le contexte courant. */
+    async refresh() {
+      if (!this.contexte) return undefined;
+      const { classeId, semestreId, anneeId } = this.contexte;
+      return this.fetchByClasse(classeId, semestreId, anneeId);
+    },
+
     /**
      * Enregistre la décision du jury sur un bulletin.
-     * @param {string} id @param {object} data
+     * @param {string} id @param {{decision: string, mention?: string}} data
      */
     async setDecision(id, data) {
       return this.run(() => updateDecisionJury(id, data), {
         success: 'Décision du jury enregistrée.',
         failure: "Erreur lors de l'enregistrement de la décision.",
-        onSuccess: () => this.fetchByClasse(this.classeId),
+        onSuccess: () => this.refresh(),
       });
     },
 
-    /** Publie officiellement les bulletins de la classe consultée. */
+    /** Publie officiellement les bulletins du contexte consulté. */
     async publier() {
-      if (!this.classeId) return undefined;
+      if (!this.contexte) return undefined;
 
-      const classeId = this.classeId;
+      const { classeId, semestreId, anneeId } = this.contexte;
 
-      return this.run(() => publierBulletinsClasse(classeId), {
+      return this.run(() => publierBulletinsClasse(classeId, { semestreId, anneeId }), {
         success: 'Bulletins publiés.',
         failure: 'Erreur lors de la publication des bulletins.',
-        onSuccess: () => this.fetchByClasse(classeId),
+        onSuccess: () => this.refresh(),
       });
     },
   },

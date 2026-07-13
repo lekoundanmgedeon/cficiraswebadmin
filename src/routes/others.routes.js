@@ -1,3 +1,10 @@
+/**
+ * Routes héritées, en attente de migration.
+ *
+ * `/notes`, `/notes/:classeId/:semestre/:type/edit` et `/deliberations` en sont
+ * partis : ils vivent désormais dans `@/modules/notes/routes`. La route d'édition
+ * a disparu — elle reposait sur un modèle de données que le serveur ne connaît pas.
+ */
 export default [
   {
     path: '/dashboard',
@@ -13,18 +20,6 @@ export default [
     path: '/documentation',
     name: 'Documentation',
     component: () => import('@/views/docf/Document.vue'),
-  },
-  { path: '/notes', name: 'Notes', component: () => import('@/views/notes/NotesView.vue') },
-  {
-    path: '/notes/:classeId/:semestre/:type/edit',
-    name: 'NotesEdition',
-    component: () => import('@/views/notes/components/EditNotes.vue'),
-    props: true,
-  },
-  {
-    path: '/deliberations',
-    name: 'Deiberations',
-    component: () => import('@/views/deliberation/deliberation.vue'),
   },
   {
     path: '/administration',

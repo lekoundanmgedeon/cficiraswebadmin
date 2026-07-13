@@ -15,6 +15,7 @@ import matieresRoutes from '@/modules/matieres/routes';
 import scolariteRoutes from '@/modules/scolarite/routes';
 import examensRoutes from '@/modules/examens/routes';
 import concoursRoutes from '@/modules/concours/routes';
+import notesRoutes from '@/modules/notes/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
@@ -33,6 +34,7 @@ const protectedRoutes = [
   ...scolariteRoutes,
   ...examensRoutes,
   ...concoursRoutes,
+  ...notesRoutes,
   ...financesRoutes,
   ...pedagogieRoutes,
   ...othersRoutes,

@@ -3,14 +3,14 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (11 commits, dernier : migration du module `concours`)
-- Écart cumulé vs `main` : **389 fichiers, +24 675 / −56 954 lignes**
-- État de santé : `npm run lint` **0 problème** sur le code migré · `npm test` **64 tests** · `npm run build` **OK**
-- ⚠️ **`matieres` a nécessité des corrections dans `cfibackend`** (CRUD des modules entièrement
-  cassé). Voir §1.6 — le dépôt backend porte un commit dédié.
-- **Endpoints vérifiés contre le backend local** (`localhost:3500`) : les 14 routes appelées par les
-  modules migrés répondent. Voir §2.5 — c'est ce contrôle qui manquait et qui avait laissé passer
-  un module entier bâti sur des routes inexistantes.
+- Branche : `refactor-main` (12 commits, dernier : migration du module `notes` et de la délibération)
+- État de santé : `npm run lint` **0 erreur** sur le code migré · `npm test` **64 tests** · `npm run build` **OK**
+- ⚠️ **`matieres`, `examens` et `concours` ont nécessité des corrections dans `cfibackend`.**
+  Voir §1.6, §1.9, §1.10 — le dépôt backend porte un commit par module.
+- **Endpoints vérifiés contre le backend local** (`localhost:3500`) : toutes les routes appelées par
+  les modules migrés répondent, et les flux d'écriture sont exercés pour de vrai (base restaurée
+  ensuite). Voir §2.5 — c'est ce contrôle qui manquait et qui avait laissé passer un module entier
+  bâti sur des routes inexistantes.
 
 ---
 
@@ -471,7 +471,88 @@ profondément.
 Éditer le « Concours Ingénieur 2025 » — de type `CONCOURS_INGE` — lui aurait fait **perdre son
 type**, celui-ci n'étant pas dans la liste proposée.
 
-### 1.11 Le bug `AppTabs` — les onglets n'affichaient plus rien
+### 1.11 Le module `notes` et la délibération — terminé
+
+```
+src/modules/notes/
+├── routes.js · constants.js
+├── note/          api.js · store.js · views/NotesView
+└── deliberation/  views/DeliberationView
+```
+
+3 018 lignes → 754. **Le design est préservé.** C'est le module qui **n'avait jamais rien
+envoyé au serveur** : rien, nulle part.
+
+> #### ⚠️ Les quatre routes de notes répondaient 404 — depuis toujours
+>
+> `api/evaluations/notesApi.js` appelait :
+>
+> ```js
+> getNotesByEvaluation → evaluationService.get(`/evaluations/${id}/notes`)   // ← il manque « /notes »
+> ```
+>
+> Le client est monté sur `/api/evaluations` ; les routes de notes sont montées **sous
+> `/notes`** (`router.use('/notes', noteRoutes)`). Le vrai chemin est donc
+> `/api/evaluations/**notes**/evaluations/:id/notes`. **Les quatre appels — lecture par
+> évaluation, lecture par étudiant, modification, publication — étaient inatteignables.**
+> Corrigé côté **frontend** (`note/api.js`) : le segment doublé est laid, mais c'est ce que le
+> serveur expose, et il fonctionne. Aucune modification backend.
+
+#### L'écran de saisie n'enregistrait rien, et son modèle de données était faux
+
+`Notes.vue` servait **quatre étudiants codés en dur** (« Ndiaye Fatou », « Camara Ibrahima »…) et
+trois matières inventées. Son bouton « Valider le PV » :
+
+```js
+const saveAllNotes = () => {
+  alert(`Validation du PV pour la classe […]`);
+};
+```
+
+Un `alert()`. Et l'URL — `/notes/:classeId/:semestre/:type/edit` — supposait qu'une note appartienne
+au triplet (classe, semestre, type d'évaluation). **Ce n'est pas le modèle du serveur** : une note
+appartient au couple **(étudiant, évaluation)** — une _épreuve_ précise d'une _session_. La route a
+été supprimée ; l'écran suit désormais la cascade **session → épreuve → grille**, qui est la réalité.
+Il n'existe par ailleurs **pas de `POST /notes`** : les notes préexistent, l'écran les corrige.
+
+#### Les quatre écrans de délibération étaient simulés, sans exception
+
+`DeliberationsContent`, `ProclamationContent`, `RapportContents` et `AssistantIAContent` servaient
+tous des `ref([...])` codés en dur — jusqu'à `mockClasses = ref(['Master 1 Info', …])`.
+`RapportsTab.vue` et `semestre2/{devoir,rappel,session}-s2.vue` étaient **vides**
+(`<template></template>`) : leurs onglets ne rendaient rien. L'onglet « Assistant IA » — une
+conversation aux messages codés en dur — a été retiré : **aucun backend ne l'alimente**.
+
+Or les quatre routes de résultats existaient depuis toujours, ainsi que leur store
+(`resultStore.js`) : **aucune vue ne les appelait**.
+
+> #### ⚠️ Un bulletin appartient au triplet (classe, semestre, année) — correction dans `examens`
+>
+> `GET /resultats/classes/:id/bulletins` **exige** `semestreId` **et** `anneeId` en query, et la
+> publication les exige **dans le corps**. Le module `examens` (§1.9) ne passait que la classe :
+> `RapportsView` prenait donc un **`400` à chaque requête**. Le store lisait de surcroît
+> `bulletin.moyenne` et `bulletin.publie` — colonnes qui **n'existent pas** (`moyenne_generale`,
+> `statut_publication`, `rang_etudiant`). Corrigé : `bulletin/api.js`, `bulletin/store.js`
+> (contexte `{classeId, semestreId, anneeId}`), et un sélecteur partagé `BulletinContexte.vue`
+> qu'utilisent les deux écrans. Vérifié de bout en bout contre `localhost:3500` (lecture,
+> décision du jury, publication), base restaurée.
+
+**La délibération réutilise le store des bulletins d'`examens`** plutôt que de le dupliquer :
+la dépendance `notes → examens` est dirigée, et déclarée. C'est aussi pourquoi les constantes du
+bulletin (décision, mention, publication) vivent dans `examens/bulletin/constants.js` : les mettre
+dans `notes` aurait refermé le cycle.
+
+#### Les énumérations viennent des contraintes SQL
+
+| Champ                                      | Valeurs                                                    |
+| ------------------------------------------ | ---------------------------------------------------------- |
+| `notes.statut`                             | `SAISIE`, `VALIDEE`, `PUBLIEE`                             |
+| `notes.valeur`                             | `CHECK (valeur >= 0 AND valeur <= 20)` — 400 sinon         |
+| `bulletins_semestriels.decision`           | `EN_ATTENTE`, `VALIDE`, `AJOURNE`, `RATTRAPAGE`            |
+| `bulletins_semestriels.mention`            | `PASSABLE`, `ASSEZ_BIEN`, `BIEN`, `TRES_BIEN`, `EXCELLENT` |
+| `bulletins_semestriels.statut_publication` | `BROUILLON`, `PUBLIE`, `VERROUILLE`                        |
+
+### 1.12 Le bug `AppTabs` — les onglets n'affichaient plus rien
 
 Signalé en cours de chantier, et il touchait **tous les modules migrés** : cliquer sur un onglet
 ne rendait pas son contenu, et la console crachait
@@ -507,7 +588,7 @@ de tout avertissement Vue**. Le troisième et le sixième échouaient avant le c
 étaient cassés**. Aucun des trois ne monte un composant. Un test de montage sur un composant
 partagé aussi central aurait dû exister dès le départ.
 
-### 1.12 L'optimisation d'API principale
+### 1.13 L'optimisation d'API principale
 
 Les conteneurs d'onglets Bootstrap (`data-bs-toggle="tab"`) **montent tous les panneaux d'un
 coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait donc son
@@ -517,7 +598,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 `AppTabs` ne monte que l'onglet actif, et `KeepAlive` évite de recharger ceux déjà visités.
 **C'est le gain le plus important à propager sur les 23 conteneurs restants.**
 
-### 1.13 Bugs corrigés (tous étaient en production)
+### 1.14 Bugs corrigés (tous étaient en production)
 
 **Authentification — la connexion ne pouvait pas aboutir**
 
@@ -545,7 +626,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 **Étudiants** (voir §1.4 pour le détail) 18. Le store n'exposait **ni `items` ni `fetchAll`** : aucun écran ne _pouvait_ charger de liste. D'où les tableaux codés en dur dans 4 onglets sur 6, plus la vue racine. 19. `fetchEtudiantsByClasseFiliereAnnee` et `filteredEtudiants` étaient consommés par l'onglet « Classes » mais **n'existaient pas** dans le store → `TypeError` au premier filtre. 20. `XLSX.utils.json_to_sheet` appelé **sans importer `XLSX`** → l'export Excel plantait au clic. 21. La fiche détail déclarait 4 onglets pour 2 panneaux ; deux d'entre eux pointaient sur un `#sales2` **inexistant** et trois `<li>` partageaient le même `id`. 22. La fiche détail affectait `etudiant.value = response` sans déballer `{ success, data }` → tous ses champs étaient `undefined`. 23. Ses `v-if` portaient sur les **mauvais champs** : le lieu de naissance était conditionné à `lieunaissance` (inexistant), le sexe à `genre`, l'adresse au _téléphone_. 24. `ajouterAuGroupe(e, g.id)` était appelé avec deux arguments mais n'en déclarait qu'un → « Assigner » affectait **le premier étudiant de la liste**, pas celui sur lequel on cliquait. 25. « Générer un rapport » : un `setTimeout(1800)` puis « Rapport généré et téléchargé avec succès » — **aucun appel API, aucun fichier**. 26. Le panneau d'onglet « Import » n'avait **aucun lien de navigation** : monté à chaque chargement, et inatteignable. Son composant était de toute façon vide, et le `DropData.vue` de secours n'avait aucun gestionnaire sur son bouton « Upload ». 27. La photo de la fiche détail était servie depuis `http://localhost:3500` **codé en dur**.
 
-### 1.14 Code mort et duplication supprimés
+### 1.15 Code mort et duplication supprimés
 
 - `routes/main.js` (copie **octet pour octet** de `routes/index.js`), `style1.css` (**520 Ko** jamais référencé), 5 fichiers `sample*.vue`, `result.js` → **25 493 lignes**.
 - Le **même tableau de niveaux existait en 3 exemplaires** (filières, classes, semestres) et celui des filières en 2 → **776 lignes**.
@@ -558,16 +639,20 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 ### 2.1 Modules à migrer (par ordre conseillé)
 
+**Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
+`concours`, `notes` + `deliberation`.
+
 | #   | Module                                 | Fichiers | Lignes | Pourquoi cet ordre                                                                                            |
 | --- | -------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| 1   | **matieres**                           | 9        | 908    | Petit, CRUD simple. Le prochain — bon rythme après deux gros modules.                                         |
-| 2   | **pedagogies**                         | 34       | 8 040  | Le plus gros. 4 conteneurs d'onglets (dont deux à 6 onglets).                                                 |
-| 3   | **examens**                            | 29       | 4 201  | 3 conteneurs d'onglets.                                                                                       |
-| 4   | **concours**                           | 21       | 5 198  | Contient l'`ItemActions` de 620 lignes.                                                                       |
-| 5   | **finances**                           | 24       | 4 382  | 3 conteneurs d'onglets. Recoupe `/inscriptions/finances`, déjà migré.                                         |
-| 6   | **notes** + **deliberation**           | 23       | 3 143  | Liés (délibération consomme les notes).                                                                       |
-| 7   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage.                                                                                       |
-| 8   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
+| 1   | **pedagogies**                         | 34       | 8 040  | Le plus gros. 4 conteneurs d'onglets (dont deux à 6 onglets). ⚠️ **`/pedagogie` est commenté** côté backend.  |
+| 2   | **finances**                           | 24       | 4 382  | 3 conteneurs d'onglets. ⚠️ **`/finance` est commenté** côté backend.                                          |
+| 3   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage. ⚠️ **`/statistiques` est commenté** côté backend.                                     |
+| 4   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
+
+> ⚠️ **Les trois prochains modules sont bloqués par le backend.** `/pedagogie`, `/finance` et
+> `/statistiques` sont **commentés** dans `src/routes/index.routes.js` : leurs routes ne sont pas
+> montées, tout appel répond 404. Il faut trancher module par module — les rétablir (et vérifier
+> leurs contrôleurs, comme pour `matieres` et `concours`) ou migrer sans eux.
 
 ### 2.2 Dette technique transverse
 
@@ -600,9 +685,9 @@ Chacun disparaît avec son dernier appelant.
 | `src/utils/{exportExcel,exportPDF,toast}.js`                                                                                                               | ré-exports vers `shared/utils/*`           |
 | Alias `@deprecated` dans les 6 stores de `structure-academique` (`items`↔`cycles`/`filieres`/`niveaux`/`classes`/`semestres`, `fetchAll()`↔`fetchXxx()`) | noms canoniques                            |
 
-**6 vues legacy** consomment encore les stores de `structure-academique` par ces alias :
-`notes/` (5 fichiers) et `examens/planification/.../AddSession.vue`. _(Les vues `etudiants/` et
-`inscriptions/` ont été migrées et n'utilisent plus que les noms canoniques.)_
+_(Les vues `etudiants/`, `inscriptions/`, `examens/` et `notes/` ont été migrées et n'utilisent plus
+que les noms canoniques. Les alias `@deprecated` n'ont donc plus, à ce stade, d'appelant connu :
+à supprimer au prochain passage.)_
 
 ### 2.5 Questions ouvertes pour le backend
 
@@ -672,6 +757,25 @@ confirmée : un utilisateur `SCOLARITE` peut créer un concours mais pas le modi
 (champ `fichier`) et `POST /academique/imports/reinscriptions` (champ `file`). Le frontend retient
 le premier. Les conventions de nom de champ divergent aussi entre les imports (`fichier` pour les
 inscriptions, `file` pour les étudiants) : à harmoniser.
+
+**11. Les routes de notes sont montées sous un segment doublé.**
+`router.use('/notes', noteRoutes)` alors que `note.routes.js` déclare lui-même
+`/evaluations/:id/notes` et `/notes/:id` : le chemin réel est
+`/api/evaluations/**notes**/evaluations/:id/notes`, et modifier une note passe par
+`/api/evaluations/notes/**notes**/:id`. C'est fonctionnel — le frontend s'y conforme (§1.11) — mais
+c'est précisément ce qui a fait échouer l'ancien `notesApi.js` (404 sur les quatre routes).
+À simplifier si l'occasion se présente ; ce serait une rupture de contrat.
+
+**12. `PUT /notes/:id` ne remet pas le statut à `SAISIE`.** Une note **publiée** peut être corrigée
+en silence : elle reste `PUBLIEE`, avec une valeur différente de celle que l'étudiant a vue. Vérifié
+en base. Soit la modification d'une note publiée doit être refusée, soit elle doit repasser la note
+en `SAISIE` (et forcer une nouvelle publication). À trancher — c'est une décision métier.
+
+**13. Aucun endpoint ne génère les bulletins.** `bulletins_semestriels` est **vide**, et les quatre
+routes de résultats ne font que lire, décider et publier. Il manque le calcul — l'équivalent du
+`calculer_moyennes_et_rangs` des concours, mais pour les bulletins semestriels. Tant qu'il n'existe
+pas, l'écran de délibération restera vide en production, quoique parfaitement fonctionnel (vérifié
+avec un bulletin inséré à la main, puis retiré).
 
 ### 2.6 Vérifier avant de coder — la leçon des modules `etudiants` et `matieres`
 
