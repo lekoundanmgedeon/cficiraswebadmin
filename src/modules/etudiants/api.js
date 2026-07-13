@@ -1,43 +1,48 @@
 import { academiqueClient } from '@/core/api/clients';
+import { createResource } from '@/core/api/createResource';
 
 /**
  * Endpoints des étudiants.
  *
- * ⚠️ Le backend n'expose **que quatre routes** sur `/etudiants` (vérifié dans
- * `cfibackend/src/routes/academique/etudiant.routes.js`) :
+ * Ce qui existe réellement (`cfibackend/src/routes/academique/etudiant.routes.js`) :
  *
  * ```
- * POST /etudiants                 créer un étudiant seul
- * POST /etudiants/:id/tuteurs     rattacher un tuteur
- * POST /etudiants/:id/photo       photo de profil
- * GET  /etudiants/:id/parcours    parcours académique
+ * GET  /etudiants                  liste — filtres : search, filiere_id, statut_dossier
+ * GET  /etudiants/:id/complet      identité + tuteurs + pièces du dossier
+ * GET  /etudiants/:id/profil-frontend   profil mis en forme
+ * GET  /etudiants/:id/parcours     parcours académique
+ * POST /etudiants                  créer un étudiant seul
+ * POST /etudiants/:id/tuteurs
+ * POST /etudiants/:id/photo
  * ```
  *
- * Il n'y a **ni `GET /etudiants` (liste), ni `GET /etudiants/:id`, ni `PUT`, ni
- * `DELETE`** — les quatre répondent 404. Ce module n'a donc pas de ressource
- * REST complète, et n'utilise pas `createResource`.
+ * Deux absences à connaître :
+ *  - **`GET /etudiants/:id` n'existe pas** (404). Le détail passe par `/complet`,
+ *    d'où la surcharge de `fetchById` dans le store.
+ *  - **`PUT` et `DELETE /etudiants/:id` n'existent pas** non plus : on ne peut ni
+ *    modifier ni supprimer un étudiant. Les boutons correspondants ont été
+ *    retirés de l'interface.
  *
- * La liste des étudiants vient de `GET /inscriptions`, dont chaque ligne porte
- * l'identité complète de l'étudiant (`etudiant_id`, `etudiant_matricule`,
- * `etudiant_nom`…). C'est le seul annuaire dont dispose l'application ; voir le
- * getter `etudiants` de `modules/inscriptions/store`.
+ * La liste ne porte **ni classe ni année académique** : un étudiant appartient à
+ * une *filière*, sa classe vient de son *inscription*. C'est le module
+ * Inscriptions qui la connaît.
  */
 
 const BASE_PATH = '/etudiants';
 
 /**
- * Crée un étudiant, sans l'inscrire.
+ * CRUD partiel : `list` et `create` uniquement.
  *
- * L'étudiant créé ici n'apparaîtra dans la liste **qu'une fois inscrit** : la
- * liste est une projection des inscriptions. Pour créer un étudiant *et* son
- * inscription en un geste, passer par l'import de l'onglet Import, ou par le
- * module Inscriptions.
- *
- * @param {object} data
+ * `getById`, `update` et `remove` sont bien produits par `createResource`, mais
+ * les routes correspondantes n'existent pas : le store les remplace ou les
+ * neutralise.
  */
-export const createEtudiant = (data) => academiqueClient.post(BASE_PATH, data);
+export const etudiantsResource = createResource(academiqueClient, BASE_PATH);
 
-/** Parcours académique d'un étudiant. @param {string|number} id */
+/** Identité + tuteurs + pièces du dossier. Remplace le `GET /etudiants/:id` absent. */
+export const getEtudiantComplet = (id) => academiqueClient.get(`${BASE_PATH}/${id}/complet`);
+
+/** Parcours académique : une entrée par année. @param {string|number} id */
 export const getEtudiantParcours = (id) => academiqueClient.get(`${BASE_PATH}/${id}/parcours`);
 
 /** Rattache un tuteur à un étudiant. @param {string|number} id @param {object} data */
@@ -62,8 +67,7 @@ export const uploadPhotoEtudiant = (id, file) => {
  * Import par lot d'une liste d'étudiants (.xlsx / .csv).
  *
  * Le champ du fichier s'appelle `file` ici, alors que l'import d'inscriptions
- * attend `fichier` : les deux routes n'ont pas la même convention côté serveur
- * (`upload.single('file')` dans `academique.routes.js`).
+ * attend `fichier` : les deux routes n'ont pas la même convention côté serveur.
  *
  * @param {File} file
  */

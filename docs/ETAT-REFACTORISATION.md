@@ -3,9 +3,9 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (8 commits, dernier : migration du module `matieres`)
-- Écart cumulé vs `main` : **272 fichiers, +17 149 / −44 799 lignes**
-- État de santé : `npm run lint` **0 problème** sur le code migré · `npm test` **57 tests** · `npm run build` **OK**
+- Branche : `refactor-main` (9 commits, dernier : migration du module `scolarite`)
+- Écart cumulé vs `main` : **291 fichiers, +18 533 / −47 005 lignes**
+- État de santé : `npm run lint` **0 problème** sur le code migré · `npm test` **64 tests** · `npm run build` **OK**
 - ⚠️ **`matieres` a nécessité des corrections dans `cfibackend`** (CRUD des modules entièrement
   cassé). Voir §1.6 — le dépôt backend porte un commit dédié.
 - **Endpoints vérifiés contre le backend local** (`localhost:3500`) : les 14 routes appelées par les
@@ -89,32 +89,25 @@ donc aucun écran ne _pouvait_ charger de liste. 3 634 lignes → 2 631, et tout
 | Import       | fichier **vide**, et son onglet n'avait aucun lien de nav → inatteignable                                                                                     | `POST /imports/etudiants`                                                                                                     |
 | Export       | 3 étudiants en dur ; `data-io/ExportData.vue` appelait `XLSX` **sans l'importer** → plantait au clic                                                          | Excel / PDF / CSV via `useTableExport`                                                                                        |
 
-> ### ⚠️ Il n'y a pas de ressource REST `/etudiants`
+> ### ⚠️ La ressource `/etudiants` reste incomplète
 >
-> Le backend (`cfibackend/src/routes/academique/etudiant.routes.js`) n'expose que **quatre**
-> routes :
+> **Cet encadré a changé en cours de chantier.** Au moment de la migration, `GET /etudiants`
+> n'existait pas (404) : l'annuaire était projeté depuis `GET /inscriptions`, faute de mieux. La
+> route a **depuis été ajoutée côté backend** (commit `2a39cdd`), et le module a été recâblé —
+> voir **§1.8**.
 >
-> ```
-> POST /etudiants                 créer un étudiant seul
-> POST /etudiants/:id/tuteurs
-> POST /etudiants/:id/photo
-> GET  /etudiants/:id/parcours
-> ```
+> Ce qui manque **toujours**, vérifié par curl :
 >
-> **Ni `GET /etudiants` (liste), ni `GET /etudiants/:id`, ni `PUT`, ni `DELETE`** — les quatre
-> répondent **404**, vérifié par curl. La première version de ce module s'appuyait dessus et était
-> donc entièrement cassée ; c'est corrigé.
+> | Route                   | État                                                                        |
+> | ----------------------- | --------------------------------------------------------------------------- |
+> | `GET /etudiants`        | ✅ existe (identité complète : sexe, téléphone, filière, statut de dossier) |
+> | `GET /etudiants/:id`    | ❌ **404** — le détail passe par `/:id/complet`                             |
+> | `PUT /etudiants/:id`    | ❌ **404** — on ne peut pas modifier un étudiant                            |
+> | `DELETE /etudiants/:id` | ❌ **404** — ni le supprimer                                                |
 >
-> L'annuaire est une **projection de `GET /inscriptions`**, dont chaque ligne porte l'identité de
-> l'étudiant (`etudiant_id`, `etudiant_matricule`, `etudiant_nom`…) — voir le getter `etudiants`
-> de `modules/inscriptions/store`. Conséquences assumées :
->
-> - **pas de « Modifier » ni « Supprimer »** sur un étudiant : aucun endpoint. Les boutons ont été
->   retirés plutôt que laissés à cliquer dans le vide ;
-> - `GET /inscriptions` ne renvoie **ni `sexe` ni `telephone`** : la colonne « Genre », son filtre
->   et la répartition Hommes/Femmes n'ont aucune source et ont disparu ;
-> - un étudiant créé par `POST /etudiants` n'apparaît dans l'annuaire **qu'une fois inscrit**. Le
->   formulaire de création le dit explicitement.
+> Les boutons « Modifier » et « Supprimer » ont donc été retirés : mieux vaut pas de bouton qu'un
+> bouton qui ment. `GET /etudiants` ne porte par ailleurs **ni classe ni année académique** — un
+> étudiant appartient à une _filière_, sa _classe_ vient de son _inscription_.
 
 La fiche détail déclarait **4 onglets pour 2 panneaux** (« Tuteur » et « Dossier complet »
 pointaient sur un `#sales2` inexistant), trois `<li>` partageaient le même `id`, et
@@ -246,7 +239,124 @@ paramètre nul, **remonte vide** (`message: null`). Le formulaire l'exige donc c
 Il est saisi au **matricule** plutôt que choisi dans une liste, car aucun endpoint ne permet de
 lister les enseignants : voir §2.5, point 6.
 
-### 1.7 L'optimisation d'API principale
+### 1.7 Le module `scolarite` — terminé
+
+```
+src/modules/scolarite/
+├── routes.js · api.js · store.js · constants.js
+├── components/   AjoutPieceModal
+│   └── tabs/     Profil · Parcours · SituationFinanciere · Pieces
+└── views/        DossiersView.vue · DossierDetailView.vue
+```
+
+2 279 lignes (12 fichiers `parcours/` + `absence/`) → 1 594, et **tout est branché sur l'API** —
+ce qui n'était le cas d'aucune ligne auparavant.
+
+**Les douze fichiers étaient simulés, sans exception.** `DossierView` affichait trois étudiants
+codés en dur avec des filtres alimentés par des tableaux littéraux ; `DossierAcademique` fabriquait
+son étudiant après un `setTimeout(800)` — « _Faux délai_ », disait le commentaire ; les cinq
+onglets servaient des `ref([...])`. `Parcours.vue` était orphelin.
+
+| Onglet                     | Avant                             | Après                                                                             |
+| -------------------------- | --------------------------------- | --------------------------------------------------------------------------------- |
+| Profil                     | `ref({...})` en dur               | `GET /etudiants/:id/complet` — identité **et tuteurs**                            |
+| Parcours académique        | `historique` en dur               | `GET /etudiants/:id/parcours` — l'endpoint existait, **aucune vue ne l'appelait** |
+| Situation financière       | `paiements` + `echeancier` en dur | projeté depuis `GET /inscriptions/finances`                                       |
+| Pièces justificatives      | `documents` en dur                | `pieces[]` + dépôt + validation / rejet                                           |
+| ~~Assiduité & Discipline~~ | `absences` + `sanctions` en dur   | **retiré** — aucun backend (voir ci-dessous)                                      |
+
+#### L'écran Absences a été supprimé
+
+`AbscenceView.vue` (353 lignes) prétendait enregistrer une feuille d'émargement. En réalité :
+
+```js
+console.log('Données envoyées :', payload);
+setTimeout(() => {
+  alert("Fiche d'émargement enregistrée avec succès !");
+}, 1000);
+```
+
+Un `console.log`, une seconde d'attente, et un message de succès — **sans rien envoyer**. Et pour
+cause : **aucune route d'absence n'existe dans le backend**, dans aucun domaine. L'écran et son
+onglet ont été retirés plutôt que d'entretenir l'illusion d'un suivi d'assiduité. Le besoin est
+consigné en §2.5.
+
+#### Les énumérations viennent des contraintes SQL
+
+Aucun script de migration n'est versionné dans le dépôt backend : les valeurs autorisées ne vivent
+que dans les contraintes `CHECK` de la base. Elles ont été relevées là, et non devinées :
+
+| Champ                       | Valeurs                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `dossiers.statut_dossier`   | `INCOMPLET`, `COMPLET`, `VERIFIE`, `REJETE`                                  |
+| `pieces_dossier.statut`     | `EN_ATTENTE`, `VALIDE`, `REJETE`                                             |
+| `pieces_dossier.type_piece` | `DIPLOME`, `ATTESTATION_REUSSITE`, `ACTE_NAISSANCE`, `RELEVE_NOTES`, `AUTRE` |
+| `pieces_dossier.chemin`     | doit vérifier `^/uploads/.*\.(pdf\|jpg\|jpeg\|png)$`                         |
+
+Cette dernière contrainte est portée par la **base**, pas par le contrôleur : un chemin mal formé
+remonte donc en erreur SQL brute (« _new row violates check constraint_ »), illisible pour
+l'utilisateur. Le formulaire valide en amont. Deux autres pièges : le dépôt d'une pièce **n'est pas
+un envoi de fichier** (l'endpoint attend un _chemin_ vers un fichier déjà présent sur le serveur),
+et le **rejet exige un motif** — 400 sans lui.
+
+### 1.8 Le module `etudiants`, recâblé sur `GET /etudiants`
+
+`GET /etudiants` **existe désormais** (commit backend `2a39cdd`), et renvoie l'identité complète :
+`sexe`, `telephone`, `date_naissance`, `ville`, `filiere_nom`, `dossier_id`, `statut_dossier`.
+Le contournement mis en place faute de mieux — projeter l'annuaire depuis `GET /inscriptions` — a
+donc été retiré, et ce qu'il avait fallu abandonner est rétabli : **colonne Genre, filtre par sexe,
+répartition Hommes/Femmes**.
+
+Ce qui reste vrai :
+
+- **ni `PUT` ni `DELETE /etudiants/:id`** (404) : toujours pas de modification ni de suppression.
+  Le store échoue explicitement plutôt que d'émettre une requête vouée au 404 ;
+- **pas de `GET /etudiants/:id`** non plus : le détail passe par `/:id/complet` ;
+- `GET /etudiants` ne porte **ni classe ni année académique**. Un étudiant appartient à une
+  _filière_ ; sa _classe_ est un fait d'**inscription**. L'onglet « Par classe » interroge donc les
+  inscriptions — ce n'est pas un contournement, c'est le bon modèle.
+
+La **fiche étudiant a été supprimée** : elle affichait la même chose que le dossier scolaire, en
+moins riche. `/etudiants/:id` **redirige** vers `/dossiers-scolaires/:id`, ce qui ne casse aucun
+lien.
+
+### 1.9 Le bug `AppTabs` — les onglets n'affichaient plus rien
+
+Signalé en cours de chantier, et il touchait **tous les modules migrés** : cliquer sur un onglet
+ne rendait pas son contenu, et la console crachait
+
+```
+TypeError: parentComponent.ctx.deactivate is not a function
+    at unmount → patch → sharedContext.activate
+```
+
+Deux défauts cumulés dans `shared/components/AppTabs.vue`, tous deux corrigés :
+
+**1. Les définitions de composants transitaient par un proxy réactif.** Dès qu'une vue construit sa
+liste d'onglets dans un `computed` — ce que fait toute vue de détail — Vue enveloppe les composants
+qu'elle contient et proteste :
+
+> _[Vue warn] Vue received a Component that was made a reactive object […] should be avoided by
+> marking the component with `markRaw`._
+
+Ce n'est pas qu'un avertissement de performance : le composant proxifié casse le cache de
+`KeepAlive`. `AppTabs` applique désormais `toRaw` + `markRaw` **lui-même**, si bien qu'aucun
+appelant n'a à y penser.
+
+**2. Le `v-if` était posé sur le `<component>` _à l'intérieur_ du `KeepAlive`.** Condition fausse →
+`KeepAlive` reçoit un vnode _Comment_ en enfant → son `activate` appelle
+`parentComponent.ctx.deactivate()` sur un parent qui n'est pas lui. D'où le `TypeError`. La
+condition porte maintenant sur le `KeepAlive` lui-même.
+
+**7 tests** figent le contrat (`AppTabs.test.js`) : rendu initial, bascule au clic, transmission des
+props, `defaultTab`, onglet à plusieurs nœuds racines, liste d'onglets en `computed`, et **absence
+de tout avertissement Vue**. Le troisième et le sixième échouaient avant le correctif.
+
+**Leçon** : lint, tests et build étaient au vert pendant que **tous les onglets de l'application
+étaient cassés**. Aucun des trois ne monte un composant. Un test de montage sur un composant
+partagé aussi central aurait dû exister dès le départ.
+
+### 1.10 L'optimisation d'API principale
 
 Les conteneurs d'onglets Bootstrap (`data-bs-toggle="tab"`) **montent tous les panneaux d'un
 coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait donc son
@@ -256,7 +366,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 `AppTabs` ne monte que l'onglet actif, et `KeepAlive` évite de recharger ceux déjà visités.
 **C'est le gain le plus important à propager sur les 23 conteneurs restants.**
 
-### 1.8 Bugs corrigés (tous étaient en production)
+### 1.11 Bugs corrigés (tous étaient en production)
 
 **Authentification — la connexion ne pouvait pas aboutir**
 
@@ -284,7 +394,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 **Étudiants** (voir §1.4 pour le détail) 18. Le store n'exposait **ni `items` ni `fetchAll`** : aucun écran ne _pouvait_ charger de liste. D'où les tableaux codés en dur dans 4 onglets sur 6, plus la vue racine. 19. `fetchEtudiantsByClasseFiliereAnnee` et `filteredEtudiants` étaient consommés par l'onglet « Classes » mais **n'existaient pas** dans le store → `TypeError` au premier filtre. 20. `XLSX.utils.json_to_sheet` appelé **sans importer `XLSX`** → l'export Excel plantait au clic. 21. La fiche détail déclarait 4 onglets pour 2 panneaux ; deux d'entre eux pointaient sur un `#sales2` **inexistant** et trois `<li>` partageaient le même `id`. 22. La fiche détail affectait `etudiant.value = response` sans déballer `{ success, data }` → tous ses champs étaient `undefined`. 23. Ses `v-if` portaient sur les **mauvais champs** : le lieu de naissance était conditionné à `lieunaissance` (inexistant), le sexe à `genre`, l'adresse au _téléphone_. 24. `ajouterAuGroupe(e, g.id)` était appelé avec deux arguments mais n'en déclarait qu'un → « Assigner » affectait **le premier étudiant de la liste**, pas celui sur lequel on cliquait. 25. « Générer un rapport » : un `setTimeout(1800)` puis « Rapport généré et téléchargé avec succès » — **aucun appel API, aucun fichier**. 26. Le panneau d'onglet « Import » n'avait **aucun lien de navigation** : monté à chaque chargement, et inatteignable. Son composant était de toute façon vide, et le `DropData.vue` de secours n'avait aucun gestionnaire sur son bouton « Upload ». 27. La photo de la fiche détail était servie depuis `http://localhost:3500` **codé en dur**.
 
-### 1.9 Code mort et duplication supprimés
+### 1.12 Code mort et duplication supprimés
 
 - `routes/main.js` (copie **octet pour octet** de `routes/index.js`), `style1.css` (**520 Ko** jamais référencé), 5 fichiers `sample*.vue`, `result.js` → **25 493 lignes**.
 - Le **même tableau de niveaux existait en 3 exemplaires** (filières, classes, semestres) et celui des filières en 2 → **776 lignes**.
@@ -391,7 +501,13 @@ l'annonce, et son message d'erreur est construit par concaténation SQL avec le 
 étant `NULL`, rend **tout le message `NULL`**. L'échec remonte donc sans explication. Le frontend
 compense, mais la fonction gagnerait à être corrigée.
 
-**7. Deux endpoints pour l'import de réinscriptions** — `POST /inscriptions/import-reinscription`
+**7. Il n'existe aucun backend d'absences.** Rien, dans aucun domaine, ne parle d'absence,
+d'assiduité ou de feuille d'émargement. L'écran `/absences` et l'onglet « Assiduité & Discipline »
+du dossier scolaire ont donc été **retirés** (§1.7) : ils affichaient « Fiche enregistrée avec
+succès » sans rien envoyer. À rétablir le jour où le serveur expose la ressource — le besoin est
+réel (feuille d'appel par classe / date / créneau, historique par étudiant).
+
+**8. Deux endpoints pour l'import de réinscriptions** — `POST /inscriptions/import-reinscription`
 (champ `fichier`) et `POST /academique/imports/reinscriptions` (champ `file`). Le frontend retient
 le premier. Les conventions de nom de champ divergent aussi entre les imports (`fichier` pour les
 inscriptions, `file` pour les étudiants) : à harmoniser.

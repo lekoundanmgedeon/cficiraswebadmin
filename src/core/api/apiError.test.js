@@ -3,7 +3,9 @@ import { ApiError, normalizeApiError } from './apiError';
 
 describe('normalizeApiError', () => {
   it('extrait `data.message`', () => {
-    const error = normalizeApiError({ response: { status: 400, data: { message: 'Code déjà pris' } } });
+    const error = normalizeApiError({
+      response: { status: 400, data: { message: 'Code déjà pris' } },
+    });
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error.message).toBe('Code déjà pris');

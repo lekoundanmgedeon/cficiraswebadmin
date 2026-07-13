@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia';
+import { createCrudStore } from '@/core/store/createCrudStore';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
-import { useInscriptionStore } from '@/modules/inscriptions/store';
 import {
   addTuteurToEtudiant,
-  createEtudiant,
+  etudiantsResource,
+  getEtudiantComplet,
   getEtudiantParcours,
   importEtudiants,
   uploadPhotoEtudiant,
@@ -12,129 +12,65 @@ import {
 /**
  * Store des étudiants.
  *
- * Il n'est **pas** bâti sur `createCrudStore`, contrairement aux autres modules :
- * `/etudiants` n'est pas une ressource REST complète côté backend. Il n'existe ni
- * `GET /etudiants`, ni `GET /etudiants/:id`, ni `PUT`, ni `DELETE` — seulement
- * `POST /etudiants`, plus les tuteurs, la photo et le parcours (voir `api.js`).
+ * L'ancien `stores/etudiants/etudiantStore.js` n'exposait **ni `items` ni
+ * `fetchAll`** : aucun écran ne *pouvait* charger de liste, d'où les tableaux
+ * codés en dur dans quatre onglets sur six.
  *
- * La **liste** vient donc de `GET /inscriptions`, dont chaque ligne porte
- * l'identité de l'étudiant. Ce store délègue la lecture au store des inscriptions
- * et n'expose en propre que ce que le backend sait réellement faire.
- *
- * Conséquence assumée : on ne peut ni modifier ni supprimer un étudiant depuis
- * l'application, faute d'endpoint. Les boutons correspondants ont été retirés
- * plutôt que laissés à cliquer dans le vide.
+ * ⚠️ La ressource `/etudiants` est **incomplète côté serveur** — voir `api.js` :
+ * il n'y a ni `GET /etudiants/:id`, ni `PUT`, ni `DELETE`. Trois actions de
+ * `createCrudStore` sont donc adaptées :
+ *  - `fetchById` passe par `/:id/complet` ;
+ *  - `update` et `remove` échouent explicitement plutôt que d'envoyer une requête
+ *    vouée à un 404.
  */
-export const useEtudiantStore = defineStore('etudiants', {
+export const useEtudiantStore = createCrudStore({
+  id: 'etudiants',
+  resource: etudiantsResource,
+  label: 'Étudiant',
+  cacheKey: 'etudiants',
+
   state: () => ({
-    /** @type {any|null} Étudiant consulté. */
-    item: null,
-    /** @type {any|null} Parcours académique de l'étudiant consulté. */
-    parcours: null,
+    /** @type {any[]} Parcours académique de l'étudiant consulté. */
+    parcours: [],
     /** @type {any|null} Compte rendu du dernier import. */
     importReport: null,
-    loading: false,
-    /** @type {import('@/core/api/apiError').ApiError|null} */
-    error: null,
   }),
-
-  getters: {
-    /**
-     * L'annuaire des étudiants, projeté depuis les inscriptions.
-     * @returns {any[]}
-     */
-    items() {
-      return useInscriptionStore().etudiants;
-    },
-
-    /**
-     * Chargement de l'**annuaire**, distinct de `loading` (qui couvre les
-     * opérations propres au module : création, import, photo, parcours).
-     */
-    listLoading() {
-      return useInscriptionStore().loading;
-    },
-
-    isEmpty() {
-      return this.items.length === 0;
-    },
-
-    count() {
-      return this.items.length;
-    },
-
-    /** @returns {(id: string|number) => any} */
-    getById() {
-      return (id) => this.items.find((etudiant) => String(etudiant.id) === String(id));
-    },
-  },
 
   actions: {
     /**
-     * Même contrat que `createCrudStore.run` : renvoie `undefined` en cas
-     * d'échec, ce sur quoi l'UI se repose pour ne fermer une modale que si
-     * l'appel a réellement abouti.
+     * Charge le détail d'un étudiant.
      *
-     * @template T
-     * @param {() => Promise<T>} call
-     * @param {{success?: string, failure?: string, onSuccess?: (result: T) => void|Promise<void>}} [options]
-     * @returns {Promise<T|undefined>}
-     */
-    async run(call, { success, failure, onSuccess } = {}) {
-      const notifications = useNotificationStore();
-      this.loading = true;
-      this.error = null;
-
-      try {
-        const result = await call();
-        await onSuccess?.(result);
-        if (success) notifications.notifySuccess(success);
-        return result;
-      } catch (error) {
-        this.error = error;
-        notifications.notifyError(error, failure);
-        return undefined;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    /**
-     * Charge l'annuaire. Délègue aux inscriptions, seule source de listing.
+     * `GET /etudiants/:id` **n'existe pas** (404) : seul `/:id/complet` renvoie
+     * l'étudiant, augmenté de ses tuteurs et des pièces de son dossier.
      *
-     * @param {object} [options]
-     * @param {boolean} [options.force]
-     * @param {object} [options.params] Filtres serveur : `annee_academique_id`,
-     *   `classe_id`, `statut`. **Pas `filiere_id`** — `listerInscriptions` ne lit
-     *   que ces trois clés dans la query string ; filtrer par filière se fait côté client.
-     */
-    async fetchAll(options) {
-      return useInscriptionStore().fetchAll(options);
-    },
-
-    /**
-     * Charge un étudiant. Il n'y a pas de `GET /etudiants/:id` : on le retrouve
-     * dans l'annuaire, qu'on charge au besoin.
      * @param {string|number} id
      */
     async fetchById(id) {
-      const inscriptions = useInscriptionStore();
-
-      if (inscriptions.items.length === 0) {
-        const loaded = await inscriptions.fetchAll();
-        if (loaded === undefined) return undefined;
-      }
-
-      this.item = this.getById(id) ?? null;
-      return this.item ?? undefined;
+      return this.run(() => getEtudiantComplet(id), {
+        failure: "Erreur lors du chargement de l'étudiant.",
+        onSuccess: (response) => {
+          this.item = response.data ?? null;
+        },
+      });
     },
 
-    /** @param {object} data */
-    async create(data) {
-      return this.run(() => createEtudiant(data), {
-        success: 'Étudiant créé. Il apparaîtra dans la liste une fois inscrit à une classe.',
-        failure: "Erreur lors de la création de l'étudiant.",
-      });
+    /**
+     * Le backend n'expose pas `PUT /etudiants/:id`. Plutôt que d'émettre une
+     * requête qui reviendra en 404, on le dit franchement.
+     */
+    async update() {
+      useNotificationStore().notifyError(
+        "La modification d'un étudiant n'est pas encore possible : le serveur n'expose pas cette opération."
+      );
+      return undefined;
+    },
+
+    /** Le backend n'expose pas `DELETE /etudiants/:id`. */
+    async remove() {
+      useNotificationStore().notifyError(
+        "La suppression d'un étudiant n'est pas encore possible : le serveur n'expose pas cette opération."
+      );
+      return undefined;
     },
 
     /** @param {string|number} id */
@@ -142,7 +78,7 @@ export const useEtudiantStore = defineStore('etudiants', {
       return this.run(() => getEtudiantParcours(id), {
         failure: 'Erreur lors du chargement du parcours académique.',
         onSuccess: (response) => {
-          this.parcours = response.data ?? null;
+          this.parcours = response.data ?? [];
         },
       });
     },
@@ -152,6 +88,7 @@ export const useEtudiantStore = defineStore('etudiants', {
       return this.run(() => addTuteurToEtudiant(id, data), {
         success: 'Tuteur ajouté avec succès.',
         failure: "Erreur lors de l'ajout du tuteur.",
+        onSuccess: () => this.fetchById(id),
       });
     },
 
@@ -160,6 +97,7 @@ export const useEtudiantStore = defineStore('etudiants', {
       return this.run(() => uploadPhotoEtudiant(id, file), {
         success: 'Photo de profil mise à jour.',
         failure: 'Erreur lors du téléchargement de la photo.',
+        onSuccess: () => this.fetchById(id),
       });
     },
 
@@ -170,8 +108,7 @@ export const useEtudiantStore = defineStore('etudiants', {
         failure: "Erreur lors de l'import du fichier.",
         onSuccess: async (response) => {
           this.importReport = response.data ?? null;
-          // L'import crée des inscriptions : l'annuaire en dépend.
-          await useInscriptionStore().invalidate();
+          await this.invalidate();
         },
       });
     },

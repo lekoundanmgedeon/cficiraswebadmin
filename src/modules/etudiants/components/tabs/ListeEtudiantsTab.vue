@@ -6,9 +6,10 @@ import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
-import { statutInfo } from '@/modules/inscriptions/constants';
+import { useFiliereStore } from '@/modules/structure-academique/filiere/store';
 import { useEtudiantStore } from '../../store';
-import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
+import { SEXES, sexeLabel } from '../../constants';
+import { dossierInfo } from '@/modules/scolarite/constants';
 
 /**
  * Répertoire des étudiants.
@@ -17,31 +18,34 @@ import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
  * « Fall Aminata »…), avec un `@edit` câblé sur un `console.log` et une
  * suppression qui retirait la ligne du tableau local sans rien envoyer au serveur.
  *
- * L'annuaire vient de `GET /inscriptions` : le backend n'expose aucun
- * `GET /etudiants`. Il ne propose donc **ni « Modifier » ni « Supprimer »** —
- * `PUT` et `DELETE /etudiants/:id` n'existent pas davantage. Mieux vaut pas de
- * bouton qu'un bouton qui ment.
+ * La liste vient de `GET /etudiants`. Elle ne propose **ni « Modifier » ni
+ * « Supprimer »** : `PUT` et `DELETE /etudiants/:id` n'existent pas côté serveur
+ * (404). Mieux vaut pas de bouton qu'un bouton qui ment.
  *
- * Ces lignes ne portent pas non plus de `sexe` ni de `telephone` : la colonne
- * « Genre » et le filtre associé ont disparu, faute de donnée pour les alimenter.
+ * `GET /etudiants` ne renvoie **ni classe ni année académique** : un étudiant
+ * appartient à une *filière*, sa classe vient de son *inscription*. C'est
+ * l'onglet « Par classe » qui la connaît.
  */
 
 const etudiantStore = useEtudiantStore();
-const { items: etudiants, listLoading } = storeToRefs(etudiantStore);
-const { filieres, loadReferences } = useEtudiantFilters();
+const filiereStore = useFiliereStore();
+
+const { items: etudiants, loading } = storeToRefs(etudiantStore);
+const { items: filieres } = storeToRefs(filiereStore);
 
 const searchQuery = ref('');
 const filterFiliere = ref('');
+const filterSexe = ref('');
 
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
 onMounted(() => {
-  loadReferences();
   etudiantStore.fetchAll();
+  filiereStore.fetchAll();
 });
 
-watch([searchQuery, filterFiliere], () => {
+watch([searchQuery, filterFiliere, filterSexe], () => {
   currentPage.value = 1;
 });
 
@@ -55,9 +59,12 @@ const filteredEtudiants = computed(() => {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(search));
 
-    const matchesFiliere = !filterFiliere.value || etudiant.filiere === filterFiliere.value;
+    const matchesFiliere =
+      !filterFiliere.value || String(etudiant.filiere_id) === String(filterFiliere.value);
 
-    return matchesSearch && matchesFiliere;
+    const matchesSexe = !filterSexe.value || etudiant.sexe === filterSexe.value;
+
+    return matchesSearch && matchesFiliere && matchesSexe;
   });
 });
 
@@ -73,11 +80,11 @@ const exportRows = computed(() =>
     Matricule: etudiant.matricule,
     Nom: etudiant.nom,
     Prénom: etudiant.prenom,
+    Sexe: sexeLabel(etudiant.sexe),
     'E-mail': etudiant.email ?? '—',
-    Filière: etudiant.filiere ?? '—',
-    Classe: etudiant.classe ?? '—',
-    Année: etudiant.annee_academique ?? '—',
-    Statut: statutInfo(etudiant.statut).label,
+    Téléphone: etudiant.telephone ?? '—',
+    Filière: etudiant.filiere_nom ?? '—',
+    Dossier: dossierInfo(etudiant.statut_dossier).label,
   }))
 );
 
@@ -95,6 +102,7 @@ function initials(etudiant) {
 function resetFilters() {
   searchQuery.value = '';
   filterFiliere.value = '';
+  filterSexe.value = '';
 }
 </script>
 
@@ -106,7 +114,7 @@ function resetFilters() {
         <p class="text-muted small mb-0">
           <i class="mdi mdi-account-group-outline me-1"></i>
           <b>{{ filteredEtudiants.length }}</b> étudiant(s) affiché(s) sur
-          {{ etudiants.length }} connu(s).
+          {{ etudiants.length }} enregistré(s).
         </p>
       </div>
       <ExportMenu
@@ -120,7 +128,7 @@ function resetFilters() {
       <div class="card border-0 shadow-sm bg-light">
         <div class="card-body p-3">
           <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-5">
               <div class="input-group bg-white rounded shadow-sm">
                 <span class="input-group-text bg-white border-0">
                   <i class="mdi mdi-magnify text-primary"></i>
@@ -134,11 +142,20 @@ function resetFilters() {
               </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
               <select v-model="filterFiliere" class="form-select border-0 shadow-sm">
                 <option value="">Toutes les filières</option>
-                <option v-for="filiere in filieres" :key="filiere.id" :value="filiere.designation">
+                <option v-for="filiere in filieres" :key="filiere.id" :value="filiere.id">
                   {{ filiere.designation }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <select v-model="filterSexe" class="form-select border-0 shadow-sm">
+                <option value="">Genre</option>
+                <option v-for="sexe in SEXES" :key="sexe.code" :value="sexe.code">
+                  {{ sexe.label }}
                 </option>
               </select>
             </div>
@@ -154,12 +171,12 @@ function resetFilters() {
     </div>
 
     <div class="col-12">
-      <LoadingSpinner v-if="listLoading" />
+      <LoadingSpinner v-if="loading" />
 
       <EmptyState
         v-else-if="etudiants.length === 0"
         title="Aucun étudiant"
-        description="L'annuaire se remplit à mesure des inscriptions. Importez une liste depuis l'onglet Import, ou depuis le module Inscriptions."
+        description="Créez un premier étudiant, ou importez une liste depuis l'onglet Import."
       />
 
       <EmptyState
@@ -177,9 +194,10 @@ function resetFilters() {
                   <th class="ps-4 py-3">#</th>
                   <th>Étudiant</th>
                   <th>Matricule</th>
-                  <th>Parcours</th>
-                  <th>E-mail</th>
-                  <th class="text-center">Inscription</th>
+                  <th class="text-center">Genre</th>
+                  <th>Filière</th>
+                  <th>Contact</th>
+                  <th class="text-center">Dossier</th>
                 </tr>
               </thead>
 
@@ -189,7 +207,14 @@ function resetFilters() {
 
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="avatar-circle me-3 bg-soft-primary text-primary">
+                      <div
+                        class="avatar-circle me-3"
+                        :class="
+                          etudiant.sexe === 'M'
+                            ? 'bg-soft-info text-info'
+                            : 'bg-soft-warning text-warning'
+                        "
+                      >
                         {{ initials(etudiant) }}
                       </div>
                       <div>
@@ -210,22 +235,35 @@ function resetFilters() {
                     </span>
                   </td>
 
-                  <td>
-                    <div class="fw-semibold">{{ etudiant.classe ?? '—' }}</div>
-                    <small class="text-muted">
-                      {{ etudiant.filiere ?? '—' }} · {{ etudiant.annee_academique ?? '—' }}
-                    </small>
-                  </td>
-
-                  <td class="small">{{ etudiant.email ?? '—' }}</td>
-
                   <td class="text-center">
                     <span
                       class="badge rounded-pill px-3 py-2"
-                      :class="`bg-${statutInfo(etudiant.statut).variant}-subtle text-${statutInfo(etudiant.statut).variant}`"
+                      :class="
+                        etudiant.sexe === 'M'
+                          ? 'bg-soft-info text-info'
+                          : 'bg-soft-warning text-warning'
+                      "
                     >
-                      {{ statutInfo(etudiant.statut).label }}
+                      {{ sexeLabel(etudiant.sexe) }}
                     </span>
+                  </td>
+
+                  <td class="small">{{ etudiant.filiere_nom ?? '—' }}</td>
+
+                  <td>
+                    <div class="small">{{ etudiant.email ?? '—' }}</div>
+                    <small class="text-muted">{{ etudiant.telephone ?? '—' }}</small>
+                  </td>
+
+                  <td class="text-center">
+                    <RouterLink
+                      :to="{ name: 'DossierScolaire', params: { id: etudiant.id } }"
+                      class="badge rounded-pill px-3 py-2 text-decoration-none"
+                      :class="`bg-${dossierInfo(etudiant.statut_dossier).variant}-subtle text-${dossierInfo(etudiant.statut_dossier).variant}`"
+                      title="Ouvrir le dossier scolaire"
+                    >
+                      {{ dossierInfo(etudiant.statut_dossier).label }}
+                    </RouterLink>
                   </td>
                 </tr>
               </tbody>
@@ -257,8 +295,14 @@ function resetFilters() {
   font-size: 0.85rem;
 }
 
-.bg-soft-primary {
-  background-color: rgba(75, 73, 172, 0.1);
+.bg-soft-info {
+  background-color: rgba(13, 202, 240, 0.12);
+  color: #0dcaf0;
+}
+
+.bg-soft-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #997404;
 }
 
 .table thead th {

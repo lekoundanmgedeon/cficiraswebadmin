@@ -121,15 +121,10 @@
               </router-link>
             </li>
 
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/absences"
-                :class="{ 'menu-active': isMenuActive('/absences') }"
-              >
-                Absences & Présences
-              </router-link>
-            </li>
+            <!-- « Absences & Présences » a été retiré : l'écran était intégralement
+                 simulé (il affichait « Fiche enregistrée avec succès » sans rien
+                 envoyer) et aucune route d'absence n'existe côté backend. À
+                 rétablir le jour où le serveur en expose. -->
 
             <li class="nav-item">
               <router-link
@@ -713,7 +708,7 @@ const menuGroups = {
     '/semestres',
   ],
 
-  scolarite: ['/etudiants', '/dossiers-scolaires', '/absences', '/notes', '/deliberations'],
+  scolarite: ['/etudiants', '/dossiers-scolaires', '/notes', '/deliberations'],
 
   examens: [
     '/planification-examens',

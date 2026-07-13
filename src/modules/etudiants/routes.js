@@ -1,10 +1,11 @@
 /**
  * Routes du module Étudiants.
  *
- * Les routes `/dossiers-scolaires`, `/absences` et `/inscriptions` cohabitaient
- * avec celles-ci dans `src/routes/etudiants.routes.js`. Elles relèvent d'autres
- * modules (parcours, absence, inscriptions), pas encore migrés : elles restent
- * donc dans le fichier hérité et rejoindront leur module respectif à leur tour.
+ * `/etudiants/:id` **redirige vers le dossier scolaire**. Les deux écrans
+ * affichaient la même chose — identité et parcours académique — le dossier
+ * offrant en plus les tuteurs, la situation financière et les pièces
+ * justificatives. Maintenir deux fiches jumeaux n'avait pas de sens ; la route
+ * est conservée pour ne casser aucun lien existant.
  */
 export default [
   {
@@ -16,8 +17,6 @@ export default [
   {
     path: '/etudiants/:id',
     name: 'EtudiantDetails',
-    component: () => import('./views/EtudiantDetailView.vue'),
-    props: true,
-    meta: { title: 'Fiche étudiant' },
+    redirect: (to) => ({ name: 'DossierScolaire', params: { id: to.params.id } }),
   },
 ];

@@ -3,9 +3,10 @@ import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
-import { statutInfo } from '@/modules/inscriptions/constants';
+import { dossierInfo } from '@/modules/scolarite/constants';
 import { useEtudiantStore } from '../../store';
 import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
+import { sexeLabel } from '../../constants';
 
 /**
  * Export filtré des étudiants.
@@ -18,20 +19,23 @@ import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
  * (Un second composant, `data-io/ExportData.vue`, faisait la même chose en
  * appelant `XLSX.utils.json_to_sheet` **sans importer `XLSX`** : l'export
  * plantait au clic. Il a disparu avec cet onglet.)
+ *
+ * Les filtres sont ceux que `GET /etudiants` sait appliquer — filière, statut de
+ * dossier, recherche. **Pas de filtre par classe** : l'annuaire ne la connaît
+ * pas. Pour exporter une classe, passer par l'onglet « Par classe », qui lit les
+ * inscriptions.
  */
 
 const etudiantStore = useEtudiantStore();
-const { items: etudiants, listLoading } = storeToRefs(etudiantStore);
+const { items: etudiants, loading } = storeToRefs(etudiantStore);
 
 const {
-  anneeId,
+  search,
   filiereId,
-  classeId,
-  annees,
+  statutDossier,
   filieres,
-  classes,
+  statuts,
   serverParams,
-  applyClientFilters,
   labels,
   loadReferences,
 } = useEtudiantFilters();
@@ -45,23 +49,20 @@ function load() {
   etudiantStore.fetchAll({ params: serverParams.value });
 }
 
-// L'année et la classe sont des filtres serveur ; la filière ne l'est pas
-// (`listerInscriptions` ne la lit pas), elle s'applique en mémoire.
 watch(serverParams, load);
 
-const rows = computed(() => applyClientFilters(etudiants.value));
-
 const exportRows = computed(() =>
-  rows.value.map((etudiant, index) => ({
+  etudiants.value.map((etudiant, index) => ({
     'N°': index + 1,
     Matricule: etudiant.matricule,
     Nom: etudiant.nom,
     Prénom: etudiant.prenom,
+    Sexe: sexeLabel(etudiant.sexe),
     'E-mail': etudiant.email ?? '—',
-    Année: etudiant.annee_academique ?? '—',
-    Filière: etudiant.filiere ?? '—',
-    Classe: etudiant.classe ?? '—',
-    Statut: statutInfo(etudiant.statut).label,
+    Téléphone: etudiant.telephone ?? '—',
+    Ville: etudiant.ville ?? '—',
+    Filière: etudiant.filiere_nom ?? '—',
+    Dossier: dossierInfo(etudiant.statut_dossier).label,
   }))
 );
 
@@ -70,9 +71,8 @@ const { exportToExcel, exportToPdf, exportToCsv } = useTableExport({
   title: 'Liste des étudiants',
   fileBaseName: 'etudiants',
   filters: () => [
-    { label: 'Année académique', value: labels.value.annee },
     { label: 'Filière', value: labels.value.filiere },
-    { label: 'Classe', value: labels.value.classe },
+    { label: 'Statut du dossier', value: labels.value.statut },
     { label: 'Total étudiants', value: exportRows.value.length },
     { label: "Date d'édition", value: new Date().toLocaleDateString('fr-FR') },
   ],
@@ -128,13 +128,14 @@ const formats = [
       <div class="card-body bg-light rounded-bottom">
         <div class="row g-3">
           <div class="col-md-4">
-            <label for="export-annee" class="small fw-semibold text-muted mb-1">Année</label>
-            <select id="export-annee" v-model="anneeId" class="form-select border-0 shadow-sm">
-              <option value="">Toutes les années</option>
-              <option v-for="annee in annees" :key="annee.id" :value="annee.id">
-                {{ annee.code }}
-              </option>
-            </select>
+            <label for="export-search" class="small fw-semibold text-muted mb-1">Recherche</label>
+            <input
+              id="export-search"
+              v-model="search"
+              type="text"
+              class="form-control border-0 shadow-sm"
+              placeholder="Nom, prénom, matricule..."
+            />
           </div>
 
           <div class="col-md-4">
@@ -148,18 +149,24 @@ const formats = [
           </div>
 
           <div class="col-md-4">
-            <label for="export-classe" class="small fw-semibold text-muted mb-1">Classe</label>
-            <select id="export-classe" v-model="classeId" class="form-select border-0 shadow-sm">
-              <option value="">Toutes les classes</option>
-              <option v-for="classe in classes" :key="classe.id" :value="classe.id">
-                {{ classe.code }}
+            <label for="export-dossier" class="small fw-semibold text-muted mb-1">
+              Statut du dossier
+            </label>
+            <select
+              id="export-dossier"
+              v-model="statutDossier"
+              class="form-select border-0 shadow-sm"
+            >
+              <option value="">Tous les statuts</option>
+              <option v-for="statut in statuts" :key="statut.code" :value="statut.code">
+                {{ statut.label }}
               </option>
             </select>
           </div>
         </div>
 
         <div class="mt-3">
-          <LoadingSpinner v-if="listLoading" />
+          <LoadingSpinner v-if="loading" />
           <p v-else class="mb-0 small text-muted">
             <i class="mdi mdi-information-outline me-1"></i>
             <b class="text-dark">{{ exportRows.length }}</b> étudiant(s) seront exportés.

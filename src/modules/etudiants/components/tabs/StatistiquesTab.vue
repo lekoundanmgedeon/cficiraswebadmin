@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia';
 import Chart from 'chart.js/auto';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
-import { STATUT_LIST, normalizeStatut } from '@/modules/inscriptions/constants';
+import { DOSSIER_STATUT_LIST, dossierInfo } from '@/modules/scolarite/constants';
 import { useEtudiantStore } from '../../store';
 
 /**
@@ -16,23 +16,26 @@ import { useEtudiantStore } from '../../store';
  * un second montage aurait échoué sur « Canvas is already in use ». Les instances
  * sont donc référencées, mises à jour à chaud et détruites au démontage.
  *
- * Les indicateurs sont dérivés de l'annuaire, lui-même projeté depuis
- * `GET /inscriptions`. Ces lignes ne portent **pas de `sexe`** : la répartition
- * par genre de l'ancienne maquette n'a aucune source de données réelle et cède
- * la place à la répartition par statut d'inscription, qui en a une.
+ * Les indicateurs sont dérivés de `GET /etudiants`, qui porte le `sexe`, la
+ * `filiere_nom` et le `statut_dossier` de chaque étudiant.
  */
 
 const etudiantStore = useEtudiantStore();
-const { items: etudiants, listLoading } = storeToRefs(etudiantStore);
+const { items: etudiants, loading } = storeToRefs(etudiantStore);
 
-/** Teinte unique : les barres comparent des magnitudes, la couleur ne porte pas d'identité. */
-const HUE = '#4b49ac';
+/**
+ * Deux teintes, validées pour la déficience de vision des couleurs
+ * (ΔE protan 127, cible ≥ 12). Le jaune passe sous 3:1 de contraste sur fond
+ * clair : la règle de relief impose des libellés visibles — d'où les effectifs
+ * et pourcentages écrits en toutes lettres sur la barre de répartition.
+ */
+const HUE_PRIMARY = '#4b49ac';
+const HUE_ACCENT = '#eda100';
 
 const filiereCanvas = ref(null);
-const classeCanvas = ref(null);
 
-/** @type {{filiere: Chart|null, classe: Chart|null}} */
-const charts = { filiere: null, classe: null };
+/** @type {{filiere: Chart|null}} */
+const charts = { filiere: null };
 
 onMounted(() => etudiantStore.fetchAll());
 
@@ -55,28 +58,24 @@ function countBy(key) {
     .sort((a, b) => b.value - a.value);
 }
 
-const parFiliere = computed(() => countBy('filiere'));
+const parFiliere = computed(() => countBy('filiere_nom'));
 
-/** Les classes sont nombreuses : au-delà de 10, le reste est agrégé en « Autres ». */
-const parClasse = computed(() => {
-  const all = countBy('classe');
-  if (all.length <= 10) return all;
+const hommes = computed(() => etudiants.value.filter((e) => e.sexe === 'M').length);
+const femmes = computed(() => etudiants.value.filter((e) => e.sexe === 'F').length);
 
-  const top = all.slice(0, 10);
-  const reste = all.slice(10).reduce((sum, item) => sum + item.value, 0);
-  return [...top, { label: 'Autres', value: reste }];
-});
+/** @param {number} value @returns {number} */
+const pourcentage = (value) => (total.value === 0 ? 0 : Math.round((value / total.value) * 100));
 
-const parStatut = computed(() =>
-  STATUT_LIST.map((statut) => ({
+const parDossier = computed(() =>
+  DOSSIER_STATUT_LIST.map((statut) => ({
     ...statut,
-    value: etudiants.value.filter((etudiant) => normalizeStatut(etudiant.statut) === statut.code)
-      .length,
+    value: etudiants.value.filter(
+      (etudiant) => dossierInfo(etudiant.statut_dossier).code === statut.code
+    ).length,
   })).filter((statut) => statut.value > 0)
 );
 
 const totalFilieres = computed(() => parFiliere.value.length);
-const totalClasses = computed(() => countBy('classe').length);
 
 /**
  * Barres horizontales, une seule série : la couleur ne porte aucune identité,
@@ -94,9 +93,9 @@ function buildBarChart(canvas, data) {
       datasets: [
         {
           data: data.map((item) => item.value),
-          backgroundColor: HUE,
+          backgroundColor: HUE_PRIMARY,
           borderRadius: 4,
-          barThickness: 14,
+          barThickness: 16,
         },
       ],
     },
@@ -106,9 +105,7 @@ function buildBarChart(canvas, data) {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: { label: (context) => `${context.parsed.x} étudiant(s)` },
-        },
+        tooltip: { callbacks: { label: (context) => `${context.parsed.x} étudiant(s)` } },
       },
       scales: {
         x: {
@@ -116,31 +113,22 @@ function buildBarChart(canvas, data) {
           ticks: { precision: 0, color: '#6c757d' },
           grid: { color: '#eef2f7' },
         },
-        y: {
-          ticks: { color: '#52514e' },
-          grid: { display: false },
-        },
+        y: { ticks: { color: '#52514e' }, grid: { display: false } },
       },
     },
   });
 }
 
 function renderCharts() {
-  if (filiereCanvas.value) {
-    charts.filiere?.destroy();
-    charts.filiere = buildBarChart(filiereCanvas.value, parFiliere.value);
-  }
-
-  if (classeCanvas.value) {
-    charts.classe?.destroy();
-    charts.classe = buildBarChart(classeCanvas.value, parClasse.value);
-  }
+  if (!filiereCanvas.value) return;
+  charts.filiere?.destroy();
+  charts.filiere = buildBarChart(filiereCanvas.value, parFiliere.value);
 }
 
-// Les canevas n'existent qu'une fois les données chargées (ils sont sous un
-// `v-else`), d'où le rendu piloté par la donnée plutôt que par `onMounted`.
+// Le canevas n'existe qu'une fois les données chargées (il est sous un `v-else`),
+// d'où le rendu piloté par la donnée plutôt que par `onMounted`.
 watch(
-  [parFiliere, parClasse],
+  parFiliere,
   async () => {
     if (total.value === 0) return;
     await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -149,10 +137,7 @@ watch(
   { flush: 'post' }
 );
 
-onBeforeUnmount(() => {
-  charts.filiere?.destroy();
-  charts.classe?.destroy();
-});
+onBeforeUnmount(() => charts.filiere?.destroy());
 </script>
 
 <template>
@@ -160,21 +145,21 @@ onBeforeUnmount(() => {
     <div class="mb-4">
       <h4 class="fw-bold mb-1">Statistiques des étudiants</h4>
       <p class="text-muted small mb-0">
-        Vue d'ensemble des effectifs par filière, classe et statut d'inscription.
+        Vue d'ensemble des effectifs par filière, genre et statut de dossier.
       </p>
     </div>
 
-    <LoadingSpinner v-if="listLoading" />
+    <LoadingSpinner v-if="loading" />
 
     <EmptyState
       v-else-if="total === 0"
       title="Aucune donnée à analyser"
-      description="Les statistiques apparaîtront dès qu'un étudiant sera inscrit."
+      description="Les statistiques apparaîtront dès qu'un étudiant sera enregistré."
     />
 
     <div v-else>
       <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
               <span class="text-muted small fw-semibold text-uppercase d-block mb-1">
@@ -185,7 +170,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
               <span class="text-muted small fw-semibold text-uppercase d-block mb-1">
@@ -195,14 +180,40 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-              <span class="text-muted small fw-semibold text-uppercase d-block mb-1">
-                Classes occupées
-              </span>
-              <h3 class="fw-bold text-dark mb-0 font-monospace">{{ totalClasses }}</h3>
+      <!-- Deux catégories seulement : une barre de proportion dit tout ce qu'un
+           camembert dirait, en se lisant d'un coup d'œil. -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Répartition par genre</h6>
+
+          <div class="proportion-bar mb-3">
+            <div
+              class="proportion-segment"
+              :style="{ width: pourcentage(hommes) + '%', background: HUE_PRIMARY }"
+              :title="`Hommes : ${hommes}`"
+            ></div>
+            <div
+              class="proportion-segment"
+              :style="{ width: pourcentage(femmes) + '%', background: HUE_ACCENT }"
+              :title="`Femmes : ${femmes}`"
+            ></div>
+          </div>
+
+          <div class="d-flex gap-4 flex-wrap">
+            <div class="d-flex align-items-center">
+              <span class="legend-dot me-2" :style="{ background: HUE_PRIMARY }"></span>
+              <span class="text-muted small me-2">Hommes</span>
+              <span class="fw-bold text-dark">{{ hommes }}</span>
+              <span class="text-muted small ms-1">({{ pourcentage(hommes) }} %)</span>
+            </div>
+
+            <div class="d-flex align-items-center">
+              <span class="legend-dot me-2" :style="{ background: HUE_ACCENT }"></span>
+              <span class="text-muted small me-2">Femmes</span>
+              <span class="fw-bold text-dark">{{ femmes }}</span>
+              <span class="text-muted small ms-1">({{ pourcentage(femmes) }} %)</span>
             </div>
           </div>
         </div>
@@ -210,10 +221,10 @@ onBeforeUnmount(() => {
 
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-          <h6 class="fw-bold mb-3">Répartition par statut d'inscription</h6>
+          <h6 class="fw-bold mb-3">Statut des dossiers scolaires</h6>
           <div class="d-flex flex-wrap gap-3">
             <div
-              v-for="statut in parStatut"
+              v-for="statut in parDossier"
               :key="statut.code"
               class="border rounded px-3 py-2 d-flex align-items-center"
             >
@@ -224,34 +235,17 @@ onBeforeUnmount(() => {
                 {{ statut.label }}
               </span>
               <span class="fw-bold text-dark">{{ statut.value }}</span>
-              <span class="text-muted small ms-1">
-                ({{ Math.round((statut.value / total) * 100) }} %)
-              </span>
+              <span class="text-muted small ms-1">({{ pourcentage(statut.value) }} %)</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row g-4">
-        <div class="col-lg-6">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-              <h6 class="fw-bold mb-3">Étudiants par filière</h6>
-              <div class="chart-holder">
-                <canvas ref="filiereCanvas"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-6">
-          <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-              <h6 class="fw-bold mb-3">Étudiants par classe</h6>
-              <div class="chart-holder">
-                <canvas ref="classeCanvas"></canvas>
-              </div>
-            </div>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3">Étudiants par filière</h6>
+          <div class="chart-holder">
+            <canvas ref="filiereCanvas"></canvas>
           </div>
         </div>
       </div>
@@ -263,5 +257,28 @@ onBeforeUnmount(() => {
 .chart-holder {
   position: relative;
   height: 320px;
+}
+
+.proportion-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  /* Un filet de surface sépare les deux segments : sans lui, deux teintes
+     adjacentes se touchent et la frontière devient ambiguë en vision déficiente. */
+  gap: 2px;
+  background: #eef2f7;
+}
+
+.proportion-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
 }
 </style>

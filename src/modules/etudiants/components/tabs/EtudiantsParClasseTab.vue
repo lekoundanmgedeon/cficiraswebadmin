@@ -6,12 +6,14 @@ import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
+import { useFiliereStore } from '@/modules/structure-academique/filiere/store';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
+import { useInscriptionStore } from '@/modules/inscriptions/store';
 import { statutInfo } from '@/modules/inscriptions/constants';
-import { useEtudiantStore } from '../../store';
-import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
 
 /**
- * Étudiants filtrés par année / filière / classe.
+ * Étudiants d'une classe, pour une année.
  *
  * L'onglet appelait `etudiantStore.fetchEtudiantsByClasseFiliereAnnee(...)` et
  * lisait `etudiantStore.filteredEtudiants` : **aucun des deux n'existait** dans
@@ -20,59 +22,91 @@ import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
  * `v-else-if` et `v-for` sur la même ligne, ce qui rendait le « aucun résultat »
  * inatteignable.
  *
+ * Il interroge les **inscriptions**, et non l'annuaire : `GET /etudiants` ne
+ * renvoie ni classe ni année académique. Un étudiant appartient à une *filière* ;
+ * sa *classe* est un fait d'inscription. C'est donc bien la bonne source.
+ *
  * L'année et la classe sont filtrées **par le serveur** (`annee_academique_id`,
- * `classe_id`), la filière **par le client** : `listerInscriptions` ne la lit pas.
+ * `classe_id`) ; la filière **par le client** : `listerInscriptions` ne la lit pas.
  */
 
-const etudiantStore = useEtudiantStore();
-const { items: etudiants, listLoading } = storeToRefs(etudiantStore);
+const inscriptionStore = useInscriptionStore();
+const anneeStore = useAnneeStore();
+const filiereStore = useFiliereStore();
+const classeStore = useClasseStore();
 
-const {
-  anneeId,
-  filiereId,
-  classeId,
-  annees,
-  filieres,
-  classes,
-  serverParams,
-  applyClientFilters,
-  labels,
-  loadReferences,
-} = useEtudiantFilters();
+const { items: inscriptions, loading } = storeToRefs(inscriptionStore);
+const { items: annees } = storeToRefs(anneeStore);
+const { items: filieres } = storeToRefs(filiereStore);
 
+const anneeId = ref('');
+const filiereId = ref('');
+const classeId = ref('');
 const searchQuery = ref('');
+
 const currentPage = ref(1);
 const itemsPerPage = 10;
 
+/** Les classes de la filière retenue ; toutes si aucune n'est choisie. */
+const classes = computed(() => {
+  if (!filiereId.value) return classeStore.items;
+  return classeStore.items.filter(
+    (classe) => String(classe.filiere_id) === String(filiereId.value)
+  );
+});
+
+const filiereNom = computed(
+  () => filieres.value.find((filiere) => filiere.id === filiereId.value)?.designation ?? ''
+);
+
 onMounted(async () => {
-  await loadReferences();
+  await Promise.all([anneeStore.fetchAll(), filiereStore.fetchAll(), classeStore.fetchAll()]);
+
+  anneeId.value = annees.value.find((annee) => annee.est_active)?.id ?? '';
   load();
+});
+
+/** Ce que le serveur sait filtrer. */
+const serverParams = computed(() => {
+  const query = {};
+  if (anneeId.value) query.annee_academique_id = anneeId.value;
+  if (classeId.value) query.classe_id = classeId.value;
+  return query;
 });
 
 function load() {
   currentPage.value = 1;
-  etudiantStore.fetchAll({ params: serverParams.value });
+  inscriptionStore.fetchAll({ params: serverParams.value });
 }
 
 // Un seul point de rechargement. L'ancienne version câblait trois `@change`
 // distincts, dont l'un oubliait de remettre la pagination à zéro.
 watch(serverParams, load);
 
-watch([searchQuery, filiereId], () => {
+// Changer de filière invalide la classe retenue : elle appartenait à l'autre.
+watch(filiereId, () => {
+  classeId.value = '';
+  currentPage.value = 1;
+});
+
+watch(searchQuery, () => {
   currentPage.value = 1;
 });
 
 const filtered = computed(() => {
   const search = searchQuery.value.toLowerCase().trim();
-  const rows = applyClientFilters(etudiants.value);
 
-  if (!search) return rows;
+  return inscriptions.value.filter((inscription) => {
+    const matchesFiliere = !filiereNom.value || inscription.filiere_nom === filiereNom.value;
 
-  return rows.filter((etudiant) =>
-    [etudiant.nom, etudiant.prenom, etudiant.matricule]
-      .filter(Boolean)
-      .some((field) => String(field).toLowerCase().includes(search))
-  );
+    const matchesSearch =
+      !search ||
+      [inscription.etudiant_nom, inscription.etudiant_prenom, inscription.etudiant_matricule]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(search));
+
+    return matchesFiliere && matchesSearch;
+  });
 });
 
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage);
@@ -81,16 +115,23 @@ const paginated = computed(() =>
   filtered.value.slice(startIndex.value, startIndex.value + itemsPerPage)
 );
 
+const labels = computed(() => ({
+  annee: annees.value.find((annee) => annee.id === anneeId.value)?.code ?? 'Toutes',
+  filiere: filiereNom.value || 'Toutes',
+  classe: classes.value.find((classe) => classe.id === classeId.value)?.code ?? 'Toutes',
+}));
+
 const exportRows = computed(() =>
-  filtered.value.map((etudiant, index) => ({
+  filtered.value.map((inscription, index) => ({
     'N°': index + 1,
-    Matricule: etudiant.matricule,
-    Nom: etudiant.nom,
-    Prénom: etudiant.prenom,
-    'E-mail': etudiant.email ?? '—',
-    Année: etudiant.annee_academique ?? '—',
-    Filière: etudiant.filiere ?? '—',
-    Classe: etudiant.classe ?? '—',
+    Matricule: inscription.etudiant_matricule,
+    Nom: inscription.etudiant_nom,
+    Prénom: inscription.etudiant_prenom,
+    'E-mail': inscription.etudiant_email ?? '—',
+    Année: inscription.annee_code ?? '—',
+    Filière: inscription.filiere_nom ?? '—',
+    Classe: inscription.classe_code ?? '—',
+    Inscription: statutInfo(inscription.inscription_statut).label,
   }))
 );
 
@@ -114,7 +155,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
       <div>
         <h4>Étudiants par classe</h4>
         <p class="text-muted mb-0">
-          Filtrez les étudiants par année académique, filière et classe.
+          Vue des inscriptions : c'est l'inscription qui rattache un étudiant à une classe.
         </p>
       </div>
       <ExportMenu :disabled="filtered.length === 0" @excel="exportToExcel" @pdf="exportToPdf" />
@@ -178,7 +219,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
     </div>
 
     <div class="col-12">
-      <LoadingSpinner v-if="listLoading" />
+      <LoadingSpinner v-if="loading" />
 
       <EmptyState
         v-else-if="filtered.length === 0"
@@ -195,29 +236,30 @@ const { exportToExcel, exportToPdf } = useTableExport({
                 <th>Matricule</th>
                 <th>Nom</th>
                 <th>Prénom</th>
-                <th>E-mail</th>
                 <th>Année</th>
                 <th>Filière</th>
                 <th>Classe</th>
-                <th class="text-center">Statut</th>
+                <th class="text-center">Inscription</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(etudiant, index) in paginated" :key="etudiant.id">
+              <tr
+                v-for="(inscription, index) in paginated"
+                :key="inscription.inscription_id ?? inscription.id"
+              >
                 <td>{{ startIndex + index + 1 }}</td>
-                <td class="fw-bold">{{ etudiant.matricule }}</td>
-                <td>{{ etudiant.nom }}</td>
-                <td>{{ etudiant.prenom }}</td>
-                <td class="small">{{ etudiant.email ?? '—' }}</td>
-                <td>{{ etudiant.annee_academique ?? '—' }}</td>
-                <td>{{ etudiant.filiere ?? '—' }}</td>
-                <td>{{ etudiant.classe ?? '—' }}</td>
+                <td class="fw-bold">{{ inscription.etudiant_matricule }}</td>
+                <td>{{ inscription.etudiant_nom }}</td>
+                <td>{{ inscription.etudiant_prenom }}</td>
+                <td>{{ inscription.annee_code ?? '—' }}</td>
+                <td>{{ inscription.filiere_nom ?? '—' }}</td>
+                <td>{{ inscription.classe_code ?? '—' }}</td>
                 <td class="text-center">
                   <span
                     class="badge rounded-pill px-3 py-2"
-                    :class="`bg-${statutInfo(etudiant.statut).variant}-subtle text-${statutInfo(etudiant.statut).variant}`"
+                    :class="`bg-${statutInfo(inscription.inscription_statut).variant}-subtle text-${statutInfo(inscription.inscription_statut).variant}`"
                   >
-                    {{ statutInfo(etudiant.statut).label }}
+                    {{ statutInfo(inscription.inscription_statut).label }}
                   </span>
                 </td>
               </tr>

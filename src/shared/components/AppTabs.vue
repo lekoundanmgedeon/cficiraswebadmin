@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, markRaw, ref, toRaw, watch } from 'vue';
 
 /**
  * Onglets à montage paresseux.
@@ -20,6 +20,32 @@ import { computed, ref, watch } from 'vue';
  *   { id: 'liste', label: 'Liste', component: ListeTab },
  *   { id: 'stats', label: 'Statistiques', component: StatsTab },
  * ]" />
+ *
+ * ## Deux pièges de `KeepAlive`, tous deux corrigés ici
+ *
+ * **1. Un composant ne doit jamais transiter par un proxy réactif.** Dès que la
+ * liste d'onglets est construite dans un `computed` — ce que font toutes les vues
+ * de détail — Vue enveloppe les définitions de composants qu'elle contient :
+ *
+ * > *[Vue warn] Vue received a Component that was made a reactive object. […]
+ * > should be avoided by marking the component with `markRaw`.*
+ *
+ * Ce n'est pas qu'un avertissement de performance : le composant proxifié casse
+ * la mécanique de cache de `KeepAlive`. D'où le `toRaw` + `markRaw` ci-dessous.
+ * Les appelants n'ont ainsi rien à savoir de tout cela.
+ *
+ * **2. Pas de `v-if` sur le `<component>` *à l'intérieur* du `KeepAlive`.**
+ * Quand la condition est fausse, `KeepAlive` reçoit un vnode *Comment* en enfant.
+ * Au changement d'onglet, son `activate` finit par appeler
+ * `parentComponent.ctx.deactivate(vnode)` sur un parent qui n'est pas lui :
+ *
+ * ```
+ * TypeError: parentComponent.ctx.deactivate is not a function
+ *     at unmount → patch → sharedContext.activate
+ * ```
+ *
+ * L'onglet cliqué ne s'affichait alors pas. La condition porte donc sur le
+ * `KeepAlive` lui-même, qui ne reçoit plus qu'un vrai composant.
  */
 
 const props = defineProps({
@@ -44,6 +70,18 @@ const activeId = ref(props.defaultTab ?? props.tabs[0]?.id);
 const activeTab = computed(
   () => props.tabs.find((tab) => tab.id === activeId.value) ?? props.tabs[0]
 );
+
+/**
+ * La définition du composant actif, **hors de toute réactivité**.
+ *
+ * `toRaw` retire l'éventuel proxy posé par un `computed` appelant, `markRaw`
+ * empêche Vue d'en reposer un. Sans cela, `KeepAlive` ne sait plus reconnaître
+ * ses propres composants (voir l'en-tête du fichier).
+ */
+const activeComponent = computed(() => {
+  const component = activeTab.value?.component;
+  return component ? markRaw(toRaw(component)) : null;
+});
 
 // Si la liste d'onglets change et que l'onglet courant disparaît, on se rabat
 // sur le premier plutôt que de rendre un panneau vide.
@@ -82,8 +120,11 @@ function select(id) {
     </ul>
 
     <div class="tab-content p-4">
-      <KeepAlive>
-        <component :is="activeTab.component" v-if="activeTab" v-bind="activeTab.props" />
+      <!-- Le `v-if` porte sur le `KeepAlive`, jamais sur le `<component>` qu'il
+           enveloppe : sinon il reçoit un vnode Comment et son `activate` plante
+           (voir l'en-tête). La `key` lui permet de distinguer ses caches. -->
+      <KeepAlive v-if="activeComponent">
+        <component :is="activeComponent" :key="activeTab.id" v-bind="activeTab.props" />
       </KeepAlive>
     </div>
   </div>
