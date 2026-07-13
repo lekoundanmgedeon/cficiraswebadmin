@@ -3,8 +3,8 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (9 commits, dernier : migration du module `scolarite`)
-- Écart cumulé vs `main` : **291 fichiers, +18 533 / −47 005 lignes**
+- Branche : `refactor-main` (10 commits, dernier : migration du module `examens`)
+- Écart cumulé vs `main` : **347 fichiers, +21 597 / −51 359 lignes**
 - État de santé : `npm run lint` **0 problème** sur le code migré · `npm test` **64 tests** · `npm run build` **OK**
 - ⚠️ **`matieres` a nécessité des corrections dans `cfibackend`** (CRUD des modules entièrement
   cassé). Voir §1.6 — le dépôt backend porte un commit dédié.
@@ -320,7 +320,85 @@ La **fiche étudiant a été supprimée** : elle affichait la même chose que le
 moins riche. `/etudiants/:id` **redirige** vers `/dossiers-scolaires/:id`, ce qui ne casse aucun
 lien.
 
-### 1.9 Le bug `AppTabs` — les onglets n'affichaient plus rien
+### 1.9 Le module `examens` — terminé (et son backend réparé)
+
+```
+src/modules/examens/
+├── routes.js · constants.js
+├── components/   ExamenHeader.vue
+├── session/      api.js · store.js · composables/ · components/ · views/PlanificationView
+├── epreuve/      api.js · store.js · composables/ · components/ · views/PlanExamenView
+├── salle/        api.js · store.js · composables/ · components/ · views/SallesView
+├── bulletin/     api.js · store.js · views/RapportsView
+└── calendrier/   components/ · views/CalendrierView
+```
+
+4 201 lignes → 2 965. **Le design a été préservé** : les templates, la mise en page et les
+composants visuels sont ceux de l'original. Ce qui change, c'est ce qu'il y a dessous.
+
+| Écran                   | Avant                                                                                                                                 | Après                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Planification           | **réel** (seul du module)                                                                                                             | + édition d'une session, + changement d'état                   |
+| Épreuves (`PlanExamen`) | **593 lignes, tout simulé** : session, filières, classes, modules codés en dur ; les épreuves composées n'étaient envoyées nulle part | `GET/POST/PUT/DELETE /evaluation`                              |
+| Calendrier              | 7 fichiers simulés ; l'onglet « Rattrapage » rendait **rien** (`CalendrierRappel.vue` était vide)                                     | épreuves réelles, triées sur `date_prevue`                     |
+| Salles                  | « 5 salles de 20 places » **inventées** ; la table `salles` existait sans qu'aucune route ne l'expose                                 | vraies salles, chacune avec **sa** capacité                    |
+| Rapports                | affichait des **formateurs** codés en dur dans un « rapport d'examens », après un `setTimeout(3000)`                                  | palmarès d'une classe (`GET /resultats/classes/:id/bulletins`) |
+
+> #### ⚠️ Le CRUD des épreuves n'avait jamais fonctionné
+>
+> `evaluation.controller.js` appelait **cinq méthodes absentes de son modèle** :
+>
+> | Le contrôleur appelait         | Le modèle expose               | Conséquence                                                                            |
+> | ------------------------------ | ------------------------------ | -------------------------------------------------------------------------------------- |
+> | `createEvaluation`             | `create`                       | **`POST` échouait toujours**                                                           |
+> | `getEvaluationById`            | `findById`                     | **`GET /:id` échouait toujours**                                                       |
+> | `updateEvaluation`             | `update`                       | **`PUT` échouait toujours**                                                            |
+> | `deleteEvaluation`             | `delete`                       | **`DELETE` échouait toujours**                                                         |
+> | `findAll(anneeId, semestreId)` | `findAll(sessionId, moduleId)` | les filtres **mentaient** : un `?anneeId=…` était lu comme un identifiant de _session_ |
+>
+> Quatre routes sur cinq levaient un `TypeError`, masqué en 500 générique. Seul `GET /evaluation`
+> répondait — en filtrant sur autre chose que ce qu'il annonçait.
+>
+> #### Deux autres bugs backend
+>
+> - **La route de changement d'état des sessions était doublée.** Déclarée
+>   `router.patch('/sessions-evaluations/:id/etat')` dans un routeur _déjà_ monté sur
+>   `/sessions-evaluations`, elle vivait en réalité à
+>   `/evaluations/sessions-evaluations/sessions-evaluations/:id/etat`. Le frontend appelait la
+>   version simple et recevait un **404** : le changement d'état n'a jamais pu aboutir.
+> - **La table `salles` n'était exposée par aucune route.** Seul `pedagogie/schedule.controller.js`
+>   la lisait, et `/pedagogie` est désactivé. D'où l'écran qui inventait ses salles. CRUD ajouté
+>   (`/api/academique/salles`), **+8 tests**.
+>
+> Les 11 échecs de la suite backend préexistaient et sont inchangés (73 passent, +8).
+
+#### Les énumérations viennent des contraintes SQL
+
+| Champ                     | Valeurs                              |
+| ------------------------- | ------------------------------------ |
+| `evaluations.type_eval`   | `CC`, `TP`, `EXAMEN`, `PROJET`       |
+| `evaluations.ponderation` | `> 0` et `<= 100`                    |
+| `sessions.etat`           | `INACTIVE`, `ACTIVE`, `ARCHIVE`      |
+| `salles.type`             | `Amphi`, `Cours`, `TD`, `TP`, `Labo` |
+
+L'ancien `PlanExamen.vue` proposait `CC`, **`NORMAL`** et **`RATTRAPAGE`** comme types d'épreuve :
+les deux derniers sont des types de _session_, et les enregistrer aurait violé la contrainte. Le
+formulaire de session offrait de son côté un état **« Brouillon »**, qui n'a jamais existé.
+
+#### Autres défauts corrigés
+
+- Les deux `HeaderView.vue` (calendrier et salles) étaient **deux copies du même fichier**, et
+  toutes deux appelaient `fetchCalendarEvents()` — **jamais définie, jamais importée**. Cliquer
+  « Actualiser » levait un `ReferenceError` sur les deux écrans.
+- `ExamenList` : `@edit` visait `#editExamModal`, **une modale inexistante**, et se contentait d'un
+  `fetchSessionById()` sans rien afficher. `exam.etat.toLowerCase()` était appelé sans garde : un
+  état nul faisait planter le rendu de la ligne.
+- `AddSession` fermait sa modale **même en cas d'échec** (l'ancien store avalait ses erreurs, donc
+  l'`await` réussissait toujours).
+- `Examens.vue` empilait la planification et le calendrier dans une page dotée d'un « + Ajouter »
+  visant `#exampleModal` — **inexistante**. La route redirige désormais vers la planification.
+
+### 1.10 Le bug `AppTabs` — les onglets n'affichaient plus rien
 
 Signalé en cours de chantier, et il touchait **tous les modules migrés** : cliquer sur un onglet
 ne rendait pas son contenu, et la console crachait
@@ -356,7 +434,7 @@ de tout avertissement Vue**. Le troisième et le sixième échouaient avant le c
 étaient cassés**. Aucun des trois ne monte un composant. Un test de montage sur un composant
 partagé aussi central aurait dû exister dès le départ.
 
-### 1.10 L'optimisation d'API principale
+### 1.11 L'optimisation d'API principale
 
 Les conteneurs d'onglets Bootstrap (`data-bs-toggle="tab"`) **montent tous les panneaux d'un
 coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait donc son
@@ -366,7 +444,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 `AppTabs` ne monte que l'onglet actif, et `KeepAlive` évite de recharger ceux déjà visités.
 **C'est le gain le plus important à propager sur les 23 conteneurs restants.**
 
-### 1.11 Bugs corrigés (tous étaient en production)
+### 1.12 Bugs corrigés (tous étaient en production)
 
 **Authentification — la connexion ne pouvait pas aboutir**
 
@@ -394,7 +472,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 **Étudiants** (voir §1.4 pour le détail) 18. Le store n'exposait **ni `items` ni `fetchAll`** : aucun écran ne _pouvait_ charger de liste. D'où les tableaux codés en dur dans 4 onglets sur 6, plus la vue racine. 19. `fetchEtudiantsByClasseFiliereAnnee` et `filteredEtudiants` étaient consommés par l'onglet « Classes » mais **n'existaient pas** dans le store → `TypeError` au premier filtre. 20. `XLSX.utils.json_to_sheet` appelé **sans importer `XLSX`** → l'export Excel plantait au clic. 21. La fiche détail déclarait 4 onglets pour 2 panneaux ; deux d'entre eux pointaient sur un `#sales2` **inexistant** et trois `<li>` partageaient le même `id`. 22. La fiche détail affectait `etudiant.value = response` sans déballer `{ success, data }` → tous ses champs étaient `undefined`. 23. Ses `v-if` portaient sur les **mauvais champs** : le lieu de naissance était conditionné à `lieunaissance` (inexistant), le sexe à `genre`, l'adresse au _téléphone_. 24. `ajouterAuGroupe(e, g.id)` était appelé avec deux arguments mais n'en déclarait qu'un → « Assigner » affectait **le premier étudiant de la liste**, pas celui sur lequel on cliquait. 25. « Générer un rapport » : un `setTimeout(1800)` puis « Rapport généré et téléchargé avec succès » — **aucun appel API, aucun fichier**. 26. Le panneau d'onglet « Import » n'avait **aucun lien de navigation** : monté à chaque chargement, et inatteignable. Son composant était de toute façon vide, et le `DropData.vue` de secours n'avait aucun gestionnaire sur son bouton « Upload ». 27. La photo de la fiche détail était servie depuis `http://localhost:3500` **codé en dur**.
 
-### 1.12 Code mort et duplication supprimés
+### 1.13 Code mort et duplication supprimés
 
 - `routes/main.js` (copie **octet pour octet** de `routes/index.js`), `style1.css` (**520 Ko** jamais référencé), 5 fichiers `sample*.vue`, `result.js` → **25 493 lignes**.
 - Le **même tableau de niveaux existait en 3 exemplaires** (filières, classes, semestres) et celui des filières en 2 → **776 lignes**.
@@ -420,8 +498,8 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 ### 2.2 Dette technique transverse
 
-- **20 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le principal gisement d'optimisation d'API restant. Liste : `grep -rl 'data-bs-toggle="tab"' src/views --include=*.vue`
-- **17 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
+- **17 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le principal gisement d'optimisation d'API restant. Liste : `grep -rl 'data-bs-toggle="tab"' src/views --include=*.vue`
+- **15 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
 - **12 fichiers d'API legacy** dans `src/api/` → à répartir dans les modules.
 - **31 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`, `body {}`, `.card`) — dont 34 avec `body {}` **dans un style scoped, donc sans aucun effet**.
 
@@ -548,7 +626,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. Appliquer la recette au module suivant (`examens`).
+3. Appliquer la recette au module suivant (`concours`).
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 
