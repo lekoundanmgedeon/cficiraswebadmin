@@ -11,6 +11,7 @@ import { registerAuthGuard } from './guards';
 import structureAcademiqueRoutes from '@/modules/structure-academique/routes';
 import etudiantsRoutes from '@/modules/etudiants/routes';
 import inscriptionsRoutes from '@/modules/inscriptions/routes';
+import matieresRoutes from '@/modules/matieres/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
@@ -28,6 +29,7 @@ const protectedRoutes = [
   ...structureAcademiqueRoutes,
   ...etudiantsRoutes,
   ...inscriptionsRoutes,
+  ...matieresRoutes,
   ...scolariteRoutes,
   ...examensRoutes,
   ...concoursRoutes,

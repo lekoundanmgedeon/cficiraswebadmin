@@ -3,9 +3,11 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (7 commits, dernier : migration du module `inscriptions`)
-- Écart cumulé vs `main` : **249 fichiers, +15 763 / −43 734 lignes**
+- Branche : `refactor-main` (8 commits, dernier : migration du module `matieres`)
+- Écart cumulé vs `main` : **272 fichiers, +17 149 / −44 799 lignes**
 - État de santé : `npm run lint` **0 problème** sur le code migré · `npm test` **57 tests** · `npm run build` **OK**
+- ⚠️ **`matieres` a nécessité des corrections dans `cfibackend`** (CRUD des modules entièrement
+  cassé). Voir §1.6 — le dépôt backend porte un commit dédié.
 - **Endpoints vérifiés contre le backend local** (`localhost:3500`) : les 14 routes appelées par les
   modules migrés répondent. Voir §2.5 — c'est ce contrôle qui manquait et qui avait laissé passer
   un module entier bâti sur des routes inexistantes.
@@ -181,7 +183,70 @@ l'alias `ANNULEE → REJETEE`, un dossier rejeté s'affiche « Inconnu » et son
 jamais. Les statuts acceptés **en écriture** sont `EN_ATTENTE`, `VALIDEE`, `REJETEE`, `ACTIVE`,
 `ABANDON`, `DIPLOME`, `EXCLU` (`inscription.controller.js` → `statutsValides`).
 
-### 1.6 L'optimisation d'API principale
+### 1.6 Le module `matieres` — terminé (et son backend réparé)
+
+```
+src/modules/matieres/
+├── routes.js · api.js · store.js · constants.js
+├── composables/  useModuleForm.js
+├── components/   ModuleTabs · ModuleFormModal · AssignationModal
+│   └── tabs/     ListeModules · Configuration
+└── views/        ModulesView.vue
+```
+
+908 lignes → 1 351 (le module fait beaucoup plus qu'avant : il fonctionne).
+
+**L'écran n'existait pas, en pratique.** `views/matieres/` n'était référencé par **aucune route ni
+aucun lien de menu** : strictement inaccessible. Et s'il l'avait été, il aurait **planté au
+montage** — `ModuleList.vue` lisait `moduleStore.modules` et appelait `fetchModules()`, **ni l'un
+ni l'autre n'existant** dans le store : `filteredModules` valait `undefined`, puis `.slice()` levait
+un `TypeError`. Il est désormais routé (`/modules`) et présent dans la barre latérale.
+
+Autres défauts : `AModuleList.vue` était une copie quasi identique de `ModuleList.vue` (148 lignes
+contre 155) ; les 4 boutons d'export étaient des `console.log` + `// TODO` ; le bouton « + Ajouter »
+ouvrait une modale `#exampleModal` **jamais montée** ; `DetailItem.vue` importait `getModuleById`,
+**fonction absente** de `moduleApi.js` ; la vue déclarait **deux blocs `<style scoped>`**, dont un
+redéfinissant `body` (sans effet en _scoped_).
+
+> #### ⚠️ Le CRUD backend des modules était entièrement cassé
+>
+> Découvert en lisant `cfibackend/src/routes/academique/module.routes.js`, puis confirmé par curl :
+>
+> | Route              | État trouvé                                                                                                                                                                              |
+> | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | `GET /modules`     | **404** — la route n'existait pas. Six modules en base, aucun moyen de les lire.                                                                                                         |
+> | `POST /modules`    | **cassé** — SQL 42702 (`RETURNING id` ambigu dans `creer_module`). De plus, son `INSERT … SELECT … FROM enseignants` **n'insérait rien** quand le responsable était absent — en silence. |
+> | `PUT /modules/:id` | **cassé** — écrivait `SET credits` et `SET responsable_code`, **colonnes inexistantes** (la table a `credit` et `responsable_id`). Et une MàJ partielle levait un `TypeError`.           |
+> | `llm_summary`      | lisait `data.credits` → « crédité de **0** crédits » pour tous les modules.                                                                                                              |
+>
+> Réparé dans `cfibackend` (commit dédié) : ajout de `GET /modules`, `createModule` réécrit en
+> `INSERT` clair — abandonnant la fonction Postgres cassée, et rendant le responsable **réellement**
+> facultatif —, `updateModule` sur liste blanche de colonnes. **+3 tests**. Les 11 échecs de la suite
+> backend préexistaient et sont inchangés.
+
+#### Deux pièges d'API à connaître
+
+**1. `POST /modules/assigner` répond `200 / success: true` même quand il échoue.** Le vrai verdict
+est dans le corps, et il compte **trois** valeurs :
+
+| `data.statut`   | Sens                                                   |
+| --------------- | ------------------------------------------------------ |
+| `SUCCES`        | l'affectation est créée                                |
+| `AVERTISSEMENT` | elle existait déjà — **rien n'est inséré**             |
+| `ERREUR`        | module, classe, semestre **ou enseignant** introuvable |
+
+L'ancien store notifiait « Module assigné avec succès » dans les trois cas.
+`readAssignationResult()` (`constants.js`) lit le corps.
+
+**2. L'enseignant est obligatoire pour rattacher un module** — rien ne le laisse deviner : le
+paramètre est accepté à `null` et la requête répond 200. Mais la fonction Postgres refuse
+l'affectation sans matricule, et son message d'erreur, construit par concaténation SQL avec ce
+paramètre nul, **remonte vide** (`message: null`). Le formulaire l'exige donc côté client.
+
+Il est saisi au **matricule** plutôt que choisi dans une liste, car aucun endpoint ne permet de
+lister les enseignants : voir §2.5, point 6.
+
+### 1.7 L'optimisation d'API principale
 
 Les conteneurs d'onglets Bootstrap (`data-bs-toggle="tab"`) **montent tous les panneaux d'un
 coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait donc son
@@ -191,7 +256,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 `AppTabs` ne monte que l'onglet actif, et `KeepAlive` évite de recharger ceux déjà visités.
 **C'est le gain le plus important à propager sur les 23 conteneurs restants.**
 
-### 1.7 Bugs corrigés (tous étaient en production)
+### 1.8 Bugs corrigés (tous étaient en production)
 
 **Authentification — la connexion ne pouvait pas aboutir**
 
@@ -219,7 +284,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 **Étudiants** (voir §1.4 pour le détail) 18. Le store n'exposait **ni `items` ni `fetchAll`** : aucun écran ne _pouvait_ charger de liste. D'où les tableaux codés en dur dans 4 onglets sur 6, plus la vue racine. 19. `fetchEtudiantsByClasseFiliereAnnee` et `filteredEtudiants` étaient consommés par l'onglet « Classes » mais **n'existaient pas** dans le store → `TypeError` au premier filtre. 20. `XLSX.utils.json_to_sheet` appelé **sans importer `XLSX`** → l'export Excel plantait au clic. 21. La fiche détail déclarait 4 onglets pour 2 panneaux ; deux d'entre eux pointaient sur un `#sales2` **inexistant** et trois `<li>` partageaient le même `id`. 22. La fiche détail affectait `etudiant.value = response` sans déballer `{ success, data }` → tous ses champs étaient `undefined`. 23. Ses `v-if` portaient sur les **mauvais champs** : le lieu de naissance était conditionné à `lieunaissance` (inexistant), le sexe à `genre`, l'adresse au _téléphone_. 24. `ajouterAuGroupe(e, g.id)` était appelé avec deux arguments mais n'en déclarait qu'un → « Assigner » affectait **le premier étudiant de la liste**, pas celui sur lequel on cliquait. 25. « Générer un rapport » : un `setTimeout(1800)` puis « Rapport généré et téléchargé avec succès » — **aucun appel API, aucun fichier**. 26. Le panneau d'onglet « Import » n'avait **aucun lien de navigation** : monté à chaque chargement, et inatteignable. Son composant était de toute façon vide, et le `DropData.vue` de secours n'avait aucun gestionnaire sur son bouton « Upload ». 27. La photo de la fiche détail était servie depuis `http://localhost:3500` **codé en dur**.
 
-### 1.8 Code mort et duplication supprimés
+### 1.9 Code mort et duplication supprimés
 
 - `routes/main.js` (copie **octet pour octet** de `routes/index.js`), `style1.css` (**520 Ko** jamais référencé), 5 fichiers `sample*.vue`, `result.js` → **25 493 lignes**.
 - Le **même tableau de niveaux existait en 3 exemplaires** (filières, classes, semestres) et celui des filières en 2 → **776 lignes**.
@@ -246,8 +311,8 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 ### 2.2 Dette technique transverse
 
 - **20 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le principal gisement d'optimisation d'API restant. Liste : `grep -rl 'data-bs-toggle="tab"' src/views --include=*.vue`
-- **18 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
-- **13 fichiers d'API legacy** dans `src/api/` → à répartir dans les modules.
+- **17 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
+- **12 fichiers d'API legacy** dans `src/api/` → à répartir dans les modules.
 - **31 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`, `body {}`, `.card`) — dont 34 avec `body {}` **dans un style scoped, donc sans aucun effet**.
 
 ### 2.3 Bugs connus, non corrigés (hors périmètre migré)
@@ -306,16 +371,40 @@ lèveraient les trois d'un coup : `GET /etudiants`, `GET /etudiants/:id`, `PUT`,
 Le frontend absorbe l'écart dans `inscriptions/constants.js` (alias `ANNULEE → REJETEE`, testé),
 mais c'est un piège : sans l'alias, un dossier rejeté s'affiche « Inconnu ».
 
-**5. Deux endpoints pour l'import de réinscriptions** — `POST /inscriptions/import-reinscription`
+**5. Trois domaines backend sont désactivés.** Dans `cfibackend/src/routes/index.routes.js`, ces
+lignes sont **commentées** :
+
+```js
+// router.use('/pedagogie', pedagogieRoutes);
+// router.use('/statistiques', StatistiqueRoutes);
+// router.use('/finance', financeRoutes);
+```
+
+Conséquence directe : **aucun endpoint n'expose les enseignants**, alors qu'ils sont obligatoires
+pour rattacher un module à une classe (§1.6). Et trois modules à migrer — `pedagogies`, `finances`,
+`stats` — n'ont aujourd'hui **aucun backend joignable**. À rétablir (ou à confirmer comme
+volontaire) avant de les entreprendre.
+
+**6. La fonction Postgres `assigner_module_a_classe` a deux défauts** (elle n'est dans aucun script
+de migration versionné, seulement en base) : l'enseignant y est **obligatoire** alors que rien ne
+l'annonce, et son message d'erreur est construit par concaténation SQL avec le paramètre — qui,
+étant `NULL`, rend **tout le message `NULL`**. L'échec remonte donc sans explication. Le frontend
+compense, mais la fonction gagnerait à être corrigée.
+
+**7. Deux endpoints pour l'import de réinscriptions** — `POST /inscriptions/import-reinscription`
 (champ `fichier`) et `POST /academique/imports/reinscriptions` (champ `file`). Le frontend retient
 le premier. Les conventions de nom de champ divergent aussi entre les imports (`fichier` pour les
 inscriptions, `file` pour les étudiants) : à harmoniser.
 
-### 2.6 Vérifier avant de coder — la leçon du module `etudiants`
+### 2.6 Vérifier avant de coder — la leçon des modules `etudiants` et `matieres`
 
 Le module `etudiants` a d'abord été livré **entièrement cassé** : bâti sur `GET /etudiants`, `PUT`
 et `DELETE`, qui **n'existent pas** (404). Lint, tests et build étaient pourtant au vert — aucun
 d'eux ne parle au backend.
+
+`matieres` a confirmé la leçon : `GET /modules` manquait, `POST` et `PUT` étaient cassés, et
+`POST /assigner` **répond 200 en cas d'échec**. Rien de tout cela n'est visible depuis le frontend.
+Un code HTTP 200 ne veut pas dire que l'opération a réussi : **lire le corps**.
 
 Le backend est dans `~/cfiprojects/cfibackend`. **Lire ses routes est plus fiable que n'importe
 quelle documentation** (celle de `09-api-et-integration-backend.md` a été reconstituée _depuis le
@@ -343,7 +432,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. Appliquer la recette au module suivant (`matieres`).
+3. Appliquer la recette au module suivant (`examens`).
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 

@@ -264,6 +264,20 @@
         </router-link>
       </li>
 
+      <!-- Modules d'enseignement.
+           L'écran existait sous `views/matieres/` mais n'était référencé par
+           aucune route ni aucun menu : il était inaccessible. -->
+      <li class="nav-item">
+        <router-link
+          class="nav-link"
+          to="/modules"
+          :class="{ 'menu-active': isMenuActive('/modules') }"
+        >
+          <i class="mdi mdi-book-open-page-variant menu-icon"></i>
+          <span class="menu-title">Modules</span>
+        </router-link>
+      </li>
+
       <!-- Emploi du temps -->
       <li class="nav-item">
         <router-link
