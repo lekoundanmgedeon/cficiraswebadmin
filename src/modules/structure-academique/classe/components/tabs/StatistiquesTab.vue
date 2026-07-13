@@ -123,7 +123,6 @@ const tauxOccupation = computed(() => {
   const capacite = parseInt(stats.value.capacite_totale_etablissement, 10);
   return capacite > 0 ? ((inscrits / capacite) * 100).toFixed(2) : 0;
 });
-
 </script>
 
 <style scoped>

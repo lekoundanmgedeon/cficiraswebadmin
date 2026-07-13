@@ -1,11 +1,11 @@
 /**
  * Routes de scolarité restées en attente de migration.
  *
- * Ce fichier s'appelait `etudiants.routes.js`, mais les deux routes du module
- * Étudiants (`/etudiants`, `/etudiants/:id`) vivent désormais dans
- * `@/modules/etudiants/routes`. Ne subsistent ici que des écrans relevant de
- * modules encore à migrer — parcours, absence, inscriptions —, chacun partira
- * vers le sien.
+ * Ce fichier s'appelait `etudiants.routes.js`. Les routes des modules Étudiants
+ * (`/etudiants`, `/etudiants/:id`) et Inscriptions (`/inscriptions`) vivent
+ * désormais dans `@/modules/etudiants/routes` et `@/modules/inscriptions/routes`.
+ * Ne subsistent ici que des écrans relevant de modules encore à migrer —
+ * parcours, absence —, chacun partira vers le sien.
  */
 export default [
   {
@@ -22,10 +22,5 @@ export default [
     path: '/absences',
     name: 'Absences',
     component: () => import('@/views/absence/AbscenceView.vue'),
-  },
-  {
-    path: '/inscriptions',
-    name: 'Inscriptions',
-    component: () => import('@/views/inscriptions/Inscription.vue'),
   },
 ];

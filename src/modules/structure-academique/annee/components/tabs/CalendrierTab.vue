@@ -15,9 +15,7 @@
     <div class="col-12 text-center py-5">
       <img src="/img/empty-box.svg" alt="" style="width: 120px" class="mb-3 opacity-50" />
       <h5 class="text-muted">Calendrier académique</h5>
-      <p class="text-muted small mb-0">
-        Cette fonctionnalité n'est pas encore disponible.
-      </p>
+      <p class="text-muted small mb-0">Cette fonctionnalité n'est pas encore disponible.</p>
     </div>
   </div>
 </template>

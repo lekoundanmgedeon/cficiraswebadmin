@@ -1,26 +1,29 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useEtudiantStore } from '../store';
 import { useEtudiantForm } from '../composables/useEtudiantForm';
-import { useEtudiantFilters } from '../composables/useEtudiantFilters';
 import { ETUDIANT_MODAL_ID, LIMITS, SEXES } from '../constants';
 
 /**
- * Formulaire de création / édition d'un étudiant.
+ * Création d'un étudiant.
  *
  * Il n'en existait aucun : `etudiantStore.addEtudiant()` était défini mais
  * **aucune vue ne l'appelait**, et le bouton « Modifier » de la liste pointait
- * sur un `console.log`. On ne pouvait donc ni créer ni modifier un étudiant
- * depuis l'application.
+ * sur un `console.log`.
  *
- * Comme partout ailleurs dans les modules migrés, la modale ne se ferme que si
- * l'enregistrement a réellement abouti (`run()` renvoie `undefined` en cas
- * d'échec).
+ * Le formulaire ne fait que **créer** : le backend n'expose pas
+ * `PUT /etudiants/:id`. Il ne rattache pas non plus l'étudiant à une classe —
+ * `POST /etudiants` crée un « étudiant seul », et c'est une *inscription* qui
+ * l'affecte à une classe pour une année. Comme l'annuaire est une projection des
+ * inscriptions, un étudiant créé ici n'apparaîtra dans la liste qu'une fois
+ * inscrit : le message de succès le dit, et l'encart ci-dessous le rappelle.
+ *
+ * La modale ne se ferme que si l'enregistrement a réellement abouti (`run()`
+ * renvoie `undefined` en cas d'échec).
  */
 
 const etudiantStore = useEtudiantStore();
-const { selectedEtudiant, close } = useEtudiantForm();
-const { filieres, classes, filiereId, loadReferences } = useEtudiantFilters();
+const { close } = useEtudiantForm();
 
 const EMPTY_FORM = {
   matricule: '',
@@ -32,61 +35,12 @@ const EMPTY_FORM = {
   email: '',
   telephone: '',
   adresse: '',
-  classe_id: '',
 };
 
 const form = ref({ ...EMPTY_FORM });
 const errorMessage = ref('');
 
-const isEdit = computed(() => Boolean(selectedEtudiant.value?.id));
 const loading = computed(() => etudiantStore.loading);
-
-loadReferences();
-
-watch(
-  selectedEtudiant,
-  (etudiant) => {
-    errorMessage.value = '';
-
-    if (!etudiant) {
-      form.value = { ...EMPTY_FORM };
-      filiereId.value = '';
-      return;
-    }
-
-    form.value = {
-      matricule: etudiant.matricule ?? '',
-      nom: etudiant.nom ?? '',
-      prenom: etudiant.prenom ?? '',
-      sexe: etudiant.sexe ?? 'M',
-      date_naissance: etudiant.date_naissance?.slice(0, 10) ?? '',
-      lieu_naissance: etudiant.lieu_naissance ?? '',
-      email: etudiant.email ?? '',
-      telephone: etudiant.telephone ?? '',
-      adresse: etudiant.adresse ?? '',
-      classe_id: etudiant.classe_id ?? '',
-    };
-
-    // Le sélecteur de classe est filtré par filière : sans cela, la classe de
-    // l'étudiant ne figurerait pas dans la liste et le champ paraîtrait vide.
-    filiereId.value = etudiant.filiere_id ?? '';
-  },
-  { immediate: true }
-);
-
-// Changer de filière refiltre la liste des classes proposées. Si la classe
-// retenue n'y figure plus, le `<select>` s'affiche vide alors que `form.classe_id`
-// garde l'identifiant d'une classe d'une autre filière — qui serait enregistré
-// tel quel. On ne la vide que dans ce cas précis : à l'ouverture d'une fiche
-// existante, la classe de l'étudiant appartient à sa propre filière et survit.
-watch(classes, (available) => {
-  if (!form.value.classe_id || available.length === 0) return;
-
-  const stillListed = available.some(
-    (classe) => String(classe.id) === String(form.value.classe_id)
-  );
-  if (!stillListed) form.value.classe_id = '';
-});
 
 /** @returns {boolean} */
 function validate() {
@@ -116,11 +70,12 @@ function validate() {
 async function submit() {
   if (!validate()) return;
 
-  const result = isEdit.value
-    ? await etudiantStore.update(selectedEtudiant.value.id, form.value)
-    : await etudiantStore.create(form.value);
+  const result = await etudiantStore.create(form.value);
 
-  if (result !== undefined) close();
+  if (result !== undefined) {
+    form.value = { ...EMPTY_FORM };
+    close();
+  }
 }
 </script>
 
@@ -129,7 +84,7 @@ async function submit() {
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">{{ isEdit ? 'Modifier' : 'Ajouter' }} un étudiant</h5>
+          <h5 class="modal-title">Ajouter un étudiant</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
@@ -140,6 +95,14 @@ async function submit() {
 
         <form @submit.prevent="submit">
           <div class="modal-body">
+            <div class="alert alert-info d-flex align-items-start" role="alert">
+              <i class="mdi mdi-information-outline me-2 mt-1"></i>
+              <div class="small">
+                Cet écran crée l'étudiant, pas son inscription. Il apparaîtra dans le répertoire une
+                fois <strong>inscrit à une classe</strong>, depuis le module Inscriptions.
+              </div>
+            </div>
+
             <div class="row">
               <div class="col-md-4 mb-3">
                 <label for="etudiant-matricule" class="form-label">
@@ -150,7 +113,7 @@ async function submit() {
                   v-model="form.matricule"
                   type="text"
                   class="form-control"
-                  placeholder="Ex : ETU001"
+                  placeholder="Ex : ETU-2025-0001"
                   :maxlength="LIMITS.MATRICULE"
                   required
                 />
@@ -240,7 +203,7 @@ async function submit() {
               </div>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-0">
               <label for="etudiant-adresse" class="form-label">Adresse</label>
               <textarea
                 id="etudiant-adresse"
@@ -248,29 +211,6 @@ async function submit() {
                 class="form-control"
                 rows="2"
               ></textarea>
-            </div>
-
-            <div class="row p-3 bg-light rounded mx-0">
-              <div class="col-md-6 mb-3 mb-md-0">
-                <label for="etudiant-filiere" class="form-label">Filière</label>
-                <select id="etudiant-filiere" v-model="filiereId" class="form-select">
-                  <option value="">Toutes les filières</option>
-                  <option v-for="filiere in filieres" :key="filiere.id" :value="filiere.id">
-                    {{ filiere.designation }}
-                  </option>
-                </select>
-                <div class="form-text">Sert à restreindre la liste des classes.</div>
-              </div>
-
-              <div class="col-md-6">
-                <label for="etudiant-classe" class="form-label">Classe</label>
-                <select id="etudiant-classe" v-model="form.classe_id" class="form-select">
-                  <option value="">Non affecté</option>
-                  <option v-for="classe in classes" :key="classe.id" :value="classe.id">
-                    {{ classe.code }}
-                  </option>
-                </select>
-              </div>
             </div>
 
             <div v-if="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">

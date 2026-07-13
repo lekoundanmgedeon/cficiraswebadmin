@@ -1,34 +1,37 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { statutInfo } from '@/modules/inscriptions/constants';
 import { useEtudiantStore } from '../../store';
-import { useEtudiantForm } from '../../composables/useEtudiantForm';
 import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
-import { SEXES, sexeLabel } from '../../constants';
 
 /**
  * Répertoire des étudiants.
  *
- * L'ancienne version affichait **vingt étudiants codés en dur** (« Diop
- * Moussa », « Fall Aminata »…) : aucun appel API, et un `@edit` câblé sur un
- * `console.log`. La suppression, elle, retirait la ligne du tableau local sans
- * jamais rien envoyer au serveur — elle réapparaissait au rechargement.
+ * L'ancienne version affichait **vingt étudiants codés en dur** (« Diop Moussa »,
+ * « Fall Aminata »…), avec un `@edit` câblé sur un `console.log` et une
+ * suppression qui retirait la ligne du tableau local sans rien envoyer au serveur.
+ *
+ * L'annuaire vient de `GET /inscriptions` : le backend n'expose aucun
+ * `GET /etudiants`. Il ne propose donc **ni « Modifier » ni « Supprimer »** —
+ * `PUT` et `DELETE /etudiants/:id` n'existent pas davantage. Mieux vaut pas de
+ * bouton qu'un bouton qui ment.
+ *
+ * Ces lignes ne portent pas non plus de `sexe` ni de `telephone` : la colonne
+ * « Genre » et le filtre associé ont disparu, faute de donnée pour les alimenter.
  */
 
 const etudiantStore = useEtudiantStore();
-const { items: etudiants, loading } = storeToRefs(etudiantStore);
-const { openEdit } = useEtudiantForm();
+const { items: etudiants, listLoading } = storeToRefs(etudiantStore);
 const { filieres, loadReferences } = useEtudiantFilters();
 
 const searchQuery = ref('');
 const filterFiliere = ref('');
-const filterSexe = ref('');
 
 const currentPage = ref(1);
 const itemsPerPage = 10;
@@ -36,6 +39,10 @@ const itemsPerPage = 10;
 onMounted(() => {
   loadReferences();
   etudiantStore.fetchAll();
+});
+
+watch([searchQuery, filterFiliere], () => {
+  currentPage.value = 1;
 });
 
 const filteredEtudiants = computed(() => {
@@ -48,11 +55,9 @@ const filteredEtudiants = computed(() => {
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(search));
 
-    const matchesFiliere =
-      !filterFiliere.value || String(etudiant.filiere_id) === String(filterFiliere.value);
-    const matchesSexe = !filterSexe.value || etudiant.sexe === filterSexe.value;
+    const matchesFiliere = !filterFiliere.value || etudiant.filiere === filterFiliere.value;
 
-    return matchesSearch && matchesFiliere && matchesSexe;
+    return matchesSearch && matchesFiliere;
   });
 });
 
@@ -68,11 +73,11 @@ const exportRows = computed(() =>
     Matricule: etudiant.matricule,
     Nom: etudiant.nom,
     Prénom: etudiant.prenom,
-    Sexe: sexeLabel(etudiant.sexe),
     'E-mail': etudiant.email ?? '—',
-    Téléphone: etudiant.telephone ?? '—',
     Filière: etudiant.filiere ?? '—',
     Classe: etudiant.classe ?? '—',
+    Année: etudiant.annee_academique ?? '—',
+    Statut: statutInfo(etudiant.statut).label,
   }))
 );
 
@@ -82,24 +87,6 @@ const { exportToExcel, exportToPdf } = useTableExport({
   fileBaseName: 'etudiants',
 });
 
-const actions = [
-  { key: 'edit', label: 'Modifier', icon: 'mdi-pencil-outline' },
-  {
-    key: 'delete',
-    label: 'Supprimer',
-    icon: 'mdi-delete-outline',
-    variant: 'danger',
-    divider: true,
-    confirm: { title: 'Confirmation de suppression' },
-  },
-];
-
-/** @param {{key: string, item: any}} event */
-function onAction({ key, item }) {
-  if (key === 'edit') openEdit(item);
-  if (key === 'delete') etudiantStore.remove(item.id);
-}
-
 /** @param {any} etudiant @returns {string} */
 function initials(etudiant) {
   return `${etudiant.nom?.[0] ?? ''}${etudiant.prenom?.[0] ?? ''}`.toUpperCase();
@@ -108,30 +95,32 @@ function initials(etudiant) {
 function resetFilters() {
   searchQuery.value = '';
   filterFiliere.value = '';
-  filterSexe.value = '';
-  currentPage.value = 1;
 }
 </script>
 
 <template>
   <div class="row">
-    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
         <h4 class="fw-bold mb-1">Répertoire des étudiants</h4>
         <p class="text-muted small mb-0">
           <i class="mdi mdi-account-group-outline me-1"></i>
           <b>{{ filteredEtudiants.length }}</b> étudiant(s) affiché(s) sur
-          {{ etudiants.length }} enregistré(s).
+          {{ etudiants.length }} connu(s).
         </p>
       </div>
-      <ExportMenu @excel="exportToExcel" @pdf="exportToPdf" />
+      <ExportMenu
+        :disabled="filteredEtudiants.length === 0"
+        @excel="exportToExcel"
+        @pdf="exportToPdf"
+      />
     </div>
 
     <div class="col-12 mb-4">
       <div class="card border-0 shadow-sm bg-light">
         <div class="card-body p-3">
           <div class="row g-3">
-            <div class="col-md-5">
+            <div class="col-md-6">
               <div class="input-group bg-white rounded shadow-sm">
                 <span class="input-group-text bg-white border-0">
                   <i class="mdi mdi-magnify text-primary"></i>
@@ -141,33 +130,15 @@ function resetFilters() {
                   type="text"
                   class="form-control border-0"
                   placeholder="Rechercher par nom, prénom, matricule..."
-                  @input="currentPage = 1"
                 />
               </div>
             </div>
 
-            <div class="col-md-3">
-              <select
-                v-model="filterFiliere"
-                class="form-select border-0 shadow-sm"
-                @change="currentPage = 1"
-              >
+            <div class="col-md-4">
+              <select v-model="filterFiliere" class="form-select border-0 shadow-sm">
                 <option value="">Toutes les filières</option>
-                <option v-for="filiere in filieres" :key="filiere.id" :value="filiere.id">
+                <option v-for="filiere in filieres" :key="filiere.id" :value="filiere.designation">
                   {{ filiere.designation }}
-                </option>
-              </select>
-            </div>
-
-            <div class="col-md-2">
-              <select
-                v-model="filterSexe"
-                class="form-select border-0 shadow-sm"
-                @change="currentPage = 1"
-              >
-                <option value="">Genre</option>
-                <option v-for="sexe in SEXES" :key="sexe.code" :value="sexe.code">
-                  {{ sexe.label }}
                 </option>
               </select>
             </div>
@@ -183,18 +154,18 @@ function resetFilters() {
     </div>
 
     <div class="col-12">
-      <LoadingSpinner v-if="loading" />
+      <LoadingSpinner v-if="listLoading" />
 
       <EmptyState
         v-else-if="etudiants.length === 0"
-        title="Aucun étudiant enregistré"
-        description="Créez un premier étudiant depuis le bouton « Ajouter un étudiant », ou importez une liste depuis l'onglet Import."
+        title="Aucun étudiant"
+        description="L'annuaire se remplit à mesure des inscriptions. Importez une liste depuis l'onglet Import, ou depuis le module Inscriptions."
       />
 
       <EmptyState
         v-else-if="filteredEtudiants.length === 0"
         title="Aucun étudiant trouvé"
-        description="Aucun étudiant ne correspond à ces critères. Essayez de les élargir."
+        description="Aucun étudiant ne correspond à ces critères."
       />
 
       <div v-else class="card border-0 shadow-sm overflow-hidden">
@@ -206,10 +177,9 @@ function resetFilters() {
                   <th class="ps-4 py-3">#</th>
                   <th>Étudiant</th>
                   <th>Matricule</th>
-                  <th class="text-center">Genre</th>
                   <th>Parcours</th>
-                  <th>Contact</th>
-                  <th class="text-end pe-4">Actions</th>
+                  <th>E-mail</th>
+                  <th class="text-center">Inscription</th>
                 </tr>
               </thead>
 
@@ -219,14 +189,7 @@ function resetFilters() {
 
                   <td>
                     <div class="d-flex align-items-center">
-                      <div
-                        class="avatar-circle me-3"
-                        :class="
-                          etudiant.sexe === 'M'
-                            ? 'bg-soft-info text-info'
-                            : 'bg-soft-warning text-warning'
-                        "
-                      >
+                      <div class="avatar-circle me-3 bg-soft-primary text-primary">
                         {{ initials(etudiant) }}
                       </div>
                       <div>
@@ -247,36 +210,22 @@ function resetFilters() {
                     </span>
                   </td>
 
+                  <td>
+                    <div class="fw-semibold">{{ etudiant.classe ?? '—' }}</div>
+                    <small class="text-muted">
+                      {{ etudiant.filiere ?? '—' }} · {{ etudiant.annee_academique ?? '—' }}
+                    </small>
+                  </td>
+
+                  <td class="small">{{ etudiant.email ?? '—' }}</td>
+
                   <td class="text-center">
                     <span
                       class="badge rounded-pill px-3 py-2"
-                      :class="
-                        etudiant.sexe === 'M'
-                          ? 'bg-soft-info text-info'
-                          : 'bg-soft-warning text-warning'
-                      "
+                      :class="`bg-${statutInfo(etudiant.statut).variant}-subtle text-${statutInfo(etudiant.statut).variant}`"
                     >
-                      {{ sexeLabel(etudiant.sexe) }}
+                      {{ statutInfo(etudiant.statut).label }}
                     </span>
-                  </td>
-
-                  <td>
-                    <div class="fw-semibold">{{ etudiant.classe ?? '—' }}</div>
-                    <small class="text-muted">{{ etudiant.filiere ?? '—' }}</small>
-                  </td>
-
-                  <td>
-                    <div class="small">{{ etudiant.email ?? '—' }}</div>
-                    <small class="text-muted">{{ etudiant.telephone ?? '—' }}</small>
-                  </td>
-
-                  <td class="text-end pe-4">
-                    <ItemActions
-                      :item="etudiant"
-                      :label="`${etudiant.nom} ${etudiant.prenom}`"
-                      :actions="actions"
-                      @action="onAction"
-                    />
                   </td>
                 </tr>
               </tbody>
@@ -308,14 +257,8 @@ function resetFilters() {
   font-size: 0.85rem;
 }
 
-.bg-soft-info {
-  background-color: rgba(13, 202, 240, 0.12);
-  color: #0dcaf0;
-}
-
-.bg-soft-warning {
-  background-color: rgba(255, 193, 7, 0.15);
-  color: #997404;
+.bg-soft-primary {
+  background-color: rgba(75, 73, 172, 0.1);
 }
 
 .table thead th {

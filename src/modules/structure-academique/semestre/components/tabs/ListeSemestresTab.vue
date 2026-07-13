@@ -91,9 +91,7 @@ function onAction({ key, item }) {
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
         <h4>Liste des semestres</h4>
-        <p class="text-muted small mb-0">
-          Suivi et gestion des semestres académiques enregistrés.
-        </p>
+        <p class="text-muted small mb-0">Suivi et gestion des semestres académiques enregistrés.</p>
       </div>
       <ExportMenu @excel="exportToExcel" @pdf="exportToPdf" />
     </div>

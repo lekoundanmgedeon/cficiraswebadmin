@@ -54,12 +54,14 @@ et `components/` vivent alors directement à sa racine.
 
 ## Règle de dépendance
 
-Une seule règle, et elle suffit à garder l'ensemble démêlé :
-
-> **`modules/` dépend de `core/` et `shared/`. Jamais l'inverse. Jamais entre modules.**
+> **`modules/` dépend de `core/` et `shared/`. Jamais l'inverse.**
+>
+> **Entre modules, les dépendances sont dirigées et déclarées — jamais circulaires.**
 
 ```
 modules/  ──►  shared/  ──►  core/
+   │
+   └──►  modules amont (structure-academique, inscriptions)
 ```
 
 Concrètement :
@@ -67,13 +69,38 @@ Concrètement :
 - ✅ `modules/structure-academique/cycle/store.js` importe `core/store/createCrudStore`
 - ✅ `modules/structure-academique/cycle/components/` importe `shared/utils/date`
 - ✅ `structure-academique/filiere/` importe `structure-academique/cycle/store` — **même module**
+- ✅ `modules/etudiants/` importe `modules/inscriptions/store` — **dépendance amont déclarée**
 - ❌ `core/` ou `shared/` importe quoi que ce soit de `modules/`
-- ❌ `modules/etudiants/` importe `modules/structure-academique/…` directement
+- ❌ deux modules qui s'importent **mutuellement**
 
-Si deux modules ont besoin de la même chose, elle remonte dans `shared/`. Si deux entités sont
-si liées qu'elles ne peuvent pas s'ignorer, elles appartiennent au **même module** — voir
-« Modules à sous-domaines » plus bas. C'est ce raisonnement qui a réuni les six entités de la
-structure académique.
+### Pourquoi la règle a changé
+
+La première version interdisait toute dépendance entre modules : « si deux modules ont besoin de
+la même chose, elle remonte dans `shared/` ». Deux constats l'ont invalidée.
+
+**1. `shared/` ne peut pas accueillir du métier.** Années, cycles, filières, niveaux, classes et
+semestres sont de la **donnée de référence** : presque tous les modules les affichent en listes
+déroulantes. Les remonter dans `shared/` y ferait entrer des stores Pinia et des appels API
+métier, c'est-à-dire y déplacer le problème plutôt que le résoudre — `shared/` cesserait d'être
+un socle technique.
+
+**2. Certains modules sont la source d'autres.** Le backend n'expose **pas** de `GET /etudiants` :
+l'annuaire des étudiants est une projection de `GET /inscriptions`. `modules/etudiants` ne _peut
+pas_ ignorer `modules/inscriptions` — pas par confort, mais parce que c'est la seule source de la
+donnée. Les fusionner en un module unique reviendrait à réunir deux écrans qui ont des
+utilisateurs et des cycles de vie distincts.
+
+La règle utile n'est donc pas « aucune dépendance », mais **« aucun cycle »**. Les dépendances
+amont actuelles, à garder à l'esprit avant d'en ajouter :
+
+| Module         | dépend de              | pourquoi                                                                |
+| -------------- | ---------------------- | ----------------------------------------------------------------------- |
+| `etudiants`    | `inscriptions`         | l'annuaire est projeté depuis `GET /inscriptions` — voir son `store.js` |
+| `etudiants`    | `structure-academique` | filtres année / filière / classe                                        |
+| `inscriptions` | `structure-academique` | filtres et capacité des classes                                         |
+
+`structure-academique` ne dépend d'aucun module : c'est la racine. Un nouveau module importe
+librement vers l'amont, jamais vers l'aval.
 
 ## Le noyau
 
@@ -102,10 +129,10 @@ donc plus que ses endpoints réellement spécifiques.
 
 `createCrudStore` est la pièce qui porte le plus de valeur. Elle produit un store Pinia complet :
 
-| | |
-|---|---|
-| **state** | `items`, `item`, `meta`, `loading`, `error` |
-| **getters** | `isEmpty`, `count`, `getById(id)` |
+|             |                                                                            |
+| ----------- | -------------------------------------------------------------------------- |
+| **state**   | `items`, `item`, `meta`, `loading`, `error`                                |
+| **getters** | `isEmpty`, `count`, `getById(id)`                                          |
 | **actions** | `fetchAll`, `fetchById`, `create`, `update`, `remove`, `invalidate`, `run` |
 
 `run(call, { success, failure, onSuccess })` est la brique de base : elle gère `loading`,
@@ -148,9 +175,9 @@ Voir **[GUIDE-MODULE.md](./GUIDE-MODULE.md)** pour la marche à suivre pas à pa
 La refonte est **incrémentale** : le noyau est en place, un module a été migré et sert de
 référence. Les autres suivent, un par un, l'application restant fonctionnelle entre chaque étape.
 
-| État | Module |
-|---|---|
-| ✅ Migré | `structure-academique` (années, cycles, filières, niveaux, classes, semestres) |
+| État        | Module                                                                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| ✅ Migré    | `structure-academique` (années, cycles, filières, niveaux, classes, semestres)                                                     |
 | ⏳ À migrer | étudiants, inscriptions, matières, examens, concours, finances, pédagogie, notes, délibérations, dashboard, parcours, statistiques |
 
 ### Modules à sous-domaines
@@ -185,12 +212,12 @@ continue de s'appliquer **entre** modules.
 Ces éléments n'existent que pour garder le code non migré fonctionnel. Chacun disparaît avec son
 dernier appelant :
 
-| Fichier | Remplacé par |
-|---|---|
-| `src/api/config/serviceApi.js` | `core/api/httpClient` |
-| `src/api/config/axiosClient.js`, `apiClients.js` | `core/api/clients` |
-| `src/stores/messages/*` | `shared/stores/notificationStore` |
-| `src/utils/{exportExcel,exportPDF,toast}.js` | `shared/utils/*` (simples ré-exports) |
+| Fichier                                                                                                                               | Remplacé par                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `src/api/config/serviceApi.js`                                                                                                        | `core/api/httpClient`                              |
+| `src/api/config/axiosClient.js`, `apiClients.js`                                                                                      | `core/api/clients`                                 |
+| `src/stores/messages/*`                                                                                                               | `shared/stores/notificationStore`                  |
+| `src/utils/{exportExcel,exportPDF,toast}.js`                                                                                          | `shared/utils/*` (simples ré-exports)              |
 | Alias `anneesAcademiques`, `anneeAcademique`, `fetchAnneesAcademiques()`, `fetchCurrentAnnee()` dans `modules/annee-academique/store` | `items`, `current`, `fetchAll()`, `fetchCurrent()` |
 
 Ce dernier point est l'exception à la règle de dépendance : six vues non migrées

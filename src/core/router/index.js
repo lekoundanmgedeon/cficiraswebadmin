@@ -10,6 +10,7 @@ import { registerAuthGuard } from './guards';
 // point du noyau à toucher pour brancher un nouveau module.
 import structureAcademiqueRoutes from '@/modules/structure-academique/routes';
 import etudiantsRoutes from '@/modules/etudiants/routes';
+import inscriptionsRoutes from '@/modules/inscriptions/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
@@ -26,6 +27,7 @@ import othersRoutes from '@/routes/others.routes';
 const protectedRoutes = [
   ...structureAcademiqueRoutes,
   ...etudiantsRoutes,
+  ...inscriptionsRoutes,
   ...scolariteRoutes,
   ...examensRoutes,
   ...concoursRoutes,

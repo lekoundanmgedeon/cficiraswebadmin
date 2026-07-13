@@ -190,7 +190,10 @@ function pluralize(annee, key, [singular, plural]) {
                 </div>
 
                 <div class="col-md-3 text-center">
-                  <span :class="mapStatutHistorique(annee.statut).class" class="px-3 py-2 rounded-pill">
+                  <span
+                    :class="mapStatutHistorique(annee.statut).class"
+                    class="px-3 py-2 rounded-pill"
+                  >
                     {{ mapStatutHistorique(annee.statut).label }}
                   </span>
                 </div>

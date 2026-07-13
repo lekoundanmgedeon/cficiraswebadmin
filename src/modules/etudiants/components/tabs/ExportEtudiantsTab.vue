@@ -3,9 +3,9 @@ import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { statutInfo } from '@/modules/inscriptions/constants';
 import { useEtudiantStore } from '../../store';
 import { useEtudiantFilters } from '../../composables/useEtudiantFilters';
-import { sexeLabel } from '../../constants';
 
 /**
  * Export filtré des étudiants.
@@ -17,14 +17,24 @@ import { sexeLabel } from '../../constants';
  *
  * (Un second composant, `data-io/ExportData.vue`, faisait la même chose en
  * appelant `XLSX.utils.json_to_sheet` **sans importer `XLSX`** : l'export
- * plantait au clic. Il disparaît avec cet onglet.)
+ * plantait au clic. Il a disparu avec cet onglet.)
  */
 
 const etudiantStore = useEtudiantStore();
-const { items: etudiants, loading } = storeToRefs(etudiantStore);
+const { items: etudiants, listLoading } = storeToRefs(etudiantStore);
 
-const { anneeId, filiereId, classeId, annees, filieres, classes, params, labels, loadReferences } =
-  useEtudiantFilters();
+const {
+  anneeId,
+  filiereId,
+  classeId,
+  annees,
+  filieres,
+  classes,
+  serverParams,
+  applyClientFilters,
+  labels,
+  loadReferences,
+} = useEtudiantFilters();
 
 onMounted(async () => {
   await loadReferences();
@@ -32,23 +42,26 @@ onMounted(async () => {
 });
 
 function load() {
-  etudiantStore.fetchAll({ params: params.value });
+  etudiantStore.fetchAll({ params: serverParams.value });
 }
 
-watch(params, load);
+// L'année et la classe sont des filtres serveur ; la filière ne l'est pas
+// (`listerInscriptions` ne la lit pas), elle s'applique en mémoire.
+watch(serverParams, load);
+
+const rows = computed(() => applyClientFilters(etudiants.value));
 
 const exportRows = computed(() =>
-  etudiants.value.map((etudiant, index) => ({
+  rows.value.map((etudiant, index) => ({
     'N°': index + 1,
     Matricule: etudiant.matricule,
     Nom: etudiant.nom,
     Prénom: etudiant.prenom,
-    Sexe: sexeLabel(etudiant.sexe),
     'E-mail': etudiant.email ?? '—',
-    Téléphone: etudiant.telephone ?? '—',
-    Année: etudiant.annee_academique ?? labels.value.annee,
-    Filière: etudiant.filiere ?? labels.value.filiere,
-    Classe: etudiant.classe ?? labels.value.classe,
+    Année: etudiant.annee_academique ?? '—',
+    Filière: etudiant.filiere ?? '—',
+    Classe: etudiant.classe ?? '—',
+    Statut: statutInfo(etudiant.statut).label,
   }))
 );
 
@@ -146,7 +159,7 @@ const formats = [
         </div>
 
         <div class="mt-3">
-          <LoadingSpinner v-if="loading" />
+          <LoadingSpinner v-if="listLoading" />
           <p v-else class="mb-0 small text-muted">
             <i class="mdi mdi-information-outline me-1"></i>
             <b class="text-dark">{{ exportRows.length }}</b> étudiant(s) seront exportés.

@@ -1,34 +1,17 @@
-import { ref } from 'vue';
 import { openModal, closeModal } from '@/shared/utils/modal';
 import { ETUDIANT_MODAL_ID } from '../constants';
 
 /**
- * Pilotage de la modale de création / édition d'un étudiant.
+ * Pilotage de la modale de création d'un étudiant.
  *
- * L'état est partagé au niveau du module : l'en-tête (« Ajouter ») et la liste
- * (« Modifier ») pilotent la même instance de modale sans faire descendre de
- * props à travers l'arbre d'onglets.
+ * Il n'y a **pas d'édition** : le backend n'expose pas `PUT /etudiants/:id`
+ * (ni `DELETE`). Ce composable n'ouvre donc qu'un formulaire de création — là où
+ * la version précédente de ce module prévoyait un `openEdit` qui aurait envoyé
+ * ses requêtes dans le vide.
  */
-
-/** @type {import('vue').Ref<any|null>} Étudiant en cours d'édition, `null` en création. */
-const selectedEtudiant = ref(null);
-
 export function useEtudiantForm() {
-  function openCreate() {
-    selectedEtudiant.value = null;
-    openModal(ETUDIANT_MODAL_ID);
-  }
+  const openCreate = () => openModal(ETUDIANT_MODAL_ID);
+  const close = () => closeModal(ETUDIANT_MODAL_ID);
 
-  /** @param {object} etudiant */
-  function openEdit(etudiant) {
-    selectedEtudiant.value = { ...etudiant };
-    openModal(ETUDIANT_MODAL_ID);
-  }
-
-  function close() {
-    closeModal(ETUDIANT_MODAL_ID);
-    selectedEtudiant.value = null;
-  }
-
-  return { selectedEtudiant, openCreate, openEdit, close };
+  return { openCreate, close };
 }

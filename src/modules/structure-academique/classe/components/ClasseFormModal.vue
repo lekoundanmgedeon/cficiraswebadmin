@@ -71,9 +71,7 @@ watch(
 watch(
   () => form.value.filiere_id,
   () => {
-    const stillValid = filteredNiveaux.value.some(
-      (niveau) => niveau.id === form.value.niveau_id
-    );
+    const stillValid = filteredNiveaux.value.some((niveau) => niveau.id === form.value.niveau_id);
     if (!stillValid) form.value.niveau_id = '';
   }
 );
