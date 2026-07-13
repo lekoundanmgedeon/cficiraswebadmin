@@ -3,8 +3,8 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (10 commits, dernier : migration du module `examens`)
-- Écart cumulé vs `main` : **347 fichiers, +21 597 / −51 359 lignes**
+- Branche : `refactor-main` (11 commits, dernier : migration du module `concours`)
+- Écart cumulé vs `main` : **389 fichiers, +24 675 / −56 954 lignes**
 - État de santé : `npm run lint` **0 problème** sur le code migré · `npm test` **64 tests** · `npm run build` **OK**
 - ⚠️ **`matieres` a nécessité des corrections dans `cfibackend`** (CRUD des modules entièrement
   cassé). Voir §1.6 — le dépôt backend porte un commit dédié.
@@ -398,7 +398,80 @@ formulaire de session offrait de son côté un état **« Brouillon »**, qui n'
 - `Examens.vue` empilait la planification et le calendrier dans une page dotée d'un « + Ajouter »
   visant `#exampleModal` — **inexistante**. La route redirige désormais vers la planification.
 
-### 1.10 Le bug `AppTabs` — les onglets n'affichaient plus rien
+### 1.10 Le module `concours` — terminé
+
+```
+src/modules/concours/
+├── routes.js · constants.js
+├── concours/   api.js · store.js · composables/ · components/ · views/
+├── epreuve/    api.js · store.js · components/TabEpreuves
+└── candidat/   api.js · store.js · components/{TabCandidats, TabNotes}
+```
+
+5 198 lignes → 3 146. **Le design est préservé.** C'est le module **le plus sain** rencontré
+jusqu'ici : la plupart de ses écrans étaient réellement branchés. Mais ce qui était cassé l'était
+profondément.
+
+> #### ⚠️ Deux routes inatteignables depuis toujours
+>
+> L'ancien `gestionApi.js` appelait :
+>
+> ```js
+> updateEpreuve → gestionService.put(`/gestions/concours/epreuves/${id}`)     // ← « /gestions/ » en trop
+> deleteEpreuve → gestionService.delete(`/gestions/concours/epreuves/${id}`)  // ← idem
+> ```
+>
+> Le client est **déjà** monté sur `/gestion` : l'URL réelle devenait
+> `/api/gestion/gestions/concours/epreuves/:id` — **404**. **Modifier ou supprimer une épreuve de
+> concours n'a jamais fonctionné.** Les trois autres routes d'épreuve avaient, elles, le bon chemin.
+
+#### Les boutons morts
+
+| Bouton                    | Ce qu'il faisait vraiment                                                                                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| « Modifier » un concours  | `console.log('Modifier :', item)` — et son `editModalTarget` visait `#editModuleModal`, **inexistante**                                                                                   |
+| Changer le statut         | appelait `concoursStore.updateConcoursStatus(...)` — l'action s'appelle **`changeStatut`** → `TypeError` au clic                                                                          |
+| « Supprimer » un candidat | retirait la ligne du **tableau local** et annonçait « Candidat masqué de la liste locale ». Elle revenait au rechargement — **il n'existe aucun `DELETE /candidats/:id`**. Bouton retiré. |
+| Import de candidats       | `POST /candidats/import` → **404** : la route était **commentée** côté backend, alors que son contrôleur était implémenté. Rétablie.                                                      |
+
+#### Les écrans simulés
+
+- **`TabDeliberation`** cumulait trois défauts : `Number(route.params.id)` sur un **UUID** (donc
+  `NaN`) ; trois candidats codés en dur ; et un test `statut === 'PROCLAMÉ'`, **un statut qui
+  n'existe pas** (`PLANIFIE`, `OUVERT`, `CLOTURE`, `ANNULE`) — la condition était toujours fausse.
+  Or `GET /concours/:id/classement` renvoie les vraies moyennes et les vrais rangs : la simulation
+  au seuil se calcule dessus, sans endpoint supplémentaire.
+- **`RapportConcours`** affichait des **formateurs** codés en dur après un `setTimeout(3000)` —
+  **le même copier-coller que `RapportExamens`**. Ni l'un ni l'autre n'avait de rapport avec des
+  résultats.
+- **`ConcoursTab`** déclarait **trois onglets pour quatre panneaux**, et le quatrième rendait
+  `<StatistiquesContent />` — **un composant jamais importé**.
+- L'onglet **Historique** a été retiré : `logs = ref([])`, table `historique_concours` **vide**, et
+  **aucune route ne l'expose**.
+
+#### Trois bugs backend corrigés
+
+- **`GET /concours/:id/moyennes-rangs` répondait 404 « Impossible de calculer »… alors que le calcul
+  réussissait.** La fonction Postgres `calculer_moyennes_et_rangs` est déclarée `RETURNS void` : le
+  modèle en tirait `undefined`, que le contrôleur prenait pour un échec. Un `void` n'est pas une
+  erreur. Elle renvoie désormais le classement à jour.
+- **`POST /candidats/import` était commenté**, son contrôleur ne l'était pas. Route rétablie.
+- **`POST /candidats/import/notes` était déclarée deux fois** — la seconde sans son `multer`, donc
+  morte.
+
+#### Les énumérations viennent des contraintes SQL
+
+| Champ                              | Valeurs                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| `concours.statut`                  | `PLANIFIE`, `OUVERT`, `CLOTURE`, `ANNULE`                                                 |
+| `concours.type_concours`           | FK vers `types_concours` — **7 types**, le formulaire n'en proposait que **4**            |
+| `epreuves_concours.type_epreuve`   | `ECRIT`, `ORAL`, `PRATIQUE` — le formulaire envoyait `écrit` en **minuscules accentuées** |
+| `candidats.sexe` / `email` / `tel` | `M`/`F`, plus deux expressions régulières                                                 |
+
+Éditer le « Concours Ingénieur 2025 » — de type `CONCOURS_INGE` — lui aurait fait **perdre son
+type**, celui-ci n'étant pas dans la liste proposée.
+
+### 1.11 Le bug `AppTabs` — les onglets n'affichaient plus rien
 
 Signalé en cours de chantier, et il touchait **tous les modules migrés** : cliquer sur un onglet
 ne rendait pas son contenu, et la console crachait
@@ -434,7 +507,7 @@ de tout avertissement Vue**. Le troisième et le sixième échouaient avant le c
 étaient cassés**. Aucun des trois ne monte un composant. Un test de montage sur un composant
 partagé aussi central aurait dû exister dès le départ.
 
-### 1.11 L'optimisation d'API principale
+### 1.12 L'optimisation d'API principale
 
 Les conteneurs d'onglets Bootstrap (`data-bs-toggle="tab"`) **montent tous les panneaux d'un
 coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait donc son
@@ -444,7 +517,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 `AppTabs` ne monte que l'onglet actif, et `KeepAlive` évite de recharger ceux déjà visités.
 **C'est le gain le plus important à propager sur les 23 conteneurs restants.**
 
-### 1.12 Bugs corrigés (tous étaient en production)
+### 1.13 Bugs corrigés (tous étaient en production)
 
 **Authentification — la connexion ne pouvait pas aboutir**
 
@@ -472,7 +545,7 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 **Étudiants** (voir §1.4 pour le détail) 18. Le store n'exposait **ni `items` ni `fetchAll`** : aucun écran ne _pouvait_ charger de liste. D'où les tableaux codés en dur dans 4 onglets sur 6, plus la vue racine. 19. `fetchEtudiantsByClasseFiliereAnnee` et `filteredEtudiants` étaient consommés par l'onglet « Classes » mais **n'existaient pas** dans le store → `TypeError` au premier filtre. 20. `XLSX.utils.json_to_sheet` appelé **sans importer `XLSX`** → l'export Excel plantait au clic. 21. La fiche détail déclarait 4 onglets pour 2 panneaux ; deux d'entre eux pointaient sur un `#sales2` **inexistant** et trois `<li>` partageaient le même `id`. 22. La fiche détail affectait `etudiant.value = response` sans déballer `{ success, data }` → tous ses champs étaient `undefined`. 23. Ses `v-if` portaient sur les **mauvais champs** : le lieu de naissance était conditionné à `lieunaissance` (inexistant), le sexe à `genre`, l'adresse au _téléphone_. 24. `ajouterAuGroupe(e, g.id)` était appelé avec deux arguments mais n'en déclarait qu'un → « Assigner » affectait **le premier étudiant de la liste**, pas celui sur lequel on cliquait. 25. « Générer un rapport » : un `setTimeout(1800)` puis « Rapport généré et téléchargé avec succès » — **aucun appel API, aucun fichier**. 26. Le panneau d'onglet « Import » n'avait **aucun lien de navigation** : monté à chaque chargement, et inatteignable. Son composant était de toute façon vide, et le `DropData.vue` de secours n'avait aucun gestionnaire sur son bouton « Upload ». 27. La photo de la fiche détail était servie depuis `http://localhost:3500` **codé en dur**.
 
-### 1.13 Code mort et duplication supprimés
+### 1.14 Code mort et duplication supprimés
 
 - `routes/main.js` (copie **octet pour octet** de `routes/index.js`), `style1.css` (**520 Ko** jamais référencé), 5 fichiers `sample*.vue`, `result.js` → **25 493 lignes**.
 - Le **même tableau de niveaux existait en 3 exemplaires** (filières, classes, semestres) et celui des filières en 2 → **776 lignes**.
@@ -498,8 +571,8 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 ### 2.2 Dette technique transverse
 
-- **17 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le principal gisement d'optimisation d'API restant. Liste : `grep -rl 'data-bs-toggle="tab"' src/views --include=*.vue`
-- **15 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
+- **14 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le principal gisement d'optimisation d'API restant. Liste : `grep -rl 'data-bs-toggle="tab"' src/views --include=*.vue`
+- **13 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
 - **12 fichiers d'API legacy** dans `src/api/` → à répartir dans les modules.
 - **31 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`, `body {}`, `.card`) — dont 34 avec `body {}` **dans un style scoped, donc sans aucun effet**.
 
@@ -585,7 +658,17 @@ du dossier scolaire ont donc été **retirés** (§1.7) : ils affichaient « Fic
 succès » sans rien envoyer. À rétablir le jour où le serveur expose la ressource — le besoin est
 réel (feuille d'appel par classe / date / créneau, historique par étudiant).
 
-**8. Deux endpoints pour l'import de réinscriptions** — `POST /inscriptions/import-reinscription`
+**8. Aucun endpoint n'expose `types_concours` ni `historique_concours`.** Le premier est une table
+de référence (7 types) dont dépend `concours.type_concours` par clé étrangère : faute de route, la
+liste est **figée dans le frontend** (`concours/constants.js`) et se désynchronisera dès qu'un type
+sera ajouté. Le second est vide et n'est écrit par rien — l'onglet Historique a été retiré (§1.10).
+
+**9. Quatre routes de concours exigent le rôle `ADMIN`** (`PUT /concours/:id`,
+`PATCH /:id/statut`, `DELETE /:id`, `DELETE /concours/epreuves/:id`), alors que toutes les autres
+ont leur `verifierRole` commenté. L'incohérence est peut-être volontaire, mais elle mérite d'être
+confirmée : un utilisateur `SCOLARITE` peut créer un concours mais pas le modifier.
+
+**10. Deux endpoints pour l'import de réinscriptions** — `POST /inscriptions/import-reinscription`
 (champ `fichier`) et `POST /academique/imports/reinscriptions` (champ `file`). Le frontend retient
 le premier. Les conventions de nom de champ divergent aussi entre les imports (`fichier` pour les
 inscriptions, `file` pour les étudiants) : à harmoniser.
@@ -626,7 +709,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. Appliquer la recette au module suivant (`concours`).
+3. Appliquer la recette au module suivant (`notes` + `deliberation`).
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 

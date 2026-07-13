@@ -14,12 +14,12 @@ import inscriptionsRoutes from '@/modules/inscriptions/routes';
 import matieresRoutes from '@/modules/matieres/routes';
 import scolariteRoutes from '@/modules/scolarite/routes';
 import examensRoutes from '@/modules/examens/routes';
+import concoursRoutes from '@/modules/concours/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
 // rejoindront `src/modules/`. Voir docs/ARCHITECTURE.md § « Migration en cours ».
 import authRoutes from '@/routes/auth.routes';
-import concoursRoutes from '@/routes/concours.routes';
 import financesRoutes from '@/routes/finances.routes';
 import pedagogieRoutes from '@/routes/pedagogie.routes';
 import othersRoutes from '@/routes/others.routes';
