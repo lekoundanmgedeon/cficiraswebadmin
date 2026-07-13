@@ -11,9 +11,9 @@ tous les stores dans `stores/`, toutes les API dans `api/`. Travailler sur « le
 académiques » imposait d'ouvrir trois branches éloignées de l'arbre, et rien n'empêchait un
 module d'aller lire le store d'un autre.
 
-La structure cible regroupe le code par **module métier**. Tout ce qui concerne les années
-académiques vit sous `src/modules/annee-academique/`. On supprime un module en supprimant son
-dossier.
+La structure cible regroupe le code par **module métier**. Tout ce qui concerne la structure
+académique vit sous `src/modules/structure-academique/`. On supprime un module en supprimant
+son dossier.
 
 ```
 src/
@@ -24,25 +24,30 @@ src/
 │   └── store/            #   fabrique de store CRUD
 │
 ├── shared/               # Réutilisable, sans logique métier
-│   ├── components/       #   composants d'interface transverses
+│   ├── components/       #   AppTabs, ItemActions, ConfirmModal, EmptyState, PageHeader…
+│   ├── composables/      #   useTableExport
 │   ├── stores/           #   notifications
-│   └── utils/            #   dates, cache, export Excel/PDF, modales
+│   └── utils/            #   dates, cache, texte, export Excel/PDF, modales
 │
 ├── modules/              # Un dossier par module métier
-│   └── annee-academique/
-│       ├── api/          #   endpoints du module
-│       ├── components/   #   composants du module (dont tabs/)
-│       ├── composables/  #   logique d'écran réutilisable
-│       ├── store/        #   store Pinia
-│       ├── views/        #   écrans montés par le router
-│       ├── constants.js  #   statuts, libellés, identifiants DOM
-│       └── routes.js     #   routes du module
+│   └── structure-academique/
+│       ├── routes.js     #   routes du module
+│       └── <sous-domaine>/
+│           ├── api.js        #  endpoints
+│           ├── store.js      #  store Pinia
+│           ├── constants.js  #  statuts, libellés, identifiants DOM
+│           ├── composables/  #  pilotage des modales, logique d'écran
+│           ├── components/   #  composants (dont tabs/)
+│           └── views/        #  écrans montés par le router
 │
 ├── layouts/              # DefaultLayout + Header / Sidebar / Footer
 ├── assets/               # CSS et images
 ├── App.vue               # Racine
 └── main.js               # Point d'entrée Vite
 ```
+
+Un module simple (une seule entité) se passe du niveau « sous-domaine » : `api.js`, `store.js`
+et `components/` vivent alors directement à sa racine.
 
 `App.vue` et `main.js` restent à la racine de `src/` : c'est la convention Vue/Vite (celle de
 `create-vue`), et `index.html` y pointe directement.
@@ -59,15 +64,16 @@ modules/  ──►  shared/  ──►  core/
 
 Concrètement :
 
-- ✅ `modules/annee-academique/store/` importe `core/store/createCrudStore`
-- ✅ `modules/annee-academique/components/` importe `shared/utils/date`
+- ✅ `modules/structure-academique/cycle/store.js` importe `core/store/createCrudStore`
+- ✅ `modules/structure-academique/cycle/components/` importe `shared/utils/date`
+- ✅ `structure-academique/filiere/` importe `structure-academique/cycle/store` — **même module**
 - ❌ `core/` ou `shared/` importe quoi que ce soit de `modules/`
-- ❌ `modules/etudiants/` importe `modules/annee-academique/store` directement
+- ❌ `modules/etudiants/` importe `modules/structure-academique/…` directement
 
-Si deux modules ont besoin de la même chose, elle remonte dans `shared/`. Si un module a besoin
-des données d'un autre (les étudiants ont besoin de l'année courante), on expose la dépendance
-**explicitement** : le module propriétaire publie ce qu'il partage dans son `index.js`, et c'est
-le seul point d'entrée autorisé. Une seule exception est tolérée aujourd'hui, documentée plus bas.
+Si deux modules ont besoin de la même chose, elle remonte dans `shared/`. Si deux entités sont
+si liées qu'elles ne peuvent pas s'ignorer, elles appartiennent au **même module** — voir
+« Modules à sous-domaines » plus bas. C'est ce raisonnement qui a réuni les six entités de la
+structure académique.
 
 ## Le noyau
 
@@ -144,8 +150,35 @@ référence. Les autres suivent, un par un, l'application restant fonctionnelle 
 
 | État | Module |
 |---|---|
-| ✅ Migré | `annee-academique` |
-| ⏳ À migrer | cycles, filières, classes, niveaux, semestres, étudiants, inscriptions, examens, concours, finances, pédagogie, notes, délibérations, dashboard |
+| ✅ Migré | `structure-academique` (années, cycles, filières, niveaux, classes, semestres) |
+| ⏳ À migrer | étudiants, inscriptions, matières, examens, concours, finances, pédagogie, notes, délibérations, dashboard, parcours, statistiques |
+
+### Modules à sous-domaines
+
+Un module peut regrouper plusieurs entités quand elles sont **fortement imbriquées
+et évoluent ensemble**. C'est le cas de `structure-academique` : un cycle porte des
+filières, qui portent des niveaux, qui portent des classes. Le formulaire d'une
+classe a besoin des stores des filières **et** des niveaux ; celui d'une filière, du
+store des cycles. Les séparer en modules distincts aurait imposé des imports
+croisés permanents.
+
+Chaque entité reste un sous-domaine autonome — son `api.js`, son `store.js`, ses
+composants, sa vue — et seules les routes sont assemblées au niveau du module :
+
+```
+structure-academique/
+├── routes.js          ← les 5 écrans du module
+├── annee/    api.js · store.js · constants.js · composables/ · components/ · views/
+├── cycle/    idem
+├── filiere/  idem
+├── niveau/   idem  (pas de vue propre : onglet des écrans filières/classes/semestres)
+├── classe/   idem
+└── semestre/ idem
+```
+
+À l'intérieur d'un module, les sous-domaines peuvent s'importer librement
+(`import { useCycleStore } from '../../cycle/store'`). La règle de dépendance
+continue de s'appliquer **entre** modules.
 
 ### Ponts de compatibilité, à retirer en fin de migration
 

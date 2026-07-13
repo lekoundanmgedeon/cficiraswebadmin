@@ -124,12 +124,6 @@ const tauxOccupation = computed(() => {
   return capacite > 0 ? ((inscrits / capacite) * 100).toFixed(2) : 0;
 });
 
-const moyenneEtudiantsParClasse = computed(() => {
-  if (!stats.value) return 0;
-  const inscrits = parseInt(stats.value.total_etudiants_inscrits, 10);
-  const classes = parseInt(stats.value.total_classes, 10);
-  return classes > 0 ? (inscrits / classes).toFixed(1) : 0;
-});
 </script>
 
 <style scoped>

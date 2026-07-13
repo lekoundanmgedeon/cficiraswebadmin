@@ -292,7 +292,7 @@ const selectedPeriod = ref(getDynamicAcademicPeriod());
 // Génération dynamique des options du select (Année en cours + l'année précédente pour l'historique)
 const dynamicOptions = computed(() => {
   const current = getDynamicAcademicPeriod();
-  const [startYear, endYear] = current.split('-').map(Number);
+  const [startYear] = current.split('-').map(Number);
 
   const previous = `${startYear - 1}-${startYear}`;
 

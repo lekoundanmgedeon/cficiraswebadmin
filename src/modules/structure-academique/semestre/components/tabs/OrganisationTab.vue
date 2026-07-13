@@ -130,12 +130,19 @@
                     Unités d'Enseignement validées ({{ semestre.ues?.length || 0 }})
                   </div>
                   <div class="d-flex flex-wrap gap-2">
+                    <!--
+                      `highlight()` échappe la donnée avant d'y insérer le balisage :
+                      le seul HTML qui subsiste ici est celui qu'elle produit elle-même.
+                      Couvert par shared/utils/text.test.js.
+                    -->
+                    <!-- eslint-disable vue/no-v-html -->
                     <span
                       v-for="(ue, idx) in semestre.ues"
                       :key="idx"
                       class="badge bg-light text-dark border rounded px-2 py-1 text-xs"
                       v-html="highlightText(ue)"
                     ></span>
+                    <!-- eslint-enable vue/no-v-html -->
                   </div>
                 </div>
               </div>
@@ -156,6 +163,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useSemestreStore } from '../../store';
+import { useSemestreForm } from '../../composables/useSemestreForm';
+import { highlight } from '@/shared/utils/text';
 
 /* ========================================================
     Initialisation du Store Pinia
@@ -215,18 +224,22 @@ const groupedSemestres = computed(() => {
 });
 
 // Mise en surbrillance (Highlight) des textes cherchés
-const highlightText = (text) => {
-  if (!filterQuery.value) return text;
-  const regex = new RegExp(`(${filterQuery.value})`, 'gi');
-  return text.replace(regex, '<mark class="bg-warning-subtle text-dark p-0">$1</mark>');
-};
+/**
+ * Surbrillance du terme recherché.
+ *
+ * L'implémentation précédente construisait la RegExp directement à partir de la
+ * saisie (une recherche contenant « ( » faisait planter le filtre) et
+ * réinjectait la donnée backend telle quelle dans un `v-html` — une porte
+ * ouverte au XSS. `highlight` échappe le texte avant d'y insérer le balisage.
+ */
+const highlightText = (text) => highlight(text, filterQuery.value);
 
 /* ========================================================
     Actions Utilitaires
 ======================================================== */
-const ouvrirModalCreation = () => {
-  console.log('Ouverture du module de configuration de semestre');
-};
+// Ce bouton ne faisait qu'un `console.log` : il ouvre désormais réellement la
+// modale de création, partagée avec l'en-tête de l'écran.
+const { openCreate: ouvrirModalCreation } = useSemestreForm();
 
 /* ========================================================
     Cycle de vie (Appel de la bonne action du Store)
