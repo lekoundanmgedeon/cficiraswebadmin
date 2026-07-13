@@ -17,37 +17,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
 import FacturationHeader from './components/FacturationHeader.vue';
 import FacturationTab from './components/FacturationTab.vue';
 
-const loading = ref(true);
-const formateurs = ref([]);
-
-onMounted(() => {
-  setTimeout(() => {
-    formateurs.value = [
-      {
-        id: 1,
-        matricule: 'F001',
-        nom: 'Doe',
-        prenom: 'John',
-        email: 'john@example.com',
-        telephone: '0123456789',
-      },
-      {
-        id: 2,
-        matricule: 'F002',
-        nom: 'Smith',
-        prenom: 'Anna',
-        email: 'anna@example.com',
-        telephone: '0987654321',
-      },
-    ];
-    loading.value = false;
-  }, 3000);
-});
+/**
+ * Voir `Paiements.vue` : le même `setTimeout` de trois secondes et le même
+ * tableau `formateurs` inutilisé y masquaient les onglets sans rien charger.
+ * Chaque onglet charge maintenant ses propres données.
+ */
+const loading = ref(false);
 </script>
 <style scoped>
 .drag-drop-area {

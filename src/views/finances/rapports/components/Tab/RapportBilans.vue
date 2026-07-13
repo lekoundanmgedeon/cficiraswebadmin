@@ -217,27 +217,46 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useRapportStore } from '@/modules/finances/stores/rapports';
 
-// KPI macro consolidés de la base de données ERP
-const kpi = ref({
-  totalEngage: 48500000,
-  totalEncaisse: 36200000,
-  totalCharges: 11450000,
+/**
+ * Bilans financiers.
+ *
+ * Les KPI et la balance par filière étaient des constantes. Ils viennent
+ * maintenant de `GET /finance/rapports/kpi` et `/rapports/bilan-filieres`, qui
+ * portent sur l'année académique **active**.
+ *
+ * ## Les charges n'ont pas de source
+ *
+ * `totalCharges` — et donc le solde net et le ratio de charges qui en découlent —
+ * valait 11 450 000 F en dur. Aucune table ne porte les charges de
+ * l'établissement : le backend ne connaît que les **recettes** étudiantes
+ * (tarifs, échéanciers, paiements). Les honoraires des formateurs, qui en
+ * constitueraient l'essentiel, relèvent de la paie et n'ont pas de modèle.
+ *
+ * Le champ est donc à zéro plutôt que faux : afficher un résultat net calculé
+ * sur une charge inventée serait pire qu'afficher zéro. Le jour où un module de
+ * charges existe, il suffit de brancher `totalCharges` dessus — les deux calculs
+ * ci-dessous suivront.
+ */
+
+const store = useRapportStore();
+
+onMounted(() => {
+  store.fetchKpi();
+  store.fetchBilanFilieres();
 });
 
-// Balance analytique ventilée par filière principale
-const balanceFilières = ref([
-  { filiere: 'Informatique & Technologies', attendu: 18500000, percu: 15200000, taux: 82.1 },
-  { filiere: 'Management & Business', attendu: 14000000, percu: 11500000, taux: 82.1 },
-  { filiere: 'Génie Civil & Architecture', attendu: 10000000, percu: 6800000, taux: 68.0 },
-  { filiere: 'Sciences Juridiques & Droit', attendu: 6000000, percu: 2700000, taux: 45.0 },
-]);
+const kpi = computed(() => ({
+  totalEngage: store.kpi.total_engage,
+  totalEncaisse: store.kpi.total_encaisse,
+  totalCharges: 0,
+}));
 
-// Calculs financiers dynamiques
-const soldeNet = computed(() => {
-  return kpi.value.totalEncaisse - kpi.value.totalCharges;
-});
+const balanceFilières = computed(() => store.bilanFilieres);
+
+const soldeNet = computed(() => kpi.value.totalEncaisse - kpi.value.totalCharges);
 
 const ratioCharges = computed(() => {
   if (kpi.value.totalEncaisse === 0) return 0;
@@ -250,9 +269,7 @@ const ratioCreances = computed(() => {
   return ((restant / kpi.value.totalEngage) * 100).toFixed(1);
 });
 
-const formatPrice = (val) => {
-  return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
-};
+const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' FCFA';
 </script>
 
 <style scoped>

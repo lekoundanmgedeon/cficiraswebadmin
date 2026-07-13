@@ -161,10 +161,56 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useNotificationStore } from '@/shared/stores/notificationStore';
+import { useInscriptionStore } from '@/modules/inscriptions/store';
+import { usePaiementStore } from '@/modules/finances/stores/paiements';
+import { imprimerRecu } from '@/modules/finances/utils/recu';
 
-// État du formulaire
-const form = ref({
+/**
+ * Guichet d'encaissement.
+ *
+ * Le formulaire n'enregistrait rien : `submitPaiement` empilait l'objet saisi
+ * dans un tableau local et affichait « Impression du reçu… » dans une `alert()`.
+ *
+ * Deux traductions sont nécessaires entre ce que l'écran saisit et ce que l'API
+ * attend, et le balisage ne change pas :
+ *
+ *  1. **L'étudiant.** Le champ est du texte libre (un matricule, ou un nom) ;
+ *     le serveur, lui, encaisse sur une **inscription** — un étudiant peut en
+ *     avoir plusieurs, une par année. On résout donc la saisie contre les
+ *     inscriptions connues, et on refuse plutôt que d'encaisser sur le mauvais
+ *     dossier si la saisie est ambiguë.
+ *
+ *  2. **Les libellés.** Les listes déroulantes proposent « Espèces », « Wave » ;
+ *     la contrainte SQL attend `ESPECE`, `WAVE`.
+ */
+
+const store = usePaiementStore();
+const inscriptionStore = useInscriptionStore();
+const notifications = useNotificationStore();
+
+/** Les valeurs de `<option>` de l'écran → les codes acceptés par le serveur. */
+const MODES = {
+  Espèces: 'ESPECE',
+  Virement: 'VIREMENT',
+  Wave: 'WAVE',
+  Chèque: 'CHEQUE',
+};
+
+/**
+ * « Scolarité » ne se traduit volontairement pas : sans `nature_paiement`, le
+ * serveur la déduit du plan de l'étudiant (mensuel, semestriel, annuel, tranche).
+ * Le guichet n'a pas à connaître cette taxonomie.
+ */
+const NATURES = {
+  Inscription: 'INSCRIPTION',
+  Scolarité: null,
+  Soutenance: 'FRAIS_ANNEXE',
+  Autres: 'FRAIS_ANNEXE',
+};
+
+const etatInitial = () => ({
   etudiant: '',
   type: '',
   montant: null,
@@ -173,44 +219,111 @@ const form = ref({
   observations: '',
 });
 
-// Liste des paiements récents pour le feedback visuel
+const form = ref(etatInitial());
 const recentPaiements = ref([]);
 
-// Fonctions
-const submitPaiement = () => {
-  // Simulation de sauvegarde
-  const newPaiement = {
-    id: Date.now(),
-    ...form.value,
-  };
+onMounted(() => inscriptionStore.fetchAll());
 
-  recentPaiements.value.unshift(newPaiement);
+/**
+ * Retrouve l'inscription visée par la saisie.
+ *
+ * Le matricule est un identifiant : une correspondance exacte tranche. Un nom ne
+ * l'est pas — deux étudiants peuvent le porter — et une correspondance multiple
+ * est donc refusée plutôt qu'arbitrée au hasard.
+ *
+ * @param {string} saisie
+ * @returns {{inscription_id: string, matricule: string, nom: string, prenom: string}}
+ */
+function resoudreInscription(saisie) {
+  const terme = saisie.trim().toLowerCase();
+  const etudiants = inscriptionStore.etudiants;
 
-  // Ici on appellerait la fonction de génération de reçu
-  alert(`Paiement de ${form.value.montant} FCFA enregistré. Impression du reçu...`);
+  const parMatricule = etudiants.filter(
+    (etudiant) => String(etudiant.matricule ?? '').toLowerCase() === terme
+  );
+  if (parMatricule.length === 1) return parMatricule[0];
+
+  const parNom = etudiants.filter((etudiant) =>
+    `${etudiant.prenom ?? ''} ${etudiant.nom ?? ''}`.toLowerCase().includes(terme)
+  );
+
+  if (parNom.length === 1) return parNom[0];
+
+  if (parNom.length > 1) {
+    throw new Error(
+      `« ${saisie} » correspond à ${parNom.length} étudiants. Saisissez le matricule pour lever l’ambiguïté.`
+    );
+  }
+
+  throw new Error(`Aucune inscription ne correspond à « ${saisie} ».`);
+}
+
+const submitPaiement = async () => {
+  let etudiant;
+
+  try {
+    etudiant = resoudreInscription(form.value.etudiant);
+  } catch (error) {
+    notifications.notifyError(error, 'Étudiant introuvable.');
+    return;
+  }
+
+  const resultat = await store.encaisser({
+    inscription_id: etudiant.inscription_id,
+    montant: Number(form.value.montant),
+    mode_paiement: MODES[form.value.mode] ?? 'ESPECE',
+    nature_paiement: NATURES[form.value.type] ?? null,
+    observations: form.value.observations || null,
+    date_paiement: form.value.date || null,
+  });
+
+  // `encaisser` a déjà notifié l'échec ; on ne vide pas le formulaire, pour que
+  // le guichetier n'ait pas à tout resaisir.
+  if (!resultat) return;
+
+  recentPaiements.value.unshift({
+    id: resultat.id,
+    etudiant: `${etudiant.prenom} ${etudiant.nom}`,
+    type: resultat.type,
+    montant: Number(resultat.montant ?? 0).toLocaleString('fr-FR'),
+  });
+
+  if (resultat.recu) {
+    try {
+      imprimerRecu({ ...resultat.recu, ...resultat });
+    } catch (error) {
+      // Le paiement est encaissé : un blocage de pop-up ne doit pas le laisser
+      // croire échoué. Le reçu reste réimprimable depuis la liste.
+      notifications.notifyWarning(
+        'Paiement enregistré, mais la fenêtre d’impression a été bloquée. Le reçu est réimprimable depuis la liste des paiements.'
+      );
+    }
+  }
 
   resetForm();
 };
 
 const resetForm = () => {
-  form.value = {
-    etudiant: '',
-    type: '',
-    montant: null,
-    date: new Date().toISOString().substr(0, 10),
-    mode: 'Espèces',
-    observations: '',
-  };
+  form.value = etatInitial();
 };
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
-  console.log('Fichier sélectionné :', file.name);
+  if (file) {
+    notifications.notifyInfo(`Fichier « ${file.name} » sélectionné.`);
+  }
 };
 
+/**
+ * L'import de masse n'a pas d'endpoint : le backend n'expose aucune route
+ * d'import de paiements (voir `routes/finances/paiement.routes.js`). Le bouton
+ * annonçait « Traitement du fichier en cours… » sans rien traiter — on le dit,
+ * plutôt que de le laisser mentir.
+ */
 const processImport = () => {
-  alert('Traitement du fichier en cours...');
-  // Logique avec la lib XLSX par exemple
+  notifications.notifyWarning(
+    'L’import de paiements en masse n’est pas encore disponible côté serveur. Saisissez les paiements à l’unité.'
+  );
 };
 </script>
 

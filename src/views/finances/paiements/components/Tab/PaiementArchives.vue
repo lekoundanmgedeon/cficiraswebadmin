@@ -146,45 +146,85 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useTableExport } from '@/shared/composables/useTableExport';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
+import { useRapportStore } from '@/modules/finances/stores/rapports';
 
-const exercisces = ['2022-2023', '2023-2024', '2024-2025'];
+/**
+ * Archives : la clôture d'un exercice, ventilée classe par classe.
+ *
+ * Les trois exercices de la liste, la synthèse et les quatre classes du tableau
+ * étaient tous codés en dur — `loadArchiveData` réaffectait les mêmes constantes
+ * quel que soit l'exercice choisi.
+ *
+ * Les exercices viennent des années académiques ; la synthèse et la ventilation
+ * viennent de `GET /finance/rapports/kpi?annee_id=` et `/rapports/bilan-classes`,
+ * qui acceptent une année précise (par défaut, ils portent sur l'année active —
+ * ce qui n'aurait aucun sens pour consulter un exercice clos).
+ */
+
+const anneeStore = useAnneeStore();
+const store = useRapportStore();
+
 const selectedExercice = ref('');
 
-// Données de synthèse de l'archive
-const summary = ref({ total: 0, tauxRecouvrement: 0, creances: 0 });
-const archiveRecords = ref([]);
+onMounted(() => anneeStore.fetchAll());
 
-const loadArchiveData = () => {
+/** Le `<select>` liste des codes d'année (« 2024-2025 »). */
+const exercisces = computed(() => anneeStore.items.map((annee) => annee.code));
+
+const summary = computed(() => ({
+  total: store.kpi.total_encaisse,
+  tauxRecouvrement: store.kpi.taux_recouvrement,
+  creances: store.kpi.total_restant,
+}));
+
+const archiveRecords = computed(() => store.bilanClasses);
+
+const loadArchiveData = async () => {
   if (!selectedExercice.value) {
-    archiveRecords.value = [];
+    store.bilanClasses = [];
     return;
   }
 
-  // Simulation d'extraction de données figées en BDD pour l'année sélectionnée
-  summary.value = {
-    total: 142500000,
-    tauxRecouvrement: 94.8,
-    creances: 7800000,
-  };
+  const annee = anneeStore.items.find((item) => item.code === selectedExercice.value);
+  if (!annee) return;
 
-  archiveRecords.value = [
-    { classe: 'Licence 1 Informatique (Ex)', effectif: 60, attendu: 45000000, percu: 43200000 },
-    { classe: 'Licence 2 Informatique (Ex)', effectif: 48, attendu: 36000000, percu: 36000000 },
-    { classe: 'Master 1 Spécialisé (Ex)', effectif: 25, attendu: 37500000, percu: 34500000 },
-    { classe: 'Master 2 Recherche (Ex)', effectif: 18, attendu: 31800000, percu: 31000000 },
-  ];
+  await Promise.all([
+    store.fetchKpi({ annee_id: annee.id }),
+    store.fetchBilanClasses({ annee_id: annee.id }),
+  ]);
 };
 
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
-};
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('fr-FR').format(Number(value ?? 0)) + ' FCFA';
 
-const downloadGlobalReport = () => {
-  alert(
-    `Extraction et téléchargement du Grand Livre Comptable certifié pour l'exercice [${selectedExercice.value}].`
-  );
-};
+const exportRows = computed(() =>
+  archiveRecords.value.map((ligne) => ({
+    Classe: ligne.classe,
+    Filière: ligne.filiere ?? '—',
+    Effectif: ligne.effectif,
+    'Total attendu': ligne.attendu,
+    'Total perçu': ligne.percu,
+    'Reste à recouvrer': ligne.reste,
+    'Taux (%)': ligne.taux,
+  }))
+);
+
+const { exportToPdf } = useTableExport({
+  rows: exportRows,
+  title: 'Grand livre — synthèse par classe',
+  fileBaseName: 'archives-financieres',
+  filters: () => [
+    { label: 'Exercice', value: selectedExercice.value },
+    { label: 'Total encaissé', value: formatCurrency(summary.value.total) },
+    { label: 'Taux de recouvrement', value: `${summary.value.tauxRecouvrement} %` },
+    { label: 'Restes à recouvrer', value: formatCurrency(summary.value.creances) },
+  ],
+});
+
+const downloadGlobalReport = () => exportToPdf();
 </script>
 
 <style scoped>

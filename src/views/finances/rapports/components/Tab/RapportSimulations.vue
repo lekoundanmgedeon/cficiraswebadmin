@@ -189,53 +189,64 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRapportStore } from '@/modules/finances/stores/rapports';
 
-// Curseurs d'ajustement (liaisons v-model)
+/**
+ * Simulateur de projections.
+ *
+ * Le simulateur projetait à partir de deux constantes (48 500 000 F de chiffre
+ * d'affaires, 11 450 000 F de charges) : les curseurs faisaient varier des
+ * nombres inventés.
+ *
+ * Le chiffre d'affaires part maintenant du **dû réel** de l'année active
+ * (`total_engage` : la somme des tarifs de tous les inscrits).
+ *
+ * Les charges, elles, restent à zéro : aucune table ne les porte. Le backend ne
+ * connaît que les recettes étudiantes ; les honoraires des formateurs, qui en
+ * formeraient l'essentiel, relèvent de la paie et n'ont pas de modèle. Le
+ * curseur « vacations » reste donc sans effet tant qu'un module de charges
+ * n'existe pas — mais le calcul, lui, est prêt à le recevoir.
+ */
+
+const store = useRapportStore();
+
 const scolariteModifier = ref(0);
 const effectifModifier = ref(0);
 const vacatModifier = ref(0);
 
-// Métriques réelles de référence de l'ERP
-const baseFinances = {
-  caActuel: 48500000, // Total facturé/engagé initial
-  chargesActuelles: 11450000, // Masse brute initiale des honoraires formateurs
-};
+onMounted(() => store.fetchKpi());
 
-// Logique mathématique de projection financière
+const baseFinances = computed(() => ({
+  caActuel: store.kpi.total_engage,
+  chargesActuelles: 0,
+}));
+
 const projections = computed(() => {
-  // Calcul du nouveau CA (Scolarités ajustées + effet volume des effectifs)
+  const base = baseFinances.value;
+
+  // Chiffre d'affaires : effet prix (scolarité) × effet volume (effectifs).
   const coefficientScolarite = 1 + scolariteModifier.value / 100;
   const coefficientEffectif = 1 + effectifModifier.value / 100;
-  const caProjete = Math.round(baseFinances.caActuel * coefficientScolarite * coefficientEffectif);
-  const caEcart = caProjete - baseFinances.caActuel;
+  const caProjete = Math.round(base.caActuel * coefficientScolarite * coefficientEffectif);
+  const caEcart = caProjete - base.caActuel;
 
-  // Calcul des nouvelles charges (Ajustement taux horaire + ajustement du volume d'heures induit par les effectifs)
+  // Charges : effet taux horaire × effet volume d'heures. On estime qu'une hausse
+  // d'effectif n'ouvre des classes qu'à hauteur de 25 % de sa croissance.
   const coefficientVacation = 1 + vacatModifier.value / 100;
-  // On estime qu'une hausse d'effectif crée une ouverture de classes de 25% du taux de croissance
   const coefficientVolumeHeure = 1 + (effectifModifier.value / 100) * 0.25;
   const chargesProjetees = Math.round(
-    baseFinances.chargesActuelles * coefficientVacation * coefficientVolumeHeure
+    base.chargesActuelles * coefficientVacation * coefficientVolumeHeure
   );
-  const chargesEcart = chargesProjetees - baseFinances.chargesActuelles;
+  const chargesEcart = chargesProjetees - base.chargesActuelles;
 
-  // Résultat net final
   const resultatProjete = caProjete - chargesProjetees;
-  const resultatEcart = resultatProjete - (baseFinances.caActuel - baseFinances.chargesActuelles);
+  const resultatEcart = resultatProjete - (base.caActuel - base.chargesActuelles);
 
-  return {
-    caProjete,
-    caEcart,
-    chargesProjetees,
-    chargesEcart,
-    resultatProjete,
-    resultatEcart,
-  };
+  return { caProjete, caEcart, chargesProjetees, chargesEcart, resultatProjete, resultatEcart };
 });
 
-const formatPrice = (val) => {
-  return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
-};
+const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' FCFA';
 
 const resetSimulateur = () => {
   scolariteModifier.value = 0;

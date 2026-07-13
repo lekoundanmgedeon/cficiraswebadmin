@@ -110,67 +110,79 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import Chart from 'chart.js/auto';
+import { usePaiementStore } from '@/modules/finances/stores/paiements';
 
-const paiements = ref([]);
-let chartModeInstance = null;
-let chartMontantsInstance = null;
+/**
+ * Rapport des paiements.
+ *
+ * Les trois paiements et les deux graphiques étaient bâtis sur un tableau écrit
+ * dans le `onMounted`. Ils viennent maintenant de `GET /finance/paiements`.
+ *
+ * Les graphiques ne peuvent plus être construits dans `onMounted` : à ce moment,
+ * la requête n'est pas revenue et la liste est vide. Ils sont donc (re)dessinés
+ * dès que les données arrivent, et détruits avant chaque redessin — sans quoi
+ * Chart.js empile ses instances sur le même `<canvas>` et fuit.
+ */
 
-onMounted(() => {
-  // Données consolidées
-  paiements.value = [
-    {
-      id: 1,
-      matricule: 'ETU-2026-001',
-      nom: 'Diallo',
-      prenom: 'Moussa',
-      montant: 50000,
-      type: 'Inscription',
-      statut: 'Payé',
-      date: '2026-01-15',
-      mode: 'Mobile Money',
-    },
-    {
-      id: 2,
-      matricule: 'ETU-2026-002',
-      nom: 'Ndiaye',
-      prenom: 'Awa',
-      montant: 30000,
-      type: 'Cours',
-      statut: 'Payé',
-      date: '2026-02-10',
-      mode: 'Espèces',
-    },
-    {
-      id: 3,
-      matricule: 'ETU-2026-003',
-      nom: 'Kouassi',
-      prenom: 'Jean',
-      montant: 45000,
-      type: 'Logement',
-      statut: 'En attente',
-      date: '2026-03-05',
-      mode: 'Virement',
-    },
-  ];
+const store = usePaiementStore();
+const { items: paiements } = storeToRefs(store);
 
-  // 1. Logique d'analyse pour le graphique en Camembert (Mode)
-  const modeCounts = {};
-  paiements.value.forEach((p) => {
-    modeCounts[p.mode] = (modeCounts[p.mode] || 0) + 1;
-  });
+/** @type {import('vue').Ref<Chart|null>} */
+const chartModeInstance = ref(null);
+/** @type {import('vue').Ref<Chart|null>} */
+const chartMontantsInstance = ref(null);
+
+onMounted(() => store.fetchAll());
+
+/** Répartition par mode, en nombre de versements. */
+const repartitionModes = computed(() => {
+  const compteurs = {};
+  for (const paiement of paiements.value) {
+    if (!paiement.mode) continue;
+    compteurs[paiement.mode] = (compteurs[paiement.mode] || 0) + 1;
+  }
+  return compteurs;
+});
+
+/**
+ * Volume encaissé par mois.
+ *
+ * `date` est servie au format JJ/MM/AAAA : `new Date('20/10/2023')` est invalide
+ * en JavaScript. On s'appuie donc sur `date_paiement` (ISO), que la vue serveur
+ * fournit à côté.
+ */
+const volumeParMois = computed(() => {
+  const totaux = {};
+
+  for (const paiement of paiements.value) {
+    const date = new Date(paiement.date_paiement);
+    if (Number.isNaN(date.getTime())) continue;
+
+    const mois = date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+    const libelle = mois.charAt(0).toUpperCase() + mois.slice(1);
+    totaux[libelle] = (totaux[libelle] || 0) + Number(paiement.montant ?? 0);
+  }
+
+  return totaux;
+});
+
+function dessinerGraphiques() {
+  chartModeInstance.value?.destroy();
+  chartMontantsInstance.value?.destroy();
 
   const ctxMode = document.getElementById('chartModePaiement');
   if (ctxMode) {
-    chartModeInstance = new Chart(ctxMode, {
-      type: 'doughnut', // Version épurée du Pie Chart classique
+    chartModeInstance.value = new Chart(ctxMode, {
+      type: 'doughnut',
       data: {
-        labels: Object.keys(modeCounts),
+        labels: Object.keys(repartitionModes.value),
         datasets: [
           {
-            data: Object.values(modeCounts),
-            backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545'],
+            data: Object.values(repartitionModes.value),
+            backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545', '#6f42c1', '#20c997'],
             borderWidth: 0,
           },
         ],
@@ -185,24 +197,16 @@ onMounted(() => {
     });
   }
 
-  // 2. Logique d'analyse pour l'histogramme mensuel
-  const moisCounts = {};
-  paiements.value.forEach((p) => {
-    const mois = new Date(p.date).toLocaleString('fr-FR', { month: 'long' });
-    const moisCapitalise = mois.charAt(0).toUpperCase() + mois.slice(1);
-    moisCounts[moisCapitalise] = (moisCounts[moisCapitalise] || 0) + p.montant;
-  });
-
   const ctxMontants = document.getElementById('chartMontants');
   if (ctxMontants) {
-    chartMontantsInstance = new Chart(ctxMontants, {
+    chartMontantsInstance.value = new Chart(ctxMontants, {
       type: 'bar',
       data: {
-        labels: Object.keys(moisCounts),
+        labels: Object.keys(volumeParMois.value),
         datasets: [
           {
             label: 'Volume encaissé',
-            data: Object.values(moisCounts),
+            data: Object.values(volumeParMois.value),
             backgroundColor: 'rgba(40, 167, 69, 0.85)',
             borderRadius: 4,
             barThickness: 25,
@@ -220,21 +224,38 @@ onMounted(() => {
       },
     });
   }
+}
+
+// `nextTick` : les `<canvas>` sont sous un `v-if` sur la liste ; ils n'existent
+// dans le DOM qu'au rendu qui suit l'arrivée des données.
+watch(paiements, async () => {
+  await nextTick();
+  dessinerGraphiques();
 });
 
-// Destruction propre des instances des charts pour prévenir les fuites de mémoire
 onBeforeUnmount(() => {
-  if (chartModeInstance) chartModeInstance.destroy();
-  if (chartMontantsInstance) chartMontantsInstance.destroy();
+  chartModeInstance.value?.destroy();
+  chartMontantsInstance.value?.destroy();
 });
 
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
-};
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('fr-FR').format(Number(value ?? 0)) + ' FCFA';
 
+/**
+ * Le serveur sert déjà la date au format JJ/MM/AAAA. La reformater la
+ * casserait : `new Date('20/10/2023')` est invalide. On ne convertit donc que
+ * ce qui ne l'est pas déjà.
+ *
+ * @param {string} dateStr
+ */
 const formatDate = (dateStr) => {
-  const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-  return new Date(dateStr).toLocaleDateString('fr-FR', options);
+  if (!dateStr) return '—';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
+
+  return date.toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' });
 };
 </script>
 

@@ -151,70 +151,95 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted } from 'vue';
+import { useTableExport } from '@/shared/composables/useTableExport';
+import { useEcheancierStore } from '@/modules/finances/stores/echeanciers';
 
-// Répartition analytique temporelle des impayés (Balance Âgée)
-const balanceAgee = ref({
-  saines: 1850000, // Factures récentes non échues
-  modere: 750000, // Échéance dépassée de 30-60j
-  critique: 450000, // Échéance dépassée de 60-90j
-  contentieux: 150000, // Échéance dépassée de +90j
+/**
+ * Créances : balance âgée et principaux débiteurs.
+ *
+ * Les quatre paliers et les cinq débiteurs étaient codés en dur.
+ *
+ * Les deux se déduisent du **suivi des traites** (`GET
+ * /finance/echeanciers/suivi`), qui porte, échéance par échéance, ce qui reste
+ * dû et depuis combien de jours. C'est la seule source qui date une créance :
+ * une facture, elle, ne connaît que son solde global, pas son ancienneté.
+ */
+
+const store = useEcheancierStore();
+
+onMounted(() => store.fetchSuivi());
+
+/** Les échéances encore dues, en montants convertis (`NUMERIC` → nombre). */
+const impayees = computed(() =>
+  store.traites
+    .map((traite) => ({
+      ...traite,
+      reste: Number(traite.reste ?? 0),
+      montant: Number(traite.montant ?? 0),
+      montant_regle: Number(traite.montant_regle ?? 0),
+      jours_retard: Number(traite.jours_retard ?? 0),
+    }))
+    .filter((traite) => traite.reste > 0)
+);
+
+/**
+ * Balance âgée : le reste dû, ventilé par ancienneté du retard.
+ *
+ * « Saines » regroupe les échéances non encore échues (aucun jour de retard) :
+ * elles sont dues, mais rien ne les rend exigibles aujourd'hui.
+ */
+const balanceAgee = computed(() => {
+  const paliers = { saines: 0, modere: 0, critique: 0, contentieux: 0 };
+
+  for (const echeance of impayees.value) {
+    const jours = echeance.jours_retard;
+
+    if (jours === 0) paliers.saines += echeance.reste;
+    else if (jours <= 60) paliers.modere += echeance.reste;
+    else if (jours <= 90) paliers.critique += echeance.reste;
+    else paliers.contentieux += echeance.reste;
+  }
+
+  return paliers;
 });
 
-// Top des dossiers nécessitant un arbitrage immédiat
-const debiteursTop = ref([
-  {
-    matricule: 'ETU-2026-003',
-    nom: 'Modou Fall',
-    filiere: 'Informatique',
-    classe: 'M1-JV',
-    total: 450000,
-    regle: 0,
-    joursRetard: 95,
-  },
-  {
-    matricule: 'ETU-2026-114',
-    nom: 'Ibrahima Diallo',
-    filiere: 'Génie Civil',
-    classe: 'L3-B',
-    total: 600000,
-    regle: 200000,
-    joursRetard: 64,
-  },
-  {
-    matricule: 'ETU-2026-001',
-    nom: 'Amath Sarr',
-    filiere: 'Informatique',
-    classe: 'L1-A',
-    total: 500000,
-    regle: 350000,
-    joursRetard: 42,
-  },
-  {
-    matricule: 'ETU-2026-088',
-    nom: 'Amy Ndiaye',
-    filiere: 'Management',
-    classe: 'M2-FI',
-    total: 750000,
-    regle: 600000,
-    joursRetard: 35,
-  },
-  {
-    matricule: 'ETU-2026-204',
-    nom: 'Oumar Sy',
-    filiere: 'Droit',
-    classe: 'L2-A',
-    total: 300000,
-    regle: 150000,
-    joursRetard: 12,
-  },
-]);
+/**
+ * Les dossiers les plus en retard.
+ *
+ * Un étudiant a plusieurs échéances : on les regroupe. Le « niveau de risque »
+ * retenu est celui de sa créance la plus ancienne — c'est elle qui déclenche
+ * l'arbitrage, pas la moyenne.
+ */
+const debiteursTop = computed(() => {
+  const parEtudiant = new Map();
 
-const formatPrice = (val) => {
-  return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
-};
+  for (const echeance of impayees.value) {
+    const cle = echeance.matricule;
+    const existant = parEtudiant.get(cle) ?? {
+      matricule: echeance.matricule,
+      nom: echeance.etudiant,
+      filiere: echeance.filiere,
+      classe: echeance.classe_code,
+      total: 0,
+      regle: 0,
+      joursRetard: 0,
+    };
 
-// Logique de couleur adaptative selon le palier de la balance âgée
+    existant.total += echeance.montant;
+    existant.regle += echeance.montant_regle;
+    existant.joursRetard = Math.max(existant.joursRetard, echeance.jours_retard);
+
+    parEtudiant.set(cle, existant);
+  }
+
+  return [...parEtudiant.values()]
+    .sort((a, b) => b.joursRetard - a.joursRetard || b.total - b.regle - (a.total - a.regle))
+    .slice(0, 10);
+});
+
+const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' FCFA';
+
 const getRiskBadgeClass = (jours) => {
   if (jours > 90) return 'bg-soft-danger text-danger fw-bold';
   if (jours > 60) return 'bg-soft-orange text-orange fw-bold';
@@ -222,11 +247,37 @@ const getRiskBadgeClass = (jours) => {
   return 'bg-soft-success text-success';
 };
 
-const exportGlobalAudit = () => {
-  alert(
-    "Génération du rapport d'audit général des créances.\nCalcul des provisions pour dépréciation inclus."
-  );
-};
+const exportRows = computed(() =>
+  debiteursTop.value.map((debiteur) => ({
+    Matricule: debiteur.matricule,
+    Étudiant: debiteur.nom,
+    Filière: debiteur.filiere ?? '—',
+    Classe: debiteur.classe ?? '—',
+    Facturé: debiteur.total,
+    'Déjà réglé': debiteur.regle,
+    'Dette restante': debiteur.total - debiteur.regle,
+    'Jours de retard': debiteur.joursRetard,
+  }))
+);
+
+const { exportToPdf } = useTableExport({
+  rows: exportRows,
+  title: 'Audit des créances',
+  fileBaseName: 'creances',
+  filters: () => [
+    { label: 'Non échu', value: formatPrice(balanceAgee.value.saines) },
+    { label: 'Retard ≤ 60 j', value: formatPrice(balanceAgee.value.modere) },
+    { label: 'Retard 61–90 j', value: formatPrice(balanceAgee.value.critique) },
+    { label: 'Contentieux (+90 j)', value: formatPrice(balanceAgee.value.contentieux) },
+  ],
+});
+
+/**
+ * L'audit exporte la balance âgée et les débiteurs. Le calcul des « provisions
+ * pour dépréciation » qu'annonçait l'`alert()` d'origine n'existe nulle part :
+ * il supposerait un taux de provisionnement par palier, que rien ne définit.
+ */
+const exportGlobalAudit = () => exportToPdf();
 </script>
 
 <style scoped>

@@ -17,37 +17,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
 import PaiementHeader from './components/PaiementHeader.vue';
 import PaiementTab from './components/PaiementTab.vue';
 
-const loading = ref(true);
-const formateurs = ref([]);
-
-onMounted(() => {
-  setTimeout(() => {
-    formateurs.value = [
-      {
-        id: 1,
-        matricule: 'F001',
-        nom: 'Doe',
-        prenom: 'John',
-        email: 'john@example.com',
-        telephone: '0123456789',
-      },
-      {
-        id: 2,
-        matricule: 'F002',
-        nom: 'Smith',
-        prenom: 'Anna',
-        email: 'anna@example.com',
-        telephone: '0987654321',
-      },
-    ];
-    loading.value = false;
-  }, 3000);
-});
+/**
+ * L'écran masquait ses onglets derrière un squelette pendant **trois secondes**,
+ * le temps d'un `setTimeout` qui remplissait un tableau `formateurs` — deux
+ * enseignants « John Doe » — que rien n'affichait ensuite. Ni le délai ni ces
+ * données n'avaient de rapport avec les paiements.
+ *
+ * Chaque onglet charge désormais ses propres données et gère son état vide :
+ * le squelette n'a plus rien à attendre.
+ */
+const loading = ref(false);
 </script>
 <style scoped>
 .drag-drop-area {

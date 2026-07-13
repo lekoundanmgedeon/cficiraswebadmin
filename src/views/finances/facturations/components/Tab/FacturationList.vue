@@ -22,7 +22,7 @@
         <div class="card bg-light border-0">
           <div class="card-body p-3">
             <p class="text-muted small mb-1">Total Facturé</p>
-            <h5 class="fw-bold mb-0">12.450.000 F</h5>
+            <h5 class="fw-bold mb-0">{{ formatPrice(totaux.facture) }}</h5>
           </div>
         </div>
       </div>
@@ -30,7 +30,7 @@
         <div class="card bg-soft-warning border-0">
           <div class="card-body p-3">
             <p class="text-warning small mb-1">En attente (Impayés)</p>
-            <h5 class="fw-bold mb-0 text-warning">3.200.000 F</h5>
+            <h5 class="fw-bold mb-0 text-warning">{{ formatPrice(totaux.solde) }}</h5>
           </div>
         </div>
       </div>
@@ -135,72 +135,153 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useNotificationStore } from '@/shared/stores/notificationStore';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
+import { useFactureStore } from '@/modules/finances/stores/factures';
+import { facturesResource } from '@/modules/finances/api';
+import { ouvrirFacture } from '@/modules/finances/utils/recu';
+
+/**
+ * Registre des factures.
+ *
+ * Les trois factures affichées étaient codées en dur, et les quatre actions
+ * (« PDF », « Email », « Détails », « Rappels groupés ») n'étaient que des
+ * `alert()`. Les deux compteurs du haut — « 12.450.000 F » facturés,
+ * « 3.200.000 F » impayés — étaient des constantes écrites dans le balisage.
+ *
+ * Tout vient maintenant de `GET /finance/factures`. La vue serveur
+ * (`v_finance_factures`) ne stocke aucun solde : elle le **déduit** des
+ * paiements confirmés. Un encaissement fait donc bouger le solde et le statut
+ * d'une facture sans que rien n'ait à être recalculé ici.
+ *
+ * Les colonnes du serveur sont en `snake_case` (`total_du`, `deja_paye`) ; le
+ * tableau, lui, lit `totalDu` et `dejaPaye`. La correspondance est faite dans
+ * `factures`, ce qui laisse le balisage inchangé.
+ */
+
+const store = useFactureStore();
+const anneeStore = useAnneeStore();
+const classeStore = useClasseStore();
+const notifications = useNotificationStore();
 
 const searchQuery = ref('');
 const statusFilter = ref('tous');
 
-const factures = ref([
-  {
-    id: 1,
-    numero: 'FAC-2024-001',
-    etudiant: 'Amath Sarr',
-    matricule: 'ETU045',
-    totalDu: 500000,
-    dejaPaye: 350000,
-    solde: 150000,
-    statut: 'Partiel',
-  },
-  {
-    id: 2,
-    numero: 'FAC-2024-002',
-    etudiant: 'Fatima Ndiaye',
-    matricule: 'ETU089',
-    totalDu: 250000,
-    dejaPaye: 250000,
-    solde: 0,
-    statut: 'Payé',
-  },
-  {
-    id: 3,
-    numero: 'FAC-2024-003',
-    etudiant: 'Modou Fall',
-    matricule: 'ETU112',
-    totalDu: 450000,
-    dejaPaye: 0,
-    solde: 450000,
-    statut: 'Impayé',
-  },
-]);
-
-const filteredFactures = computed(() => {
-  return factures.value.filter((f) => {
-    const matchesSearch =
-      f.etudiant.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      f.numero.includes(searchQuery.value);
-    const matchesStatus =
-      statusFilter.value === 'tous' || f.statut.toLowerCase() === statusFilter.value;
-    return matchesSearch && matchesStatus;
-  });
+onMounted(() => {
+  store.fetchAll();
+  anneeStore.fetchAll();
+  classeStore.fetchAll();
 });
 
-const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(val) + ' F';
+const factures = computed(() =>
+  store.items.map((facture) => ({
+    ...facture,
+    totalDu: Number(facture.total_du ?? 0),
+    dejaPaye: Number(facture.deja_paye ?? 0),
+    solde: Number(facture.solde ?? 0),
+  }))
+);
+
+/** Ce que les deux compteurs du haut affichaient en dur. */
+const totaux = computed(() => store.totaux);
+
+const filteredFactures = computed(() =>
+  factures.value.filter((f) => {
+    const recherche = searchQuery.value.toLowerCase();
+    const matchesSearch =
+      !recherche ||
+      String(f.etudiant ?? '')
+        .toLowerCase()
+        .includes(recherche) ||
+      String(f.matricule ?? '')
+        .toLowerCase()
+        .includes(recherche) ||
+      String(f.numero ?? '')
+        .toLowerCase()
+        .includes(recherche);
+
+    const matchesStatus =
+      statusFilter.value === 'tous' ||
+      String(f.statut ?? '').toLowerCase() === statusFilter.value.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  })
+);
+
+const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' F';
 
 const getStatusBadge = (status) => {
   const base = 'badge rounded-pill ';
   if (status === 'Payé') return base + 'bg-success';
   if (status === 'Partiel') return base + 'bg-warning text-dark';
+  if (status === 'Annulée') return base + 'bg-secondary';
   return base + 'bg-danger';
 };
 
-// Logique des actions
-const downloadPDF = (f) => alert(`Téléchargement de la facture ${f.numero} au format PDF...`);
+/**
+ * Ouvre le document de la facture : ses lignes et les règlements imputés.
+ *
+ * Le serveur n'expose pas de PDF — `GET /factures/:id` rend les données, pas le
+ * document. Il est composé côté client, et l'impression du navigateur permet de
+ * l'enregistrer en PDF.
+ *
+ * @param {any} facture @param {boolean} imprimer
+ */
+async function ouvrirDocument(facture, imprimer) {
+  const reponse = await store.run(() => facturesResource.getById(facture.id), {
+    failure: 'Erreur lors de la récupération de la facture.',
+  });
+  if (!reponse) return;
+
+  try {
+    ouvrirFacture(reponse.data, { imprimer });
+  } catch (error) {
+    notifications.notifyError(error, 'Impossible d’ouvrir la facture.');
+  }
+}
+
+const downloadPDF = (f) => ouvrirDocument(f, true);
+const viewDetails = (f) => ouvrirDocument(f, false);
+
+/**
+ * L'envoi d'e-mails n'a pas d'endpoint : aucune route du backend n'expédie de
+ * courrier (voir `routes/finances/facture.routes.js`). Le dire vaut mieux que de
+ * laisser croire à un envoi, comme le faisait l'`alert()` précédente.
+ */
 const sendEmail = (f) =>
-  alert(`Facture envoyée à l'adresse email liée au matricule ${f.matricule}`);
-const sendBulkReminders = () =>
-  alert('Envoi des emails de rappel pour toutes les factures impayées/partielles...');
-const triggerAutoGeneration = () =>
-  alert('Génération automatique des factures mensuelles pour le cycle en cours...');
+  notifications.notifyWarning(
+    `L’envoi par e-mail n’est pas encore disponible. Adresse du dossier : ${f.email ?? 'non renseignée'}.`
+  );
+
+const sendBulkReminders = async () => {
+  await store.fetchImpayees();
+  notifications.notifyWarning(
+    `${store.impayees.length} facture(s) non soldée(s), pour ${formatPrice(store.totalImpaye)}. ` +
+      'L’envoi des rappels par e-mail n’est pas encore disponible côté serveur.'
+  );
+};
+
+/**
+ * Facture toutes les inscriptions non encore facturées de l'année active.
+ *
+ * Le serveur facture une classe à la fois ; l'écran ne demandant pas de classe,
+ * on les parcourt toutes. Les inscriptions déjà facturées sont ignorées par le
+ * serveur : relancer la génération est sans effet, et non une erreur.
+ */
+const triggerAutoGeneration = async () => {
+  const annee = anneeStore.activeAnnee;
+
+  if (!annee) {
+    notifications.notifyWarning(
+      'Aucune année académique active : impossible de savoir sur quel exercice facturer.'
+    );
+    return;
+  }
+
+  await store.genererPourClasses(classeStore.items, annee.id);
+};
 </script>
 
 <style scoped>

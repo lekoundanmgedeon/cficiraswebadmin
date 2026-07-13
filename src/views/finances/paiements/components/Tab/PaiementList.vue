@@ -147,7 +147,31 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useNotificationStore } from '@/shared/stores/notificationStore';
+import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePaiementStore } from '@/modules/finances/stores/paiements';
+import { imprimerRecu } from '@/modules/finances/utils/recu';
+
+/**
+ * Registre des encaissements.
+ *
+ * Les deux paiements affichés étaient codés en dur, comme les listes de cycles,
+ * de filières et de classes des filtres : on filtrait donc un tableau constant
+ * de deux lignes sur des valeurs (« Doctorat », « L1-A ») qui n'existaient nulle
+ * part en base. Les trois boutons d'export et le bouton « Reçu » se contentaient
+ * d'un `alert()`.
+ *
+ * Tout vient désormais de `GET /finance/paiements`, dont la vue serveur
+ * (`v_finance_paiements`) rend précisément les colonnes attendues ici —
+ * `matricule`, `nom`, `prenom`, `montant`, `type`, `statut`, `date`, `mode`,
+ * `cycle`, `filiere`, `classe`. Le balisage n'a pas bougé.
+ */
+
+const store = usePaiementStore();
+const notifications = useNotificationStore();
+const { items: paiements } = storeToRefs(store);
 
 const moisListe = [
   'Janvier',
@@ -164,10 +188,6 @@ const moisListe = [
   'Décembre',
 ];
 
-const cycles = ['Licence', 'Master', 'Doctorat'];
-const filieres = ['Informatique', 'Génie Civil', 'Management', 'Droit'];
-const classes = ['L1-A', 'L1-B', 'M1-JV', 'M2-FI'];
-
 const filters = ref({
   cycle: '',
   filiere: '',
@@ -175,71 +195,88 @@ const filters = ref({
   classe: '',
 });
 
-const paiements = ref([
-  {
-    id: 1,
-    matricule: 'ETU-2024-001',
-    nom: 'DIOP',
-    prenom: 'Moussa',
-    montant: 150000,
-    type: 'Scolarité',
-    statut: 'Payé',
-    date: '20/10/2023',
-    mode: 'Wave',
-    cycle: 'Licence',
-    filiere: 'Informatique',
-    classe: 'L1-A',
-  },
-  {
-    id: 2,
-    matricule: 'ETU-2024-042',
-    nom: 'SOW',
-    prenom: 'Fatou',
-    montant: 75000,
-    type: 'Inscription',
-    statut: 'Partiel',
-    date: '22/10/2023',
-    mode: 'Espèces',
-    cycle: 'Master',
-    filiere: 'Management',
-    classe: 'M1-JV',
-  },
-]);
+onMounted(() => store.fetchAll());
 
-// Logique de filtrage adaptative
-const filteredPaiements = computed(() => {
-  return paiements.value.filter((p) => {
-    const partieDate = p.date.split('/');
-    const moisPaiement = parseInt(partieDate[1]);
+/**
+ * Les options des filtres sont déduites des paiements chargés, et non d'une
+ * liste figée : elles ne peuvent donc pas proposer une classe qui n'existe pas,
+ * ni omettre une classe qui existe.
+ *
+ * @param {string} champ
+ */
+const valeursDistinctes = (champ) =>
+  [...new Set(paiements.value.map((paiement) => paiement[champ]).filter(Boolean))].sort();
+
+const cycles = computed(() => valeursDistinctes('cycle'));
+const filieres = computed(() => valeursDistinctes('filiere'));
+const classes = computed(() => valeursDistinctes('classe'));
+
+const filteredPaiements = computed(() =>
+  paiements.value.filter((p) => {
+    // `date` est servie au format JJ/MM/AAAA : le mois est le second segment.
+    const moisPaiement = parseInt(String(p.date ?? '').split('/')[1], 10);
 
     return (
       (filters.value.cycle === '' || p.cycle === filters.value.cycle) &&
       (filters.value.filiere === '' || p.filiere === filters.value.filiere) &&
       (filters.value.classe === '' || p.classe === filters.value.classe) &&
-      (filters.value.mois === '' || moisPaiement === parseInt(filters.value.mois))
+      (filters.value.mois === '' || moisPaiement === parseInt(filters.value.mois, 10))
     );
-  });
+  })
+);
+
+// Les montants arrivent en chaînes (`NUMERIC` PostgreSQL) : sans `Number()`,
+// l'addition les concaténerait.
+const totalFiltré = computed(() =>
+  filteredPaiements.value.reduce((total, paiement) => total + Number(paiement.montant ?? 0), 0)
+);
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('fr-FR').format(Number(value ?? 0)) + ' FCFA';
+
+const exportRows = computed(() =>
+  filteredPaiements.value.map((paiement) => ({
+    Matricule: paiement.matricule,
+    Nom: paiement.nom,
+    Prénom: paiement.prenom,
+    Montant: Number(paiement.montant ?? 0),
+    'Type de frais': paiement.type,
+    Statut: paiement.statut,
+    Date: paiement.date,
+    Mode: paiement.mode,
+    Classe: paiement.classe ?? '—',
+    Filière: paiement.filiere ?? '—',
+  }))
+);
+
+const { exportToExcel, exportToPdf, exportToCsv } = useTableExport({
+  rows: exportRows,
+  title: 'Registre des encaissements',
+  fileBaseName: 'paiements',
 });
 
-// Calcul cumulé en temps réel des flux affichés
-const totalFiltré = computed(() => {
-  return filteredPaiements.value.reduce((acc, current) => acc + current.montant, 0);
-});
-
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
-};
-
-const generateReceipt = (p) => {
-  alert(
-    `Édition du reçu officiel de caisse pour : ${p.prenom} ${p.nom}\nFormat A5 standardisé prêt.`
-  );
-};
-
+/** @param {'csv'|'excel'|'pdf'} format */
 const exportData = (format) => {
-  alert(
-    `Préparation du fichier d'export au format [.${format.toUpperCase()}] basé sur la sélection actuelle.`
-  );
+  if (format === 'csv') return exportToCsv();
+  if (format === 'excel') return exportToExcel();
+  return exportToPdf();
+};
+
+/**
+ * Le reçu n'est pas fabriqué ici : le serveur l'a émis au moment de
+ * l'encaissement. On le récupère, puis on l'imprime.
+ *
+ * @param {any} paiement
+ */
+const generateReceipt = async (paiement) => {
+  const recu = await store.fetchRecu(paiement.id);
+  if (!recu) return;
+
+  try {
+    imprimerRecu(recu);
+  } catch (error) {
+    notifications.notifyError(error, 'Impossible d’ouvrir la fenêtre d’impression.');
+  }
 };
 </script>
 
