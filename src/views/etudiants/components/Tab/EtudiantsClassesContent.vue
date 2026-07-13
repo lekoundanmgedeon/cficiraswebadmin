@@ -176,9 +176,9 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
-import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
-import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
+import { useFiliereStore } from '@/modules/structure-academique/filiere/store';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import { useEtudiantStore } from '@/stores/etudiants/etudiantStore';
 import Pagination from '@/components/shared/Pagination.vue';
 import logoCFI from '@/assets/logoBase64';

@@ -36,7 +36,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
-import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
 
 const classeStore = useClasseStore();
 

@@ -175,7 +175,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useConcoursStore } from '@/stores/gestionStores/concourStore';
-import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 
 const concoursStore = useConcoursStore();
 const anneeStore = useAnneeStore();

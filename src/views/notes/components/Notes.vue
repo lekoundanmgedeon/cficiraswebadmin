@@ -185,7 +185,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 // 1. Importer le store pour pouvoir rechercher la correspondance de l'UUID
-import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
 
 const classeStore = useClasseStore();
 

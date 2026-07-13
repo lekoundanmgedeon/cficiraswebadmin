@@ -217,9 +217,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useAnneeStore } from '@/modules/annee-academique/store/anneeStore';
-import { useFiliereStore } from '@/stores/academiqueStore/filiereStore';
-import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
+import { useFiliereStore } from '@/modules/structure-academique/filiere/store';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import { useNotifier } from '@/stores/messages/useNotifier';
 
 const emit = defineEmits(['rapportGenere']);

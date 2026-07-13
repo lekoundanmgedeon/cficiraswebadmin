@@ -224,7 +224,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import AppPagination from '@/components/shared/Pagination.vue';
-import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import ClasseStudentsModal from '../modal/ClasseEtudiantModal.vue';
 
 const classeStore = useClasseStore();

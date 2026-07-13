@@ -8,13 +8,12 @@ import { registerAuthGuard } from './guards';
 // ── Routes des modules migrés ────────────────────────────────────────────────
 // Chaque module possède son propre `routes.js` et est ajouté ici. C'est le seul
 // point du noyau à toucher pour brancher un nouveau module.
-import anneeAcademiqueRoutes from '@/modules/annee-academique/routes';
+import structureAcademiqueRoutes from '@/modules/structure-academique/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
 // rejoindront `src/modules/`. Voir docs/ARCHITECTURE.md § « Migration en cours ».
 import authRoutes from '@/routes/auth.routes';
-import structureRoutes from '@/routes/structure.routes';
 import etudiantsRoutes from '@/routes/etudiants.routes';
 import examensRoutes from '@/routes/examens.routes';
 import concoursRoutes from '@/routes/concours.routes';
@@ -24,8 +23,7 @@ import othersRoutes from '@/routes/others.routes';
 
 /** Routes internes, rendues dans le layout applicatif et protégées par le guard. */
 const protectedRoutes = [
-  ...anneeAcademiqueRoutes,
-  ...structureRoutes,
+  ...structureAcademiqueRoutes,
   ...etudiantsRoutes,
   ...examensRoutes,
   ...concoursRoutes,

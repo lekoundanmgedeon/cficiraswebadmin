@@ -106,7 +106,7 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useClasseStore } from '@/stores/academiqueStore/classeStore';
+import { useClasseStore } from '@/modules/structure-academique/classe/store';
 
 // Définition des Props reçues du parent
 const props = defineProps({
