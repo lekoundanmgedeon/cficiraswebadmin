@@ -72,5 +72,39 @@ export function useTableExport({ rows, title, fileBaseName, filters, sheetName }
     });
   }
 
-  return { exportToExcel, exportToPdf };
+  /**
+   * Échappe une cellule au format CSV (RFC 4180) : les guillemets internes sont
+   * doublés, et la valeur est toujours encadrée, ce qui neutralise d'un coup les
+   * virgules, les points-virgules et les retours à la ligne qu'elle contiendrait.
+   * @param {any} value
+   */
+  function escapeCsvCell(value) {
+    return `"${String(value ?? '').replace(/"/g, '""')}"`;
+  }
+
+  function exportToCsv() {
+    const data = resolveRows();
+    if (!data) return;
+
+    const columns = Object.keys(data[0]);
+    const lines = [
+      columns.map(escapeCsvCell).join(','),
+      ...data.map((row) => columns.map((column) => escapeCsvCell(row[column])).join(',')),
+    ];
+
+    // Le BOM force Excel à lire le fichier en UTF-8 ; sans lui, les accents des
+    // en-têtes (« Prénom », « Filière ») ressortent en mojibake.
+    const blob = new Blob(['﻿', lines.join('\r\n')], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName('csv');
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return { exportToExcel, exportToPdf, exportToCsv };
 }

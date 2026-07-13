@@ -1,0 +1,201 @@
+<script setup>
+import { computed, ref } from 'vue';
+import { useEtudiantStore } from '../../store';
+import { IMPORT_ACCEPT } from '../../constants';
+
+/**
+ * Import d'une liste d'étudiants (.xlsx / .xls / .csv).
+ *
+ * Le composant précédent, `Tab/ImportEtudiantsContent.vue`, était **vide** : un
+ * template et un script tous deux sans contenu. Son panneau d'onglet existait
+ * bien dans le conteneur, mais aucun lien de navigation ne pointait dessus — il
+ * était monté à chaque chargement de page et restait inatteignable.
+ *
+ * Le second candidat, `data-io/DropData.vue`, déclarait deux blocs de script
+ * (un `setup` vide et une Options API), traînait les données de démonstration
+ * du gabarit d'origine (« TASK-7103 : Parse EXE bandwidth! ») et son bouton
+ * « Upload » n'avait **aucun gestionnaire** : les fichiers déposés n'étaient
+ * jamais envoyés nulle part.
+ *
+ * Celui-ci envoie réellement le fichier à `POST /academique/imports/etudiants`.
+ */
+
+const etudiantStore = useEtudiantStore();
+
+const fileInput = ref(null);
+const isDragging = ref(false);
+const selectedFile = ref(null);
+const errorMessage = ref('');
+
+const loading = computed(() => etudiantStore.loading);
+const report = computed(() => etudiantStore.importReport);
+
+const ACCEPTED_EXTENSIONS = IMPORT_ACCEPT.split(',');
+
+/** @param {File} file @returns {boolean} */
+function isAccepted(file) {
+  // On valide sur l'extension et non sur le type MIME : celui d'un .xlsx varie
+  // d'un système à l'autre (et vaut souvent `application/octet-stream`), si bien
+  // que l'ancien contrôle par `file.type` rejetait des fichiers parfaitement
+  // valides.
+  const name = file.name.toLowerCase();
+  return ACCEPTED_EXTENSIONS.some((extension) => name.endsWith(extension));
+}
+
+/** @param {File|undefined} file */
+function selectFile(file) {
+  errorMessage.value = '';
+
+  if (!file) return;
+
+  if (!isAccepted(file)) {
+    errorMessage.value = `Format non pris en charge. Attendu : ${IMPORT_ACCEPT}.`;
+    selectedFile.value = null;
+    return;
+  }
+
+  selectedFile.value = file;
+}
+
+/** @param {DragEvent} event */
+function onDrop(event) {
+  isDragging.value = false;
+  selectFile(event.dataTransfer?.files?.[0]);
+}
+
+/** @param {Event} event */
+function onFileChange(event) {
+  selectFile(event.target.files?.[0]);
+}
+
+function clearFile() {
+  selectedFile.value = null;
+  errorMessage.value = '';
+  // Sans cette remise à zéro, resélectionner le même fichier n'émettrait pas
+  // d'événement `change` et le formulaire paraîtrait figé.
+  if (fileInput.value) fileInput.value.value = '';
+}
+
+async function submit() {
+  if (!selectedFile.value) return;
+
+  const result = await etudiantStore.importFromFile(selectedFile.value);
+  if (result !== undefined) clearFile();
+}
+
+/** @param {number} bytes @returns {string} */
+function formatSize(bytes) {
+  if (bytes < 1024) return `${bytes} o`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+}
+</script>
+
+<template>
+  <div>
+    <div class="mb-4">
+      <h4 class="fw-bold mb-1">Import d'étudiants</h4>
+      <p class="text-muted small mb-0">
+        Chargez une liste d'étudiants au format Excel ou CSV. Les lignes seront créées côté serveur.
+      </p>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div
+          class="drop-zone rounded p-5 text-center"
+          :class="{ 'drop-zone--active': isDragging }"
+          @dragover.prevent
+          @dragenter.prevent="isDragging = true"
+          @dragleave="isDragging = false"
+          @drop.prevent="onDrop"
+        >
+          <i
+            class="mdi mdi-cloud-upload-outline text-primary d-block mb-2"
+            style="font-size: 2.5rem"
+          ></i>
+
+          <p class="text-muted mb-3">
+            Glissez un fichier ici, ou
+            <button
+              type="button"
+              class="btn btn-link p-0 align-baseline"
+              @click="fileInput.click()"
+            >
+              parcourez vos fichiers
+            </button>
+          </p>
+
+          <small class="text-muted d-block">Formats acceptés : {{ IMPORT_ACCEPT }}</small>
+
+          <input
+            ref="fileInput"
+            type="file"
+            hidden
+            :accept="IMPORT_ACCEPT"
+            @change="onFileChange"
+          />
+        </div>
+
+        <div v-if="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
+          <i class="mdi mdi-alert-circle me-1"></i> {{ errorMessage }}
+        </div>
+
+        <div
+          v-if="selectedFile"
+          class="d-flex align-items-center justify-content-between border rounded p-3 mt-3"
+        >
+          <div class="d-flex align-items-center">
+            <i
+              class="mdi mdi-file-document-outline text-primary me-3"
+              style="font-size: 1.5rem"
+            ></i>
+            <div>
+              <div class="fw-semibold text-dark">{{ selectedFile.name }}</div>
+              <small class="text-muted">{{ formatSize(selectedFile.size) }}</small>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              :disabled="loading"
+              @click="clearFile"
+            >
+              Retirer
+            </button>
+
+            <button type="button" class="btn btn-primary" :disabled="loading" @click="submit">
+              <span
+                v-if="loading"
+                class="spinner-border spinner-border-sm me-2"
+                aria-hidden="true"
+              ></span>
+              {{ loading ? 'Import en cours...' : 'Lancer l’import' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="report" class="alert alert-success mt-3 mb-0" role="alert">
+          <h6 class="alert-heading fw-bold">
+            <i class="mdi mdi-check-circle me-1"></i> Import terminé
+          </h6>
+          <pre class="mb-0 small bg-transparent border-0 p-0">{{ report }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.drop-zone {
+  border: 2px dashed #dee2e6;
+  transition: all 0.2s ease-in-out;
+}
+
+.drop-zone--active {
+  border-color: var(--bs-primary);
+  background-color: rgba(75, 73, 172, 0.04);
+}
+</style>
