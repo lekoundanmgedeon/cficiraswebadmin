@@ -1,10 +1,10 @@
 <script setup>
-import { computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
+import { computed, onMounted, ref, watch } from 'vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
-import { useInscriptionStore } from '@/modules/inscriptions/store';
-import { formatMoney, statutInfo } from '@/modules/inscriptions/constants';
+import { statutInfo } from '@/modules/inscriptions/constants';
+import { formatMoney } from '@/modules/finances/constants';
+import { useRapportStore } from '@/modules/finances/stores/rapports';
 
 const props = defineProps({
   etudiantId: { type: String, required: true },
@@ -13,42 +13,53 @@ const props = defineProps({
 /**
  * Situation financière de l'étudiant.
  *
- * `SituationFinanciere.vue` servait des `paiements` et un `echeancier` codés en
- * dur. Il n'existe pas d'endpoint « finances d'un étudiant », mais
- * `GET /inscriptions/finances` renvoie **une ligne par dossier d'inscription**,
- * avec `etudiant_id`, les frais, le montant versé et le reste : il suffit d'y
- * retenir les lignes de cet étudiant.
+ * Cet onglet affichait des montants faux. Il lisait `GET /inscriptions/finances`,
+ * dont la vue serveur exposait les **frais d'inscription** (50 000 F) sous le nom
+ * `frais_scolarite`, et plafonnait à ce même montant le versé. Un étudiant devant
+ * 575 000 F et en ayant réglé 500 000 s'y affichait « dû 50 000, versé 50 000,
+ * reste 0 — 100 % réglé ».
  *
- * (Le domaine `/finance` du backend, qui exposerait l'échéancier détaillé, est
- * **commenté dans `index.routes.js`** — donc désactivé. L'échéancier de la
- * maquette n'a donc aucune source réelle et n'est pas repris.)
+ * La vue est corrigée à la source (migration 005), mais cet onglet interroge
+ * désormais le domaine financier lui-même :
+ * `GET /finance/rapports/situation/:etudiantId` rend une ligne par inscription
+ * avec le dû ventilé, le versé, le reste et le taux de règlement — et, en prime,
+ * le plan de paiement de l'étudiant et ses échéances en retard, que l'ancienne
+ * source ne connaissait pas.
  */
 
-const inscriptionStore = useInscriptionStore();
-const { finances, loading } = storeToRefs(inscriptionStore);
+const store = useRapportStore();
+const lignes = ref([]);
+const loading = ref(false);
 
-onMounted(() => inscriptionStore.fetchFinances());
+async function charger() {
+  loading.value = true;
+  try {
+    lignes.value = await store.fetchSituationEtudiant(props.etudiantId);
+  } finally {
+    loading.value = false;
+  }
+}
 
-const lignes = computed(() =>
-  finances.value.filter((ligne) => String(ligne.etudiant_id) === String(props.etudiantId))
-);
+onMounted(charger);
 
-const totalDu = computed(() =>
-  lignes.value.reduce((total, ligne) => total + Number(ligne.frais_scolarite ?? 0), 0)
-);
+// La fiche passe d'un étudiant à l'autre sans être démontée : sans cela, l'onglet
+// resterait sur la situation du dossier précédent.
+watch(() => props.etudiantId, charger);
 
-const totalVerse = computed(() =>
-  lignes.value.reduce((total, ligne) => total + Number(ligne.montant_verse ?? 0), 0)
-);
+/** Les montants arrivent en chaînes (`NUMERIC` PostgreSQL) : d'où le `Number()`. */
+const somme = (champ) => lignes.value.reduce((total, l) => total + Number(l[champ] ?? 0), 0);
 
-const totalReste = computed(() =>
-  lignes.value.reduce((total, ligne) => total + Number(ligne.reste ?? 0), 0)
-);
+const totalDu = computed(() => somme('total_du'));
+const totalVerse = computed(() => somme('total_verse'));
+const totalReste = computed(() => somme('reste'));
 
 const tauxReglement = computed(() => {
   if (totalDu.value <= 0) return 0;
   return Math.round((totalVerse.value / totalDu.value) * 100);
 });
+
+/** Échéances dépassées et non soldées, toutes inscriptions confondues. */
+const echeancesEnRetard = computed(() => somme('nb_echeances_retard'));
 </script>
 
 <template>
@@ -62,6 +73,17 @@ const tauxReglement = computed(() => {
     />
 
     <div v-else>
+      <div
+        v-if="echeancesEnRetard > 0"
+        class="alert alert-warning border-0 d-flex align-items-center mb-4"
+      >
+        <i class="mdi mdi-alert-circle-outline me-2"></i>
+        <span>
+          {{ echeancesEnRetard }} échéance(s) dépassée(s) et non soldée(s) sur l'échéancier de cet
+          étudiant.
+        </span>
+      </div>
+
       <div class="row g-3 mb-4">
         <div class="col-md-4">
           <div class="card border-0 shadow-sm h-100">
@@ -117,21 +139,35 @@ const tauxReglement = computed(() => {
               <thead class="table-light">
                 <tr>
                   <th class="ps-4 py-3">Classe</th>
-                  <th class="text-end">Frais</th>
+                  <th>Plan de paiement</th>
+                  <th class="text-end">Frais dus</th>
                   <th class="text-end">Versé</th>
                   <th class="text-end">Reste</th>
                   <th class="text-center">Statut</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ligne in lignes" :key="ligne.id">
+                <tr v-for="ligne in lignes" :key="ligne.inscription_id">
                   <td class="ps-4">
                     <div class="fw-semibold text-dark">{{ ligne.classe_code ?? '—' }}</div>
-                    <small class="text-muted">{{ ligne.filiere_code ?? '—' }}</small>
+                    <small class="text-muted">
+                      {{ ligne.filiere_code ?? '—' }} · {{ ligne.annee_code ?? '—' }}
+                    </small>
                   </td>
-                  <td class="text-end">{{ formatMoney(ligne.frais_scolarite) }}</td>
-                  <td class="text-end text-success">{{ formatMoney(ligne.montant_verse) }}</td>
-                  <td class="text-end fw-bold text-danger">{{ formatMoney(ligne.reste) }}</td>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ ligne.plan ?? 'Aucun échéancier' }}</div>
+                    <small v-if="ligne.nb_echeances" class="text-muted">
+                      {{ ligne.nb_echeances }} échéance(s)
+                    </small>
+                  </td>
+                  <td class="text-end">{{ formatMoney(ligne.total_du) }}</td>
+                  <td class="text-end text-success">{{ formatMoney(ligne.total_verse) }}</td>
+                  <td
+                    class="text-end fw-bold"
+                    :class="Number(ligne.reste) > 0 ? 'text-danger' : 'text-muted'"
+                  >
+                    {{ formatMoney(ligne.reste) }}
+                  </td>
                   <td class="text-center">
                     <span
                       class="badge rounded-pill px-3 py-2"

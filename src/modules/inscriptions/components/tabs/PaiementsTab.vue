@@ -77,7 +77,9 @@ const exportRows = computed(() =>
     Prénom: ligne.prenom,
     Classe: ligne.classe_code ?? '—',
     Filière: ligne.filiere_code ?? '—',
-    'Frais de scolarité': Number(ligne.frais_scolarite ?? 0),
+    // `frais_scolarite` ne portait pas la scolarité mais les frais d'inscription,
+    // et ne représentait donc qu'un neuvième du dû réel (voir migration 005).
+    'Total dû': Number(ligne.total_du ?? 0),
     'Montant versé': Number(ligne.montant_verse ?? 0),
     Reste: Number(ligne.reste ?? 0),
     Statut: statutInfo(ligne.statut).label,
@@ -231,7 +233,7 @@ function resetFilters() {
                   <small class="text-muted">{{ ligne.filiere_code ?? '—' }}</small>
                 </td>
 
-                <td class="text-end">{{ formatMoney(ligne.frais_scolarite) }}</td>
+                <td class="text-end">{{ formatMoney(ligne.total_du) }}</td>
                 <td class="text-end text-success">{{ formatMoney(ligne.montant_verse) }}</td>
                 <td class="text-end fw-bold text-danger">{{ formatMoney(ligne.reste) }}</td>
 
