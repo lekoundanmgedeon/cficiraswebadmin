@@ -72,9 +72,9 @@
 </template>
 
 <script setup>
-import FacturationList from './Tab/FacturationList.vue';
-import FacturationForm from './Tab/FacturationForm.vue';
-import FacturationArchives from './Tab/FacturationArchives.vue';
+import FacturationList from './tabs/FacturationList.vue';
+import FacturationForm from './tabs/FacturationForm.vue';
+import FacturationArchives from './tabs/FacturationArchives.vue';
 </script>
 
 <style scoped>

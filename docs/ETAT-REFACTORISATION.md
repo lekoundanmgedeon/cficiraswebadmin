@@ -637,16 +637,24 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 
 ```
 src/modules/finances/
-├── api.js · constants.js
+├── routes.js · api.js · constants.js
 ├── stores/  plans · echeanciers · factures · paiements · rapports
-└── utils/   recu.js (impression reçu / facture / fiche) · qr.js (codes QR de contrôle)
+├── utils/   recu.js (impression reçu / facture / fiche) · qr.js (codes QR de contrôle)
+├── facturations/  views/FacturationsView · components/ (+ tabs/)
+├── paiements/     views/PaiementsView · components/ (+ tabs/)
+└── rapports/      views/RapportsFinancesView · components/ (+ tabs/)
 ```
 
-La **logique** a été migrée dans `src/modules/finances/` ; l'**UI est restée dans
-`src/views/finances/`** (facturations, paiements, rapports), branchée sur l'API sans refonte du
-balisage. Contrairement à ce qu'indiquait ce document, **`/finance` est monté** côté backend et
-répond : l'ancien `financeApi.js` visait `/finances`, `/factures`, `/frais_inscription` — trois
-endpoints inexistants — pendant que les écrans affichaient des tableaux codés en dur.
+La logique a d'abord été migrée (stores, `api.js`), puis, dans un second temps, **les vues ont été
+déplacées de `src/views/finances/` vers le module** et structurées comme `examens` (un sous-dossier
+par écran : `views/` + `components/` + `components/tabs/`). Le déplacement s'est fait par `git mv`
+sans toucher aux templates ni à la logique des `<script setup>` — **seuls les chemins d'import
+relatifs** ont changé (`./Tab/` → `./tabs/`, `./components/` → `../components/`). Les routes ont
+migré de `src/routes/finances.routes.js` vers `src/modules/finances/routes.js` (chemins et noms
+inchangés : la barre latérale n'a rien vu). Contrairement à ce qu'indiquait ce document, **`/finance`
+est monté** côté backend et répond : l'ancien `financeApi.js` visait `/finances`, `/factures`,
+`/frais_inscription` — trois endpoints inexistants — pendant que les écrans affichaient des tableaux
+codés en dur.
 
 > #### Codes QR de contrôle (reçus + suivi de paiement)
 >

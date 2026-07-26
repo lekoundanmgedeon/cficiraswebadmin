@@ -109,11 +109,11 @@
 </template>
 
 <script setup>
-import RapportPaiements from './Tab/RapportPaiements.vue';
-import RapportFactures from './Tab/RapportFactures.vue';
-import RapportBilans from './Tab/RapportBilans.vue';
-import RapportSimulations from './Tab/RapportSimulations.vue';
-import AssistantIA from './Tab/AssistantIA.vue';
+import RapportPaiements from './tabs/RapportPaiements.vue';
+import RapportFactures from './tabs/RapportFactures.vue';
+import RapportBilans from './tabs/RapportBilans.vue';
+import RapportSimulations from './tabs/RapportSimulations.vue';
+import AssistantIA from './tabs/AssistantIA.vue';
 </script>
 
 <style scoped>

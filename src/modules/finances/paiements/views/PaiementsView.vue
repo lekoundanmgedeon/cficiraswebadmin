@@ -19,8 +19,8 @@
 <script setup>
 import { ref } from 'vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
-import PaiementHeader from './components/PaiementHeader.vue';
-import PaiementTab from './components/PaiementTab.vue';
+import PaiementHeader from '../components/PaiementHeader.vue';
+import PaiementTab from '../components/PaiementTab.vue';
 
 /**
  * L'écran masquait ses onglets derrière un squelette pendant **trois secondes**,

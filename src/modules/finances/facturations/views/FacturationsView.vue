@@ -1,14 +1,14 @@
 <template>
   <div>
     <div class="row">
-      <RapportHeader />
+      <FacturationHeader />
     </div>
     <div class="row">
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
           <SkeletonLoader v-if="loading" type="table" :rows="3" :columns="1" />
           <div v-else class="card-body dashboard-tabs p-0">
-            <RapportTab />
+            <FacturationTab />
           </div>
         </div>
       </div>
@@ -19,8 +19,8 @@
 <script setup>
 import { ref } from 'vue';
 import SkeletonLoader from '@/components/SkeletonLoader.vue';
-import RapportHeader from './components/RapportHeader.vue';
-import RapportTab from './components/RapportTab.vue';
+import FacturationHeader from '../components/FacturationHeader.vue';
+import FacturationTab from '../components/FacturationTab.vue';
 
 /**
  * Voir `Paiements.vue` : le même `setTimeout` de trois secondes et le même

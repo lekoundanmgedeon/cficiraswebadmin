@@ -113,11 +113,11 @@
 </template>
 
 <script setup>
-import PaiementList from './Tab/PaiementList.vue';
-import PaiementForm from './Tab/PaiementForm.vue';
-import PaiementArchives from './Tab/PaiementArchives.vue';
-import SuiviEtudiant from './Tab/SuiviEtudiant.vue';
-import ControleClasse from './Tab/ControleClasse.vue';
+import PaiementList from './tabs/PaiementList.vue';
+import PaiementForm from './tabs/PaiementForm.vue';
+import PaiementArchives from './tabs/PaiementArchives.vue';
+import SuiviEtudiant from './tabs/SuiviEtudiant.vue';
+import ControleClasse from './tabs/ControleClasse.vue';
 </script>
 
 <style scoped>
