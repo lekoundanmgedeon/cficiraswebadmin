@@ -1,9 +1,6 @@
 export default [
-  {
-    path: '/enseignants',
-    name: 'Formateur',
-    component: () => import('@/views/pedagogies/formateurs/Enseignants.vue'),
-  },
+  // Le répertoire des formateurs (`/enseignants`) a migré vers
+  // `src/modules/pedagogies/` (étape 1). Les trois écrans ci-dessous suivront.
   {
     path: '/attribution-cours',
     name: 'AttributionsCours',

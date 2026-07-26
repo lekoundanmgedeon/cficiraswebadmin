@@ -202,118 +202,60 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import ItemActions from '../Details/ItemActions.vue';
 import Pagination from '@/components/shared/Pagination.vue';
+import { useFormateurStore } from '@/modules/pedagogies/formateurs/store';
+import { useTableExport } from '@/shared/composables/useTableExport';
 
-// Variables de contrôle d'état
-const isLoading = ref(true);
+/**
+ * Répertoire des formateurs.
+ *
+ * Les six formateurs « Jean Dupont » codés en dur, le `setTimeout(800)` et les
+ * trois exports `console.log` ont laissé place aux vraies données
+ * (`GET /pedagogies/enseignant/enseignants`, servi par `vue_infos_enseignants`).
+ * Le balisage et les styles n'ont pas bougé : le store projette chaque ligne sur
+ * exactement les champs que ce tableau lit (`code_enseignant`, `contrat`,
+ * `departement`, `specialite`, `date_embauche`…).
+ */
+const store = useFormateurStore();
+const { items: formateurs, departements, loading: isLoading } = storeToRefs(store);
+
 const currentPage = ref(1);
-const itemsPerPage = ref(5); // Mis à 5 pour tester la pagination facilement
+const itemsPerPage = ref(5);
 const searchQuery = ref('');
 const filterDepartement = ref('');
 const filterContrat = ref('');
 
-const departements = ref(['Informatique', 'Management', 'Génie Civil', 'Langues']);
+onMounted(() => {
+  store.fetchAll();
+  store.fetchDepartements();
+});
 
-// Données Factices (Mock Data)
-const mockFormateurs = ref([
-  {
-    id: 1,
-    nom: 'Dupont',
-    prenom: 'Jean',
-    code_enseignant: 'ENS-2024-001',
-    contrat: 'Permanent',
-    departement: 'Informatique',
-    specialite: 'Développement Vue.js & Node.js',
-    email: 'j.dupont@ecole.com',
-    telephone: '+33 6 12 34 56 78',
-    date_embauche: '12/09/2022',
-  },
-  {
-    id: 2,
-    nom: 'Alami',
-    prenom: 'Sanaa',
-    code_enseignant: 'ENS-2023-042',
-    contrat: 'Vacataire',
-    departement: 'Management',
-    specialite: 'Gestion de Projet & ERP',
-    email: 's.alami@ecole.com',
-    telephone: '+212 6 98 76 54 32',
-    date_embauche: '05/01/2024',
-  },
-  {
-    id: 3,
-    nom: 'Traoré',
-    prenom: 'Moussa',
-    code_enseignant: 'ENS-2021-105',
-    contrat: 'Permanent',
-    departement: 'Informatique',
-    specialite: 'Architecture Cloud & DevOps',
-    email: 'm.traore@ecole.com',
-    telephone: '+221 77 123 45 67',
-    date_embauche: '18/11/2021',
-  },
-  {
-    id: 4,
-    nom: 'Muller',
-    prenom: 'Charlotte',
-    code_enseignant: 'ENS-2025-012',
-    contrat: 'Permanent',
-    departement: 'Langues',
-    specialite: 'Anglais Professionnel',
-    email: 'c.muller@ecole.com',
-    telephone: '+33 7 89 45 12 23',
-    date_embauche: '01/09/2025',
-  },
-  {
-    id: 5,
-    nom: 'Rousseau',
-    prenom: 'Pierre',
-    code_enseignant: 'ENS-2024-089',
-    contrat: 'Vacataire',
-    departement: 'Génie Civil',
-    specialite: 'RDM & Structures',
-    email: 'p.rousseau@ecole.com',
-    telephone: '+33 6 45 78 12 56',
-    date_embauche: '15/02/2024',
-  },
-  {
-    id: 6,
-    nom: 'Martin',
-    prenom: 'Sophie',
-    code_enseignant: 'ENS-2022-031',
-    contrat: 'Permanent',
-    departement: 'Management',
-    specialite: 'Ressources Humaines',
-    email: 's.martin@ecole.com',
-    telephone: '+33 6 32 14 56 98',
-    date_embauche: '01/09/2022',
-  },
-]);
-
-// Logique de filtrage dynamique (Remplace les requêtes backend pendant le test)
-const filteredFormateurs = computed(() => {
-  return mockFormateurs.value.filter((formateur) => {
+// Filtrage : mêmes critères qu'avant (nom / prénom / spécialité, département,
+// type de contrat), appliqués aux données réelles.
+const filteredFormateurs = computed(() =>
+  formateurs.value.filter((formateur) => {
+    const q = searchQuery.value.toLowerCase();
     const matchesSearch =
-      formateur.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      formateur.prenom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      formateur.specialite.toLowerCase().includes(searchQuery.value.toLowerCase());
+      (formateur.nom ?? '').toLowerCase().includes(q) ||
+      (formateur.prenom ?? '').toLowerCase().includes(q) ||
+      (formateur.specialite ?? '').toLowerCase().includes(q);
 
     const matchesDepartement =
       filterDepartement.value === '' || formateur.departement === filterDepartement.value;
     const matchesContrat = filterContrat.value === '' || formateur.contrat === filterContrat.value;
 
     return matchesSearch && matchesDepartement && matchesContrat;
-  });
-});
+  })
+);
 
-// Logique de Pagination
+// Logique de Pagination (inchangée)
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
 const paginatedFormateurs = computed(() =>
   filteredFormateurs.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
 );
 
-// Actions mécaniques de l'UI
 const resetFilters = () => {
   searchQuery.value = '';
   filterDepartement.value = '';
@@ -322,26 +264,40 @@ const resetFilters = () => {
 };
 
 const editFormateur = (formateur) => {
+  // Le formulaire d'édition complet (identité + diplômes + contrat) est branché
+  // dans une étape ultérieure ; le bouton conserve son comportement d'origine.
   alert(`Édition du formateur : ${formateur.nom} ${formateur.prenom}`);
 };
 
-const confirmDelete = (formateur) => {
+const confirmDelete = async (formateur) => {
   if (confirm(`Voulez-vous vraiment retirer le formateur ${formateur.nom} ${formateur.prenom} ?`)) {
-    mockFormateurs.value = mockFormateurs.value.filter((f) => f.id !== formateur.id);
+    await store.remove(formateur.id);
   }
 };
 
-// Simulation d'un chargement asynchrone au montage
-onMounted(() => {
-  setTimeout(() => {
-    isLoading.value = false;
-  }, 800); // Le tableau s'affiche après 800ms
+// Exports réels (remplacent les `console.log`) — le tableau filtré, tel qu'affiché.
+const exportRows = computed(() =>
+  filteredFormateurs.value.map((f) => ({
+    Code: f.code_enseignant,
+    Nom: f.nom,
+    Prénom: f.prenom,
+    Contrat: f.contrat,
+    Département: f.departement,
+    Spécialité: f.specialite,
+    Email: f.email,
+    Téléphone: f.telephone,
+  }))
+);
+
+const { exportToExcel, exportToPdf, exportToCsv } = useTableExport({
+  rows: exportRows,
+  title: 'Répertoire des formateurs',
+  fileBaseName: 'formateurs',
 });
 
-// Fonctions d'exports factices
-const exportPDF = () => console.log('Mock Export PDF...');
-const exportCSV = () => console.log('Mock Export CSV...');
-const exportExcel = () => console.log('Mock Export Excel...');
+const exportPDF = () => exportToPdf();
+const exportCSV = () => exportToCsv();
+const exportExcel = () => exportToExcel();
 const printTable = () => window.print();
 </script>
 

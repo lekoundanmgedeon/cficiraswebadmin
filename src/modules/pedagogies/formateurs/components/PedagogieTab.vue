@@ -127,10 +127,10 @@
 </template>
 
 <script setup>
-import FormateursContent from './Tab/FormateursContent.vue';
-import AssignationsContent from './Tab/AssignationsContent.vue';
-import SuiviPedagogique from './Tab/SuiviPedagogique.vue';
-import ChargesHoraires from './Tab/ChargesHoraires.vue';
-import RapportsAcademiques from './Tab/RapportsAcademiques.vue';
-import ArchivesPedagogiques from './Tab/ArchivesPedagogiques.vue';
+import FormateursContent from './tabs/FormateursContent.vue';
+import AssignationsContent from './tabs/AssignationsContent.vue';
+import SuiviPedagogique from './tabs/SuiviPedagogique.vue';
+import ChargesHoraires from './tabs/ChargesHoraires.vue';
+import RapportsAcademiques from './tabs/RapportsAcademiques.vue';
+import ArchivesPedagogiques from './tabs/ArchivesPedagogiques.vue';
 </script>

@@ -12,6 +12,6 @@ import { createHttpClient } from './httpClient';
 export const authClient = createHttpClient('/auth');
 export const academiqueClient = createHttpClient('/academique');
 export const gestionClient = createHttpClient('/gestion');
-export const pedagogieClient = createHttpClient('/pedagogie');
+export const pedagogieClient = createHttpClient('/pedagogies');
 export const financeClient = createHttpClient('/finance');
 export const evaluationClient = createHttpClient('/evaluations');

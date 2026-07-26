@@ -297,7 +297,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getEnseignants } from '@/api/pedagogies/pedagogieApi';
+import { enseignantsResource } from '@/modules/pedagogies/formateurs/api';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
 const etudiant = ref();
@@ -346,7 +346,7 @@ function formatDate(dateString) {
 }
 
 onMounted(async () => {
-  const res = await getEnseignants();
+  const res = await enseignantsResource.list();
   if (res.success && res.data) {
     enseignantDetails.value = res.data.find(
       (ens) => `${ens.nom} ${ens.prenom}`.trim() === props.item.responsable?.trim()
