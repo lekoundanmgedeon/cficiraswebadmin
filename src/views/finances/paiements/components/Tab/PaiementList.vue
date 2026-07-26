@@ -273,7 +273,7 @@ const generateReceipt = async (paiement) => {
   if (!recu) return;
 
   try {
-    imprimerRecu(recu);
+    await imprimerRecu(recu);
   } catch (error) {
     notifications.notifyError(error, 'Impossible d’ouvrir la fenêtre d’impression.');
   }

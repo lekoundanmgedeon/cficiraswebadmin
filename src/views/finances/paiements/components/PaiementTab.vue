@@ -3,8 +3,8 @@
     <ul class="nav nav-tabs px-4" role="tablist">
       <li class="nav-item">
         <a
-          class="nav-link active"
           id="paiement-tab"
+          class="nav-link active"
           data-bs-toggle="tab"
           href="#paiement"
           role="tab"
@@ -16,8 +16,8 @@
       </li>
       <li class="nav-item">
         <a
-          class="nav-link"
           id="nouveau-tab"
+          class="nav-link"
           data-bs-toggle="tab"
           href="#nouveau"
           role="tab"
@@ -29,8 +29,34 @@
       </li>
       <li class="nav-item">
         <a
+          id="suivi-etudiant-tab"
           class="nav-link"
+          data-bs-toggle="tab"
+          href="#suivi-etudiant"
+          role="tab"
+          aria-controls="suivi-etudiant"
+          aria-selected="false"
+        >
+          Suivi étudiant
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
+          id="controle-classe-tab"
+          class="nav-link"
+          data-bs-toggle="tab"
+          href="#controle-classe"
+          role="tab"
+          aria-controls="controle-classe"
+          aria-selected="false"
+        >
+          Contrôle par classe
+        </a>
+      </li>
+      <li class="nav-item">
+        <a
           id="archives-tab"
+          class="nav-link"
           data-bs-toggle="tab"
           href="#archives"
           role="tab"
@@ -45,8 +71,8 @@
     <div class="tab-content p-4">
       <!-- Liste des paiements -->
       <div
-        class="tab-pane fade show active"
         id="paiement"
+        class="tab-pane fade show active"
         role="tabpanel"
         aria-labelledby="paiement-tab"
       >
@@ -54,12 +80,32 @@
       </div>
 
       <!-- Formulaire d'ajout -->
-      <div class="tab-pane fade" id="nouveau" role="tabpanel" aria-labelledby="nouveau-tab">
+      <div id="nouveau" class="tab-pane fade" role="tabpanel" aria-labelledby="nouveau-tab">
         <PaiementForm />
       </div>
 
+      <!-- Suivi d'un étudiant : a-t-il payé le mois / semestre / année ? -->
+      <div
+        id="suivi-etudiant"
+        class="tab-pane fade"
+        role="tabpanel"
+        aria-labelledby="suivi-etudiant-tab"
+      >
+        <SuiviEtudiant />
+      </div>
+
+      <!-- Contrôle collectif : statut de paiement de toute une classe -->
+      <div
+        id="controle-classe"
+        class="tab-pane fade"
+        role="tabpanel"
+        aria-labelledby="controle-classe-tab"
+      >
+        <ControleClasse />
+      </div>
+
       <!-- Historique / Archives -->
-      <div class="tab-pane fade" id="archives" role="tabpanel" aria-labelledby="archives-tab">
+      <div id="archives" class="tab-pane fade" role="tabpanel" aria-labelledby="archives-tab">
         <PaiementArchives />
       </div>
     </div>
@@ -70,6 +116,8 @@
 import PaiementList from './Tab/PaiementList.vue';
 import PaiementForm from './Tab/PaiementForm.vue';
 import PaiementArchives from './Tab/PaiementArchives.vue';
+import SuiviEtudiant from './Tab/SuiviEtudiant.vue';
+import ControleClasse from './Tab/ControleClasse.vue';
 </script>
 
 <style scoped>

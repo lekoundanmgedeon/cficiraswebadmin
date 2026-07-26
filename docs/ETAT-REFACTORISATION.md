@@ -633,6 +633,53 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 - Les helpers `setCache`/`getCache` étaient copiés **à l'identique dans 9 stores**.
 - `ItemActions` existait en **8 exemplaires divergents** (84 à 620 lignes), certains émettant l'objet, d'autres l'`id`.
 
+### 1.16 Le module `finances` — terminé
+
+```
+src/modules/finances/
+├── api.js · constants.js
+├── stores/  plans · echeanciers · factures · paiements · rapports
+└── utils/   recu.js (impression reçu / facture / fiche) · qr.js (codes QR de contrôle)
+```
+
+La **logique** a été migrée dans `src/modules/finances/` ; l'**UI est restée dans
+`src/views/finances/`** (facturations, paiements, rapports), branchée sur l'API sans refonte du
+balisage. Contrairement à ce qu'indiquait ce document, **`/finance` est monté** côté backend et
+répond : l'ancien `financeApi.js` visait `/finances`, `/factures`, `/frais_inscription` — trois
+endpoints inexistants — pendant que les écrans affichaient des tableaux codés en dur.
+
+> #### Codes QR de contrôle (reçus + suivi de paiement)
+>
+> Le QR **n'encode pas une URL** de vérification : il porte directement les faits du document
+> (numéro, matricule, montant, date, statut), lisibles hors ligne par n'importe quel scanner de
+> téléphone. Un contrôleur compare ce que le QR affiche à ce qui est imprimé ; un document falsifié
+> après coup trahit l'écart. Aucun ajout backend. Format compact `CLE:valeur|CLE:valeur`, assemblé
+> par `utils/qr.js` (`chargeRecu`, `chargeSituation`, `toQrDataUrl`). Dépendance ajoutée : `qrcode`.
+>
+> - **Sur le reçu** (`utils/recu.js` → `imprimerRecu`) : un QR est apposé sur le reçu A5 imprimé.
+>   La fonction est devenue **asynchrone** — la fenêtre d'impression est ouverte **avant** l'`await`
+>   de génération du QR, sans quoi le bloqueur de pop-ups l'intercepterait (elle ne serait plus
+>   rattachée au clic). Ses deux appelants (`PaiementList`, `PaiementForm`) l'`await` désormais.
+> - **Sur la fiche de suivi** (`imprimerSituation`, même contrainte async) : un QR résume la
+>   situation de paiement de l'étudiant.
+
+#### Deux écrans de contrôle ajoutés (onglets de l'écran Paiements)
+
+Répondent au besoin « voir si un étudiant a payé le mois / le semestre / l'année ». Les données
+existaient déjà côté serveur ; aucune vue ne les affichait.
+
+| Onglet                                         | Source                                                     | Ce qu'il montre                                                                                                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Suivi étudiant** (`SuiviEtudiant.vue`)       | `GET /etudiants?search=` + `GET /echeanciers/etudiant/:id` | Recherche serveur d'un étudiant, puis son échéancier période par période (statut calculé par `v_finance_echeances`) + synthèse + **QR de contrôle**. |
+| **Contrôle par classe** (`ControleClasse.vue`) | `GET /echeanciers/suivi?classe_id=`                        | Tous les étudiants d'une classe regroupés par échéance → statut d'ensemble, cartes de synthèse, export.                                              |
+
+> ⚠️ **`/echeanciers/suivi` limite à 500 lignes par défaut** (ordonnées par retard). Le regroupement
+> par étudiant se faisant côté client, `ControleClasse` passe `limite: 5000` pour ne pas tronquer une
+> classe entière. La fiche étudiant utilise `/echeanciers/etudiant/:id`, **sans limite**.
+
+> Le statut d'ensemble suit la **hiérarchie des échéances** (§1.5, constants) : le retard prime. Dès
+> qu'une période est en retard, l'étudiant est « en retard », même s'il a réglé les autres.
+
 ---
 
 ## 2. Ce qui reste
@@ -640,19 +687,19 @@ coup** et se contentent d'en masquer certains en CSS. Chaque onglet exécutait d
 ### 2.1 Modules à migrer (par ordre conseillé)
 
 **Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
-`concours`, `notes` + `deliberation`.
+`concours`, `notes` + `deliberation`, `finances`.
 
 | #   | Module                                 | Fichiers | Lignes | Pourquoi cet ordre                                                                                            |
 | --- | -------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------- |
 | 1   | **pedagogies**                         | 34       | 8 040  | Le plus gros. 4 conteneurs d'onglets (dont deux à 6 onglets). ⚠️ **`/pedagogie` est commenté** côté backend.  |
-| 2   | **finances**                           | 24       | 4 382  | 3 conteneurs d'onglets. ⚠️ **`/finance` est commenté** côté backend.                                          |
-| 3   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage. ⚠️ **`/statistiques` est commenté** côté backend.                                     |
-| 4   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
+| 2   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage. ⚠️ **`/statistiques` est commenté** côté backend.                                     |
+| 3   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
 
-> ⚠️ **Les trois prochains modules sont bloqués par le backend.** `/pedagogie`, `/finance` et
-> `/statistiques` sont **commentés** dans `src/routes/index.routes.js` : leurs routes ne sont pas
-> montées, tout appel répond 404. Il faut trancher module par module — les rétablir (et vérifier
-> leurs contrôleurs, comme pour `matieres` et `concours`) ou migrer sans eux.
+> ⚠️ **`/finance` n'est plus bloqué** : il **est monté** dans `index.routes.js`
+> (`router.use('/finance', financeRoutes)`) — l'entrée « commenté » de ce tableau était périmée.
+> Restent bloqués : `/pedagogie` et `/statistiques`, toujours **commentés**, dont les routes ne sont
+> pas montées (404). À trancher module par module — les rétablir (et vérifier leurs contrôleurs,
+> comme pour `matieres` et `concours`) ou migrer sans eux.
 
 ### 2.2 Dette technique transverse
 

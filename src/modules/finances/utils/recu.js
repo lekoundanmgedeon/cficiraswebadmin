@@ -1,4 +1,5 @@
 import { formatMoney } from '../constants';
+import { chargeRecu, chargeSituation, toQrDataUrl } from './qr';
 
 /**
  * Ouvre la fenêtre d'impression d'un reçu de caisse.
@@ -12,14 +13,21 @@ import { formatMoney } from '../constants';
  * évite d'ajouter du balisage aux écrans, et le navigateur gère seul la mise en
  * page A5.
  *
+ * Un **code QR de contrôle** est apposé sur le reçu : il porte le numéro, le
+ * matricule, le montant et la date, lisibles hors ligne par n'importe quel
+ * scanner. La fonction est asynchrone pour cela — la fenêtre est ouverte
+ * **avant** l'`await` de génération du QR, sans quoi le navigateur, ne la voyant
+ * plus rattachée au clic, la bloquerait comme une pop-up intempestive.
+ *
  * @param {{
  *   numero_recu: string, etudiant: string, matricule: string,
  *   montant: number|string, mode: string, type: string, date: string,
  *   reference_transaction?: string, classe?: string, filiere?: string,
  *   numero_facture?: string|null,
  * }} recu
+ * @returns {Promise<void>}
  */
-export function imprimerRecu(recu) {
+export async function imprimerRecu(recu) {
   const fenetre = window.open('', '_blank', 'width=600,height=800');
 
   // Bloqueur de pop-ups, ou navigateur qui refuse : on le dit plutôt que
@@ -29,6 +37,11 @@ export function imprimerRecu(recu) {
       'La fenêtre d’impression a été bloquée. Autorisez les pop-ups pour imprimer le reçu.'
     );
   }
+
+  // La fenêtre est déjà ouverte : générer le QR maintenant ne risque plus de
+  // déclencher le bloqueur de pop-ups. Un échec d'encodage rend `null`, et le
+  // reçu s'imprime alors simplement sans QR.
+  const qr = await toQrDataUrl(chargeRecu(recu));
 
   const ligne = (label, valeur) =>
     valeur ? `<tr><th>${label}</th><td>${escapeHtml(String(valeur))}</td></tr>` : '';
@@ -49,6 +62,10 @@ export function imprimerRecu(recu) {
           th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e9ecef; }
           th { color: #6c757d; font-weight: 600; width: 42%; }
           .montant { font-size: 18px; font-weight: bold; }
+          .controle { margin-top: 16px; display: flex; align-items: center; gap: 12px;
+            border-top: 1px dashed #ced4da; padding-top: 12px; }
+          .controle img { width: 96px; height: 96px; }
+          .controle p { margin: 0; color: #6c757d; font-size: 10px; }
           footer { margin-top: 24px; color: #6c757d; font-size: 10px; text-align: center; }
         </style>
       </head>
@@ -73,6 +90,128 @@ export function imprimerRecu(recu) {
             <td class="montant">${escapeHtml(formatMoney(recu.montant))}</td>
           </tr>
         </table>
+
+        ${
+          qr
+            ? `<div class="controle">
+                 <img src="${qr}" alt="Code QR de contrôle du reçu" />
+                 <p>Code de contrôle : scannez pour vérifier le numéro, le matricule,
+                    le montant et la date de ce reçu.</p>
+               </div>`
+            : ''
+        }
+
+        <footer>Document généré le ${new Date().toLocaleString('fr-FR')}</footer>
+      </body>
+    </html>
+  `);
+
+  fenetre.document.close();
+  fenetre.focus();
+  fenetre.print();
+}
+
+/**
+ * Ouvre la fiche de contrôle du suivi de paiement d'un étudiant : sa synthèse,
+ * le détail période par période, et le **code QR de contrôle** de sa situation.
+ *
+ * Même contrainte que `imprimerRecu` : la fenêtre est ouverte avant l'`await` du
+ * QR, sinon le bloqueur de pop-ups l'intercepte.
+ *
+ * @param {{
+ *   matricule?: string, etudiant?: string, classe?: string,
+ *   du: number, regle: number, reste: number, statut?: string, date?: string,
+ * }} situation
+ * @param {Array<{libelle?: string, date_echeance_fr?: string, montant?: number|string,
+ *   montant_regle?: number|string, reste?: number|string, statut_libelle?: string}>} echeances
+ * @returns {Promise<void>}
+ */
+export async function imprimerSituation(situation, echeances) {
+  const fenetre = window.open('', '_blank', 'width=800,height=900');
+
+  if (!fenetre) {
+    throw new Error(
+      'La fenêtre d’impression a été bloquée. Autorisez les pop-ups pour imprimer la fiche.'
+    );
+  }
+
+  const qr = await toQrDataUrl(chargeSituation(situation));
+
+  const lignes = (echeances ?? [])
+    .map(
+      (ech) => `
+        <tr>
+          <td>${escapeHtml(ech.libelle ?? '')}</td>
+          <td>${escapeHtml(ech.date_echeance_fr ?? '')}</td>
+          <td class="droite">${escapeHtml(formatMoney(ech.montant))}</td>
+          <td class="droite">${escapeHtml(formatMoney(ech.montant_regle))}</td>
+          <td class="droite">${escapeHtml(formatMoney(ech.reste))}</td>
+          <td>${escapeHtml(ech.statut_libelle ?? '')}</td>
+        </tr>`
+    )
+    .join('');
+
+  fenetre.document.write(`
+    <!doctype html>
+    <html lang="fr">
+      <head>
+        <meta charset="utf-8" />
+        <title>Situation de paiement — ${escapeHtml(situation.matricule ?? '')}</title>
+        <style>
+          @page { size: A4; margin: 16mm; }
+          body { font-family: Arial, Helvetica, sans-serif; color: #212529; font-size: 12px; }
+          h1 { font-size: 18px; margin: 0 0 2px; }
+          h2 { font-size: 13px; margin: 20px 0 6px; color: #495057; }
+          .sous-titre { color: #6c757d; font-size: 11px; margin: 0 0 18px; }
+          .entete { display: flex; justify-content: space-between; align-items: flex-start; }
+          .entete img { width: 110px; height: 110px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+          th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e9ecef; }
+          thead th { color: #6c757d; font-size: 11px; text-transform: uppercase; }
+          .droite { text-align: right; }
+          .totaux td { border: none; padding: 3px 4px; }
+          .totaux .valeur { text-align: right; font-weight: bold; }
+          .solde { font-size: 15px; }
+          footer { margin-top: 24px; color: #6c757d; font-size: 10px; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="entete">
+          <div>
+            <h1>Situation de paiement</h1>
+            <p class="sous-titre">
+              ${escapeHtml(situation.etudiant ?? '')} — ${escapeHtml(situation.matricule ?? '')}
+              ${situation.classe ? `· ${escapeHtml(situation.classe)}` : ''}
+            </p>
+          </div>
+          ${qr ? `<img src="${qr}" alt="Code QR de contrôle" />` : ''}
+        </div>
+
+        <h2>Détail période par période</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Période</th><th>Échéance</th>
+              <th class="droite">Dû</th><th class="droite">Réglé</th>
+              <th class="droite">Reste</th><th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>${lignes || '<tr><td colspan="6">Aucune échéance.</td></tr>'}</tbody>
+        </table>
+
+        <table class="totaux">
+          <tr><td>Total dû</td><td class="valeur">${escapeHtml(formatMoney(situation.du))}</td></tr>
+          <tr><td>Déjà réglé</td><td class="valeur">${escapeHtml(formatMoney(situation.regle))}</td></tr>
+          <tr class="solde">
+            <td>Reste à payer</td>
+            <td class="valeur">${escapeHtml(formatMoney(situation.reste))}</td>
+          </tr>
+        </table>
+
+        <p class="sous-titre">
+          Statut d'ensemble : <strong>${escapeHtml(situation.statut ?? '')}</strong> —
+          le code QR ci-dessus permet de contrôler cette situation hors ligne.
+        </p>
 
         <footer>Document généré le ${new Date().toLocaleString('fr-FR')}</footer>
       </body>

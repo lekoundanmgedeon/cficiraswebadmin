@@ -290,7 +290,7 @@ const submitPaiement = async () => {
 
   if (resultat.recu) {
     try {
-      imprimerRecu({ ...resultat.recu, ...resultat });
+      await imprimerRecu({ ...resultat.recu, ...resultat });
     } catch (error) {
       // Le paiement est encaissé : un blocage de pop-up ne doit pas le laisser
       // croire échoué. Le reçu reste réimprimable depuis la liste.
