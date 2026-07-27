@@ -137,11 +137,11 @@
 </template>
 
 <script setup>
-import CoursMatieres from './Tab/CoursMatieres.vue';
-import AssignationsContent from './Tab/AssignationsContent.vue';
-import PresencesContent from './Tab/PresencesContent.vue';
-import RessourcesPedagogiques from './Tab/RessourcesPedagogiques.vue';
-import ChargesHoraires from './Tab/ChargesHoraires.vue';
-import RapportsAcademiques from './Tab/RapportsAcademiques.vue';
-import ArchivesPedagogiques from './Tab/ArchivesPedagogiques.vue';
+import CoursMatieres from './tabs/CoursMatieres.vue';
+import AssignationsContent from './tabs/AssignationsContent.vue';
+import PresencesContent from './tabs/PresencesContent.vue';
+import RessourcesPedagogiques from './tabs/RessourcesPedagogiques.vue';
+import ChargesHoraires from './tabs/ChargesHoraires.vue';
+import RapportsAcademiques from './tabs/RapportsAcademiques.vue';
+import ArchivesPedagogiques from './tabs/ArchivesPedagogiques.vue';
 </script>

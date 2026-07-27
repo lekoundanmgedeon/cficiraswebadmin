@@ -213,7 +213,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useAttributionStore } from '@/modules/pedagogies/attributions/store';
+
+/**
+ * Assignation des enseignements : affecte une matière d'une classe à un formateur.
+ *
+ * Les tableaux mock (assignations, matières, formateurs) ont laissé place au vrai
+ * backend (`/pedagogies/attribution`, via `vue_attributions_cours`). Le balisage
+ * n'a pas bougé : les noms `mock*` et les helpers de résolution par id sont
+ * conservés, le store fournit les listes sous la forme qu'ils attendent.
+ */
+const store = useAttributionStore();
+const { assignments, mockClasses, mockMatieres, mockModules, mockFormateurs } = storeToRefs(store);
 
 // États globaux
 const searchQuery = ref('');
@@ -225,38 +238,14 @@ const form = ref({
   heures: null,
 });
 
-// Liste des classes
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management']);
+onMounted(() => {
+  store.fetchAssignments();
+  store.fetchReferentiels();
+});
 
-// Base de données des Modules (récupérés de la vue précédente pour conserver la cohérence)
-const mockModules = ref([
-  { id: 1, code: 'UE-INF-1', nom: 'Génie Logiciel & Outils de Dev' },
-  { id: 2, code: 'UE-DATA-2', nom: 'Data Science & Intelligence Artificielle' },
-  { id: 3, code: 'UE-MNG-1', nom: 'Management & RH' },
-]);
-
-// Base de données des Matières
-const mockMatieres = ref([
-  { id: 101, parentId: 1, nom: 'Conception orientée objet & Patterns' },
-  { id: 102, parentId: 1, nom: 'Frameworks Modernes (Vue.js 3 & Node)' },
-  { id: 103, parentId: 2, nom: "Bases de l'apprentissage automatique (ML)" },
-  { id: 104, parentId: 2, nom: 'Deep Learning & Vision par ordinateur' },
-  { id: 105, parentId: 3, nom: 'Méthodologies Agiles & Scrum Master' },
-]);
-
-// Liste des Formateurs disponibles
-const mockFormateurs = ref([
-  { id: 201, nom: 'Dupont', prenom: 'Jean', contrat: 'Permanent' },
-  { id: 202, nom: 'Alami', prenom: 'Sanaa', contrat: 'Vacataire' },
-  { id: 203, nom: 'Traoré', prenom: 'Moussa', contrat: 'Permanent' },
-]);
-
-// Table de liaison (Assignations) : relie une Classe + une Matière -> à un Formateur
-const mockAssignments = ref([
-  { id: 1, classe: 'Master 1 Info', matiereId: 101, formateurId: 201, heures: 45 },
-  { id: 2, classe: 'Master 1 Info', matiereId: 102, formateurId: 203, heures: 40 },
-  { id: 3, classe: 'Master 2 Info', matiereId: 104, formateurId: 202, heures: 35 },
-]);
+// Le sélecteur de classe déclenche ce handler ; il n'y a pas de filtrage serveur
+// des matières par classe, on le garde neutre (le template le référence).
+const handleClasseChange = () => {};
 
 // --- Méthodes utilitaires de correspondance des Données ---
 const getModuleCode = (parentId) => {
@@ -285,7 +274,7 @@ const getFormateurName = (id) => {
 
 const getFormateurInitials = (id) => {
   const f = mockFormateurs.value.find((prof) => prof.id === id);
-  return f ? `${f.nom[0]}${f.prenom[0]}` : '??';
+  return f ? `${(f.nom || '?')[0]}${(f.prenom || '?')[0]}` : '??';
 };
 
 const getFormateurContrat = (id) => {
@@ -295,35 +284,30 @@ const getFormateurContrat = (id) => {
 
 // --- Filtrage en temps réel ---
 const filteredAssignments = computed(() => {
-  return mockAssignments.value.filter((assign) => {
+  return assignments.value.filter((assign) => {
     const term = searchQuery.value.toLowerCase();
     const matName = getMatiereName(assign.matiereId).toLowerCase();
     const profName = getFormateurName(assign.formateurId).toLowerCase();
-    const className = assign.classe.toLowerCase();
+    const className = (assign.classe || '').toLowerCase();
 
     return matName.includes(term) || profName.includes(term) || className.includes(term);
   });
 });
 
 // --- Actions ---
-const handleAssign = () => {
-  mockAssignments.value.unshift({
-    id: Date.now(),
-    classe: form.value.classe,
-    matiereId: Number(form.value.matiereId),
-    formateurId: Number(form.value.formateurId),
-    heures: form.value.heures,
-  });
-
-  // Reset partiel (on garde la classe sélectionnée pour enchaîner les saisies rapidement)
-  form.value.matiereId = '';
-  form.value.formateurId = '';
-  form.value.heures = null;
+const handleAssign = async () => {
+  const resultat = await store.create(form.value);
+  if (resultat !== undefined) {
+    // Reset partiel (on garde la classe pour enchaîner les saisies rapidement).
+    form.value.matiereId = '';
+    form.value.formateurId = '';
+    form.value.heures = null;
+  }
 };
 
-const removeAssignment = (id) => {
+const removeAssignment = async (id) => {
   if (confirm('Voulez-vous rompre le lien entre ce formateur et ce cours ?')) {
-    mockAssignments.value = mockAssignments.value.filter((item) => item.id !== id);
+    await store.remove(id);
   }
 };
 </script>

@@ -1,11 +1,6 @@
 export default [
-  // Le répertoire des formateurs (`/enseignants`) a migré vers
-  // `src/modules/pedagogies/` (étape 1). Les trois écrans ci-dessous suivront.
-  {
-    path: '/attribution-cours',
-    name: 'AttributionsCours',
-    component: () => import('@/views/pedagogies/attributions/AttributionCours.vue'),
-  },
+  // Répertoire formateurs, créneaux et attributions ont migré vers
+  // `src/modules/pedagogies/` (étapes 1–3). Reste `programme` ci-dessous.
   {
     path: '/programmes-credits',
     name: 'ProgrammesCredits',
