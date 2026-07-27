@@ -3,8 +3,12 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (12 commits, dernier : migration du module `notes` et de la délibération)
-- État de santé : `npm run lint` **0 erreur** sur le code migré · `npm test` **64 tests** · `npm run build` **OK**
+- Branche : `refactor-main` (dernier commit : `38b7591`, étape 4/4 du module `pedagogies` — le programme)
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **64 tests, 8 fichiers** ·
+  `npm run build` **OK**
+  Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
+  `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
+  (`<template>` sans élément racine).
 - ⚠️ **`matieres`, `examens` et `concours` ont nécessité des corrections dans `cfibackend`.**
   Voir §1.6, §1.9, §1.10 — le dépôt backend porte un commit par module.
 - **Endpoints vérifiés contre le backend local** (`localhost:3500`) : toutes les routes appelées par
@@ -677,7 +681,7 @@ Répondent au besoin « voir si un étudiant a payé le mois / le semestre / l'a
 existaient déjà côté serveur ; aucune vue ne les affichait.
 
 | Onglet                                         | Source                                                     | Ce qu'il montre                                                                                                                                      |
-| ---------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ---------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Suivi étudiant** (`SuiviEtudiant.vue`)       | `GET /etudiants?search=` + `GET /echeanciers/etudiant/:id` | Recherche serveur d'un étudiant, puis son échéancier période par période (statut calculé par `v_finance_echeances`) + synthèse + **QR de contrôle**. |
 | **Contrôle par classe** (`ControleClasse.vue`) | `GET /echeanciers/suivi?classe_id=`                        | Tous les étudiants d'une classe regroupés par échéance → statut d'ensemble, cartes de synthèse, export.                                              |
 
@@ -707,12 +711,12 @@ mais la plupart de ses routes **répondaient 500** faute d'objets en base. `peda
 
 > #### ⚠️ Backend créé — 4 migrations SQL (dépôt `cfibackend`, un commit par étape)
 >
-> | Migration | Objet créé | Débloque |
-> | --------- | ---------- | -------- |
-> | `006` | table `diplomes`, vue `vue_infos_enseignants` + CRUD enseignant (`PUT`/`DELETE`) | répertoire formateurs (500 → 200) |
-> | `007` | table `schedule` + colonne `date`, vue `vue_horaire_details` | emplois du temps (500) ; `jour` dérivé de `date` à l'écriture |
-> | `008` | colonne `moduleclasse.heures`, vue `vue_attributions_cours` + endpoints attribution | assignation cours → enseignant |
-> | `009` | table `maquette_pedagogique` + endpoints CRUD | maquette (programme, coef, ECTS, note éliminatoire) |
+> | Migration | Objet créé                                                                          | Débloque                                                      |
+> | --------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+> | `006`     | table `diplomes`, vue `vue_infos_enseignants` + CRUD enseignant (`PUT`/`DELETE`)    | répertoire formateurs (500 → 200)                             |
+> | `007`     | table `schedule` + colonne `date`, vue `vue_horaire_details`                        | emplois du temps (500) ; `jour` dérivé de `date` à l'écriture |
+> | `008`     | colonne `moduleclasse.heures`, vue `vue_attributions_cours` + endpoints attribution | assignation cours → enseignant                                |
+> | `009`     | table `maquette_pedagogique` + endpoints CRUD                                       | maquette (programme, coef, ECTS, note éliminatoire)           |
 
 Par écran :
 
@@ -736,36 +740,106 @@ Nettoyage : suppression des orphelins `src/api/pedagogies/pedagogieApi.js` et `s
 **Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
 `concours`, `notes` + `deliberation`, `finances`, `pedagogies`.
 
-| #   | Module                                 | Fichiers | Lignes | Pourquoi cet ordre                                                                                            |
-| --- | -------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| 1   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage. ⚠️ **`/statistiques` est commenté** côté backend.                                     |
-| 2   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
+| #   | Module        | Fichiers | Lignes | Pourquoi cet ordre                                                                               |
+| --- | ------------- | -------- | ------ | ------------------------------------------------------------------------------------------------ |
+| 1   | **dashboard** | 10       | 1 852  | Surtout de l'affichage, et **aucune dépendance à `/statistiques`**. Le prochain.                 |
+| 2   | **stats**     | 8        | 431    | ⚠️ **Son backend n'existe plus** — voir l'encadré ci-dessous. À réécrire, pas à migrer.          |
+| 3   | Résidus       | ~12      | ~1 500 | `admin`, `schedule`, `prompt`, `docf`, `support`, `settings`, `notifications`, `errors`, `auth`. |
 
-> ⚠️ **`/finance` et `/pedagogies` ne sont plus bloqués** : tous deux **montés** dans
-> `index.routes.js` (`router.use('/finance', …)`, `router.use('/pedagogies', pedagogieRoutes)`) —
-> l'entrée « commenté » de ce tableau était périmée. Reste bloqué : `/statistiques`, toujours
-> **commenté** (404). À trancher — le rétablir (et vérifier ses contrôleurs, comme pour `matieres` et
-> `concours`) ou migrer sans lui.
+_(`parcours` ne figure plus ici : ses vues sont parties avec le module `scolarite`, §1.7. `absence`
+et `structure` non plus : le premier a été retiré faute de backend (§1.7), le second était vide.)_
+
+> #### ⚠️ `/statistiques` n'est pas « commenté » — il a été **supprimé**, et son code est mort
+>
+> Vérifié le 27/07/2026 contre `cfibackend` et la base `cfi_data_v2`. `index.routes.js` ne porte
+> plus **aucune ligne** `/statistiques`, pas même en commentaire. Les deux fichiers ont été retirés
+> en deux temps, tous deux dans l'historique de `HEAD` :
+>
+> | Fichier                                | Sort                                                                  |
+> | -------------------------------------- | --------------------------------------------------------------------- |
+> | `src/services/statistique.services.js` | supprimé à `8dc85ab` (« import inscriptions integrations »)           |
+> | `src/routes/statistiques.routes.js`    | **vidé** à `8686c6b` (« concours routes »), puis supprimé à `3f7e4dc` |
+>
+> Le service a disparu **avant** ses routes : entre les deux commits, `statistiques.routes.js`
+> faisait un `require()` sur un fichier absent. Rétablir le `router.use` à ce moment-là aurait fait
+> **planter le serveur au démarrage** — d'où la mise en commentaire, puis le vidage, puis la
+> suppression. Le code d'origine (116 lignes, 11 endpoints) reste lisible à `5b25a4c`.
+>
+> **Mais il n'y a rien à restaurer : 9 des 11 requêtes échouent contre la base réelle.** Elles ont
+> été exercées une à une :
+>
+> | Endpoint                  | Verdict                                   |
+> | ------------------------- | ----------------------------------------- |
+> | `/par-filiere`            | ✅ OK                                     |
+> | `/repartition-sexe`       | ✅ OK                                     |
+> | `/globales`               | ❌ `relation "paiements" does not exist`  |
+> | `/par-classe`             | ❌ `relation "cursus" does not exist`     |
+> | `/par-annee`              | ❌ idem                                   |
+> | `/classe-sexe`            | ❌ idem                                   |
+> | `/filiere-cycle-annee`    | ❌ idem                                   |
+> | `/taux-reussite`          | ❌ `relation "resultats" does not exist`  |
+> | `/inscriptions`           | ❌ `column i.annee_id does not exist`     |
+> | `/participation-concours` | ❌ `column c.nb_places does not exist`    |
+> | `/filiere-cycle`          | ❌ `column cy.designation does not exist` |
+>
+> Le service a été écrit contre un **schéma antérieur**. Correspondances actuelles : `cursus` →
+> `inscriptions`, `resultats` → `bulletins_semestriels`, `paiements` → `paiements_all`,
+> `inscriptions.annee_id` → `annee_academique_id`, `cycle.designation` → `cycle.code`. Et
+> `concours.nb_places` **n'existe pas du tout** : le taux de participation n'a plus de dénominateur.
+>
+> **Décision : ne pas restaurer.** Reconstruire pour le schéma réel, comme on l'a fait pour
+> `pedagogies` (migrations `006`–`009`) — ou dériver les agrégats des endpoints déjà branchés
+> (`/inscriptions`, `/modules`, `/echeanciers/suivi`, classement concours), sans rien ajouter au
+> serveur. À trancher au moment d'attaquer `stats`.
+
+> #### L'écran `stats` est une maquette, **et elle est cassée**
+>
+> Rien à préserver côté frontend non plus :
+>
+> - `Statistiques.vue` sert, après un `setTimeout(3000)`, deux formateurs codés en dur — « John Doe »,
+>   « Anna Smith ». **C'est le même copier-coller que `RapportExamens` (§1.9) et `RapportConcours`
+>   (§1.10)**, pour la troisième fois, dans un écran de statistiques. Ses quatre `ref([])` ne sont
+>   passées à aucun enfant.
+> - Les **5 composants d'onglet sont byte-identiques** : la même table, à en-têtes d'examens
+>   (`N° / Designation / Niveau / Examen / Valider`).
+> - Aucun ne reçoit sa prop `rows` → `v-for` sur `undefined` → **les onglets affichent une table
+>   vide**, en-têtes seuls.
+> - **5 liens d'onglet pour 4 panneaux**, et deux liens visent le même `#purchases` : le 5ᵉ onglet
+>   rouvre le 4ᵉ. `StatsKPI.vue` n'est importé nulle part.
+> - **Aucun appel API, nulle part.**
 
 ### 2.2 Dette technique transverse
 
-- **14 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le principal gisement d'optimisation d'API restant. Liste : `grep -rl 'data-bs-toggle="tab"' src/views --include=*.vue`
-- **13 stores legacy** dans `src/stores/` → à réécrire avec `createCrudStore`.
-- **12 fichiers d'API legacy** dans `src/api/` → à répartir dans les modules.
-- **31 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`, `body {}`, `.card`) — dont 34 avec `body {}` **dans un style scoped, donc sans aucun effet**.
+_(Chiffres recomptés le 27/07/2026 — les précédents dataient d'avant `finances` et `pedagogies`.)_
+
+- **11 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le
+  principal gisement d'optimisation d'API restant (§1.13).
+  Liste : `grep -rl 'data-bs-toggle="tab"' src --include=*.vue`
+  - **7 sont dans des modules déjà migrés** — `pedagogies/{formateurs,programme,crenaux,attributions}`
+    et `finances/{facturations,rapports,paiements}`. Leurs vues ont été déplacées sans toucher au
+    balisage (§1.16, §1.17) : la bascule sur `AppTabs` reste à faire.
+  - 3 dans `src/views/` — `dashboard/components/DashTab.vue`, `settings/Settings.vue`,
+    `stats/components/StatsTabs.vue` (ce dernier est cassé, voir §2.1).
+- **6 stores legacy** dans `src/stores/` : `academiqueStore/` (1) et `messages/` (5, → §2.4).
+- **6 fichiers d'API legacy** dans `src/api/` : `config/` (3, → §2.4), `academique/academiqueApi.js`,
+  `uploads/importService.js`, `userApi.js`.
+- **15 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`) — dont
+  **13** avec `body {}` **dans un style scoped, donc sans aucun effet**.
 
 ### 2.3 Bugs connus, non corrigés (hors périmètre migré)
 
 Détail complet dans **`docs/DETTE-TECHNIQUE.md`**. Les bloquants :
 
-| Fichier                                                 | Bug                                                          |
-| ------------------------------------------------------- | ------------------------------------------------------------ |
-| `views/admin/DataTable.vue:40`                          | **Erreur de syntaxe** — le fichier ne parse pas.             |
-| `views/examens/calendrier/components/HeaderView.vue:42` | `fetchCalendarEvents` **jamais définie** → plantage au clic. |
-| `views/examens/salles/components/HeaderView.vue:40`     | Idem.                                                        |
-| 9 composants                                            | `<template>` sans élément racine → **ne rendent rien**.      |
+_(Recompté le 27/07/2026. Il n'en reste que **deux** — ce sont exactement les 2 erreurs du lint.)_
 
-_(Les deux entrées `views/etudiants/.../ExportData.vue` ont disparu avec la migration du module.)_
+| Fichier                                  | Bug                                                  |
+| ---------------------------------------- | ---------------------------------------------------- |
+| `views/admin/DataTable.vue:40`           | **Erreur de syntaxe** — le fichier ne parse pas.     |
+| `views/notifications/notification.vue:1` | `<template>` sans élément racine → **ne rend rien**. |
+
+_(Les entrées `views/etudiants/.../ExportData.vue` et les deux `views/examens/.../HeaderView.vue`
+ont disparu avec la migration de leurs modules — `src/views/examens/` n'existe plus. Et des
+9 composants sans élément racine, il n'en subsiste qu'un.)_
 
 ### 2.4 Ponts de compatibilité à retirer en fin de migration
 
@@ -810,19 +884,21 @@ lèveraient les trois d'un coup : `GET /etudiants`, `GET /etudiants/:id`, `PUT`,
 Le frontend absorbe l'écart dans `inscriptions/constants.js` (alias `ANNULEE → REJETEE`, testé),
 mais c'est un piège : sans l'alias, un dossier rejeté s'affiche « Inconnu ».
 
-**5. Trois domaines backend sont désactivés.** Dans `cfibackend/src/routes/index.routes.js`, ces
-lignes sont **commentées** :
+**5. ~~Trois domaines backend sont désactivés.~~ — périmé, corrigé le 27/07/2026.**
 
-```js
-// router.use('/pedagogie', pedagogieRoutes);
-// router.use('/statistiques', StatistiqueRoutes);
-// router.use('/finance', financeRoutes);
-```
+Cette entrée annonçait `/pedagogie`, `/finance` et `/statistiques` commentés dans
+`cfibackend/src/routes/index.routes.js`. Relevé réel :
 
-Conséquence directe : **aucun endpoint n'expose les enseignants**, alors qu'ils sont obligatoires
-pour rattacher un module à une classe (§1.6). Et trois modules à migrer — `pedagogies`, `finances`,
-`stats` — n'ont aujourd'hui **aucun backend joignable**. À rétablir (ou à confirmer comme
-volontaire) avant de les entreprendre.
+| Domaine         | État vérifié                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| `/finance`      | ✅ **monté** — `router.use('/finance', financeRoutes)`. Migré, §1.16.                              |
+| `/pedagogies`   | ✅ **monté** — au **pluriel** ; `pedagogieClient` visait `/pedagogie`, d'où les 404. Migré, §1.17. |
+| `/statistiques` | ❌ **supprimé**, pas commenté — routes _et_ service. Voir l'encadré du §2.1.                       |
+
+La conséquence annoncée — « aucun endpoint n'expose les enseignants » — **n'est plus vraie** :
+`GET /pedagogies/enseignant/enseignants` les expose depuis la migration `006` (§1.17). La saisie de
+l'enseignant au matricule dans `matieres` (§1.6) peut donc devenir une vraie liste déroulante ;
+c'est un reste à faire, pas un blocage.
 
 **6. La fonction Postgres `assigner_module_a_classe` a deux défauts** (elle n'est dans aucun script
 de migration versionné, seulement en base) : l'enseignant y est **obligatoire** alors que rien ne
@@ -906,7 +982,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. Appliquer la recette au module suivant (`notes` + `deliberation`).
+3. Appliquer la recette au module suivant — **`dashboard`** (§2.1).
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 
