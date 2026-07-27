@@ -171,7 +171,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useMaquetteStore } from '@/modules/pedagogies/programme/store';
+
+/**
+ * La répartition des UE vient désormais des modules réels (`GET /modules`, via le
+ * store de la maquette) ; le balisage n'a pas bougé. Les règles de cycle
+ * (barème, compensation) restent une configuration d'écran, sans backend dédié.
+ */
+const store = useMaquetteStore();
+const { ueDistribution: mockUeDistribution } = storeToRefs(store);
+onMounted(() => store.fetchReferentiels());
 
 // État du cycle sélectionné
 const selectedCycle = ref('Master');
@@ -193,32 +204,6 @@ const loadCycleConfig = () => {
     cycleConfig.value = { totalEcts: 180, compensationPermise: false, noteValidationDirecte: 12.0 };
   }
 };
-
-// Distribution factice des ECTS pour alimenter l'interface graphique
-const mockUeDistribution = ref([
-  { code: 'UE-INF-101', nom: 'Génie Logiciel Avancé', heures: 60, ects: 8, obligatoire: true },
-  {
-    code: 'UE-DATA-102',
-    nom: 'Algorithmes de Machine Learning',
-    heures: 45,
-    ects: 6,
-    obligatoire: true,
-  },
-  {
-    code: 'UE-MNG-103',
-    nom: 'Management de projet & Agilité',
-    heures: 30,
-    ects: 4,
-    obligatoire: false,
-  },
-  {
-    code: 'UE-LANG-104',
-    nom: 'Anglais Professionnel & Technique',
-    heures: 30,
-    ects: 2,
-    obligatoire: true,
-  },
-]);
 
 const updateCycleRules = () => {
   alert(

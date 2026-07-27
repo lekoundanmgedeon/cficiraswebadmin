@@ -87,8 +87,8 @@
 </template>
 
 <script setup>
-import ProgrammeCours from './Tab/ProgrammeCours.vue';
-import CreditsAcademiques from './Tab/CreditsAcademiques.vue';
-import CreditsECTS from './Tab/CreditsECTS.vue';
-import ResumeProgramme from './Tab/ResumeProgramme.vue';
+import ProgrammeCours from './tabs/ProgrammeCours.vue';
+import CreditsAcademiques from './tabs/CreditsAcademiques.vue';
+import CreditsECTS from './tabs/CreditsECTS.vue';
+import ResumeProgramme from './tabs/ResumeProgramme.vue';
 </script>

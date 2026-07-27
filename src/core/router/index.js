@@ -23,7 +23,6 @@ import pedagogiesRoutes from '@/modules/pedagogies/routes';
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
 // rejoindront `src/modules/`. Voir docs/ARCHITECTURE.md § « Migration en cours ».
 import authRoutes from '@/routes/auth.routes';
-import pedagogieRoutes from '@/routes/pedagogie.routes';
 import othersRoutes from '@/routes/others.routes';
 
 /** Routes internes, rendues dans le layout applicatif et protégées par le guard. */
@@ -38,7 +37,6 @@ const protectedRoutes = [
   ...notesRoutes,
   ...financesRoutes,
   ...pedagogiesRoutes,
-  ...pedagogieRoutes,
   ...othersRoutes,
 ];
 

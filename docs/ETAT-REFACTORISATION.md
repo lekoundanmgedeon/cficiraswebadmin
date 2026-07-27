@@ -688,6 +688,45 @@ existaient déjà côté serveur ; aucune vue ne les affichait.
 > Le statut d'ensemble suit la **hiérarchie des échéances** (§1.5, constants) : le retard prime. Dès
 > qu'une période est en retard, l'étudiant est « en retard », même s'il a réglé les autres.
 
+### 1.17 Le module `pedagogies` — terminé (le plus gros, 4 écrans, backend créé)
+
+```
+src/modules/pedagogies/
+├── routes.js
+├── formateurs/    api.js · store.js · views/EnseignantsView · components/ (+ tabs/)
+├── crenaux/       api.js · store.js · views/CrenauHoraireView · components/ (+ tabs/)
+├── attributions/  api.js · store.js · views/AttributionCoursView · components/ (+ tabs/)
+└── programme/     api.js · store.js · views/ProgrammeCreditView · components/ (+ tabs/)
+```
+
+Migré **écran par écran, chacun vérifié en live** contre `localhost:3500`. Les quatre écrans
+(~8 040 lignes) étaient **quasi entièrement en données codées en dur** (« Jean Dupont », `setTimeout`,
+exports `console.log`). Le domaine backend `/pedagogies` **est monté** (le doc le croyait commenté),
+mais la plupart de ses routes **répondaient 500** faute d'objets en base. `pedagogieClient` visait
+`/pedagogie` (singulier) — préfixe inexistant, 404 sur tout.
+
+> #### ⚠️ Backend créé — 4 migrations SQL (dépôt `cfibackend`, un commit par étape)
+>
+> | Migration | Objet créé | Débloque |
+> | --------- | ---------- | -------- |
+> | `006` | table `diplomes`, vue `vue_infos_enseignants` + CRUD enseignant (`PUT`/`DELETE`) | répertoire formateurs (500 → 200) |
+> | `007` | table `schedule` + colonne `date`, vue `vue_horaire_details` | emplois du temps (500) ; `jour` dérivé de `date` à l'écriture |
+> | `008` | colonne `moduleclasse.heures`, vue `vue_attributions_cours` + endpoints attribution | assignation cours → enseignant |
+> | `009` | table `maquette_pedagogique` + endpoints CRUD | maquette (programme, coef, ECTS, note éliminatoire) |
+
+Par écran :
+
+- **formateurs** — répertoire branché sur `GET /pedagogies/enseignant/enseignants` (`vue_infos_enseignants`). Suppression réelle, exports réels.
+- **crenaux** — CRUD des créneaux + grille sur `/pedagogies/schedule`. L'UI saisit une **date**, le backend en **dérive le jour** ; import de masse → avertissement honnête (pas d'endpoint).
+- **attributions** — onglet « Assignation » branché (`/pedagogies/attribution`). `PresencesContent` (`<template>` vide) → état honnête.
+- **programme** — maquette (`ProgrammeCours`) sur `/pedagogies/programme/maquette` ; répartition UE (`CreditsAcademiques`) dérivée de `GET /modules`.
+
+> #### Onglets restés mockés (pas de backend, à consolider)
+>
+> Relocalisés tels quels pour ne pas casser l'UI : `crenaux/{TravauxPratiques, TravauxDiriges}` (stats/archives) ; `attributions/{CoursMatieres` (recoupe le module `matieres`)`, ChargesHoraires, RessourcesPedagogiques, RapportsAcademiques, ArchivesPedagogiques}` ; `programme/{ResumeProgramme, CreditsECTS}` (**nécessitent des résultats** — bulletins vides, voir §2.5.13).
+
+Nettoyage : suppression des orphelins `src/api/pedagogies/pedagogieApi.js` et `src/stores/pedagogieStore/*` (3 stores), et de `src/routes/pedagogie.routes.js` (le module porte ses routes).
+
 ---
 
 ## 2. Ce qui reste
@@ -695,19 +734,18 @@ existaient déjà côté serveur ; aucune vue ne les affichait.
 ### 2.1 Modules à migrer (par ordre conseillé)
 
 **Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
-`concours`, `notes` + `deliberation`, `finances`.
+`concours`, `notes` + `deliberation`, `finances`, `pedagogies`.
 
 | #   | Module                                 | Fichiers | Lignes | Pourquoi cet ordre                                                                                            |
 | --- | -------------------------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------- |
-| 1   | **pedagogies**                         | 34       | 8 040  | Le plus gros. 4 conteneurs d'onglets (dont deux à 6 onglets). ⚠️ **`/pedagogie` est commenté** côté backend.  |
-| 2   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage. ⚠️ **`/statistiques` est commenté** côté backend.                                     |
-| 3   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
+| 1   | **dashboard**, **parcours**, **stats** | 29       | 4 126  | Surtout de l'affichage. ⚠️ **`/statistiques` est commenté** côté backend.                                     |
+| 2   | Résidus                                | ~12      | ~1 500 | `admin`, `schedule`, `absence`, `prompt`, `docf`, `support`, `settings`, `notifications`, `structure` (vide). |
 
-> ⚠️ **`/finance` n'est plus bloqué** : il **est monté** dans `index.routes.js`
-> (`router.use('/finance', financeRoutes)`) — l'entrée « commenté » de ce tableau était périmée.
-> Restent bloqués : `/pedagogie` et `/statistiques`, toujours **commentés**, dont les routes ne sont
-> pas montées (404). À trancher module par module — les rétablir (et vérifier leurs contrôleurs,
-> comme pour `matieres` et `concours`) ou migrer sans eux.
+> ⚠️ **`/finance` et `/pedagogies` ne sont plus bloqués** : tous deux **montés** dans
+> `index.routes.js` (`router.use('/finance', …)`, `router.use('/pedagogies', pedagogieRoutes)`) —
+> l'entrée « commenté » de ce tableau était périmée. Reste bloqué : `/statistiques`, toujours
+> **commenté** (404). À trancher — le rétablir (et vérifier ses contrôleurs, comme pour `matieres` et
+> `concours`) ou migrer sans lui.
 
 ### 2.2 Dette technique transverse
 

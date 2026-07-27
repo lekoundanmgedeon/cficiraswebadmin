@@ -254,7 +254,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useMaquetteStore } from '@/modules/pedagogies/programme/store';
+
+/**
+ * Maquette pédagogique. Les tableaux `mockRules` / `mockModules` / `mockClasses`
+ * codés en dur ont laissé place à la vraie table `maquette_pedagogique`
+ * (`/pedagogies/programme/maquette`) et aux modules réels. Le balisage n'a pas
+ * bougé : les noms `mock*` sont conservés mais pointent sur les données réelles.
+ */
 
 // États de l'interface
 const isEditing = ref(false);
@@ -271,62 +280,21 @@ const form = ref({
   noteEliminatoire: null,
 });
 
-// Référentiels de maquettes
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management']);
-const mockModules = ref([
-  { code: 'UE-INF-1', nom: 'Génie Logiciel & Outils de Dev' },
-  { code: 'UE-DATA-2', nom: 'Data Science & Intelligence Artificielle' },
-  { code: 'UE-MNG-1', nom: 'Management & RH' },
-]);
+// Référentiels et maquette réels (voir le store).
+const store = useMaquetteStore();
+const { rules: mockRules, mockClasses, mockModules } = storeToRefs(store);
 
-// Registre de la maquette (Règles d'examens unitaires)
-const mockRules = ref([
-  {
-    id: 1,
-    classe: 'Master 1 Info',
-    semestre: 'Semestre 1',
-    moduleCode: 'UE-INF-1',
-    matiere: 'Conception orientée objet & Patterns',
-    coefficient: 2,
-    ects: 4,
-    noteEliminatoire: 8,
-  },
-  {
-    id: 2,
-    classe: 'Master 1 Info',
-    semestre: 'Semestre 1',
-    moduleCode: 'UE-INF-1',
-    matiere: 'Frameworks Modernes (Vue.js 3 & Node)',
-    coefficient: 2,
-    ects: 4,
-    noteEliminatoire: null,
-  },
-  {
-    id: 3,
-    classe: 'Master 2 Info',
-    semestre: 'Semestre 1',
-    moduleCode: 'UE-DATA-2',
-    matiere: 'Deep Learning & Vision par ordinateur',
-    coefficient: 3,
-    ects: 6,
-    noteEliminatoire: 10,
-  },
-]);
+onMounted(() => {
+  store.fetchMaquette();
+  store.fetchReferentiels();
+});
 
 // Sauvegarde ou modification d'une règle
-const saveProgramRule = () => {
-  if (isEditing.value) {
-    const index = mockRules.value.findIndex((r) => r.id === editingId.value);
-    if (index !== -1) {
-      mockRules.value[index] = { id: editingId.value, ...form.value };
-    }
-  } else {
-    mockRules.value.unshift({
-      id: Date.now(),
-      ...form.value,
-    });
-  }
-  resetForm();
+const saveProgramRule = async () => {
+  const resultat = isEditing.value
+    ? await store.update(editingId.value, form.value)
+    : await store.create(form.value);
+  if (resultat !== undefined) resetForm();
 };
 
 const editRule = (rule) => {
@@ -335,9 +303,9 @@ const editRule = (rule) => {
   form.value = { ...rule };
 };
 
-const deleteRule = (id) => {
+const deleteRule = async (id) => {
   if (confirm('Voulez-vous supprimer cette matière de la maquette pédagogique ?')) {
-    mockRules.value = mockRules.value.filter((r) => r.id !== id);
+    await store.remove(id);
   }
 };
 
