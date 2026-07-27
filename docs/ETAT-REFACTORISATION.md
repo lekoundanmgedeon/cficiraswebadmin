@@ -3,8 +3,8 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (dernier commit : `38b7591`, étape 4/4 du module `pedagogies` — le programme)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **64 tests, 8 fichiers** ·
+- Branche : `refactor-main` (dernier module migré : `dashboard`, §1.18)
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **72 tests, 9 fichiers** ·
   `npm run build` **OK**
   Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
   `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
@@ -731,6 +731,72 @@ Par écran :
 
 Nettoyage : suppression des orphelins `src/api/pedagogies/pedagogieApi.js` et `src/stores/pedagogieStore/*` (3 stores), et de `src/routes/pedagogie.routes.js` (le module porte ses routes).
 
+### 1.18 Le module `dashboard` — terminé (zéro travail backend)
+
+```
+src/modules/dashboard/
+├── routes.js · api.js · store.js · store.test.js
+├── components/   DashboardHeader · DashboardTabs
+│   └── tabs/     VueEnsemble · Scolarites · Pedagogies · Cycles · Rapports
+└── views/        DashboardView.vue
+```
+
+1 852 lignes → 1 430. **Le design est préservé** : cartes à liseré coloré, teintes
+`bg-soft-*`, `text-xs`, `tracking-wider`, `rounded-4` — la charte ERP est celle de l'original.
+
+**C'est l'écran d'accueil de l'application, et il n'émettait aucune requête.** Ses quatre KPI
+étaient écrits **en dur dans le template** (« 37 050 000 FCFA », « 482 Inscrits »), ses graphiques
+portaient des séries fixes, et son tableau du bas servait les **données de démonstration du thème
+Bootstrap** — « Jeremy Ortega », « $790 », « Catalinaborough », en dollars, dans une application
+scolaire libellée en FCFA, sous un commentaire `// Ajouter les autres données ici`.
+
+| Onglet         | Avant                                                                                                                                  | Après                                                                                                               |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Vue d'ensemble | 4 KPI en dur + 3 « Flash Diagnostics IA » **inventés**, dont un nommant une filière précise avec son taux d'impayés                    | effectifs, capacité, taux de remplissage (`/classes/analytics/dashboard-global`) et répartition par cycle           |
+| Scolarités     | 4 KPI en dur ; « Relancer » → `alert("Notification de mise en demeure envoyée… via SMS")` — **rien n'était envoyé, aucun backend SMS** | KPI réels (`/rapports/kpi`), encaissements par filière, retards réels (`/echeanciers/suivi`) → lien vers le dossier |
+| Pédagogies     | suivi des vacations en dur (« Dr. Amadou Diallo »…)                                                                                    | corps enseignant, attributions et charge horaire réelles (`vue_infos_enseignants`, `vue_attributions_cours`)        |
+| Cycles         | tout en dur, dont une « Note Secrétariat » créditant **un module de suivi des présences qui n'existe pas** (§1.7)                      | effectifs par cycle + remplissage des filières, avec une lecture **dérivée des données affichées**                  |
+| Rapports       | catalogue de 4 rapports inventés, dates de génération fictives, Excel/PDF → `alert("Génération à la volée réussie")`                   | catalogue de **5 extractions réelles**, chacune adossée à son endpoint, fichier produit dans le navigateur          |
+
+#### Le bug de la vue racine
+
+`Dashboard.vue` portait `v-if="loading"` sur un `loading` **jamais déclaré** dans son
+`<script setup>`. La condition valait donc toujours `undefined` : le `SkeletonLoader` ne s'est
+jamais affiché. Le chargement est désormais porté par chaque onglet, au plus près de ses données.
+
+Trois boutons-icônes de l'en-tête n'avaient **aucun `@click`**, et « Générer un rapport » ouvrait
+une modale qui attendait 1,5 s avant d'annoncer « Le fichier a été généré avec succès par le noyau
+de l'ERP » — **sans appeler la moindre API ni produire de fichier**. C'est mot pour mot ce qui avait
+été retiré du module `etudiants` (§1.4). Le bouton renvoie maintenant vers l'onglet Rapports, qui
+fait réellement ce que la modale prétendait faire.
+
+#### Ce qui n'a pas de backend garde sa place, mais ne ment plus
+
+Décision prise en cours de chantier : **conserver la mise en page, remplacer le contenu inventé par
+un état honnête** (`EmptyState`) plutôt que de retirer les blocs. Le panneau « Flash Diagnostics IA »
+annonce donc qu'aucun moteur d'analyse n'est raccordé, au lieu d'afficher trois diagnostics
+fabriqués. Même traitement que `PresencesContent` et l'import de masse des créneaux (§1.17).
+
+#### Aucun ajout serveur — tout existait déjà
+
+Les cinq endpoints consommés étaient exposés depuis toujours et **aucun écran ne les appelait** :
+`/classes/analytics/dashboard-global`, `/cycles/stats/distribution`, `/filieres/stats/organisations`,
+`/pedagogies/enseignant/enseignants`, `/pedagogies/attribution/attributions`. Les agrégats
+financiers ne sont pas redéclarés : le module réutilise **`finances/stores/rapports.js`**, qui les
+porte déjà — dépendance `dashboard → finances` dirigée et déclarée, même montage que `notes →
+examens` (§1.11).
+
+> #### ⚠️ Les compteurs arrivent en chaînes
+>
+> `pg` sert ses `COUNT` et ses `SUM` en chaînes : `dashboard-global` renvoie `"10"`, `"1610"`,
+> `"26"`. La division fonctionne par coercition, mais **l'addition concatène** et Chart.js reçoit des
+> étiquettes au lieu de valeurs — l'axe reste vide **sans qu'aucune erreur ne soit levée**. Le store
+> convertit à l'entrée, et **8 tests** (`store.test.js`) figent le contrat sur les charges utiles
+> réelles relevées contre `localhost:3500`, y compris la garde contre la division par zéro.
+
+Le conteneur d'onglets Bootstrap a été remplacé par `AppTabs` : la page d'accueil montait ses **cinq
+panneaux d'un coup**, soit cinq `onMounted` et cinq instances Chart.js pour n'en afficher qu'un.
+
 ---
 
 ## 2. Ce qui reste
@@ -738,13 +804,12 @@ Nettoyage : suppression des orphelins `src/api/pedagogies/pedagogieApi.js` et `s
 ### 2.1 Modules à migrer (par ordre conseillé)
 
 **Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
-`concours`, `notes` + `deliberation`, `finances`, `pedagogies`.
+`concours`, `notes` + `deliberation`, `finances`, `pedagogies`, `dashboard`.
 
-| #   | Module        | Fichiers | Lignes | Pourquoi cet ordre                                                                               |
-| --- | ------------- | -------- | ------ | ------------------------------------------------------------------------------------------------ |
-| 1   | **dashboard** | 10       | 1 852  | Surtout de l'affichage, et **aucune dépendance à `/statistiques`**. Le prochain.                 |
-| 2   | **stats**     | 8        | 431    | ⚠️ **Son backend n'existe plus** — voir l'encadré ci-dessous. À réécrire, pas à migrer.          |
-| 3   | Résidus       | ~12      | ~1 500 | `admin`, `schedule`, `prompt`, `docf`, `support`, `settings`, `notifications`, `errors`, `auth`. |
+| #   | Module    | Fichiers | Lignes | Pourquoi cet ordre                                                                               |
+| --- | --------- | -------- | ------ | ------------------------------------------------------------------------------------------------ |
+| 1   | **stats** | 8        | 431    | ⚠️ **Son backend n'existe plus** — voir l'encadré ci-dessous. À réécrire, pas à migrer.          |
+| 2   | Résidus   | ~12      | ~1 500 | `admin`, `schedule`, `prompt`, `docf`, `support`, `settings`, `notifications`, `errors`, `auth`. |
 
 _(`parcours` ne figure plus ici : ses vues sont parties avec le module `scolarite`, §1.7. `absence`
 et `structure` non plus : le premier a été retiré faute de backend (§1.7), le second était vide.)_
@@ -812,19 +877,25 @@ et `structure` non plus : le premier a été retiré faute de backend (§1.7), l
 
 _(Chiffres recomptés le 27/07/2026 — les précédents dataient d'avant `finances` et `pedagogies`.)_
 
-- **11 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le
+- **9 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le
   principal gisement d'optimisation d'API restant (§1.13).
-  Liste : `grep -rl 'data-bs-toggle="tab"' src --include=*.vue`
+
   - **7 sont dans des modules déjà migrés** — `pedagogies/{formateurs,programme,crenaux,attributions}`
     et `finances/{facturations,rapports,paiements}`. Leurs vues ont été déplacées sans toucher au
     balisage (§1.16, §1.17) : la bascule sur `AppTabs` reste à faire.
-  - 3 dans `src/views/` — `dashboard/components/DashTab.vue`, `settings/Settings.vue`,
-    `stats/components/StatsTabs.vue` (ce dernier est cassé, voir §2.1).
+  - 2 dans `src/views/` — `settings/Settings.vue` et `stats/components/StatsTabs.vue` (ce dernier
+    est cassé, voir §2.1).
+
+  > ⚠️ **`grep -rl 'data-bs-toggle="tab"' src --include=*.vue` rend 11, pas 9.** Deux faux positifs :
+  > `shared/components/AppTabs.vue` et `dashboard/components/DashboardTabs.vue` ne font que
+  > **mentionner** la chaîne dans leur documentation — ce sont précisément les composants qui la
+  > remplacent. Ne pas compter un fichier sans l'ouvrir.
+
 - **6 stores legacy** dans `src/stores/` : `academiqueStore/` (1) et `messages/` (5, → §2.4).
 - **6 fichiers d'API legacy** dans `src/api/` : `config/` (3, → §2.4), `academique/academiqueApi.js`,
   `uploads/importService.js`, `userApi.js`.
-- **15 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`) — dont
-  **13** avec `body {}` **dans un style scoped, donc sans aucun effet**.
+- **14 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`) — la
+  plupart avec un `body {}` **dans un style scoped, donc sans aucun effet**.
 
 ### 2.3 Bugs connus, non corrigés (hors périmètre migré)
 
@@ -982,7 +1053,8 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. Appliquer la recette au module suivant — **`dashboard`** (§2.1).
+3. Appliquer la recette au module suivant — **`stats`** (§2.1), en gardant à l'esprit qu'il s'agit
+   d'une réécriture et non d'une migration : son backend a été supprimé.
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 

@@ -4,13 +4,11 @@
  * `/notes`, `/notes/:classeId/:semestre/:type/edit` et `/deliberations` en sont
  * partis : ils vivent désormais dans `@/modules/notes/routes`. La route d'édition
  * a disparu — elle reposait sur un modèle de données que le serveur ne connaît pas.
+ *
+ * `/dashboard`, `/home` et `''` en sont partis à leur tour, vers
+ * `@/modules/dashboard/routes`.
  */
 export default [
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/views/dashboard/Dashboard.vue'),
-  },
   {
     path: '/statistiques',
     name: 'Statistiques',
@@ -31,6 +29,4 @@ export default [
     name: 'AssistantAI',
     component: () => import('@/views/prompt/AssistantAi.vue'),
   },
-  { path: '/home', name: 'Home', component: () => import('@/views/dashboard/Dashboard.vue') },
-  { path: '', name: 'Root', component: () => import('@/views/dashboard/Dashboard.vue') },
 ];

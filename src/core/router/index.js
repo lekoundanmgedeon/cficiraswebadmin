@@ -18,6 +18,7 @@ import concoursRoutes from '@/modules/concours/routes';
 import notesRoutes from '@/modules/notes/routes';
 import financesRoutes from '@/modules/finances/routes';
 import pedagogiesRoutes from '@/modules/pedagogies/routes';
+import dashboardRoutes from '@/modules/dashboard/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
@@ -27,6 +28,7 @@ import othersRoutes from '@/routes/others.routes';
 
 /** Routes internes, rendues dans le layout applicatif et protégées par le guard. */
 const protectedRoutes = [
+  ...dashboardRoutes,
   ...structureAcademiqueRoutes,
   ...etudiantsRoutes,
   ...inscriptionsRoutes,
