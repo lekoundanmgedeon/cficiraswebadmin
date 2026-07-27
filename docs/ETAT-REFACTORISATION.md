@@ -4,7 +4,7 @@ Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et *
 À tenir à jour à chaque module migré.
 
 - Branche : `refactor-main` (dernier module migré : `dashboard`, §1.18)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **72 tests, 9 fichiers** ·
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **79 tests, 10 fichiers** ·
   `npm run build` **OK**
   Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
   `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
@@ -794,6 +794,26 @@ examens` (§1.11).
 > convertit à l'entrée, et **8 tests** (`store.test.js`) figent le contrat sur les charges utiles
 > réelles relevées contre `localhost:3500`, y compris la garde contre la division par zéro.
 
+#### Vérification
+
+**Les dix endpoints ont été exercés avec un vrai jeton** (`superadmin`), et rendent tous
+`success: true`. Deux remarques utiles pour la suite :
+
+- `/echeanciers/suivi` rend **0 ligne** : la vue `v_finance_echeances` est vide en base, et le KPI
+  confirme (`nb_en_retard: 0`). Le tableau d'alertes affiche donc son `EmptyState`. Le mappage de
+  ses champs suit les colonnes déclarées de la vue et l'usage qu'en fait déjà `ControleClasse.vue` —
+  mais **aucune ligne n'a réellement transité** par ce chemin.
+- Les endpoints financiers exigent un jeton (401 sans). Les agrégats académiques, eux, sont
+  **ouverts** : aucun `verifierToken` sur `/classes/analytics/*`, `/cycles/stats/*` ni
+  `/filieres/stats/*`. À signaler côté backend — ces routes exposent les effectifs de
+  l'établissement sans authentification.
+
+**7 tests de montage** (`components/tabs/tabs.test.js`, jsdom) complètent les tests de store : ils
+montent réellement les onglets et vérifient que les chiffres affichés sont ceux du serveur — et que
+les valeurs inventées de l'ancien écran (« 37 050 000 », « Sciences Juridiques », « Dr. Amadou
+Diallo ») n'apparaissent plus. C'est la leçon du §1.12 : lint, tests et build peuvent être au vert
+pendant qu'un écran ne rend rien, faute de test qui le monte.
+
 Le conteneur d'onglets Bootstrap a été remplacé par `AppTabs` : la page d'accueil montait ses **cinq
 panneaux d'un coup**, soit cinq `onMounted` et cinq instances Chart.js pour n'en afficher qu'un.
 
@@ -1016,6 +1036,19 @@ routes de résultats ne font que lire, décider et publier. Il manque le calcul 
 `calculer_moyennes_et_rangs` des concours, mais pour les bulletins semestriels. Tant qu'il n'existe
 pas, l'écran de délibération restera vide en production, quoique parfaitement fonctionnel (vérifié
 avec un bulletin inséré à la main, puis retiré).
+
+**14. Les agrégats académiques ne sont protégés par aucune authentification.** Relevé en migrant le
+dashboard (§1.18) : `GET /academique/classes/analytics/dashboard-global`,
+`/academique/cycles/stats/distribution` et `/academique/filieres/stats/organisations` répondent
+**200 sans jeton**, là où tous les endpoints `/finance/*` renvoient 401. Leurs routes ne portent
+aucun `verifierToken`. Ils exposent les effectifs, les capacités et le taux de remplissage de
+l'établissement à qui connaît l'URL. L'incohérence est peut-être un oubli plutôt qu'un choix : à
+confirmer, et à aligner sur le reste.
+
+**15. Aucune échéance n'existe en base.** La vue `v_finance_echeances` est **vide** (0 ligne), donc
+`/echeanciers/suivi` ne rend jamais rien, quel que soit le filtre. Les écrans qui en dépendent —
+« Suivi étudiant » et « Contrôle par classe » (§1.16), et le tableau d'alertes du dashboard (§1.18) —
+sont fonctionnels mais **invérifiables sur données réelles** tant qu'un échéancier n'est pas généré.
 
 ### 2.6 Vérifier avant de coder — la leçon des modules `etudiants` et `matieres`
 

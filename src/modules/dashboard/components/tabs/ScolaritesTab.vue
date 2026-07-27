@@ -190,7 +190,7 @@ const dessiner = async () => {
   instance = new Chart(canvasFilieres.value, {
     type: 'bar',
     data: {
-      labels: filieresAffichees.value.map((ligne) => ligne.filiere ?? ligne.filiere_nom ?? '—'),
+      labels: filieresAffichees.value.map((ligne) => ligne.filiere),
       datasets: [
         {
           label: 'Montant Encaissé',

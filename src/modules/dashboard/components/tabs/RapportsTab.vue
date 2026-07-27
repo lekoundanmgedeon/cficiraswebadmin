@@ -103,7 +103,7 @@ const catalogue = [
     async lignes() {
       await rapports.fetchBilanFilieres();
       return rapports.bilanFilieres.map((ligne) => ({
-        Filière: ligne.filiere ?? '—',
+        Filière: ligne.filiere,
         Étudiants: ligne.nb_etudiants,
         Attendu: ligne.attendu,
         Perçu: ligne.percu,
@@ -120,9 +120,11 @@ const catalogue = [
     source: '/rapports/encaissements-mensuels',
     async lignes() {
       await rapports.fetchEncaissementsMensuels();
+      // Le store rend déjà `{ mois, total, nb_paiements }`, converti en nombres.
       return rapports.encaissementsMensuels.map((ligne) => ({
-        Mois: ligne.mois ?? ligne.periode ?? '—',
-        Montant: ligne.montant ?? ligne.total ?? 0,
+        Mois: ligne.mois,
+        Opérations: ligne.nb_paiements,
+        Montant: ligne.total,
       }));
     },
   },
@@ -135,9 +137,9 @@ const catalogue = [
     async lignes() {
       await rapports.fetchRepartitionModes();
       return rapports.repartitionModes.map((ligne) => ({
-        Mode: ligne.mode ?? ligne.mode_paiement ?? '—',
-        Opérations: ligne.nb ?? ligne.nb_paiements ?? 0,
-        Montant: ligne.montant ?? ligne.total ?? 0,
+        Mode: ligne.mode,
+        Opérations: ligne.nb_paiements,
+        Montant: ligne.total,
       }));
     },
   },
