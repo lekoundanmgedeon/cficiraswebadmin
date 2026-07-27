@@ -7,11 +7,6 @@ export default [
     component: () => import('@/views/pedagogies/attributions/AttributionCours.vue'),
   },
   {
-    path: '/crenaux-horaires',
-    name: 'CrenauxHoraire',
-    component: () => import('@/views/pedagogies/crenaux/CrenauHoraire.vue'),
-  },
-  {
     path: '/programmes-credits',
     name: 'ProgrammesCredits',
     component: () => import('@/views/pedagogies/programme/ProgrammeCredit.vue'),

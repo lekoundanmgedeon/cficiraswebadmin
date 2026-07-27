@@ -93,8 +93,8 @@
 </template>
 
 <script setup>
-import CreneauxHoraires from './Tab/CreneauxHoraires.vue';
-import EmploisDuTemps from './Tab/EmploisDuTemps.vue';
-import TravauxPratiques from './Tab/TravauxPratiques.vue';
-import TravauxDiriges from './Tab/TravauxDiriges.vue';
+import CreneauxHoraires from './tabs/CreneauxHoraires.vue';
+import EmploisDuTemps from './tabs/EmploisDuTemps.vue';
+import TravauxPratiques from './tabs/TravauxPratiques.vue';
+import TravauxDiriges from './tabs/TravauxDiriges.vue';
 </script>

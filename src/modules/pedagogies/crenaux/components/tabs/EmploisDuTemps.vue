@@ -129,16 +129,29 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useScheduleStore } from '@/modules/pedagogies/crenaux/store';
+
+/**
+ * Grille hebdomadaire. Les cours et les référentiels viennent désormais du store
+ * partagé (`vue_horaire_details`) ; le balisage n'a pas bougé. Un créneau
+ * n'apparaît dans une cellule que si sa date et son heure de début coïncident
+ * avec la case — d'où l'importance de la date réelle (dérivée en jour côté
+ * serveur pour la grille par jour de semaine).
+ */
+const store = useScheduleStore();
+const { schedules: mockSchedules, classes: mockClasses } = storeToRefs(store);
 
 // Configuration de la navigation / Type de vue
 const viewType = ref('classe');
-const selectedTarget = ref('Master 1 Info');
+const selectedTarget = ref('');
 const currentSemaineOffset = ref(0);
 
-// Référentiels
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management']);
-const mockFormateurs = ref(['Dupont Jean', 'Traoré Moussa', 'Alami Sanaa']);
+// Formateurs présents dans les créneaux chargés (pour la « Vue par Formateur »).
+const mockFormateurs = computed(() =>
+  [...new Set(mockSchedules.value.map((s) => s.formateur).filter(Boolean))].sort()
+);
 
 // Découpage structurel des lignes de la grille (Créneaux standards ERP)
 const slotsHoraires = ref([
@@ -147,54 +160,22 @@ const slotsHoraires = ref([
   { start: '17:00', end: '20:00' },
 ]);
 
-// Base de données dynamique des cours planifiés
-const mockSchedules = ref([
-  {
-    id: 1,
-    date: '2026-05-18',
-    heureDebut: '08:30',
-    classe: 'Master 1 Info',
-    matiere: 'Frameworks Modernes (Vue.js 3 & Node)',
-    formateur: 'Traoré Moussa',
-    salle: 'Salle 102 (Labo)',
+onMounted(() => {
+  store.fetchSchedules();
+  store.fetchReferentiels();
+});
+
+// À l'arrivée des données, cale la cible sur la première disponible.
+watch(
+  [mockClasses, mockFormateurs, viewType],
+  () => {
+    const source = viewType.value === 'classe' ? mockClasses.value : mockFormateurs.value;
+    if (source.length && !source.includes(selectedTarget.value)) {
+      selectedTarget.value = source[0];
+    }
   },
-  {
-    id: 2,
-    date: '2026-05-18',
-    heureDebut: '13:30',
-    classe: 'Master 1 Info',
-    matiere: 'Conception orientée objet & Patterns',
-    formateur: 'Dupont Jean',
-    salle: 'Amphi A',
-  },
-  {
-    id: 3,
-    date: '2026-05-19',
-    heureDebut: '08:30',
-    classe: 'Master 2 Info',
-    matiere: 'Deep Learning & Vision par ordinateur',
-    formateur: 'Alami Sanaa',
-    salle: 'Salle 102 (Labo)',
-  },
-  {
-    id: 4,
-    date: '2026-05-20',
-    heureDebut: '13:30',
-    classe: 'Master 1 Info',
-    matiere: 'Frameworks Modernes (Vue.js 3 & Node)',
-    formateur: 'Traoré Moussa',
-    salle: 'Visioconférence',
-  },
-  {
-    id: 5,
-    date: '2026-05-21',
-    heureDebut: '08:30',
-    classe: 'Licence 3 Management',
-    matiere: 'Méthodologies Agiles & Scrum Master',
-    formateur: 'Dupont Jean',
-    salle: 'Salle 204',
-  },
-]);
+  { immediate: true }
+);
 
 // Génération dynamique des dates de la semaine en cours d'affichage
 const joursSemaine = computed(() => {

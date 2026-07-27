@@ -6,7 +6,7 @@
  * écran est branché sur le backend réel. Chemins et noms **inchangés**, pour ne
  * pas toucher à la barre latérale.
  *
- * Étape 1 — formateurs (répertoire enseignants). À suivre : crenaux,
+ * Étapes 1–2 — formateurs (répertoire) et crenaux (emplois du temps). À suivre :
  * attributions, programme.
  */
 export default [
@@ -15,5 +15,11 @@ export default [
     name: 'Formateur',
     component: () => import('./formateurs/views/EnseignantsView.vue'),
     meta: { title: 'Formateurs' },
+  },
+  {
+    path: '/crenaux-horaires',
+    name: 'CrenauxHoraire',
+    component: () => import('./crenaux/views/CrenauHoraireView.vue'),
+    meta: { title: 'Créneaux & horaires' },
   },
 ];

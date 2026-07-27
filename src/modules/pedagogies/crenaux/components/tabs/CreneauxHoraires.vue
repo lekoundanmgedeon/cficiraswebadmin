@@ -288,7 +288,29 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useScheduleStore } from '@/modules/pedagogies/crenaux/store';
+import { useNotificationStore } from '@/shared/stores/notificationStore';
+
+/**
+ * Planification des créneaux.
+ *
+ * Les tableaux `mockSchedules` / `mockClasses` / `mockSalles` /
+ * `mockMatiereFormateurs` codés en dur et le CRUD purement local ont laissé
+ * place au vrai backend (`/pedagogies/schedule`, via `vue_horaire_details`). Le
+ * balisage et les styles n'ont pas bougé : les noms `mock*` restent, mais
+ * pointent désormais sur les référentiels réels (classes, salles, modules +
+ * responsables). Le backend dérive le jour de la semaine de la date saisie.
+ */
+const store = useScheduleStore();
+const notifications = useNotificationStore();
+const {
+  schedules,
+  classes: mockClasses,
+  salles: mockSalles,
+  matiereFormateurs: mockMatiereFormateurs,
+} = storeToRefs(store);
 
 // Etats d'importation
 const isDragging = ref(false);
@@ -308,39 +330,10 @@ const form = ref({
   heureFin: '',
 });
 
-// Référentiels d'aide à la saisie
-const mockClasses = ref(['Master 1 Info', 'Master 2 Info', 'Licence 3 Management']);
-const mockSalles = ref(['Amphi A', 'Salle 102 (Labo)', 'Salle 204', 'Visioconférence']);
-const mockMatiereFormateurs = ref([
-  { id: 1, matiere: 'Conception orientée objet & Patterns', formateur: 'Dupont Jean' },
-  { id: 2, matiere: 'Frameworks Modernes (Vue.js 3 & Node)', formateur: 'Traoré Moussa' },
-  { id: 3, matiere: 'Deep Learning & Vision par ordinateur', formateur: 'Alami Sanaa' },
-  { id: 4, matiere: 'Méthodologies Agiles & Scrum Master', formateur: 'Dupont Jean' },
-]);
-
-// Registre centralisé des emplois du temps (Modifiable à la volée)
-const mockSchedules = ref([
-  {
-    id: 1001,
-    date: '2026-05-19',
-    heureDebut: '08:30',
-    heureFin: '11:30',
-    classe: 'Master 1 Info',
-    matiere: 'Frameworks Modernes (Vue.js 3 & Node)',
-    formateur: 'Traoré Moussa',
-    salle: 'Salle 102 (Labo)',
-  },
-  {
-    id: 1002,
-    date: '2026-05-19',
-    heureDebut: '13:30',
-    heureFin: '16:30',
-    classe: 'Master 2 Info',
-    matiere: 'Deep Learning & Vision par ordinateur',
-    formateur: 'Alami Sanaa',
-    salle: 'Amphi A',
-  },
-]);
+onMounted(() => {
+  store.fetchSchedules();
+  store.fetchReferentiels();
+});
 
 // --- Gestion de l'import de fichier ---
 const handleFileSelect = (event) => {
@@ -355,76 +348,43 @@ const handleFileDrop = (event) => {
 };
 
 const processImport = () => {
-  alert(
-    `Fichier [${uploadedFile.value.name}] analysé avec succès ! Ajout simulé de 24 nouveaux créneaux horaires dans la base de données.`
+  // L'import de masse d'emplois du temps n'a pas d'endpoint côté serveur : plutôt
+  // que de simuler l'insertion de 24 créneaux, on le dit franchement. La saisie
+  // unitaire ci-contre, elle, est réelle.
+  notifications.notifyWarning(
+    'L’import de masse n’est pas encore disponible côté serveur. Utilisez la saisie unitaire.'
   );
-  // Simulation de l'insertion post-importation
-  mockSchedules.value.push({
-    id: Date.now(),
-    date: '2026-05-20',
-    heureDebut: '09:00',
-    heureFin: '12:00',
-    classe: 'Licence 3 Management',
-    matiere: 'Méthodologies Agiles & Scrum Master',
-    formateur: 'Dupont Jean',
-    salle: 'Salle 204',
-  });
   uploadedFile.value = null;
 };
 
 // --- CRUD : Enregistrement (Ajout unitaire / Modification) ---
-const saveSchedule = () => {
-  if (isEditing.value) {
-    // Mode Modification
-    const index = mockSchedules.value.findIndex((s) => s.id === editingId.value);
-    if (index !== -1) {
-      mockSchedules.value[index] = {
-        id: editingId.value,
-        date: form.value.date,
-        heureDebut: form.value.heureDebut,
-        heureFin: form.value.heureFin,
-        classe: form.value.classe,
-        matiere: form.value.matiereFormateur.matiere,
-        formateur: form.value.matiereFormateur.formateur,
-        salle: form.value.salle,
-      };
-    }
-  } else {
-    // Mode Ajout Tardif
-    mockSchedules.value.unshift({
-      id: Date.now(),
-      date: form.value.date,
-      heureDebut: form.value.heureDebut,
-      heureFin: form.value.heureFin,
-      classe: form.value.classe,
-      matiere: form.value.matiereFormateur.matiere,
-      formateur: form.value.matiereFormateur.formateur,
-      salle: form.value.salle,
-    });
-  }
-  resetForm();
+const saveSchedule = async () => {
+  const resultat = isEditing.value
+    ? await store.update(editingId.value, form.value)
+    : await store.create(form.value);
+  if (resultat !== undefined) resetForm();
 };
 
 const editSlot = (slot) => {
   isEditing.value = true;
   editingId.value = slot.id;
 
-  // Retrouver la correspondance de l'objet d'enseignement
+  // Retrouver l'objet d'enseignement (matière + responsable) correspondant.
   const matFormObj = mockMatiereFormateurs.value.find((m) => m.matiere === slot.matiere) || '';
 
   form.value = {
     classe: slot.classe,
     matiereFormateur: matFormObj,
     salle: slot.salle,
-    date: slot.date,
+    date: slot.date ? String(slot.date).slice(0, 10) : '',
     heureDebut: slot.heureDebut,
     heureFin: slot.heureFin,
   };
 };
 
-const deleteSlot = (id) => {
+const deleteSlot = async (id) => {
   if (confirm('Voulez-vous annuler ce créneau horaire ?')) {
-    mockSchedules.value = mockSchedules.value.filter((s) => s.id !== id);
+    await store.remove(id);
   }
 };
 
@@ -443,8 +403,8 @@ const resetForm = () => {
 
 // --- Formatage & Tri ---
 const filteredSchedules = computed(() => {
-  if (tableFilterClasse.value === 'Toutes') return mockSchedules.value;
-  return mockSchedules.value.filter((s) => s.classe === tableFilterClasse.value);
+  if (tableFilterClasse.value === 'Toutes') return schedules.value;
+  return schedules.value.filter((s) => s.classe === tableFilterClasse.value);
 });
 
 const formatDate = (dateStr) => {
