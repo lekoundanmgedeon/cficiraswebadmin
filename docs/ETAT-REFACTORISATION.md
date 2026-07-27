@@ -3,8 +3,8 @@
 Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
 À tenir à jour à chaque module migré.
 
-- Branche : `refactor-main` (dernier module migré : `dashboard`, §1.18)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **79 tests, 10 fichiers** ·
+- Branche : `refactor-main` (dernier module migré : `stats`, §1.19 — **il ne reste que les résidus**)
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **101 tests, 12 fichiers** ·
   `npm run build` **OK**
   Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
   `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
@@ -817,6 +817,95 @@ pendant qu'un écran ne rend rien, faute de test qui le monte.
 Le conteneur d'onglets Bootstrap a été remplacé par `AppTabs` : la page d'accueil montait ses **cinq
 panneaux d'un coup**, soit cinq `onMounted` et cinq instances Chart.js pour n'en afficher qu'un.
 
+### 1.19 Le module `stats` — réécrit, et le calcul des bulletins créé côté backend
+
+```
+src/modules/stats/
+├── routes.js · api.js · store.js · constants.js · store.test.js
+├── components/   StatsHeader · StatsTabs
+│   └── tabs/     Synthese · Classes · Palmares  (+ tabs.test.js)
+└── views/        StatistiquesView.vue
+```
+
+**Ce n'est pas une migration mais une réécriture** : l'écran d'origine ne pouvait pas être repris,
+et le domaine backend sur lequel il aurait dû s'appuyer n'existe plus (voir l'encadré du §2.1).
+
+#### L'écran d'origine était une maquette cassée
+
+- `Statistiques.vue` servait deux formateurs codés en dur — « John Doe », « Anna Smith » — après un
+  `setTimeout(3000)`. **Le même copier-coller que `RapportExamens` (§1.9) et `RapportConcours`
+  (§1.10)**, pour la troisième fois, dans un écran de statistiques.
+- Ses **5 composants d'onglet étaient byte-identiques** : la même table, à en-têtes d'examens.
+- **Aucun ne recevait sa prop `rows`** → `v-for` sur `undefined` → les onglets affichaient une table
+  vide, en-têtes seuls.
+- **5 liens d'onglet pour 4 panneaux**, deux visant le même `#purchases`. `StatsKPI.vue` était
+  orphelin. Aucun appel API, nulle part.
+
+#### Le périmètre a été resserré
+
+L'écran déclarait « Vue d'ensemble », « Académiques », « Finances », « Indicateurs », « Rapports ».
+Les trois premiers et le dernier **refont le tableau de bord** (§1.18) — mêmes endpoints, mêmes
+chiffres. Seul « Académiques » lui est propre. L'écran ne garde donc que les **résultats** :
+synthèse (réussite, distribution, décisions, mentions), comparaison des classes, palmarès nominatif.
+
+Le partage est net et tenu : **`dashboard` montre les effectifs et l'argent, `stats` montre les
+résultats.** Aucun des deux n'appelle les endpoints de l'autre.
+
+Le sélecteur année → semestre → classe n'est pas redupliqué : c'est `BulletinContexte` du module
+`examens`, qui porte déjà la règle « un semestre appartient à une année ». Dépendance
+`stats → examens` dirigée et déclarée, comme `notes → examens` (§1.11).
+
+> #### ⚠️ Le calcul des bulletins n'existait pas — migration backend `010`
+>
+> **C'est le blocage du §2.5.13, levé.** `bulletins_semestriels` existait, ses quatre routes de
+> lecture aussi, mais **rien ne remplissait la table** : elle était vide depuis toujours, et l'écran
+> de délibération vide avec elle. Il manquait le calcul.
+>
+> `calculer_bulletins_semestriels(classe, semestre, annee)` enchaîne
+> `inscriptions → moduleclasse → sessions_evaluation → evaluations → notes`, puis la moyenne
+> pondérée par module, les coefficients, les crédits, le rang et la décision. S'y ajoute
+> `vue_statistiques_resultats`, qui enrichit chaque bulletin de son contexte et pré-calcule sa
+> tranche de moyenne.
+>
+> **Deux choix explicites**, documentés dans la migration :
+>
+> - **La pondération ne porte que sur les épreuves réellement notées.** Un étudiant à qui il manque
+>   une note n'écope pas d'un zéro implicite : compter l'absence comme un échec est une décision de
+>   jury, pas un fait de calcul.
+> - **Le coefficient vient de la maquette quand elle existe, du module sinon.** > `maquette_pedagogique` (migration 009) porte coefficient, ECTS et note éliminatoire — mais elle
+>   est **vide en base**. Le repli est `module.coefficient` puis `module.credit`, tous deux
+>   renseignés.
+>
+> **Trois gardes, vérifiées en base** : la fonction est idempotente (rejouée, elle met à jour et ne
+> duplique pas) ; elle **ne touche jamais** un bulletin `VERROUILLE` ; et elle ne réécrit décision et
+> mention que tant que le bulletin est un **brouillon** — la décision du jury survit à un recalcul.
+>
+> La décision produite est une **proposition** (`VALIDE` ≥ 10, `RATTRAPAGE` ≥ 7, `AJOURNE` sinon),
+> que le jury corrige via `PUT /resultats/bulletins/:id/decision`. Sous la moyenne, **aucune mention
+> n'est décernée** : la colonne est nullable, on ne donne pas un « passable » à un ajourné.
+>
+> Deux routes ajoutées : `POST /evaluations/resultats/classes/:id/bulletins/generer` et
+> `GET /evaluations/resultats/statistiques` (filtres classe, semestre, année, filière — tous
+> facultatifs). **+9 tests backend** ; les 11 échecs de la suite préexistaient et sont inchangés.
+
+> #### Un `llm_summary` qui mentait
+>
+> Le formateur de type « bulletin » appliqué à `{ generatedCount }` et `{ publishedCount }` — des
+> compteurs, pas des bulletins — annonçait « Moyenne générale: 0.00/20. Décision: EN_ATTENTE » sur
+> des objets qui ne portent aucun de ces champs. Le paramètre `type` est facultatif : sans lui,
+> aucun résumé n'est fabriqué. Corrigé sur les quatre réponses concernées, dont deux préexistantes.
+
+#### Deux pièges de données, couverts par les tests
+
+- **`AVG` d'un ensemble vide vaut `null`, pas 0.** Un filtre sans résultat affichait « NaN/20 » si
+  on le formatait comme un nombre. L'écran rend « — ».
+- **Le `GROUP BY` n'émet que les tranches peuplées.** Un histogramme bâti dessus aurait des colonnes
+  manquantes plutôt que des colonnes à zéro, et **sa forme changerait d'un filtre à l'autre**. Le
+  store complète les sept tranches.
+
+**22 tests** : 14 sur le store, 8 de montage — ces derniers vérifiant que les chiffres affichés sont
+ceux du serveur, et que « John Doe » a bien disparu.
+
 ---
 
 ## 2. Ce qui reste
@@ -824,12 +913,13 @@ panneaux d'un coup**, soit cinq `onMounted` et cinq instances Chart.js pour n'en
 ### 2.1 Modules à migrer (par ordre conseillé)
 
 **Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
-`concours`, `notes` + `deliberation`, `finances`, `pedagogies`, `dashboard`.
+`concours`, `notes` + `deliberation`, `finances`, `pedagogies`, `dashboard`, `stats`.
 
-| #   | Module    | Fichiers | Lignes | Pourquoi cet ordre                                                                               |
-| --- | --------- | -------- | ------ | ------------------------------------------------------------------------------------------------ |
-| 1   | **stats** | 8        | 431    | ⚠️ **Son backend n'existe plus** — voir l'encadré ci-dessous. À réécrire, pas à migrer.          |
-| 2   | Résidus   | ~12      | ~1 500 | `admin`, `schedule`, `prompt`, `docf`, `support`, `settings`, `notifications`, `errors`, `auth`. |
+**Tous les modules fonctionnels sont migrés.** Il ne reste que les résidus.
+
+| #   | Module  | Fichiers | Lignes | Pourquoi cet ordre                                                                               |
+| --- | ------- | -------- | ------ | ------------------------------------------------------------------------------------------------ |
+| 1   | Résidus | ~12      | ~1 500 | `admin`, `schedule`, `prompt`, `docf`, `support`, `settings`, `notifications`, `errors`, `auth`. |
 
 _(`parcours` ne figure plus ici : ses vues sont parties avec le module `scolarite`, §1.7. `absence`
 et `structure` non plus : le premier a été retiré faute de backend (§1.7), le second était vide.)_
@@ -872,12 +962,13 @@ et `structure` non plus : le premier a été retiré faute de backend (§1.7), l
 > `inscriptions.annee_id` → `annee_academique_id`, `cycle.designation` → `cycle.code`. Et
 > `concours.nb_places` **n'existe pas du tout** : le taux de participation n'a plus de dénominateur.
 >
-> **Décision : ne pas restaurer.** Reconstruire pour le schéma réel, comme on l'a fait pour
-> `pedagogies` (migrations `006`–`009`) — ou dériver les agrégats des endpoints déjà branchés
-> (`/inscriptions`, `/modules`, `/echeanciers/suivi`, classement concours), sans rien ajouter au
-> serveur. À trancher au moment d'attaquer `stats`.
+> **Décision prise : ne pas restaurer, réécrire.** C'est ce qui a été fait (§1.19) — l'écran repose
+> désormais sur `/evaluations/resultats`, dont la partie manquante (le calcul des bulletins) a été
+> ajoutée par la migration `010`. Le domaine `/statistiques` reste supprimé, et n'a pas à revenir.
 
-> #### L'écran `stats` est une maquette, **et elle est cassée**
+> #### ~~L'écran `stats` est une maquette, et elle est cassée~~ — réécrit, §1.19
+>
+> _Conservé pour mémoire : voici ce qui a été trouvé, et pourquoi rien n'a été repris._
 >
 > Rien à préserver côté frontend non plus :
 >
@@ -914,7 +1005,7 @@ _(Chiffres recomptés le 27/07/2026 — les précédents dataient d'avant `finan
 - **6 stores legacy** dans `src/stores/` : `academiqueStore/` (1) et `messages/` (5, → §2.4).
 - **6 fichiers d'API legacy** dans `src/api/` : `config/` (3, → §2.4), `academique/academiqueApi.js`,
   `uploads/importService.js`, `userApi.js`.
-- **14 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`) — la
+- **12 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`) — la
   plupart avec un `body {}` **dans un style scoped, donc sans aucun effet**.
 
 ### 2.3 Bugs connus, non corrigés (hors périmètre migré)
@@ -1031,11 +1122,16 @@ en silence : elle reste `PUBLIEE`, avec une valeur différente de celle que l'é
 en base. Soit la modification d'une note publiée doit être refusée, soit elle doit repasser la note
 en `SAISIE` (et forcer une nouvelle publication). À trancher — c'est une décision métier.
 
-**13. Aucun endpoint ne génère les bulletins.** `bulletins_semestriels` est **vide**, et les quatre
-routes de résultats ne font que lire, décider et publier. Il manque le calcul — l'équivalent du
-`calculer_moyennes_et_rangs` des concours, mais pour les bulletins semestriels. Tant qu'il n'existe
-pas, l'écran de délibération restera vide en production, quoique parfaitement fonctionnel (vérifié
-avec un bulletin inséré à la main, puis retiré).
+**13. ~~Aucun endpoint ne génère les bulletins.~~ — levé le 27/07/2026 (migration `010`).**
+
+`bulletins_semestriels` n'était remplie par rien : les quatre routes de résultats ne faisaient que
+lire, décider et publier. `calculer_bulletins_semestriels(classe, semestre, annee)` fournit le
+calcul manquant, exposé par `POST /evaluations/resultats/classes/:id/bulletins/generer`. Voir §1.19.
+
+Ce qui reste ouvert sur ce sujet : **`maquette_pedagogique` est vide**, si bien que coefficients,
+ECTS et notes éliminatoires retombent sur `module.coefficient` / `module.credit`. Renseigner la
+maquette est un geste de paramétrage, pas de développement — mais tant qu'elle est vide, la note
+éliminatoire n'est jamais appliquée.
 
 **14. Les agrégats académiques ne sont protégés par aucune authentification.** Relevé en migrant le
 dashboard (§1.18) : `GET /academique/classes/analytics/dashboard-global`,
@@ -1086,8 +1182,8 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. Appliquer la recette au module suivant — **`stats`** (§2.1), en gardant à l'esprit qu'il s'agit
-   d'une réécriture et non d'une migration : son backend a été supprimé.
+3. **Tous les modules fonctionnels sont migrés.** Ce qui reste (§2.1) tient aux résidus, à la dette
+   transverse (§2.2) et aux ponts de compatibilité (§2.4) — pas à un module.
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 
