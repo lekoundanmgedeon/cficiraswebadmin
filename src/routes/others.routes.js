@@ -6,14 +6,9 @@
  * a disparu — elle reposait sur un modèle de données que le serveur ne connaît pas.
  *
  * `/dashboard`, `/home` et `''` en sont partis à leur tour, vers
- * `@/modules/dashboard/routes`.
+ * `@/modules/dashboard/routes`. `/statistiques` de même, vers `@/modules/stats/routes`.
  */
 export default [
-  {
-    path: '/statistiques',
-    name: 'Statistiques',
-    component: () => import('@/views/stats/Statistiques.vue'),
-  },
   {
     path: '/documentation',
     name: 'Documentation',
