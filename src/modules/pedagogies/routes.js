@@ -34,4 +34,12 @@ export default [
     component: () => import('./programme/views/ProgrammeCreditView.vue'),
     meta: { title: 'Programmes & crédits' },
   },
+  {
+    // La barre latérale pointait déjà vers `/schedule`, mais **aucune route ne
+    // portait ce chemin** : le lien menait à la page « introuvable ».
+    path: '/schedule',
+    name: 'EmploiDuTemps',
+    component: () => import('./emploi-du-temps/views/EmploiDuTempsView.vue'),
+    meta: { title: 'Emploi du temps' },
+  },
 ];
