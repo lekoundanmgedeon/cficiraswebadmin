@@ -80,7 +80,7 @@ async function submit() {
   <div :id="NIVEAU_MODAL_ID" class="modal fade" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
+        <div class="modal-header bg-secondary text-white">
           <h5 class="modal-title">{{ isEdit ? 'Modifier' : 'Créer' }} un niveau</h5>
           <button
             type="button"
@@ -99,7 +99,7 @@ async function submit() {
               <select id="niveau-cycle" v-model="form.cycle_id" class="form-select" required>
                 <option value="">— Sélectionner un cycle —</option>
                 <option v-for="cycle in cycles" :key="cycle.id" :value="cycle.id">
-                  {{ cycle.designation }}
+                  {{ cycle.code }}
                 </option>
               </select>
             </div>

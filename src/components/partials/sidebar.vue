@@ -387,16 +387,6 @@
             <li class="nav-item">
               <router-link
                 class="nav-link"
-                to="/conges-replacement"
-                :class="{ 'menu-active': isMenuActive('/conges-replacement') }"
-              >
-                Congés & remplacements
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
                 to="/programmes-credits"
                 :class="{ 'menu-active': isMenuActive('/programmes-credits') }"
               >
@@ -407,70 +397,7 @@
         </div>
       </li>
 
-      <!-- Bibliothèque -->
-      <li class="nav-item">
-        <router-link
-          class="nav-link"
-          to="/bibliotheque"
-          :class="{ 'menu-active': isMenuActive('/bibliotheque') }"
-        >
-          <i class="mdi mdi-library menu-icon"></i>
-          <span class="menu-title">Bibliothèque</span>
-        </router-link>
-      </li>
-
       <!-- Ressources matérielles -->
-      <li class="nav-item">
-        <a
-          class="nav-link"
-          :class="{ 'active-parent': isParentActive(menuGroups.ressources) }"
-          data-bs-toggle="collapse"
-          href="#ressources"
-          :aria-expanded="isParentActive(menuGroups.ressources)"
-        >
-          <i class="mdi mdi-database menu-icon"></i>
-          <span class="menu-title">Ressources matérielles</span>
-          <i class="menu-arrow"></i>
-        </a>
-
-        <div
-          class="collapse"
-          :class="{ show: isParentActive(menuGroups.ressources) }"
-          id="ressources"
-        >
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/salles"
-                :class="{ 'menu-active': isMenuActive('/salles') }"
-              >
-                Salles & équipements
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/reservation"
-                :class="{ 'menu-active': isMenuActive('/reservation') }"
-              >
-                Réservation
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/disponibilites"
-                :class="{ 'menu-active': isMenuActive('/disponibilites') }"
-              >
-                Disponibilités
-              </router-link>
-            </li>
-          </ul>
-        </div>
-      </li>
 
       <!-- Services -->
       <li class="nav-item">
@@ -485,155 +412,10 @@
       </li>
 
       <!-- Coordination académique -->
-      <li class="nav-item">
-        <a
-          class="nav-link"
-          :class="{ 'active-parent': isParentActive(menuGroups.coordination) }"
-          data-bs-toggle="collapse"
-          href="#coordination"
-          :aria-expanded="isParentActive(menuGroups.coordination)"
-        >
-          <i class="mdi mdi-clipboard-text menu-icon"></i>
-          <span class="menu-title">Coordination académique</span>
-          <i class="menu-arrow"></i>
-        </a>
-
-        <div
-          class="collapse"
-          :class="{ show: isParentActive(menuGroups.coordination) }"
-          id="coordination"
-        >
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/themes-memoires"
-                :class="{ 'menu-active': isMenuActive('/themes-memoires') }"
-              >
-                Thèmes & mémoires
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/soutenances"
-                :class="{ 'menu-active': isMenuActive('/soutenances') }"
-              >
-                Soutenances
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/statut"
-                :class="{ 'menu-active': isMenuActive('/statut') }"
-              >
-                Statut étudiant
-              </router-link>
-            </li>
-          </ul>
-        </div>
-      </li>
 
       <!-- Diplômes -->
-      <li class="nav-item">
-        <a
-          class="nav-link"
-          :class="{ 'active-parent': isParentActive(menuGroups.diplomes) }"
-          data-bs-toggle="collapse"
-          href="#diplomes"
-          :aria-expanded="isParentActive(menuGroups.diplomes)"
-        >
-          <i class="mdi mdi-certificate menu-icon"></i>
-          <span class="menu-title">Diplômes</span>
-          <i class="menu-arrow"></i>
-        </a>
-
-        <div class="collapse" :class="{ show: isParentActive(menuGroups.diplomes) }" id="diplomes">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/demande-diplome"
-                :class="{ 'menu-active': isMenuActive('/demande-diplome') }"
-              >
-                Demande de diplôme
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/edition-diplome"
-                :class="{ 'menu-active': isMenuActive('/edition-diplome') }"
-              >
-                Édition & certification
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/historique-diplome"
-                :class="{ 'menu-active': isMenuActive('/historique-diplome') }"
-              >
-                Historique
-              </router-link>
-            </li>
-          </ul>
-        </div>
-      </li>
 
       <!-- Courrier -->
-      <li class="nav-item">
-        <a
-          class="nav-link"
-          :class="{ 'active-parent': isParentActive(menuGroups.courrier) }"
-          data-bs-toggle="collapse"
-          href="#courrier"
-          :aria-expanded="isParentActive(menuGroups.courrier)"
-        >
-          <i class="mdi mdi-email menu-icon"></i>
-          <span class="menu-title">Courrier & Notes</span>
-          <i class="menu-arrow"></i>
-        </a>
-
-        <div class="collapse" :class="{ show: isParentActive(menuGroups.courrier) }" id="courrier">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/courriers"
-                :class="{ 'menu-active': isMenuActive('/courriers') }"
-              >
-                Courriers
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/notes-admin"
-                :class="{ 'menu-active': isMenuActive('/notes-admin') }"
-              >
-                Notes administratives
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                class="nav-link"
-                to="/archivage"
-                :class="{ 'menu-active': isMenuActive('/archivage') }"
-              >
-                Archivage
-              </router-link>
-            </li>
-          </ul>
-        </div>
-      </li>
 
       <!-- Notifications -->
       <li class="nav-item">
@@ -717,7 +499,7 @@ const menuGroups = {
     '/rapport-examens',
   ],
 
-  concours: ['/edition-concours', '/resultats-concours', '/rapport-concours'],
+  concours: ['/edition-concours', '/rapport-concours'],
 
   finances: ['/paiements-finances', '/factures-finances', '/rapports-financiers'],
 
@@ -725,17 +507,9 @@ const menuGroups = {
     '/enseignants',
     '/attribution-cours',
     '/crenaux-horaires',
-    '/conges-replacement',
     '/programmes-credits',
+    '/schedule',
   ],
-
-  ressources: ['/salles', '/reservation', '/disponibilites'],
-
-  coordination: ['/themes-memoires', '/soutenances', '/statut'],
-
-  diplomes: ['/demande-diplome', '/edition-diplome', '/historique-diplome'],
-
-  courrier: ['/courriers', '/notes-admin', '/archivage'],
 };
 
 const isMenuActive = (basePath) => {

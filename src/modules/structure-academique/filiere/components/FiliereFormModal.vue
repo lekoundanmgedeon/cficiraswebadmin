@@ -136,7 +136,7 @@ async function submit() {
               <select id="filiere-cycle" v-model="form.cycle_id" class="form-select" required>
                 <option value="">— Sélectionner un cycle —</option>
                 <option v-for="cycle in cycles" :key="cycle.id" :value="cycle.id">
-                  {{ cycle.designation }}
+                  {{ cycle.code }}
                 </option>
               </select>
             </div>
