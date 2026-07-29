@@ -7,6 +7,9 @@
  * recopiée. Ils sont conservés — leur besoin est réel — mais leur contenu
  * mensonger a cédé la place à un état explicite.
  *
+ * `/assistant-ai` a quitté ce module : l'assistant existe désormais
+ * (`modules/assistant`), il n'est plus un écran sans backend.
+ *
  * Trois d'entre eux n'étaient **atteignables par aucune route** alors que la
  * barre latérale y menait : `/settings` et `/notification` tombaient sur la page
  * « introuvable », et `/supports-cours` n'était même pas lié. Les chemins déjà
@@ -18,12 +21,6 @@ export default [
     name: 'Administration',
     component: () => import('./views/AdministrationView.vue'),
     meta: { title: 'Administration' },
-  },
-  {
-    path: '/assistant-ai',
-    name: 'AssistantAI',
-    component: () => import('./views/AssistantIAView.vue'),
-    meta: { title: 'Assistant IA' },
   },
   {
     path: '/documentation',

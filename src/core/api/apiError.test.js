@@ -20,6 +20,17 @@ describe('normalizeApiError', () => {
     expect(error.message).toBe('Échec (code dupliqué)');
   });
 
+  it('ne répète pas le message quand les deux emplacements portent le même texte', () => {
+    // Le backend le fait chaque fois qu'un contrôleur remonte le message d'une
+    // exception métier : `response.error(res, error, error.message, …)`.
+    const identique = 'Quota dépassé — réessayez dans 8 minutes.';
+    const error = normalizeApiError({
+      response: { status: 429, data: { message: identique, error: { message: identique } } },
+    });
+
+    expect(error.message).toBe(identique);
+  });
+
   it('accepte un corps de réponse en texte brut', () => {
     const error = normalizeApiError({ response: { status: 500, data: 'Erreur interne' } });
 

@@ -52,7 +52,15 @@ function extractMessage(data) {
   if (typeof data === 'string') return data;
 
   if (data.message && data.error?.message) {
-    return `${data.message} (${data.error.message})`;
+    // Le backend répète souvent le même texte aux deux emplacements : c'est le
+    // cas chaque fois qu'un contrôleur remonte le message d'une exception
+    // métier (`response.error(res, error, error.message, …)`). Sans cette
+    // comparaison, l'utilisateur lisait la phrase deux fois, la seconde entre
+    // parenthèses — « Quota dépassé, réessayez dans 8 min. (Quota dépassé,
+    // réessayez dans 8 min.) ».
+    return data.message === data.error.message
+      ? data.message
+      : `${data.message} (${data.error.message})`;
   }
   if (data.message) return data.message;
   if (data.error?.message) return data.error.message;

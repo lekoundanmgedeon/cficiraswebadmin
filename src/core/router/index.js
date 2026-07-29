@@ -20,6 +20,7 @@ import financesRoutes from '@/modules/finances/routes';
 import pedagogiesRoutes from '@/modules/pedagogies/routes';
 import dashboardRoutes from '@/modules/dashboard/routes';
 import statsRoutes from '@/modules/stats/routes';
+import assistantRoutes from '@/modules/assistant/routes';
 import plateformeRoutes from '@/modules/plateforme/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
@@ -42,6 +43,7 @@ const protectedRoutes = [
   ...notesRoutes,
   ...financesRoutes,
   ...pedagogiesRoutes,
+  ...assistantRoutes,
 ];
 
 const routes = [
