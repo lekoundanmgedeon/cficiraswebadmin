@@ -50,7 +50,45 @@ export const getNotesByEtudiant = (etudiantId, semestreId) =>
 
 /**
  * Met à jour une note.
+ *
+ * La note **repasse en `SAISIE`** côté serveur : une valeur corrigée ne
+ * conserve pas la validation obtenue par la précédente.
+ *
  * @param {string} id
  * @param {{valeur: number, commentaire?: string|null}} data
  */
 export const updateNote = (id, data) => evaluationClient.put(`${BASE_PATH}/notes/${id}`, data);
+
+/**
+ * Saisie en lot des notes d'une évaluation, **par matricule**.
+ *
+ * Cette route manquait, et son absence était bloquante : il n'existe pas de
+ * `POST /notes`, et `PUT /notes/:id` suppose la ligne déjà présente. Une
+ * évaluation dont les notes n'avaient jamais été saisies ne pouvait donc pas
+ * être notée du tout. Elle s'appuie sur `importer_notes_batch`, fonction
+ * Postgres présente depuis le début mais qu'aucun appelant n'utilisait.
+ *
+ * La réponse est un **rapport**, pas une liste de notes :
+ * `{ total_traite, total_succes, total_echecs, erreurs: [{ matricule, erreur }] }`.
+ * Un matricule inconnu n'y fait pas échouer le lot — il ressort dans `erreurs`.
+ *
+ * @param {string} evaluationId
+ * @param {Array<{matricule: string, note: number, commentaire?: string|null}>} notes
+ */
+export const saisirNotesBatch = (evaluationId, notes) =>
+  evaluationClient.post(`${BASE_PATH}/evaluations/${evaluationId}/notes/saisie`, { notes });
+
+/**
+ * Fait avancer — ou reculer — le statut des notes d'une évaluation.
+ *
+ * Transitions acceptées par le serveur, chacune réservée à un rôle :
+ * `SAISIE → VALIDEE` (scolarité), `VALIDEE → PUBLIEE` (directeur),
+ * `VALIDEE → SAISIE` (renvoi en correction, scolarité ou gestionnaire).
+ * Une transition qui ne déplace aucune note répond **409** avec la répartition
+ * réelle des statuts : c'est une information, pas une panne.
+ *
+ * @param {string} evaluationId
+ * @param {'SAISIE'|'VALIDEE'|'PUBLIEE'} statut
+ */
+export const changerStatutNotes = (evaluationId, statut) =>
+  evaluationClient.patch(`${BASE_PATH}/evaluations/${evaluationId}/notes/statut`, { statut });

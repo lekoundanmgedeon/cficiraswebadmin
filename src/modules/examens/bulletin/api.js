@@ -45,3 +45,25 @@ export const updateDecisionJury = (id, data) =>
  */
 export const publierBulletinsClasse = (classeId, data) =>
   evaluationClient.patch(`${BASE_PATH}/classes/${classeId}/bulletins/publier`, data);
+
+/**
+ * Calcule et enregistre les bulletins d'une classe pour une période.
+ *
+ * C'est le geste qui remplit `bulletins_semestriels` : sans lui, les quatre
+ * routes ci-dessus lisent une table vide. La fonction serveur est idempotente —
+ * relancer met à jour, ne duplique pas — et ne touche jamais un bulletin
+ * verrouillé.
+ *
+ * ⚠️ `modules/stats/api.js` déclare le **même** endpoint pour son propre écran.
+ * Les deux consommateurs sont indépendants et la ligne est unique de chaque
+ * côté ; les fusionner créerait une dépendance entre deux modules qui n'en ont
+ * aucune autre.
+ *
+ * @param {string} classeId
+ * @param {{semestreId: string, anneeId: string}} periode
+ */
+export const genererBulletinsClasse = (classeId, { semestreId, anneeId }) =>
+  evaluationClient.post(`${BASE_PATH}/classes/${classeId}/bulletins/generer`, {
+    semestreId,
+    anneeId,
+  });

@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
-import { getBulletinsByClasse, publierBulletinsClasse, updateDecisionJury } from './api';
+import {
+  genererBulletinsClasse,
+  getBulletinsByClasse,
+  publierBulletinsClasse,
+  updateDecisionJury,
+} from './api';
 
 /**
  * Store des bulletins.
@@ -95,6 +100,31 @@ export const useBulletinStore = defineStore('bulletins', {
         failure: "Erreur lors de l'enregistrement de la décision.",
         onSuccess: () => this.refresh(),
       });
+    },
+
+    /**
+     * Calcule les bulletins d'un triplet, puis les recharge.
+     *
+     * Le serveur répond `200` avec `generatedCount: 0` quand il n'y a rien à
+     * calculer — aucune note exploitable, ou bulletins verrouillés. Ce n'est pas
+     * un échec, mais un clic sans effet ne doit pas passer pour un succès :
+     * l'appelant reçoit le compte et le dit.
+     *
+     * @param {string} classeId @param {string} semestreId @param {string} anneeId
+     * @returns {Promise<number|undefined>} Nombre de bulletins calculés.
+     */
+    async generer(classeId, semestreId, anneeId) {
+      if (!classeId || !semestreId || !anneeId) return undefined;
+
+      const resultat = await this.run(
+        () => genererBulletinsClasse(classeId, { semestreId, anneeId }),
+        { failure: 'Erreur lors du calcul des bulletins.' }
+      );
+
+      if (resultat === undefined) return undefined;
+
+      await this.fetchByClasse(classeId, semestreId, anneeId);
+      return Number(resultat.data?.generatedCount ?? 0) || 0;
     },
 
     /** Publie officiellement les bulletins du contexte consulté. */

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { onUnauthorized } from '@/core/api/httpClient';
-import { clearToken } from '@/core/auth/tokenStorage';
+import { clearToken, getTokenScope } from '@/core/auth/tokenStorage';
 import { clearAllCache } from '@/shared/utils/cache';
 import { registerAuthGuard } from './guards';
 
@@ -22,6 +22,7 @@ import dashboardRoutes from '@/modules/dashboard/routes';
 import statsRoutes from '@/modules/stats/routes';
 import assistantRoutes from '@/modules/assistant/routes';
 import plateformeRoutes from '@/modules/plateforme/routes';
+import espaceNotesRoutes from '@/modules/espace-notes/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
 // Ces fichiers disparaîtront au fur et à mesure que les modules correspondants
@@ -48,6 +49,10 @@ const protectedRoutes = [
 
 const routes = [
   ...authRoutes,
+  // L'espace notes s'ouvre dans une fenêtre à part : il ne passe **pas** par
+  // `DefaultLayout` (ni en-tête, ni menu de l'application) et porte sa propre
+  // coquille, sa propre session et sa propre garde. Voir son `routes.js`.
+  ...espaceNotesRoutes,
   {
     path: '/',
     component: DefaultLayout,
@@ -67,13 +72,19 @@ registerAuthGuard(router);
 // Un 401 signifie que le jeton n'est plus valide côté serveur : on nettoie la
 // session locale et on renvoie vers la connexion. Le client HTTP ne connaît pas
 // le router (cela créerait un cycle d'imports), il expose donc ce point d'accroche.
+//
+// La porte de sortie dépend de la fenêtre : l'espace notes a sa propre session
+// et son propre écran de connexion. Y renvoyer vers `Login` afficherait
+// l'application dans une fenêtre qui n'en est pas une.
 onUnauthorized(() => {
   clearToken();
   clearAllCache();
 
-  if (router.currentRoute.value.name !== 'Login') {
+  const connexion = getTokenScope() === 'espace-notes' ? 'EspaceNotesConnexion' : 'Login';
+
+  if (router.currentRoute.value.name !== connexion) {
     router.push({
-      name: 'Login',
+      name: connexion,
       query: { redirect: router.currentRoute.value.fullPath },
     });
   }

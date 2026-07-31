@@ -4,7 +4,7 @@ Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et *
 À tenir à jour à chaque module migré.
 
 - Branche : `refactor-main` (dernier module migré : `stats`, §1.19 — **il ne reste que les résidus**)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **156 tests, 19 fichiers** ·
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **189 tests, 25 fichiers** ·
   `npm run build` **OK**
   Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
   `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
@@ -960,6 +960,65 @@ Le sélecteur année → semestre → classe n'est pas redupliqué : c'est `Bull
 
 **22 tests** : 14 sur le store, 8 de montage — ces derniers vérifiant que les chiffres affichés sont
 ceux du serveur, et que « John Doe » a bien disparu.
+
+### 1.20 L'espace de gestion des notes — nouvel espace, et le flux de validation créé côté backend
+
+```
+src/modules/espace-notes/
+├── routes.js · constants.js · store.js
+├── layouts/     EspaceNotesLayout.vue      ← sidebar, hors layout applicatif
+├── components/  BandeauEtapes.vue
+└── views/       ConnexionView · TableauBordView · GrilleNotesView · MoyennesView
+```
+
+La saisie des notes quitte l'écran habituel pour un **espace dédié**, ouvert dans une fenêtre
+minimale (`window.open`, sans barre d'outils ni menus) depuis le bouton de `/notes`. Il porte la
+chaîne complète — saisie, vérification, validation, publication — avec ses rôles, et
+`/notes` devient un écran de **consultation seule** qui n'affiche que les notes `VALIDEE` ou
+`PUBLIEE`.
+
+**Session indépendante.** `core/auth/tokenStorage.js` range désormais le jeton sous une clé par
+espace (`token` / `token:espace-notes`), la portée étant fixée au démarrage d'après l'URL de la
+fenêtre. Deux fenêtres sur le même navigateur, deux sessions : entrer dans l'espace exige de
+s'identifier, et s'en déconnecter ne ferme pas l'application. Le 401 y renvoie vers la connexion de
+l'espace, pas vers celle de l'application.
+
+> #### ⚠️ Trois manques bloquants côté backend — corrigés (commit dédié dans `cfibackend`)
+>
+> | Constat                                                                                                                                              | Correction                                                                                              |
+> | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+> | **Aucune note ne pouvait être créée.** Pas de `POST` ; `PUT /notes/:id` suppose la ligne existante. Une classe jamais notée était donc impossible à noter. | `POST …/evaluations/:id/notes/saisie`, branché sur `importer_notes_batch` — fonction **déjà en base**, sans aucun appelant. |
+> | **`VALIDEE` n'existait que dans la contrainte `CHECK`.** `publier` faisait passer `SAISIE` → `PUBLIEE` : la validation de la scolarité était court-circuitée. | `PATCH …/notes/statut` avec table de transitions (`SAISIE→VALIDEE`, `VALIDEE→PUBLIEE`, `VALIDEE→SAISIE`). La publication part maintenant de `VALIDEE`. |
+> | **Aucune garde de rôle** sur les routes de notes, alors que `verifierRole` existait et que le domaine est authentifié de bout en bout.                      | `verifierRole` posé par route ; règle fine par transition dans le contrôleur (403 sinon).                |
+>
+> Corrigé aussi : `PUT /notes/:id` **ramène la note en `SAISIE`**. Sans cela, corriger la valeur
+> d'une note validée lui laissait une validation qui ne portait pas sur elle.
+
+**Qui fait quoi** — les rôles existaient déjà en base, aucun n'a été inventé :
+
+| Étape        | Rôle                     | Effet serveur           |
+| ------------ | ------------------------ | ----------------------- |
+| Saisie       | ENSEIGNANT, GESTIONNAIRE | crée/corrige → `SAISIE` |
+| Vérification | GESTIONNAIRE             | **aucun** — voir ci-dessous |
+| Validation   | SCOLARITE                | `SAISIE → VALIDEE`      |
+| Publication  | DIRECTEUR                | `VALIDEE → PUBLIEE`     |
+
+> **La vérification n'est pas un statut.** La colonne n'accepte que trois valeurs ; ajouter un
+> quatrième état aurait demandé une migration du schéma, hors du périmètre autorisé. Elle est donc
+> un **contrôle de conformité recalculé à chaque affichage** — complétude de l'effectif, bornes
+> [0, 20], notes rattachées à un matricule absent de la classe — et la validation reste désactivée
+> tant qu'il n'est pas vert. On ne prétend nulle part qu'une grille « a été vérifiée » : on montre
+> si elle *est* conforme.
+
+Deux jointures que le serveur ne sait pas faire sont assurées par le store de l'espace :
+**évaluations d'une classe** (une évaluation appartient à un module et à une session ; le lien à la
+classe passe par `ModuleClasse`) et **effectif à noter** (la grille ne renvoie que les étudiants
+déjà notés — au premier remplissage elle est vide, l'effectif vient de `GET /classes/:id/etudiants`).
+
+**30 tests** : capacités par rôle (miroir de la table de transitions du serveur), contexte,
+store des notes (saisie en lot, transitions, statut global), grille (effectif complet, envoi par
+matricule, boutons par rôle, grille publiée non modifiable) et écran habituel (seules les notes
+officielles, aucun champ de saisie).
 
 ---
 

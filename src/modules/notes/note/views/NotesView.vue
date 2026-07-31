@@ -5,42 +5,39 @@ import PageHeader from '@/shared/components/PageHeader.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
-import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
 import { useSessionStore } from '@/modules/examens/session/store';
 import { useEpreuveStore } from '@/modules/examens/epreuve/store';
+import { ouvrirEspaceNotes, STATUTS_PUBLIABLES } from '@/modules/espace-notes/constants';
 import { useNoteStore } from '../store';
-import { NOTE_BORNES, statutNoteInfo } from '../../constants';
+import { statutNoteInfo } from '../../constants';
 
 /**
- * Saisie des notes d'une évaluation.
+ * Consultation des notes officielles.
  *
- * ## L'écran précédent n'enregistrait rien
+ * ## Cet écran ne saisit plus rien — et c'est le but
  *
- * `Notes.vue` servait **quatre étudiants codés en dur** (« Ndiaye Fatou »,
- * « Camara Ibrahima »…) et trois matières inventées. Son bouton « Valider le PV »
- * appelait :
+ * La saisie, la vérification, la validation et la publication vivent désormais
+ * dans l'**espace notes**, une fenêtre à part avec sa propre session et ses
+ * propres rôles (`@/modules/espace-notes`). Ici, on consulte, on exporte, on
+ * imprime : aucun champ n'est modifiable, et aucune action de flux n'est
+ * offerte. Le bouton d'accès ouvre l'espace ; l'entrée y exige une connexion.
  *
- * ```js
- * const saveAllNotes = () => { alert(`Validation du PV pour la classe […]`); };
- * ```
+ * ## Et il ne montre que ce qui est officiel
  *
- * Un `alert()`. Rien n'était envoyé nulle part.
+ * Seules les notes **validées par la scolarité** (`VALIDEE`) et celles
+ * **publiées** (`PUBLIEE`) sont affichées. Une note encore en `SAISIE` est un
+ * brouillon : la montrer ici reviendrait à diffuser un résultat que personne
+ * n'a contrôlé. Le filtre est appliqué sur la grille servie par le serveur —
+ * l'API n'expose pas de filtre par statut, et l'ajouter changerait le contrat
+ * d'un endpoint dont l'espace notes, lui, a besoin dans son intégralité.
  *
- * ## Et le modèle de données était faux
+ * ## Le modèle de données, rappelé
  *
- * L'URL était `/notes/:classeId/:semestre/:type/edit` : une note aurait donc
- * appartenu à un triplet (classe, semestre, type d'évaluation). **Ce n'est pas
- * le modèle du serveur** : une note appartient à un couple **(étudiant,
- * évaluation)** — une *épreuve* précise d'une *session*. D'où la cascade
- * session → épreuve ci-dessous, qui reflète, elle, la réalité.
- *
- * ## Une note ne se crée pas
- *
- * Il n'existe **pas de `POST /notes`** : les notes préexistent (une ligne par
- * couple étudiant / évaluation) et l'écran ne fait que les corriger. Un étudiant
- * sans ligne de note n'apparaît donc pas dans la grille.
+ * Une note appartient à un couple **(étudiant, évaluation)** — une épreuve
+ * précise d'une session — et non à un triplet (classe, semestre, type). D'où la
+ * cascade session → épreuve.
  */
 
 const noteStore = useNoteStore();
@@ -48,17 +45,12 @@ const sessionStore = useSessionStore();
 const epreuveStore = useEpreuveStore();
 const notifications = useNotificationStore();
 
-const { items: notes, loading, moyenne, estPubliee } = storeToRefs(noteStore);
+const { items: notes, loading, parStatut } = storeToRefs(noteStore);
 const { items: sessions } = storeToRefs(sessionStore);
 const { items: epreuves } = storeToRefs(epreuveStore);
 
 const sessionId = ref('');
 const evaluationId = ref('');
-const publication = ref(false);
-const saving = ref(false);
-
-/** Valeurs saisies, indexées par identifiant de note. */
-const brouillon = ref({});
 
 onMounted(async () => {
   await Promise.all([sessionStore.fetchAll(), epreuveStore.fetchAll()]);
@@ -75,133 +67,83 @@ watch(sessionId, () => {
   evaluationId.value = '';
 });
 
-watch(evaluationId, (id) => {
-  brouillon.value = {};
-  noteStore.fetchByEvaluation(id);
-});
-
-// La grille du serveur fait foi : toute relecture réinitialise le brouillon.
-watch(notes, (rows) => {
-  brouillon.value = Object.fromEntries(
-    rows.map((note) => [note.note_id, note.valeur === null ? '' : String(note.valeur)])
-  );
-});
+watch(evaluationId, (id) => noteStore.fetchByEvaluation(id));
 
 const epreuve = computed(() => epreuves.value.find((item) => item.id === evaluationId.value));
 
-/** @param {any} note @returns {string|null} */
-function erreurDe(note) {
-  const brut = brouillon.value[note.note_id];
-  if (brut === '' || brut === undefined) return null;
-
-  const valeur = Number(brut);
-  if (Number.isNaN(valeur) || valeur < NOTE_BORNES.MIN || valeur > NOTE_BORNES.MAX) {
-    return `La note doit être comprise entre ${NOTE_BORNES.MIN} et ${NOTE_BORNES.MAX}.`;
-  }
-  return null;
-}
-
-/** Notes dont la valeur diffère de celle du serveur. */
-const modifiees = computed(() =>
-  notes.value.filter((note) => {
-    const brut = brouillon.value[note.note_id];
-    if (brut === undefined || brut === '') return false;
-    return Number(brut) !== Number(note.valeur);
-  })
+/** Les seules notes que cet écran a le droit de montrer. */
+const notesOfficielles = computed(() =>
+  notes.value.filter((note) => STATUTS_PUBLIABLES.includes(String(note.statut ?? '').toUpperCase()))
 );
 
-const enErreur = computed(() => notes.value.some((note) => erreurDe(note) !== null));
+/** Notes existantes mais encore en cours de traitement — comptées, jamais montrées. */
+const enAttente = computed(() => parStatut.value.SAISIE);
 
 const stats = computed(() => {
-  const valeurs = notes.value
-    .map((note) => Number(brouillon.value[note.note_id]))
-    .filter((v) => !Number.isNaN(v) && brouillon.value !== '');
+  const valeurs = notesOfficielles.value
+    .map((note) => Number(note.valeur))
+    .filter((valeur) => !Number.isNaN(valeur));
 
   if (valeurs.length === 0) return { moyenne: '—', max: '—', min: '—' };
 
   return {
-    moyenne: (valeurs.reduce((s, v) => s + v, 0) / valeurs.length).toFixed(2),
+    moyenne: (valeurs.reduce((somme, valeur) => somme + valeur, 0) / valeurs.length).toFixed(2),
     max: Math.max(...valeurs).toFixed(2),
     min: Math.min(...valeurs).toFixed(2),
   };
 });
 
-async function enregistrer() {
-  if (enErreur.value) {
-    notifications.notifyError('Corrigez les notes invalides avant d’enregistrer.');
-    return;
-  }
-
-  if (modifiees.value.length === 0) {
-    notifications.notifyInfo('Aucune modification à enregistrer.');
-    return;
-  }
-
-  saving.value = true;
-
-  // On compte les vrais succès : `run()` renvoie `undefined` en cas d'échec.
-  // L'écran précédent se contentait d'un `alert()` de succès, quoi qu'il arrive.
-  let succes = 0;
-
-  for (const note of modifiees.value) {
-    const result = await noteStore.update(note.note_id, {
-      valeur: Number(brouillon.value[note.note_id]),
-      commentaire: note.commentaire ?? null,
-    });
-
-    if (result !== undefined) succes += 1;
-  }
-
-  saving.value = false;
-
-  const echecs = modifiees.value.length - succes;
-
-  if (echecs === 0) {
-    notifications.notifySuccess(`${succes} note(s) enregistrée(s).`);
-  } else {
-    notifications.notifyWarning(`${succes} note(s) enregistrée(s), ${echecs} en échec.`);
-  }
-
-  await noteStore.fetchByEvaluation(evaluationId.value);
-}
-
-async function publier() {
-  const result = await noteStore.publier();
-  if (result !== undefined) publication.value = false;
-}
-
-const exportRows = computed(() =>
-  notes.value.map((note, index) => ({
-    'N°': index + 1,
-    Matricule: note.matricule,
-    Nom: note.nom,
-    Prénom: note.prenom,
-    Note: note.valeur ?? '—',
-    Statut: statutNoteInfo(note.statut).label,
-  }))
-);
-
 const { exportToExcel, exportToPdf } = useTableExport({
-  rows: exportRows,
-  title: 'Grille de notes',
+  rows: computed(() =>
+    notesOfficielles.value.map((note, index) => ({
+      'N°': index + 1,
+      Matricule: note.matricule,
+      Nom: note.nom,
+      Prénom: note.prenom,
+      Note: note.valeur ?? '—',
+      Statut: statutNoteInfo(note.statut).label,
+    }))
+  ),
+  title: 'Notes officielles',
   fileBaseName: 'notes',
   filters: () => [
     { label: 'Épreuve', value: epreuve.value?.designation ?? '—' },
-    { label: 'Moyenne', value: moyenne.value?.toFixed(2) ?? '—' },
-    { label: 'Notes', value: notes.value.length },
+    { label: 'Moyenne', value: stats.value.moyenne },
+    { label: 'Notes publiées ou validées', value: notesOfficielles.value.length },
   ],
 });
+
+function ouvrirEspace() {
+  const fenetre = ouvrirEspaceNotes();
+
+  // `window.open` renvoie `null` quand le navigateur bloque la fenêtre. Le taire
+  // laisserait l'utilisateur devant un bouton qui « ne fait rien ».
+  if (!fenetre) {
+    notifications.notifyWarning(
+      'La fenêtre a été bloquée par le navigateur. Autorisez les fenêtres surgissantes pour ce site.'
+    );
+  }
+}
 </script>
 
 <template>
   <div>
     <PageHeader
-      title="Saisie des notes"
-      subtitle="Notes d'une épreuve, session par session"
+      title="Notes officielles"
+      subtitle="Consultation des notes validées et publiées"
       :breadcrumb="['évaluations', 'notes']"
     >
       <template #actions>
-        <ExportMenu :disabled="notes.length === 0" @excel="exportToExcel" @pdf="exportToPdf" />
+        <ExportMenu
+          class="me-2"
+          :disabled="notesOfficielles.length === 0"
+          @excel="exportToExcel"
+          @pdf="exportToPdf"
+        />
+        <button class="btn btn-primary mt-2 mt-xl-0" type="button" @click="ouvrirEspace">
+          <i class="bi bi-box-arrow-up-right me-1"></i>
+          Ouvrir l'espace de gestion des notes
+        </button>
       </template>
     </PageHeader>
 
@@ -209,10 +151,22 @@ const { exportToExcel, exportToPdf } = useTableExport({
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
           <div class="card-body">
+            <div class="alert alert-light border d-flex align-items-start gap-2 small">
+              <i class="bi bi-lock text-secondary mt-1"></i>
+              <div>
+                <strong>Consultation seule.</strong>
+                Cet écran n'affiche que les notes validées par la scolarité, puis publiées. La
+                saisie, la vérification, la validation et la publication se font dans l'espace de
+                gestion des notes, qui s'ouvre dans une fenêtre dédiée et demande une connexion.
+              </div>
+            </div>
+
             <div class="row g-3 align-items-end mb-4">
-              <div class="col-md-4">
-                <label class="form-label fw-bold small">Session d'évaluation</label>
-                <select v-model="sessionId" class="form-select form-select-sm">
+              <div class="col-md-5">
+                <label for="notes-session" class="form-label fw-bold small">
+                  Session d'évaluation
+                </label>
+                <select id="notes-session" v-model="sessionId" class="form-select form-select-sm">
                   <option value="">— Sélectionnez une session —</option>
                   <option v-for="session in sessions" :key="session.id" :value="session.id">
                     {{ session.code }} — {{ session.designation }}
@@ -221,8 +175,9 @@ const { exportToExcel, exportToPdf } = useTableExport({
               </div>
 
               <div class="col-md-5">
-                <label class="form-label fw-bold small">Épreuve</label>
+                <label for="notes-epreuve" class="form-label fw-bold small">Épreuve</label>
                 <select
+                  id="notes-epreuve"
                   v-model="evaluationId"
                   class="form-select form-select-sm"
                   :disabled="!sessionId"
@@ -239,29 +194,6 @@ const { exportToExcel, exportToPdf } = useTableExport({
                   Aucune épreuve n'est définie pour cette session.
                 </div>
               </div>
-
-              <div class="col-md-3 text-md-end">
-                <button
-                  class="btn btn-sm btn-primary px-3 me-2"
-                  :disabled="saving || modifiees.length === 0 || enErreur"
-                  @click="enregistrer"
-                >
-                  <span
-                    v-if="saving"
-                    class="spinner-border spinner-border-sm me-1"
-                    aria-hidden="true"
-                  ></span>
-                  {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
-                </button>
-
-                <button
-                  class="btn btn-sm btn-success px-3"
-                  :disabled="loading || notes.length === 0 || estPubliee"
-                  @click="publication = true"
-                >
-                  <i class="bi bi-megaphone me-1"></i> Publier
-                </button>
-              </div>
             </div>
 
             <LoadingSpinner v-if="loading" />
@@ -273,9 +205,15 @@ const { exportToExcel, exportToPdf } = useTableExport({
             />
 
             <EmptyState
-              v-else-if="notes.length === 0"
-              title="Aucune note"
-              description="Aucune ligne de note n'existe pour cette épreuve. Les notes sont créées avec l'évaluation ; l'application ne peut que les corriger."
+              v-else-if="notesOfficielles.length === 0 && enAttente > 0"
+              title="Notes en cours de traitement"
+              :description="`${enAttente} note(s) sont saisies mais pas encore validées par la scolarité : elles ne sont pas consultables ici.`"
+            />
+
+            <EmptyState
+              v-else-if="notesOfficielles.length === 0"
+              title="Aucune note officielle"
+              description="Aucune note validée ni publiée pour cette épreuve."
             />
 
             <div v-else>
@@ -294,18 +232,19 @@ const { exportToExcel, exportToPdf } = useTableExport({
                 </div>
                 <div class="col-md-4">
                   <div class="card border-0 shadow-sm p-3 text-center">
-                    <span class="text-muted small fw-semibold text-uppercase"
-                      >Note la plus basse</span
-                    >
+                    <span class="text-muted small fw-semibold text-uppercase">
+                      Note la plus basse
+                    </span>
                     <h4 class="fw-bold mt-1 mb-0 text-danger">{{ stats.min }} / 20</h4>
                   </div>
                 </div>
               </div>
 
-              <div v-if="modifiees.length > 0" class="alert alert-warning py-2 small">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                {{ modifiees.length }} note(s) modifiée(s) et non enregistrée(s).
-              </div>
+              <p v-if="enAttente > 0" class="text-muted small">
+                <i class="bi bi-hourglass-split me-1"></i>
+                {{ enAttente }} note(s) de cette épreuve sont encore en saisie et n'apparaissent pas
+                ci-dessous.
+              </p>
 
               <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -313,12 +252,12 @@ const { exportToExcel, exportToPdf } = useTableExport({
                     <tr>
                       <th class="ps-4">Matricule</th>
                       <th>Étudiant</th>
-                      <th style="width: 160px">Note / 20</th>
+                      <th style="width: 140px">Note / 20</th>
                       <th class="text-center">Statut</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="note in notes" :key="note.note_id">
+                    <tr v-for="note in notesOfficielles" :key="note.note_id">
                       <td class="ps-4">
                         <span class="badge bg-light text-dark border font-monospace">
                           {{ note.matricule }}
@@ -327,20 +266,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
 
                       <td class="fw-semibold text-dark">{{ note.nom }} {{ note.prenom }}</td>
 
-                      <td>
-                        <input
-                          v-model="brouillon[note.note_id]"
-                          type="number"
-                          class="form-control form-control-sm font-monospace"
-                          :class="{ 'is-invalid': erreurDe(note) }"
-                          :min="NOTE_BORNES.MIN"
-                          :max="NOTE_BORNES.MAX"
-                          step="0.25"
-                        />
-                        <div v-if="erreurDe(note)" class="invalid-feedback d-block small">
-                          {{ erreurDe(note) }}
-                        </div>
-                      </td>
+                      <td class="font-monospace fw-bold">{{ note.valeur ?? '—' }}</td>
 
                       <td class="text-center">
                         <span
@@ -359,16 +285,6 @@ const { exportToExcel, exportToPdf } = useTableExport({
         </div>
       </div>
     </div>
-
-    <ConfirmModal
-      v-model="publication"
-      title="Publier les notes"
-      message="Toutes les notes de cette épreuve passeront au statut « Publiée » et deviendront visibles."
-      confirm-label="Publier"
-      variant="success"
-      :loading="loading"
-      @confirm="publier"
-    />
   </div>
 </template>
 

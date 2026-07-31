@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
 import {
+  changerStatutNotes,
   getNotesByEtudiant,
   getNotesByEvaluation,
   publierNotesEvaluation,
+  saisirNotesBatch,
   updateNote,
 } from './api';
 
@@ -46,6 +48,32 @@ export const useNoteStore = defineStore('notes', {
     estPubliee: (state) =>
       state.items.length > 0 &&
       state.items.every((note) => String(note.statut).toUpperCase() === 'PUBLIEE'),
+
+    /** Répartition des notes par statut — l'état réel de la grille. */
+    parStatut: (state) =>
+      state.items.reduce(
+        (compteurs, note) => {
+          const statut = String(note.statut ?? '').toUpperCase();
+          if (compteurs[statut] !== undefined) compteurs[statut] += 1;
+          return compteurs;
+        },
+        { SAISIE: 0, VALIDEE: 0, PUBLIEE: 0 }
+      ),
+
+    /**
+     * Statut d'ensemble de la grille : le plus **faible** de ses notes.
+     *
+     * Une grille dont une seule note est repassée en `SAISIE` n'est plus
+     * validée — c'est ce que fait aussi le serveur, qui ne déplace que les
+     * notes éligibles.
+     */
+    statutGlobal() {
+      if (this.items.length === 0) return null;
+      const { SAISIE, VALIDEE } = this.parStatut;
+      if (SAISIE > 0) return 'SAISIE';
+      if (VALIDEE > 0) return 'VALIDEE';
+      return 'PUBLIEE';
+    },
   },
 
   actions: {
@@ -113,6 +141,57 @@ export const useNoteStore = defineStore('notes', {
     async update(id, data) {
       return this.run(() => updateNote(id, data), {
         failure: 'Erreur lors de l’enregistrement de la note.',
+      });
+    },
+
+    /**
+     * Saisit un lot de notes, par matricule.
+     *
+     * C'est le seul chemin capable de **créer** une note : `update()` ne sait
+     * que corriger une ligne existante, et il n'y a pas de `POST /notes`. Un
+     * étudiant qui n'avait encore aucune note n'apparaît donc pas dans la
+     * grille — il vient de la liste de la classe, et sa note naît ici.
+     *
+     * @param {string} evaluationId
+     * @param {Array<{matricule: string, note: number, commentaire?: string|null}>} lignes
+     * @returns {Promise<{total_traite: number, total_succes: number, total_echecs: number, erreurs: any[]}|undefined>}
+     */
+    async saisirLot(evaluationId, lignes) {
+      if (!evaluationId || !lignes?.length) return undefined;
+
+      const response = await this.run(() => saisirNotesBatch(evaluationId, lignes), {
+        failure: 'Erreur lors de l’enregistrement des notes.',
+      });
+
+      if (response === undefined) return undefined;
+
+      await this.fetchByEvaluation(evaluationId);
+      return response.data ?? response;
+    },
+
+    /**
+     * Change le statut de toutes les notes de l'évaluation consultée.
+     *
+     * Le serveur répond **409** quand aucune note n'est éligible (par exemple
+     * valider une grille déjà validée) : ce n'est pas une panne, et `run()` le
+     * remonte comme n'importe quelle erreur métier, message du serveur compris.
+     *
+     * @param {'SAISIE'|'VALIDEE'|'PUBLIEE'} statut
+     */
+    async changerStatut(statut) {
+      if (!this.evaluationId) return undefined;
+
+      const evaluationId = this.evaluationId;
+      const messages = {
+        VALIDEE: 'Notes validées.',
+        PUBLIEE: 'Notes publiées.',
+        SAISIE: 'Grille renvoyée en correction.',
+      };
+
+      return this.run(() => changerStatutNotes(evaluationId, statut), {
+        success: messages[statut] ?? 'Statut mis à jour.',
+        failure: 'Erreur lors du changement de statut.',
+        onSuccess: () => this.fetchByEvaluation(evaluationId),
       });
     },
 
