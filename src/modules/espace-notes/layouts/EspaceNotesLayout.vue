@@ -78,7 +78,7 @@ async function deconnecter() {
         <span class="text-uppercase small opacity-75">Gestion & validation</span>
       </div>
 
-      <nav class="flex-grow-1 px-2">
+      <nav class="nav-espace flex-grow-1 px-2">
         <RouterLink
           v-for="entree in navigation"
           :key="entree.nom"
@@ -152,6 +152,7 @@ async function deconnecter() {
  * dessous.
  */
 .espace-notes {
+  --largeur-barre: 240px;
   min-height: 100vh;
   background: #f5f6fa;
 }
@@ -171,6 +172,13 @@ async function deconnecter() {
 
 .marque {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Filet de sécurité : trois entrées aujourd'hui, mais une barre fixe ne doit
+   jamais rendre une entrée inatteignable si la liste s'allonge. */
+.nav-espace {
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .lien-nav {

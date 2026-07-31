@@ -17,6 +17,11 @@ defineProps({
   variant: { type: String, default: 'danger' },
   /** Désactive le bouton de confirmation pendant l'appel réseau. */
   loading: { type: Boolean, default: false },
+  /**
+   * Désactive la confirmation tant qu'une condition n'est pas remplie — une
+   * saisie obligatoire posée dans le slot, par exemple un motif de rejet.
+   */
+  disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue', 'confirm']);
@@ -58,7 +63,7 @@ const close = () => emit('update:modelValue', false);
             <button
               class="btn"
               :class="`btn-${variant}`"
-              :disabled="loading"
+              :disabled="loading || disabled"
               @click="emit('confirm')"
             >
               <span

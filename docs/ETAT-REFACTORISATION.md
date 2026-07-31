@@ -4,7 +4,7 @@ Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et *
 À tenir à jour à chaque module migré.
 
 - Branche : `refactor-main` (dernier module migré : `stats`, §1.19 — **il ne reste que les résidus**)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **189 tests, 25 fichiers** ·
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **207 tests, 28 fichiers** ·
   `npm run build` **OK**
   Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
   `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
@@ -1019,6 +1019,68 @@ déjà notés — au premier remplissage elle est vide, l'effectif vient de `GET
 store des notes (saisie en lot, transitions, statut global), grille (effectif complet, envoi par
 matricule, boutons par rôle, grille publiée non modifiable) et écran habituel (seules les notes
 officielles, aucun champ de saisie).
+
+### 1.21 Bibliothèque, coordination académique et documents administratifs — trois modules créés
+
+Sept entrées de menu existaient dans `main` — `/bibliotheque`, `/themes-memoires`, `/soutenances`,
+`/statut`, `/demande-diplome`, `/edition-diplome`, `/historique-diplome`. **Aucune ne pointait vers
+quoi que ce soit** : ni route, ni vue, ni table. Il n'y avait donc rien à restaurer.
+
+```
+src/modules/bibliotheque/   catalogue · mémoires & thèses
+src/modules/coordination/   travaux/ · soutenances/ · statut/
+src/modules/documents/      demandes en cours · historique · documents délivrables
+```
+
+Trois migrations, appliquées sur `cfi_data_v2` et reflétées dans `schema.sql` (76 tables, 42 vues) :
+
+| Migration                        | Contenu                                                                                  |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| `014_bibliotheque.sql`           | `ouvrages` + `v_ouvrages_catalogue` (disponibilité dérivée, jamais stockée)               |
+| `015_coordination_academique.sql`| `travaux_recherche`, `proces_verbaux_soutenance`, colonnes ajoutées à `soutenances`, 3 vues |
+| `016_documents_administratifs.sql`| `types_documents` (13 types LMD), `demandes_documents`, `v_demandes_documents`            |
+
+> #### Ce que la base savait déjà faire, sans que personne l'appelle
+>
+> - **`fn_numero_document(type, préfixe, année)`** — numérotation officielle par type et par année,
+>   présente depuis toujours, **zéro appelant**. Elle produit désormais les numéros de PV
+>   (`PV-2026-0001`, en `DEFAULT` de colonne) et de demandes (`ATT-2026-0001`, dans la transaction
+>   d'enregistrement). Un bug l'empêchait de servir : `compteurs_documents.type_document` est un
+>   `varchar(20)` alors que les codes de type vont jusqu'à 40 caractères — `22001 value too long`
+>   sur la moitié du catalogue. Relevé **en exerçant la route**, pas en la relisant.
+> - **`soutenances` et `soutenance_jurys`** existaient (dates, salle, rôles du jury) sans aucune
+>   route ni écran. Elles sont complétées, pas remplacées : `travail_id`, `statut`, `type_soutenance`
+>   et une contrainte `heure_fin > heure_debut` — une soutenance finissant avant de commencer était
+>   acceptée.
+
+**Deux règles métier déduites, jamais codées en dur.** Un **finaliste** est un étudiant dont le
+niveau porte le dernier rang de son cycle (`niveau.ordre = cycle.duree_annees`) : la règle vaut pour
+une licence de trois ans comme pour un cycle d'ingénieur de cinq, et un nouveau cycle est pris en
+compte sans toucher au code. Une **échéance** de mémoire vaut `date_attribution + duree_semaines × 7`,
+posée par déclencheur quand elle n'est pas saisie. `v_finalistes` renvoie déjà **10 étudiants réels**.
+
+**Ce qui est dérivé ne se stocke pas** : disponibilité d'un ouvrage, retard d'un travail ou d'une
+demande, délai réellement constaté. Une colonne fige au jour de l'écriture ce qui change avec le
+calendrier.
+
+Côté backend, trois domaines authentifiés de bout en bout (`/api/bibliotheque`, `/api/coordination`,
+`/api/documents`), avec gardes de rôle : la **validation d'un procès-verbal** (DIRECTEUR, C_CYCLE)
+est plus étroite que sa rédaction (PEDAGOGIE, SCOLARITE, C_CYCLE), car elle rend le document
+opposable, fait passer la soutenance à « tenue » et le mémoire à « soutenu ». Le circuit d'une
+demande de document est contraint côté serveur (`SOUMISE → EN_TRAITEMENT → PRETE → DELIVREE`) : une
+transition impossible répond **409** en disant pourquoi, et un rejet sans motif est refusé — par la
+base autant que par le contrôleur.
+
+> **Les dix routes ont été exercées contre `cfi_data_v2`**, écritures comprises : création d'ouvrage,
+> attribution de thème (échéance calculée à +20 semaines), soutenance avec jury en transaction, PV
+> numéroté puis validé (soutenance passée à « tenue »), circuit complet d'une demande et transitions
+> refusées. Les données de test ont été supprimées ensuite. Un second bug y a été pris :
+> `42P08 inconsistent types deduced for parameter $2` sur le changement de statut, faute de
+> paramètres typés.
+
+**18 tests** sur les trois stores : cumuls du fonds, séparation catalogue / mémoires, finalistes sans
+sujet, moyenne d'avancement calculée sur les seuls travaux engagés, séparation des demandes ouvertes
+et closes, et miroir des transitions autorisées.
 
 ---
 

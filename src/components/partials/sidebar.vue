@@ -1,5 +1,5 @@
 <template>
-  <nav class="sidebar sidebar-offcanvas" id="sidebar" :class="{ active: mobileOpen }">
+  <nav id="sidebar" class="sidebar sidebar-offcanvas" :class="{ active: mobileOpen }">
     <ul class="nav">
       <li class="nav-item">
         <router-link class="nav-link" to="/home" :class="{ 'menu-active': isMenuActive('/home') }">
@@ -23,9 +23,9 @@
         </a>
 
         <div
+          id="structure-academique"
           class="collapse"
           :class="{ show: isParentActive(menuGroups.structure) }"
-          id="structure-academique"
         >
           <ul class="nav flex-column sub-menu">
             <li class="nav-item">
@@ -96,9 +96,9 @@
         </a>
 
         <div
+          id="scolarite"
           class="collapse"
           :class="{ show: isParentActive(menuGroups.scolarite) }"
-          id="scolarite"
         >
           <ul class="nav flex-column sub-menu">
             <li class="nav-item">
@@ -163,7 +163,7 @@
           <i class="menu-arrow"></i>
         </a>
 
-        <div class="collapse" :class="{ show: isParentActive(menuGroups.examens) }" id="examens">
+        <div id="examens" class="collapse" :class="{ show: isParentActive(menuGroups.examens) }">
           <ul class="nav flex-column sub-menu">
             <li class="nav-item">
               <router-link
@@ -222,7 +222,7 @@
           <i class="menu-arrow"></i>
         </a>
 
-        <div class="collapse" :class="{ show: isParentActive(menuGroups.concours) }" id="concours">
+        <div id="concours" class="collapse" :class="{ show: isParentActive(menuGroups.concours) }">
           <ul class="nav flex-column sub-menu">
             <li class="nav-item">
               <router-link
@@ -299,7 +299,7 @@
           <i class="menu-arrow"></i>
         </a>
 
-        <div class="collapse" :class="{ show: isParentActive(menuGroups.finances) }" id="finances">
+        <div id="finances" class="collapse" :class="{ show: isParentActive(menuGroups.finances) }">
           <ul class="nav flex-column sub-menu">
             <li class="nav-item">
               <router-link
@@ -349,9 +349,9 @@
         </a>
 
         <div
+          id="pedagogique"
           class="collapse"
           :class="{ show: isParentActive(menuGroups.pedagogique) }"
-          id="pedagogique"
         >
           <ul class="nav flex-column sub-menu">
             <li class="nav-item">
@@ -411,9 +411,82 @@
         </router-link>
       </li>
 
-      <!-- Coordination académique -->
+      <!-- Bibliothèque -->
+      <li class="nav-item">
+        <router-link
+          class="nav-link"
+          to="/bibliotheque"
+          :class="{ 'menu-active': isMenuActive('/bibliotheque') }"
+        >
+          <i class="mdi mdi-library menu-icon"></i>
+          <span class="menu-title">Bibliothèque</span>
+        </router-link>
+      </li>
 
-      <!-- Diplômes -->
+      <!-- Coordination académique -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          :class="{ 'active-parent': isParentActive(menuGroups.coordination) }"
+          data-bs-toggle="collapse"
+          href="#coordination"
+          :aria-expanded="isParentActive(menuGroups.coordination)"
+        >
+          <i class="mdi mdi-clipboard-text menu-icon"></i>
+          <span class="menu-title">Coordination académique</span>
+          <i class="menu-arrow"></i>
+        </a>
+
+        <div
+          id="coordination"
+          class="collapse"
+          :class="{ show: isParentActive(menuGroups.coordination) }"
+        >
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/themes-memoires"
+                :class="{ 'menu-active': isMenuActive('/themes-memoires') }"
+              >
+                Thèmes & mémoires
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/soutenances"
+                :class="{ 'menu-active': isMenuActive('/soutenances') }"
+              >
+                Soutenances
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link
+                class="nav-link"
+                to="/statut"
+                :class="{ 'menu-active': isMenuActive('/statut') }"
+              >
+                Statut étudiant
+              </router-link>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <!-- Diplômes & documents administratifs -->
+      <li class="nav-item">
+        <router-link
+          class="nav-link"
+          to="/documents"
+          :class="{ 'menu-active': isMenuActive('/documents') }"
+        >
+          <i class="mdi mdi-certificate menu-icon"></i>
+          <span class="menu-title">Diplômes & documents</span>
+        </router-link>
+      </li>
 
       <!-- Courrier -->
 
@@ -491,6 +564,10 @@ const menuGroups = {
   ],
 
   scolarite: ['/etudiants', '/dossiers-scolaires', '/notes', '/deliberations'],
+
+  // Les trois écrans de la coordination : attribution des thèmes, soutenances
+  // et suivi des finalistes. Le groupe s'ouvre dès que l'un d'eux est actif.
+  coordination: ['/themes-memoires', '/soutenances', '/statut'],
 
   examens: [
     '/planification-examens',

@@ -22,6 +22,9 @@ import dashboardRoutes from '@/modules/dashboard/routes';
 import statsRoutes from '@/modules/stats/routes';
 import assistantRoutes from '@/modules/assistant/routes';
 import plateformeRoutes from '@/modules/plateforme/routes';
+import bibliothequeRoutes from '@/modules/bibliotheque/routes';
+import coordinationRoutes from '@/modules/coordination/routes';
+import documentsRoutes from '@/modules/documents/routes';
 import espaceNotesRoutes from '@/modules/espace-notes/routes';
 
 // ── Routes héritées, en attente de migration ─────────────────────────────────
@@ -44,6 +47,9 @@ const protectedRoutes = [
   ...notesRoutes,
   ...financesRoutes,
   ...pedagogiesRoutes,
+  ...bibliothequeRoutes,
+  ...coordinationRoutes,
+  ...documentsRoutes,
   ...assistantRoutes,
 ];
 

@@ -15,3 +15,6 @@ export const gestionClient = createHttpClient('/gestion');
 export const pedagogieClient = createHttpClient('/pedagogies');
 export const financeClient = createHttpClient('/finance');
 export const evaluationClient = createHttpClient('/evaluations');
+export const bibliothequeClient = createHttpClient('/bibliotheque');
+export const coordinationClient = createHttpClient('/coordination');
+export const documentClient = createHttpClient('/documents');
