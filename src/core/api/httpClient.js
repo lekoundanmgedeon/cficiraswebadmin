@@ -5,8 +5,8 @@ import { getToken } from '@/core/auth/tokenStorage';
 /**
  * Client HTTP de l'application.
  *
- * Remplace `api/config/axiosClient.js` + `api/config/serviceApi.js`, qui
- * souffraient de deux défauts :
+ * A remplacé l'ancienne couche `src/api/` — supprimée depuis, une fois son
+ * dernier appelant migré — qui souffrait de deux défauts :
  *  - `post(url, data)` n'acceptait pas de configuration Axios, si bien que les
  *    appels d'upload passant un 3e argument voyaient leurs en-têtes ignorés
  *    en silence ;

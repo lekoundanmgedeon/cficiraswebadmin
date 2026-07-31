@@ -8,8 +8,8 @@ import { IMPORT_TUTEURS_SCHEMA, LIENS_PARENTE } from '../../constants';
  * Import par lot de tuteurs légaux.
  *
  * Le serveur exposait `POST /academique/imports/tuteurs` depuis le début, mais
- * **aucun écran ne l'appelait** : la seule référence vivait dans
- * `src/api/academique/academiqueApi.js`, un fichier que plus personne n'importe.
+ * **aucun écran ne l'appelait** : la seule référence vivait dans l'ancienne
+ * couche `src/api/`, que plus personne n'importait et qui a été supprimée.
  * L'import de tuteurs était donc inatteignable depuis l'application.
  *
  * Le tuteur se rattache à l'étudiant par son **matricule** : il n'y a pas
