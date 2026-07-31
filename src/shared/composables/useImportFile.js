@@ -1,27 +1,38 @@
 import { computed, ref } from 'vue';
 import * as XLSX from 'xlsx';
-import { IMPORT_ACCEPT, IMPORT_SCHEMAS } from '../constants';
+
+/** Extensions acceptées par les imports par lot. */
+export const IMPORT_ACCEPT = '.xlsx,.xls,.csv';
 
 /**
  * Dépôt, prévisualisation et validation d'un fichier d'import.
  *
- * `InscriptionsModal.vue` et `ReinscriptionModal.vue` réécrivaient chacun la
- * même mécanique — zone de glisser-déposer, lecture SheetJS, validation ligne à
- * ligne, aperçu, génération du gabarit — pour ne différer que par la liste des
- * colonnes obligatoires. Le schéma est désormais une donnée (`IMPORT_SCHEMAS`),
- * pas du code recopié.
+ * Vivait dans `modules/inscriptions` et n'était paramétrable que par un **nom**
+ * de schéma (`'inscriptions' | 'reinscriptions'`), à choisir dans une table
+ * interne à ce module. L'import de tuteurs, qui relève des étudiants, ne pouvait
+ * donc pas s'en servir sans déclarer ses colonnes chez les inscriptions.
  *
- * @param {'inscriptions'|'reinscriptions'} schemaName
+ * Le composable reçoit désormais le **schéma lui-même** : chaque module garde
+ * ses colonnes chez lui, et la mécanique — glisser-déposer, lecture SheetJS,
+ * validation ligne à ligne, aperçu, gabarit — reste écrite une fois.
+ *
+ * @param {object} schema
+ * @param {string[]} schema.columns Colonnes du gabarit, dans l'ordre.
+ * @param {string[]} schema.required Colonnes dont la valeur est obligatoire.
+ * @param {Record<string, any>} schema.example Ligne d'exemple du gabarit.
+ * @param {string[]} [schema.booleans] Colonnes attendues en oui/non.
+ * @param {string} [templateName] Suffixe du fichier modèle téléchargé.
  */
-export function useImportFile(schemaName) {
-  const schema = IMPORT_SCHEMAS[schemaName];
-
+export function useImportFile(schema, templateName = 'import') {
   const selectedFile = ref(null);
   const isDragging = ref(false);
   const rows = ref([]);
   const errorMessage = ref('');
 
   const ACCEPTED_EXTENSIONS = IMPORT_ACCEPT.split(',');
+
+  /** Valeurs que le backend interprète comme « vrai ». */
+  const BOOLEENS_CONNUS = ['true', 'false', '1', '0', 'oui', 'non', 'yes', 'no', 'vrai', 'faux'];
 
   /** @param {File} file */
   function isAccepted(file) {
@@ -51,6 +62,18 @@ export function useImportFile(schemaName) {
 
     if (row.sexe && !['M', 'F'].includes(String(row.sexe).toUpperCase().trim())) {
       errors.push('sexe invalide (M/F)');
+    }
+
+    for (const column of schema.booleans ?? []) {
+      const valeur = String(row[column] ?? '')
+        .toLowerCase()
+        .trim();
+      // Une valeur vide vaut « non » côté serveur : c'est un défaut, pas une
+      // faute. Seule une valeur non interprétable est signalée — sans quoi elle
+      // serait silencieusement ramenée à « non ».
+      if (valeur && !BOOLEENS_CONNUS.includes(valeur)) {
+        errors.push(`${column} : attendu oui/non`);
+      }
     }
 
     return errors;
@@ -89,6 +112,19 @@ export function useImportFile(schemaName) {
 
         if (parsed.length === 0) {
           errorMessage.value = 'Le fichier ne contient aucune ligne.';
+          selectedFile.value = null;
+          return;
+        }
+
+        // Colonne absente de l'en-tête : le serveur refuserait tout le fichier.
+        // Autant le dire avant de le téléverser. On ne contrôle que les colonnes
+        // dont la valeur est obligatoire : le contrat de colonnes du serveur est
+        // parfois plus large que ce qu'il exige réellement.
+        const entetes = Object.keys(parsed[0]).map((entete) => entete.trim());
+        const absentes = schema.required.filter((column) => !entetes.includes(column));
+
+        if (absentes.length > 0) {
+          errorMessage.value = `Colonne(s) manquante(s) : ${absentes.join(', ')}.`;
           selectedFile.value = null;
           return;
         }
@@ -136,7 +172,7 @@ export function useImportFile(schemaName) {
     const worksheet = XLSX.utils.json_to_sheet([schema.example], { header: schema.columns });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Modèle');
-    XLSX.writeFile(workbook, `modele_${schemaName}.xlsx`);
+    XLSX.writeFile(workbook, `modele_${templateName}.xlsx`);
   }
 
   return {

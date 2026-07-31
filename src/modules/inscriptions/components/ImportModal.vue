@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue';
 import { closeModal } from '@/shared/utils/modal';
 import { useInscriptionStore } from '../store';
-import { useImportFile } from '../composables/useImportFile';
-import { IMPORT_ACCEPT } from '../constants';
+import { useImportFile } from '@/shared/composables/useImportFile';
+import { IMPORT_ACCEPT, IMPORT_SCHEMAS } from '../constants';
 
 /**
  * Import par lot — inscriptions neuves ou réinscriptions.
@@ -41,7 +41,7 @@ const {
   onFileChange,
   reset,
   downloadTemplate,
-} = useImportFile(props.kind);
+} = useImportFile(IMPORT_SCHEMAS[props.kind], props.kind);
 
 const fileInput = ref(null);
 const codeAnnee = ref('');

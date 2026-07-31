@@ -6,6 +6,7 @@ import {
   getEtudiantComplet,
   getEtudiantParcours,
   importEtudiants,
+  importTuteurs,
   uploadPhotoEtudiant,
 } from './api';
 
@@ -32,8 +33,16 @@ export const useEtudiantStore = createCrudStore({
   state: () => ({
     /** @type {any[]} Parcours académique de l'étudiant consulté. */
     parcours: [],
-    /** @type {any|null} Compte rendu du dernier import. */
+    /** @type {any|null} Compte rendu du dernier import d'étudiants. */
     importReport: null,
+    /**
+     * @type {any|null} Compte rendu du dernier import de tuteurs.
+     *
+     * Séparé d'`importReport` : les deux onglets vivent côte à côte, et un
+     * compte rendu partagé afficherait le rapport des étudiants sous l'onglet
+     * des tuteurs.
+     */
+    tuteursImportReport: null,
   }),
 
   actions: {
@@ -117,6 +126,25 @@ export const useEtudiantStore = createCrudStore({
           useNotificationStore().notifySuccess(response.message ?? 'Import terminé.');
 
           await this.invalidate();
+        },
+      });
+    },
+
+    /**
+     * Import par lot de tuteurs légaux.
+     *
+     * Pas d'`invalidate()` : les tuteurs ne figurent pas dans la liste des
+     * étudiants, qui n'a donc pas à être rechargée. Ils apparaissent sur la
+     * fiche détaillée, servie par `/etudiants/:id/complet`.
+     *
+     * @param {File} file
+     */
+    async importTuteursFromFile(file) {
+      return this.run(() => importTuteurs(file), {
+        failure: "Erreur lors de l'import des tuteurs.",
+        onSuccess: (response) => {
+          this.tuteursImportReport = response.data ?? null;
+          useNotificationStore().notifySuccess(response.message ?? 'Import terminé.');
         },
       });
     },

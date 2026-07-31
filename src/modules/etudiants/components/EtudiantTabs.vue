@@ -5,6 +5,7 @@ import EtudiantsParClasseTab from './tabs/EtudiantsParClasseTab.vue';
 import RepartitionTab from './tabs/RepartitionTab.vue';
 import StatistiquesTab from './tabs/StatistiquesTab.vue';
 import ImportEtudiantsTab from './tabs/ImportEtudiantsTab.vue';
+import ImportTuteursTab from './tabs/ImportTuteursTab.vue';
 import ExportEtudiantsTab from './tabs/ExportEtudiantsTab.vue';
 
 /**
@@ -22,6 +23,8 @@ const tabs = [
   { id: 'repartition', label: 'Répartition', component: RepartitionTab },
   { id: 'statistiques', label: 'Statistiques', component: StatistiquesTab },
   { id: 'import', label: 'Import', component: ImportEtudiantsTab },
+  // `POST /academique/imports/tuteurs` existait sans qu'aucun écran ne l'appelle.
+  { id: 'import-tuteurs', label: 'Import tuteurs', component: ImportTuteursTab },
   { id: 'export', label: 'Exportations', component: ExportEtudiantsTab },
 ];
 </script>

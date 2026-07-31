@@ -84,3 +84,17 @@ export const importEtudiants = (file, codeAnnee) => {
   formData.append('code_annee', codeAnnee);
   return academiqueClient.post('/imports/etudiants', formData);
 };
+
+/**
+ * Import par lot de tuteurs légaux (.xlsx / .csv).
+ *
+ * Pas de `code_annee`, contrairement à l'import d'étudiants : le tuteur se
+ * rattache au matricule, qui ne dépend pas de l'année académique.
+ *
+ * @param {File} file
+ */
+export const importTuteurs = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return academiqueClient.post('/imports/tuteurs', formData);
+};
