@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useEtudiantStore } from '../../store';
+import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 import { IMPORT_ACCEPT } from '../../constants';
 
 /**
@@ -18,17 +19,37 @@ import { IMPORT_ACCEPT } from '../../constants';
  * jamais envoyés nulle part.
  *
  * Celui-ci envoie réellement le fichier à `POST /academique/imports/etudiants`.
+ *
+ * ⚠️ Il manquait l'année académique. Chaque ligne du fichier crée une
+ * inscription, et une inscription n'existe que rattachée à une année : sans
+ * `code_annee`, le serveur répondait 400 et **l'import n'aboutissait jamais**.
+ * Le sélecteur ci-dessous comble ce trou, en proposant par défaut l'année
+ * active.
  */
 
 const etudiantStore = useEtudiantStore();
+const anneeStore = useAnneeStore();
 
 const fileInput = ref(null);
 const isDragging = ref(false);
 const selectedFile = ref(null);
 const errorMessage = ref('');
+const codeAnnee = ref('');
 
 const loading = computed(() => etudiantStore.loading);
 const report = computed(() => etudiantStore.importReport);
+const annees = computed(() => anneeStore.items ?? []);
+
+/** Lignes rejetées : la partie du compte rendu sur laquelle on peut agir. */
+const echecs = computed(() => report.value?.details?.echecs ?? []);
+const summary = computed(() => report.value?.summary ?? null);
+
+onMounted(async () => {
+  await anneeStore.fetchAll();
+  // L'année active est le choix juste dans la quasi-totalité des cas ; elle
+  // reste modifiable pour rattraper un import sur une année précédente.
+  codeAnnee.value = anneeStore.activeAnnee?.code ?? annees.value[0]?.code ?? '';
+});
 
 const ACCEPTED_EXTENSIONS = IMPORT_ACCEPT.split(',');
 
@@ -79,7 +100,12 @@ function clearFile() {
 async function submit() {
   if (!selectedFile.value) return;
 
-  const result = await etudiantStore.importFromFile(selectedFile.value);
+  if (!codeAnnee.value) {
+    errorMessage.value = "Choisissez l'année académique de rattachement.";
+    return;
+  }
+
+  const result = await etudiantStore.importFromFile(selectedFile.value, codeAnnee.value);
   if (result !== undefined) clearFile();
 }
 
@@ -102,6 +128,23 @@ function formatSize(bytes) {
 
     <div class="card border-0 shadow-sm">
       <div class="card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-5">
+            <label for="import-code-annee" class="form-label small fw-semibold">
+              Année académique de rattachement
+            </label>
+            <select id="import-code-annee" v-model="codeAnnee" class="form-select">
+              <option value="" disabled>Choisir une année…</option>
+              <option v-for="annee in annees" :key="annee.id" :value="annee.code">
+                {{ annee.code }}{{ annee.est_active ? ' (active)' : '' }}
+              </option>
+            </select>
+            <small class="text-muted">
+              Chaque ligne du fichier crée une inscription pour cette année.
+            </small>
+          </div>
+        </div>
+
         <div
           class="drop-zone rounded p-5 text-center"
           :class="{ 'drop-zone--active': isDragging }"
@@ -177,11 +220,46 @@ function formatSize(bytes) {
           </div>
         </div>
 
-        <div v-if="report" class="alert alert-success mt-3 mb-0" role="alert">
-          <h6 class="alert-heading fw-bold">
-            <i class="mdi mdi-check-circle me-1"></i> Import terminé
-          </h6>
-          <pre class="mb-0 small bg-transparent border-0 p-0">{{ report }}</pre>
+        <!--
+          Le compte rendu était affiché en JSON brut dans un <pre>. Or ce qui
+          compte pour l'opérateur, ce sont les lignes **rejetées** et leur
+          motif : c'est la seule information sur laquelle il peut agir pour
+          corriger son fichier et relancer.
+        -->
+        <div v-if="summary" class="mt-3">
+          <div
+            class="alert mb-0"
+            :class="summary.totalEchecs > 0 ? 'alert-warning' : 'alert-success'"
+            role="alert"
+          >
+            <h6 class="alert-heading fw-bold">
+              <i
+                class="mdi me-1"
+                :class="summary.totalEchecs > 0 ? 'mdi-alert' : 'mdi-check-circle'"
+              ></i>
+              {{ summary.totalSucces }}/{{ summary.totalTraite }} ligne(s) intégrée(s)
+              <span v-if="summary.totalEchecs > 0"> — {{ summary.totalEchecs }} rejetée(s) </span>
+            </h6>
+
+            <div v-if="echecs.length" class="table-responsive mt-2">
+              <table class="table table-sm mb-0 align-middle">
+                <thead>
+                  <tr>
+                    <th scope="col" style="width: 6rem">Ligne</th>
+                    <th scope="col">Étudiant</th>
+                    <th scope="col">Motif du rejet</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="echec in echecs" :key="echec.ligne">
+                    <td class="fw-semibold">{{ echec.ligne }}</td>
+                    <td>{{ echec.etudiant }}</td>
+                    <td class="small">{{ echec.erreur }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -101,13 +101,21 @@ export const useEtudiantStore = createCrudStore({
       });
     },
 
-    /** @param {File} file */
-    async importFromFile(file) {
-      return this.run(() => importEtudiants(file), {
-        success: 'Import terminé.',
+    /**
+     * @param {File} file
+     * @param {string} codeAnnee Année académique cible, ex. "2024-2025".
+     */
+    async importFromFile(file, codeAnnee) {
+      return this.run(() => importEtudiants(file, codeAnnee), {
         failure: "Erreur lors de l'import du fichier.",
         onSuccess: async (response) => {
           this.importReport = response.data ?? null;
+
+          // On notifie avec le message du serveur plutôt qu'un « Import
+          // terminé. » fixe : lui seul distingue l'import intégralement repris
+          // de l'import partiel (« 3/5 lignes intégrées, 2 rejetée(s) »).
+          useNotificationStore().notifySuccess(response.message ?? 'Import terminé.');
+
           await this.invalidate();
         },
       });

@@ -69,10 +69,18 @@ export const uploadPhotoEtudiant = (id, file) => {
  * Le champ du fichier s'appelle `file` ici, alors que l'import d'inscriptions
  * attend `fichier` : les deux routes n'ont pas la même convention côté serveur.
  *
+ * `code_annee` est **obligatoire** : chaque ligne du fichier crée une
+ * inscription, qui n'existe que rattachée à une année académique. Il manquait à
+ * cet appel, et le serveur répondait donc systématiquement
+ * « Le paramètre 'code_annee' (ex: 2024-2025) est obligatoire. » — l'écran
+ * d'import d'étudiants n'a jamais pu aboutir.
+ *
  * @param {File} file
+ * @param {string} codeAnnee Ex: "2024-2025"
  */
-export const importEtudiants = (file) => {
+export const importEtudiants = (file, codeAnnee) => {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('code_annee', codeAnnee);
   return academiqueClient.post('/imports/etudiants', formData);
 };
