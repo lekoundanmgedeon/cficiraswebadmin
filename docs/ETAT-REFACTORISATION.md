@@ -4,7 +4,7 @@ Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et *
 À tenir à jour à chaque module migré.
 
 - Branche : `refactor-main` (dernier module migré : `stats`, §1.19 — **il ne reste que les résidus**)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **101 tests, 12 fichiers** ·
+- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **156 tests, 19 fichiers** ·
   `npm run build` **OK**
   Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
   `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
@@ -68,6 +68,61 @@ src/modules/structure-academique/
 ```
 
 Stores : **1 145 lignes → 400**. Écrans : **1 requête au chargement au lieu de 4–5**.
+
+**Ajout depuis la migration — l'onglet « Statistiques » des filières.** Il n'affichait que deux
+compteurs (`nb_etudiants`, `nb_classes`) pour **une** filière choisie dans une liste déroulante :
+ni vue d'ensemble, ni graphique, et la capacité — pourtant servie par `v_organisation_filieres` —
+n'apparaissait nulle part. Il croise désormais les deux lectures disponibles dans le getter
+`filieresEnrichies` (`GET /filieres` pour l'identité et les classes, `GET /filieres/stats/organisations`
+pour la capacité et l'effectif ; **aucune route backend n'a été touchée**) et en tire :
+
+- quatre indicateurs de tête (filières actives, inscrits, remplissage global, places disponibles) ;
+- trois graphiques Chart.js — effectifs des filières actives, répartition par cycle, taux de
+  remplissage — détruits au démontage, tracés par un **seul** déclencheur (les deux lectures
+  arrivant en parallèle, un tracé par lecture en aurait construit six pour en afficher trois) ;
+- des diagnostics dérivés (`analysesFilieres`) : saturation, filières sans classe, concentration
+  des effectifs, capacité sous-utilisée. Chaque constat naît d'un test sur les données et disparaît
+  avec la situation qu'il décrit — rien n'y est écrit d'avance.
+
+Les seuils (`SEUILS`, `filiere/constants.js`) servent à la fois aux couleurs et aux diagnostics :
+une barre verte ne peut pas accompagner une alerte rouge. Couvert par `filiere/store.test.js`
+(8 tests) et `StatistiquesTab.test.js` (6 tests) — les deux vues servant leurs compteurs en
+chaînes, les tests verrouillent l'addition, qui sinon concatène en silence.
+
+**Ajout depuis la migration — les onglets « Par filière » et « Par niveau » des classes.** Ils
+servaient les annuaires des deux autres écrans : on y administrait des filières et des niveaux,
+jamais des classes. Un composant unique (`ClassesFiltreesTab.vue`, monté deux fois avec une prop
+`dimension`) filtre désormais les classes sur la dimension choisie, avec effectifs, capacités,
+taux de remplissage par classe et cumuls de la sélection.
+
+> Le filtre est appliqué **en mémoire**, et c'est délibéré. `GET /classes/filiere/:id` et
+> `GET /classes/niveau/:id` existent, mais lisent `v_classes_par_filiere` / `v_classes_par_niveau`,
+> qui ne sont que `classe.*` plus une étiquette : **aucun `nb_etudiants`**. Les employer afficherait
+> un effectif de 0 partout — un chiffre faux plutôt qu'un chiffre absent. `GET /classes`
+> (`v_classes_effectifs`) porte `filiere_id`, `niveau_id` *et* l'effectif de l'année active. Second
+> motif : `fetchByFiliere()` / `fetchByNiveau()` **remplacent `items`**, la collection que lit aussi
+> l'onglet « Liste des classes » — filtrer ici l'aurait amputée là-bas.
+
+**Ajout depuis la migration — l'onglet « Unités d'enseignement » des semestres, en remplacement de
+« Niveaux ».** Un semestre n'a pas de niveau : la table `semestre` ne porte qu'un code, une année et
+deux dates. L'onglet cède la place à ce qui est réellement enseigné pendant le semestre
+(`ModuleClasse` : module × classe × semestre), classe par classe, avec cumul des crédits et du
+volume horaire, détachement d'une UE et rattachement via `AssignationModal` — dépendance dirigée
+`semestre → matieres`, déclarée, comme `stats → examens` (§1.11). Trois pièges du domaine y sont
+absorbés :
+
+- **« semestre actif » a deux sens** : `GET /semestres/courants/actifs` ne renvoie pas les semestres
+  dont `est_actif` est vrai, mais tous ceux de l'**année académique active** — le nom de la route
+  ment. L'écran affiche le périmètre réel et signale à part le semestre en cours ;
+- **la liste des classes ne vient pas des configurations** : `v_semestre_configurations` est bâtie
+  `FROM ModuleClasse`, donc une classe n'y apparaît qu'*après* sa première UE. S'en servir comme
+  sélecteur interdirait précisément de rattacher cette première UE. Les classes viennent de
+  `GET /classes` ; les configurations disent seulement lesquelles sont déjà pourvues ;
+- **`v_module_classe_semestres` parle un autre vocabulaire** que `GET /modules` (`libelle`,
+  `credits`, `heures` contre `designation`, `credit`, `volume_horaire`) : les deux graphies sont lues.
+
+Couverts par `ClassesFiltreesTab.test.js` (5 tests) et `UesSemestreTab.test.js` (5 tests). Là encore,
+**aucune route backend n'a été touchée**.
 
 ### 1.4 Le module `etudiants` — terminé
 
