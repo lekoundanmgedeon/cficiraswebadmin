@@ -83,6 +83,39 @@ export function statutInfo(raw) {
   return STATUTS[code] ?? { code: 'INCONNU', label: raw || 'Inconnu', variant: 'secondary' };
 }
 
+/**
+ * Types d'inscription.
+ *
+ * La colonne `inscriptions.type_inscription` porte une contrainte CHECK qui
+ * n'accepte que ces trois codes — le champ qualifie la **nature du passage**
+ * (entrée normale, redoublement, transfert), et non l'opposition première
+ * inscription / réinscription. Envoyer `REINSCRIPTION` faisait échouer la
+ * création en `23514`, que le backend remontait en 500 générique.
+ */
+export const TYPES_INSCRIPTION = [
+  { code: 'NOUVEAU', label: 'Nouveau' },
+  { code: 'REDOUBLANT', label: 'Redoublant' },
+  { code: 'TRANSFERT', label: 'Transfert' },
+];
+
+/** Valeur par défaut côté base (`DEFAULT 'NOUVEAU'`). */
+export const TYPE_INSCRIPTION_DEFAUT = 'NOUVEAU';
+
+/**
+ * Libellé lisible d'un type d'inscription.
+ *
+ * Un type inconnu est rendu tel quel plutôt que masqué : la donnée existe en
+ * base, la cacher tromperait plus que l'afficher brute.
+ *
+ * @param {string|null|undefined} raw
+ * @returns {string}
+ */
+export function typeInscriptionLabel(raw) {
+  if (!raw) return '';
+  const code = String(raw).trim().toUpperCase();
+  return TYPES_INSCRIPTION.find((type) => type.code === code)?.label ?? raw;
+}
+
 /** Statuts qu'un dossier peut prendre depuis « en attente ». */
 export const DECISIONS = [
   { code: 'VALIDEE', label: "Valider l'inscription", variant: 'success' },

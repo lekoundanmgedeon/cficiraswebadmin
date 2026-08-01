@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import { useInscriptionStore } from '../store';
+import { TYPES_INSCRIPTION, TYPE_INSCRIPTION_DEFAUT } from '../constants';
 
 /**
  * Réinscription d'un étudiant, à l'unité.
@@ -35,6 +36,7 @@ const { items: classes } = storeToRefs(classeStore);
 
 const anneeId = ref('');
 const classeId = ref('');
+const typeInscription = ref(TYPE_INSCRIPTION_DEFAUT);
 const commentaire = ref('');
 const errorMessage = ref('');
 
@@ -46,6 +48,7 @@ watch(
     errorMessage.value = '';
     commentaire.value = '';
     classeId.value = '';
+    typeInscription.value = TYPE_INSCRIPTION_DEFAUT;
 
     if (!etudiant) return;
 
@@ -71,7 +74,7 @@ async function submit() {
     etudiant_id: props.etudiant.id,
     classe_id: classeId.value,
     annee_academique_id: anneeId.value,
-    type_inscription: 'REINSCRIPTION',
+    type_inscription: typeInscription.value,
     commentaire: commentaire.value.trim() || null,
   });
 
@@ -136,6 +139,17 @@ async function submit() {
                   <option value="">Choisir une classe</option>
                   <option v-for="classe in classes" :key="classe.id" :value="classe.id">
                     {{ classe.code }} — {{ classe.filiere_nom }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="reinscrire-type" class="form-label">
+                  Type d’inscription <span class="text-danger">*</span>
+                </label>
+                <select id="reinscrire-type" v-model="typeInscription" class="form-select" required>
+                  <option v-for="type in TYPES_INSCRIPTION" :key="type.code" :value="type.code">
+                    {{ type.label }}
                   </option>
                 </select>
               </div>

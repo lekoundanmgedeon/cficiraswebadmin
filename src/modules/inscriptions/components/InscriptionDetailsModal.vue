@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { formatDate } from '@/shared/utils/date';
-import { statutInfo } from '../constants';
+import { statutInfo, typeInscriptionLabel } from '../constants';
 
 /**
  * Détail d'une inscription, en lecture seule.
@@ -37,7 +37,7 @@ const lignes = computed(() => {
     { label: 'Classe', value: value.classe_code },
     { label: 'Filière', value: value.filiere_nom },
     { label: 'Année académique', value: value.annee_code },
-    { label: 'Type d’inscription', value: value.type_inscription },
+    { label: 'Type d’inscription', value: typeInscriptionLabel(value.type_inscription) },
     { label: 'Date d’inscription', value: formatDate(value.date_inscription) },
     { label: 'Gestionnaire', value: value.gestionnaire_username },
     { label: 'Commentaire', value: value.commentaire },
