@@ -33,23 +33,23 @@ import AssistantPanneau from '@/modules/assistant/components/AssistantPanneau.vu
 
 const AMORCES = [
   {
-    icone: 'mdi-cash-multiple',
+    icone: 'bi-cash-stack',
     libelle: 'Encaissements de la période',
     question: 'Combien a-t-on encaissé ce mois-ci, et par mode de paiement ?',
   },
   {
-    icone: 'mdi-alert-octagon-outline',
+    icone: 'bi-exclamation-octagon',
     libelle: 'Classes les plus débitrices',
     question:
       'Quelles classes ont le plus d’impayés ? Donne le montant restant dû et le nombre d’étudiants concernés.',
   },
   {
-    icone: 'mdi-calendar-alert',
+    icone: 'bi-calendar-x',
     libelle: 'Échéances dépassées',
     question: 'Quelles échéances sont dépassées et non soldées, pour quel montant total ?',
   },
   {
-    icone: 'mdi-chart-box-outline',
+    icone: 'bi-bar-chart',
     libelle: 'Bilan par filière',
     question: 'Quel est le bilan financier par filière : attendu, encaissé, reste à recouvrer ?',
   },

@@ -37,10 +37,49 @@ export const poserQuestion = (question, conversationId = null, cadrage = null) =
 /**
  * Les conversations de l'utilisateur, la plus récente d'abord.
  *
- * Le `titre` est la première question du fil — le backend n'en fait pas générer
- * un par le modèle.
+ * Le `titre` est celui que l'utilisateur a choisi, à défaut la première question
+ * du fil — le backend n'en fait pas générer un par le modèle.
+ *
+ * `archivees: true` **remplace** la liste par celle des fils rangés : c'est la
+ * corbeille, pas un supplément.
+ *
+ * @param {{limite?: number, offset?: number, q?: string, archivees?: boolean,
+ *   cadrage?: string}} [params]
  */
-export const getConversations = (limite = 20) => assistantClient.get('/conversations', { limite });
+export const getConversations = (params = {}) =>
+  assistantClient.get('/conversations', { limite: 20, ...params });
+
+/**
+ * Le fil complet d'une conversation.
+ *
+ * Rend les échanges dans l'ordre, **y compris ceux qui ont échoué** (ils
+ * portent `erreur`), chacun avec son `horodatage` : les chiffres d'une réponse
+ * sont ceux de ce moment-là, et l'écran doit le dire.
+ *
+ * 404 si le fil n'existe pas **ou** s'il appartient à quelqu'un d'autre — le
+ * serveur confond volontairement les deux cas.
+ */
+export const getConversation = (id) => assistantClient.get(`/conversations/${id}`);
+
+/**
+ * Renomme ou range une conversation.
+ *
+ * Il n'existe pas de suppression : `assistant_echanges` est le journal d'audit
+ * du module. `{ archivee: true }` masque le fil, la trace reste.
+ *
+ * @param {string} id
+ * @param {{titre?: string|null, archivee?: boolean}} patch
+ *   `titre: null` rend au fil son titre par défaut.
+ */
+export const patchConversation = (id, patch) =>
+  assistantClient.patch(`/conversations/${id}`, patch);
+
+/** Le journal des échanges, tous utilisateurs — **403 hors ADMIN**. */
+export const getAudit = (params = {}) => assistantClient.get('/audit', { limite: 50, ...params });
+
+/** Statistiques d'usage et de coût — **403 hors ADMIN**. */
+export const getAuditStatistiques = (jours = 30) =>
+  assistantClient.get('/audit/statistiques', { jours });
 
 /** Les dernières questions, tous fils confondus. */
 export const getHistorique = (limite = 20) => assistantClient.get('/historique', { limite });

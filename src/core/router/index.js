@@ -21,6 +21,7 @@ import pedagogiesRoutes from '@/modules/pedagogies/routes';
 import dashboardRoutes from '@/modules/dashboard/routes';
 import statsRoutes from '@/modules/stats/routes';
 import assistantRoutes from '@/modules/assistant/routes';
+import assistantEspaceRoutes from '@/modules/assistant/espace/routes';
 import plateformeRoutes from '@/modules/plateforme/routes';
 import bibliothequeRoutes from '@/modules/bibliotheque/routes';
 import coordinationRoutes from '@/modules/coordination/routes';
@@ -59,6 +60,14 @@ const routes = [
   // `DefaultLayout` (ni en-tête, ni menu de l'application) et porte sa propre
   // coquille, sa propre session et sa propre garde. Voir son `routes.js`.
   ...espaceNotesRoutes,
+  // L'espace de chat s'ouvre lui aussi dans un onglet à part, hors
+  // `DefaultLayout` : une conversation veut toute la hauteur de l'écran, que
+  // l'en-tête et le menu de l'application lui prendraient.
+  //
+  // Il **partage** en revanche la session de l'application — pas de portée de
+  // jeton distincte, pas de `meta.public` : la garde générale le protège comme
+  // n'importe quel écran interne. Voir `modules/assistant/espace/routes.js`.
+  ...assistantEspaceRoutes,
   {
     path: '/',
     component: DefaultLayout,

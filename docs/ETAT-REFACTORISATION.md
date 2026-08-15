@@ -1490,6 +1490,9 @@ rend. ⚠️ Le rôle vient du profil **en mémoire**, que la connexion renseign
 de page perd : les écrans qui montent l'assistant appellent donc `fetchCurrentUser()`. À défaut, le
 bloc se serait masqué à un administrateur revenu par F5 — le défaut se fait dans le sens sûr.
 
+_(Ce masquage n'était alors que **visuel** : le serveur joignait le SQL à toutes les réponses. Il
+filtre désormais lui-même — voir §1.24.)_
+
 > #### Trois défauts du catalogue serveur, révélés en exerçant les onglets
 >
 > - **`principales` n'ordonnait rien.** La liste ne servait que de drapeau : la coupe à huit colonnes
@@ -1580,6 +1583,198 @@ survol **et** au clic uniquement quand la barre est repliée, les infobulles, et
 bandeau de marque — sens du mouvement, `aria-expanded`, aller-retour. ⚠️ Même réserve
 qu'au §1.22 : **rien n'a pu être vérifié en navigateur**, faute de pouvoir en démarrer un ici — ce
 qui a précisément laissé passer le défaut des pixels CSS.
+
+---
+
+### 1.24 L'espace de chat — les conversations enfin rouvrables, et l'audit du module
+
+**Le défaut constaté à l'usage : on perdait ses conversations.** Le fil de l'assistant vivait le
+temps de l'écran. Le §1.22 le présentait comme un choix — rouvrir une conversation d'hier
+afficherait des chiffres périmés —, et l'argument tient ; mais il condamnait l'utilisateur à ne
+jamais retrouver ce qu'il avait demandé, alors que le serveur, lui, journalisait tout depuis la
+migration 012.
+
+La cause technique était ailleurs : **aucune route n'exposait le détail d'un fil.**
+`GET /conversations` ne rendait que des en-têtes, et `EchangeModel.findConversation()` est réservée
+à la reconstruction du prompt (5 échanges, aboutis seulement). L'écran `/assistant-ai` listait donc
+des conversations qu'un clic ne pouvait pas ouvrir.
+
+#### Le partage des rôles
+
+| Où                                                | Sert à                                                                    |
+| ------------------------------------------------- | ------------------------------------------------------------------------- |
+| `/assistant-ai` et les 4 onglets métier (§1.22)   | la **question rapide** sur la vue affichée ; fil de session, sans mémoire  |
+| `/espace-chat` — onglet distinct, hors du layout  | la conversation suivie, la relecture de tout l'historique, l'export, l'audit |
+
+Un lien « Poursuivre dans l'espace » passe de l'un à l'autre **sans reposer la question** : le fil
+existe côté serveur, l'espace le rouvre par son identifiant.
+
+#### La prudence d'origine, conservée autrement
+
+Le fil est rechargé, mais chaque message rejoué porte `archive: true` et son horodatage serveur.
+`AssistantFil` affiche alors « Chiffres arrêtés au … ». On restitue une trace, pas une réponse
+encore valable — ce qui répond à l'objection du §1.22 sans renoncer à l'historique.
+
+#### Backend — migration 018 et cinq routes
+
+- **`assistant_echanges.cadrage`** : le cadrage était reçu, transmis au prompt… et jeté. Il est
+  désormais journalisé, ce qui permet d'étiqueter et de filtrer l'historique par domaine.
+  ⚠️ **Les 47 échanges antérieurs restent NULL** (« Général ») : rien ne permet de les rattacher
+  après coup, et le deviner fabriquerait une statistique fausse.
+- **`assistant_conversations`** : la migration 013 avait écarté cette table « jusqu'au jour où une
+  conversation portera des attributs propres ». L'archivage et le renommage sont ces attributs. Elle
+  est **creuse** — aucune ligne tant que l'utilisateur n'agit pas —, la liste reste construite sur
+  les échanges avec une jointure externe.
+- `GET /conversations/:id` (fil complet, échecs compris), `PATCH /conversations/:id`
+  (`titre`, `archivee`), `GET /audit` et `GET /audit/statistiques`, ces deux dernières en
+  `verifierRole(['ADMIN'])` — **seule exception** à la règle du domaine (« pas de `verifierRole`
+  ici, le cloisonnement se fait au catalogue ») : l'audit lit le journal de *tous* les utilisateurs,
+  le catalogue n'y protège rien.
+- `EchangeModel.statistiques()` existait depuis la migration 012 et **n'était appelée par personne** ;
+  elle est exposée et complétée (par fournisseur — c'est ce qui rend les replis visibles —, et par
+  jour via `generate_series`, sans quoi un jour creux disparaît de la série).
+- **Défaut corrigé au passage** : `POST /question` joignait le SQL exécuté à **toutes** les
+  réponses. `AssistantRequetes.vue` le masquait hors ADMIN, mais le masquage était purement visuel —
+  la carte du schéma partait dans chaque réponse, lisible dans l'inspecteur réseau. Le filtrage est
+  maintenant fait côté serveur (`requetesPour`), sur cette route comme sur la nouvelle. Aucun
+  changement à l'écran.
+- **Pas de `DELETE`, et ce n'est pas un oubli** : `assistant_echanges` est le journal d'audit du
+  module et son seul jeu d'évaluation du prompt. `archivee` masque, la trace reste.
+
+#### Frontend — un espace, un seul fichier du noyau touché
+
+`src/modules/assistant/espace/` (coquille, liste, barre de fil, chat, audit, store) et
+`constants.js` / `utils/export.js` au niveau du module. Le noyau ne reçoit que l'étalement des
+routes hors `DefaultLayout` dans `core/router/index.js`.
+
+**Différence de fond avec l'espace de notes (§1.20)** : celui-ci a sa propre session (jeton sous une
+autre clé, écran de connexion dédié, routes `meta.public` + garde locale). L'espace de chat
+**partage la session de l'application** — c'est ce qui lui permet d'afficher les conversations de
+l'utilisateur sans le faire se reconnecter. Il ne déclare donc **rien de public** : la garde
+générale le protège comme n'importe quel écran interne, et `tokenStorage.js` comme `main.js`
+l'ignorent. Un `meta.public` posé par mégarde y ouvrirait l'historique à qui tape l'URL ; un test le
+verrouille.
+
+Second écart : `height: 100vh; overflow: hidden`, quand l'espace de notes est en `min-height` et
+laisse défiler la page. Une grille de notes défile ; un composeur de chat doit rester au bas de
+l'écran.
+
+**Retiré de `/assistant-ai`** : la liste des conversations passées. Elle **listait sans pouvoir
+rouvrir** — un inventaire de ce qu'on ne peut pas consulter. La carte « Sources accessibles » reste.
+`fetchConversations` et l'état `conversations` du store embarqué sont supprimés avec elle, ainsi que
+l'aller-retour qu'il ajoutait à chaque réponse.
+
+**Export** : `useTableExport` ne convient pas (trois sorties tabulaires ; un fil y deviendrait une
+colonne de plusieurs milliers de caractères) et `ExportMenu.vue` est figé sur deux formats. D'où
+`utils/export.js` : le Markdown conserve la conversation telle qu'elle s'est tenue, tableaux
+compris ; le CSV en rend le **relevé**, une ligne par échange.
+
+**Ajouts partagés** : `formatDateTime` et `formatRelatif` (`shared/utils/date.js` ne formatait que
+des dates, jamais d'heure — `toLocaleDateString` ignore `hour` sans rien signaler) et `tronquer`
+(`shared/utils/text.js`), pour les cas où le CSS ne peut rien : un `title`, un nom de fichier.
+
+**Vérifié contre `localhost:3500`** avec deux jetons : fil de 8 échanges rouvert dans l'ordre, 404
+pour un non-propriétaire, 400 sur un UUID malformé, 403 sur `/audit` pour `scolarite`, archivage
+puis restauration sans perte du titre, filtres `q` et `cadrage`, statistiques réelles (47 échanges,
+2 fournisseurs — le repli `groq` → `mistral` y est visible), et une question cadrée posée de bout en
+bout dont le `cadrage` se retrouve en base puis dans l'étiquette de la liste. `requetes` vaut bien
+`[]` pour `scolarite`. Migration rejouée pour éprouver son idempotence.
+
+**36 tests front ajoutés ou étendus** : routes de l'espace (aucun `meta.public`, montage hors
+layout, `c/:id` qui ne mange pas `audit`), store (dépliage d'un échange en deux bulles, marquage
+`archive`, erreur affichée plutôt qu'une bulle vide, liste rafraîchie une seule fois par fil, titre
+relu dans la liste après un renommage annulé), export (dates, tableaux préservés, RFC 4180, BOM) et
+les deux utilitaires partagés.
+
+⚠️ **Même réserve qu'aux §1.22 et §1.23 : rien n'a pu être vérifié en navigateur** — Chromium ne
+démarre pas ici. La mise en page plein écran (barre latérale repliable, fil qui défile sous un
+composeur ancré) est raisonnée, pas constatée.
+
+---
+
+### 1.25 Refonte de l'écran `/assistant-ai` — barre d'appel et aperçus dérivés du catalogue
+
+Le §1.24 a vidé cet écran de sa liste de conversations sans redessiner ce qui restait : trois quarts
+de page pour une conversation vide, un quart pour un compteur (« 20 vues, selon votre rôle » et cinq
+pastilles de domaine). Or il ne sert plus qu'à deux choses depuis le partage des rôles — **la
+question rapide et l'aperçu**.
+
+#### Deux états, pas deux écrans
+
+| État                       | Ce qui s'affiche                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| À l'arrivée                | barre d'appel centrée (bridée à 46 rem) + tuiles d'aperçu groupées par domaine    |
+| Dès la première réponse    | le fil seul, pleine largeur ; barre d'appel et tuiles s'effacent                  |
+
+Un champ vide n'apprend à personne ce qu'un assistant sait faire ; à l'inverse, garder les tuiles
+sous une réponse pousserait un tableau de quinze lignes sous le pli. Retour au premier état par
+« Nouvelle question ».
+
+`AssistantChamp` gagne une variante `accueil` (champ agrandi, bouton d'envoi rond) — **une taille,
+pas un comportement** : dupliquer le composant aurait fait diverger deux fois la même règle de
+clavier.
+
+#### Les aperçus viennent du catalogue, pas d'une liste en dur
+
+`GET /catalogue` (bon marché, aucun modèle sollicité) est désormais appelé au montage — l'action
+`fetchCatalogue` du store existait et **n'était appelée par personne**. Les tuiles n'affichent que
+les domaines qu'il déclare accessibles au rôle.
+
+Écart réel mesuré sur le jeu de démonstration : ADMIN 20 vues sur cinq domaines, SCOLARITE 14,
+**PEDAGOGIE 13 et aucune source financière**. Sans ce filtre, un responsable pédagogique se verrait
+proposer « quelles classes ont le plus d'impayés ? », que le garde SQL refuserait — un bouton qui
+ment.
+
+⚠️ **Deux vocabulaires se croisent, et les confondre donne des tuiles qui ne s'affichent jamais** :
+un **cadrage** nomme un écran (`structure-academique`, `scolarite`, `examens`, `finances`), un
+**domaine de catalogue** nomme un groupe de sources (`academique`, `evaluations`, `finances`,
+`pedagogie`, `concours`). Seul `finances` porte le même nom des deux côtés. `apercus.js` est indexé
+par domaine de catalogue ; `constants.js` par cadrage.
+
+**Les questions restent écrites à la main**, jamais engendrées depuis un nom de vue : une question
+fabriquée tomberait dans les pièges du dépôt. Deux tests les verrouillent — le remplissage n'est
+demandé que par classe, et le comptage des enseignants dit « distincts » (`vue_infos_enseignants`
+rend une ligne **par diplôme ET par contrat**, un COUNT nu y compte les diplômes).
+
+#### La carte des sources, conservée mais rendue utile
+
+Elle devient un panneau dépliable en pied d'écran qui **nomme** les vues, groupées par domaine, avec
+leur description. Le compteur seul ne disait ni ce qu'on peut demander ni surtout ce qu'on ne peut
+pas, ce qui rendait un refus inexplicable. Repliée par défaut : vingt vues avec leurs gloses
+occupent un écran entier. Les **colonnes ne sont pas affichées** — elles n'apprennent rien à qui
+pose ses questions en français, et étaler le schéma à chaque visite irait contre le masquage du SQL
+hors ADMIN. Repli sur `/sante` tant que le catalogue n'est pas arrivé, ou s'il échoue.
+
+**18 tests ajoutés** : filtrage par domaine dans les deux sens, ordre d'affichage (le serveur trie
+alphabétiquement — « concours » passerait avant « académique »), domaine inconnu ignoré plutôt
+qu'inventé, question posée **sans cadrage** (l'écran de plateforme n'est l'écran d'aucun domaine),
+bascule entre les deux états, sources repliées puis dépliées, tuiles désactivées quand l'assistant
+est hors service. Même réserve : **non vérifié en navigateur**.
+
+#### Le module passe à Bootstrap Icons
+
+Tout `mdi-*` du module — et des quatre onglets métier, qui **fournissent** les icônes de leurs
+amorces au panneau — est converti en `bi-*`. L'application charge les deux jeux (`mdi` pour la barre
+latérale et les écrans hérités, `bi` depuis `main.js`, déjà utilisé par l'espace de notes) : rien
+n'empêche donc de les mélanger, et le mélange ne se voit qu'à l'œil — graisse et taille optique
+diffèrent d'une glyphe à l'autre.
+
+Les 54 correspondances ont été choisies par intention, pas par ressemblance de nom, et **chaque
+cible a été vérifiée présente** dans `node_modules/bootstrap-icons/font/bootstrap-icons.css`
+(2 078 icônes) avant remplacement — un nom inventé rendrait un `<i>` vide, sans erreur ni
+avertissement.
+
+⚠️ **Une icône `bi` exige deux classes** : la base `bi` **et** le nom `bi-xxx`. `class="bi-search"`
+seul ne rend rien du tout, pas même un carré. `mdi` tolérait davantage l'oubli.
+
+`icones.test.js` verrouille la convention en balayant les fichiers du module : aucun `mdi`, aucune
+classe `bi-xxx` sans sa base, et tout nom déclaré en constante conforme à `/^bi-[a-z0-9-]+$/`.
+Éprouvé en réintroduisant volontairement un `mdi-school` : les deux assertions concernées échouent
+et nomment le fichier.
+
+**Reste en `mdi`, délibérément** : l'entrée « Espace de chat » de `src/components/partials/sidebar.vue`.
+La barre latérale est en `mdi` d'un bout à l'autre ; une seule entrée en `bi` y jurerait avec ses
+voisines. Elle basculera avec la barre, pas avant.
 
 ---
 

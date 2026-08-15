@@ -1,5 +1,6 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue';
+import { formatDateTime } from '@/shared/utils/date';
 import AssistantRequetes from './AssistantRequetes.vue';
 import { rendreMarkdown } from '../utils/markdown';
 
@@ -21,6 +22,17 @@ import { rendreMarkdown } from '../utils/markdown';
  * La question de l'utilisateur, elle, reste du texte : elle vient d'un champ de
  * saisie, personne n'y écrit du markdown, et l'interpréter ne ferait que
  * déformer ce qu'il a tapé.
+ *
+ * ## Les messages rejoués portent leur date
+ *
+ * L'espace de chat recharge des conversations passées (`message.archive`). Une
+ * réponse d'assistant est un **instantané** : l'effectif, le montant encaissé
+ * ou le taux de recouvrement qu'elle cite ont pu changer depuis. Affichée nue,
+ * elle se lirait comme un chiffre encore valable.
+ *
+ * D'où l'horodatage sous chaque bulle rejouée. C'est ce qui a permis de revenir
+ * sur le choix d'origine — « on ne rouvre pas une conversation » — sans en
+ * perdre la prudence.
  */
 const props = defineProps({
   /** @type {import('vue').PropType<Array<object>>} */
@@ -61,10 +73,18 @@ watch(
         <AssistantRequetes v-if="message.role === 'assistant'" :requetes="message.requetes || []" />
 
         <p
-          v-if="message.role === 'assistant' && message.dureeMs"
-          class="mb-0 mt-1 small text-muted"
+          v-if="message.role === 'assistant' && (message.dureeMs || message.archive)"
+          class="mb-0 mt-1 small assistant-meta"
+          :class="message.archive ? 'text-body-secondary' : 'text-muted'"
         >
-          {{ (message.dureeMs / 1000).toFixed(1) }} s
+          <template v-if="message.archive">
+            <i class="bi bi-clock-history me-1"></i>Chiffres arrêtés au
+            {{ formatDateTime(message.horodatage) }}
+          </template>
+          <template v-if="message.dureeMs">
+            <span v-if="message.archive" class="mx-1">·</span>
+            {{ (message.dureeMs / 1000).toFixed(1) }} s
+          </template>
         </p>
       </div>
     </div>
@@ -113,6 +133,12 @@ watch(
 .assistant-bulle--assistant {
   max-width: 100%;
   background: rgba(0, 0, 0, 0.05);
+}
+
+/* L'horodatage est un repère, pas une information à lire d'abord : il doit se
+   voir sans concurrencer la réponse qu'il date. */
+.assistant-meta {
+  font-size: 0.72rem;
 }
 
 /* La question tapée par l'utilisateur porte ses propres retours à la ligne. */

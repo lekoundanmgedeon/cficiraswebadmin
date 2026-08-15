@@ -47,7 +47,7 @@ const ouvert = ref(false);
       class="btn btn-link btn-sm p-0 text-muted text-decoration-none"
       @click="ouvert = !ouvert"
     >
-      <i class="mdi" :class="ouvert ? 'mdi-chevron-down' : 'mdi-chevron-right'"></i>
+      <i class="bi" :class="ouvert ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
       {{ requetes.length }} requête{{ requetes.length > 1 ? 's' : '' }} exécutée{{
         requetes.length > 1 ? 's' : ''
       }}

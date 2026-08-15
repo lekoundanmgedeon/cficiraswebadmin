@@ -6,10 +6,27 @@ import { ref } from 'vue';
  *
  * `Entrée` envoie, `Maj+Entrée` va à la ligne : c'est la convention de tous les
  * outils de conversation, et l'inverse surprendrait.
+ *
+ * ## Deux tailles, un seul composant
+ *
+ * L'écran de plateforme ouvre sur une barre d'appel : le champ y est l'élément
+ * principal de la page, pas un pied de conversation. Il change de taille, pas
+ * de comportement — dupliquer le composant aurait fait diverger deux fois la
+ * même règle de clavier.
  */
 const props = defineProps({
   enCours: { type: Boolean, default: false },
   desactive: { type: Boolean, default: false },
+
+  /**
+   * `normal` : pied de conversation. `accueil` : la barre d'appel de l'écran
+   * de plateforme — champ agrandi, bouton d'envoi rond.
+   */
+  variante: {
+    type: String,
+    default: 'normal',
+    validator: (valeur) => ['normal', 'accueil'].includes(valeur),
+  },
 
   /**
    * Les amorces proposées au-dessus du champ — un champ vide n'indique pas ce
@@ -69,6 +86,7 @@ function proposer(suggestion) {
       <textarea
         v-model="texte"
         class="form-control"
+        :class="{ 'champ-accueil': variante === 'accueil' }"
         rows="2"
         :disabled="enCours || desactive"
         :placeholder="desactive ? 'Assistant indisponible' : placeholder"
@@ -78,17 +96,38 @@ function proposer(suggestion) {
       <button
         type="button"
         class="btn btn-primary"
+        :class="{ 'champ-envoi-accueil': variante === 'accueil' }"
         :disabled="!texte.trim() || enCours || desactive"
         @click="envoyer"
       >
         <span v-if="enCours" class="spinner-border spinner-border-sm" role="status"></span>
-        <i v-else class="mdi mdi-send"></i>
+        <i v-else class="bi bi-send"></i>
       </button>
     </div>
 
-    <p class="mt-1 mb-0 small text-muted">
+    <p class="mt-1 mb-0 small text-muted" :class="{ 'text-center': variante === 'accueil' }">
       Entrée pour envoyer, Maj+Entrée pour aller à la ligne. Les réponses s'appuient sur les données
       auxquelles votre rôle donne accès.
     </p>
   </div>
 </template>
+
+<style scoped>
+/* La barre d'appel est l'élément principal de l'écran de plateforme : elle doit
+   se voir depuis l'autre bout de la page, sans devenir une zone de rédaction —
+   on y pose une question, on n'y écrit pas un rapport. */
+.champ-accueil {
+  font-size: 1.02rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+}
+
+/* Un carré de la hauteur du champ déséquilibrerait la barre ; le rond ramène
+   l'œil sur l'action. */
+.champ-envoi-accueil {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+</style>

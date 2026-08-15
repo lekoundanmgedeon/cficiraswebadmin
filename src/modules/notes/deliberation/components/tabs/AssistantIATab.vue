@@ -21,23 +21,23 @@ import AssistantPanneau from '@/modules/assistant/components/AssistantPanneau.vu
 
 const AMORCES = [
   {
-    icone: 'mdi-trophy-outline',
+    icone: 'bi-trophy',
     libelle: 'Taux de réussite par classe',
     question:
       'Quel est le taux de réussite par classe ce semestre ? Donne le nombre de bulletins et le nombre de validés.',
   },
   {
-    icone: 'mdi-chart-bell-curve',
+    icone: 'bi-bar-chart-line',
     libelle: 'Répartition des mentions',
     question: 'Comment se répartissent les mentions sur les bulletins de cette année ?',
   },
   {
-    icone: 'mdi-alert-outline',
+    icone: 'bi-exclamation-triangle',
     libelle: 'Étudiants en difficulté',
     question: 'Quels étudiants ont une moyenne générale inférieure à 10 ? Donne classe et moyenne.',
   },
   {
-    icone: 'mdi-account-multiple-outline',
+    icone: 'bi-people',
     libelle: 'Effectifs et statuts',
     question:
       'Combien d’étudiants par classe cette année, et combien d’inscriptions par statut (ACTIVE, VALIDEE, EN_ATTENTE…) ?',

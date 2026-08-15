@@ -32,7 +32,9 @@ const monter = (cadrage = 'examens') =>
       cadrage,
       titre: 'Assistant',
       intro: 'Une intro.',
-      amorces: [{ icone: 'mdi-podium', libelle: 'Comparer', question: 'Compare les classes.' }],
+      amorces: [
+        { icone: 'bi-bar-chart-steps', libelle: 'Comparer', question: 'Compare les classes.' },
+      ],
     },
   });
 

@@ -1,7 +1,9 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useAuthStore } from '@/core/auth/authStore';
+import { useNotificationStore } from '@/shared/stores/notificationStore';
 import { useAssistantStore } from '../store';
+import { ESPACE_CHAT_BASE, cheminConversation, ouvrirEspaceChat } from '../constants';
 import AssistantFil from './AssistantFil.vue';
 import AssistantChamp from './AssistantChamp.vue';
 
@@ -60,6 +62,7 @@ const props = defineProps({
 
 const store = useAssistantStore(props.cadrage);
 const auth = useAuthStore();
+const notifications = useNotificationStore();
 
 onMounted(() => {
   // Seul appel bon marché du module : il dit si l'assistant est utilisable
@@ -79,6 +82,28 @@ function demander(question) {
   if (store.enCours || store.utilisable === false) return;
   store.demander(question);
 }
+
+/**
+ * Poursuit la conversation dans l'espace de chat.
+ *
+ * Cet onglet est fait pour la question rapide : le fil y vit le temps de
+ * l'écran. Quand la discussion s'allonge — ou qu'on veut la garder —, l'espace
+ * la rouvre par son identifiant, sans qu'il faille reposer quoi que ce soit.
+ *
+ * Sur un fil vide, on y arrive avec le même cadrage : l'espace n'est l'écran
+ * d'aucun domaine, autant lui transmettre celui d'où l'on part.
+ */
+function poursuivreDansEspace() {
+  const chemin = store.conversationId
+    ? cheminConversation(store.conversationId)
+    : `${ESPACE_CHAT_BASE}?cadrage=${props.cadrage}`;
+
+  if (!ouvrirEspaceChat(chemin)) {
+    notifications.notifyWarning(
+      "L'onglet a été bloqué par le navigateur. Autorisez les fenêtres surgissantes pour ce site."
+    );
+  }
+}
 </script>
 
 <template>
@@ -87,22 +112,34 @@ function demander(question) {
       <div>
         <h5 class="fw-bold mb-1">{{ titre }}</h5>
         <p class="text-muted small mb-0">
-          <i class="mdi mdi-robot-outline text-primary me-1"></i>{{ intro }}
+          <i class="bi bi-robot text-primary me-1"></i>{{ intro }}
         </p>
       </div>
 
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm mt-2 mt-md-0"
-        :disabled="store.estVide || store.enCours"
-        @click="store.nouvelleConversation"
-      >
-        <i class="mdi mdi-plus me-1"></i> Nouvelle conversation
-      </button>
+      <div class="d-flex gap-2 mt-2 mt-md-0">
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          :disabled="store.estVide || store.enCours"
+          @click="store.nouvelleConversation"
+        >
+          <i class="bi bi-plus-lg me-1"></i> Nouvelle conversation
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm"
+          :disabled="store.enCours"
+          @click="poursuivreDansEspace"
+        >
+          <i class="bi bi-box-arrow-up-right me-1"></i>
+          {{ store.estVide ? 'Espace de chat' : "Poursuivre dans l'espace" }}
+        </button>
+      </div>
     </div>
 
     <div v-if="store.utilisable === false" class="alert alert-warning py-2 small" role="alert">
-      <i class="mdi mdi-alert-outline me-1"></i>
+      <i class="bi bi-exclamation-triangle me-1"></i>
       <strong>Assistant indisponible.</strong> {{ store.raisonIndisponible }}
     </div>
 
@@ -125,7 +162,7 @@ function demander(question) {
     <div v-if="amorces.length" class="card border-0 shadow-sm mb-3">
       <div class="card-body p-3">
         <h6 class="text-uppercase text-secondary fw-bold small mb-2">
-          <i class="mdi mdi-lightning-bolt text-warning me-1"></i> Questions fréquentes
+          <i class="bi bi-lightning-charge text-warning me-1"></i> Questions fréquentes
         </h6>
 
         <div class="d-flex flex-wrap gap-2">
@@ -137,14 +174,14 @@ function demander(question) {
             :disabled="store.enCours || store.utilisable === false"
             @click="demander(amorce.question)"
           >
-            <i class="mdi me-2 text-primary" :class="amorce.icone"></i>{{ amorce.libelle }}
+            <i class="bi me-2 text-primary" :class="amorce.icone"></i>{{ amorce.libelle }}
           </button>
         </div>
 
         <!-- Sur une seule ligne : le périmètre se lit une fois, il n'a pas à
              occuper un encadré au-dessus de chaque conversation. -->
         <p v-if="perimetre" class="assistant-perimetre text-muted mb-0 mt-2">
-          <i class="mdi mdi-shield-check text-primary me-1"></i>{{ perimetre }}
+          <i class="bi bi-shield-check text-primary me-1"></i>{{ perimetre }}
         </p>
       </div>
     </div>
@@ -152,7 +189,7 @@ function demander(question) {
     <div class="card border-0 shadow-sm">
       <div class="card-body d-flex flex-column p-3">
         <div v-if="store.estVide" class="text-center text-muted py-5">
-          <i class="mdi mdi-robot-outline" style="font-size: 2.2rem"></i>
+          <i class="bi bi-robot" style="font-size: 2.2rem"></i>
           <p class="mt-2 mb-0 small">{{ intro }}</p>
           <p class="mb-0 small text-body-secondary">
             Les réponses s'appuient sur les données auxquelles votre rôle donne accès.

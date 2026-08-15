@@ -1,6 +1,32 @@
 /**
- * Utilitaires de texte pour la mise en surbrillance des résultats de recherche.
+ * Utilitaires de texte : surbrillance des résultats de recherche, troncature.
  */
+
+/**
+ * Tronque à `max` caractères, en ajoutant une ellipse.
+ *
+ * La troncature est ailleurs faite en CSS (`text-truncate`), et c'est le bon
+ * choix tant que le texte reste dans le document : le navigateur coupe alors à
+ * la largeur réelle. Cette fonction sert les cas où le CSS ne peut rien —
+ * un `title`, un nom de fichier, une ligne de Markdown exporté.
+ *
+ * La coupe se fait sur le dernier espace avant la limite quand il y en a un
+ * assez tard : couper « recouvre » en « recouv… » se lit plus mal que perdre le
+ * mot entier.
+ *
+ * @param {string} texte
+ * @param {number} [max]
+ * @returns {string}
+ */
+export function tronquer(texte, max = 80) {
+  const valeur = String(texte ?? '').trim();
+  if (valeur.length <= max) return valeur;
+
+  const coupe = valeur.slice(0, max);
+  const dernierEspace = coupe.lastIndexOf(' ');
+
+  return `${dernierEspace > max * 0.6 ? coupe.slice(0, dernierEspace) : coupe.trimEnd()}…`;
+}
 
 /**
  * Échappe les caractères spéciaux HTML.

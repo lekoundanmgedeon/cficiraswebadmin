@@ -1,20 +1,25 @@
 import { defineStore } from 'pinia';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
-import { getCatalogue, getConversations, getSante, poserQuestion } from './api';
+import { getCatalogue, getSante, poserQuestion } from './api';
 
 /**
- * Store de l'assistant IA — **une instance par écran**.
+ * Store de l'assistant **embarqué** — une instance par écran.
  *
- * ## Le fil est local, pas rechargé
+ * ## Le fil est local, pas rechargé — ici
  *
- * Le backend journalise chaque échange, mais n'expose pas le détail d'un fil :
- * `GET /conversations` ne rend que des en-têtes (titre, nombre d'échanges,
- * dernière activité). Le fil affiché est donc celui de la session courante.
+ * Le fil affiché est celui de la session courante : ce store ne rouvre aucune
+ * conversation passée. Ce n'est plus une limite du backend — `GET
+ * /conversations/:id` rend désormais un fil entier —, c'est le partage des
+ * rôles entre les deux assistants :
  *
- * C'est un choix assumé et non un oubli : recharger une conversation d'hier
- * afficherait des chiffres périmés — un effectif, un montant encaissé, un taux
- * de recouvrement changent. Mieux vaut reposer la question que faire croire à
- * une réponse encore valable.
+ *  - **embarqué** (cet écran-ci et les quatre onglets métier) : la question
+ *    rapide sur la vue qu'on a sous les yeux, sans mémoire ;
+ *  - **espace de chat** (`espace/store.js`) : la conversation suivie, la
+ *    relecture de tout l'historique, la sauvegarde et l'audit.
+ *
+ * La prudence d'origine y a été conservée sans son inconvénient : l'espace
+ * recharge les fils, mais chaque message rejoué porte sa date — un effectif, un
+ * montant encaissé, un taux de recouvrement changent, et l'écran le dit.
  *
  * ## Pourquoi un store par cadrage
  *
@@ -65,9 +70,6 @@ function definirStore(cle, cadrage) {
 
       /** Fil serveur en cours. `null` = la prochaine question en ouvrira un. */
       conversationId: null,
-
-      /** @type {Array<{conversation_id: string, titre: string, nb_echanges: number}>} */
-      conversations: [],
 
       /** @type {{disponible: boolean, modele: object, sources: object}|null} */
       sante: null,
@@ -147,15 +149,6 @@ function definirStore(cle, cadrage) {
         });
       },
 
-      async fetchConversations() {
-        return this.run(() => getConversations(), {
-          silencieux: true,
-          onSuccess: (r) => {
-            this.conversations = r.data ?? [];
-          },
-        });
-      },
-
       /**
        * Pose une question et l'ajoute au fil.
        *
@@ -201,15 +194,18 @@ function definirStore(cle, cadrage) {
             horodatage: new Date().toISOString(),
           });
 
-          // La liste latérale doit refléter le fil qui vient d'être ouvert.
-          await this.fetchConversations();
           return d;
         } finally {
           this.enCours = false;
         }
       },
 
-      /** Ouvre un fil neuf. Le précédent reste consultable côté serveur. */
+      /**
+       * Ouvre un fil neuf.
+       *
+       * Le précédent n'est pas perdu : il est en base, et l'espace de chat le
+       * rouvrira — c'est même le seul endroit qui sache le faire.
+       */
       nouvelleConversation() {
         this.messages = [];
         this.conversationId = null;

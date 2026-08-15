@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml, escapeRegExp, highlight } from './text';
+import { escapeHtml, escapeRegExp, highlight, tronquer } from './text';
 
 describe('escapeHtml', () => {
   it('neutralise les balises', () => {
@@ -47,5 +47,29 @@ describe('highlight', () => {
   it('ne plante pas sur une recherche contenant des métacaractères', () => {
     expect(() => highlight('Semestre (1)', '(')).not.toThrow();
     expect(() => highlight('Semestre', '*')).not.toThrow();
+  });
+});
+
+describe('tronquer', () => {
+  it('laisse intact ce qui tient dans la limite', () => {
+    expect(tronquer('Combien d’étudiants ?', 80)).toBe('Combien d’étudiants ?');
+  });
+
+  it('coupe sur le dernier espace plutôt qu’au milieu d’un mot', () => {
+    // « recouv… » se lit plus mal que la perte du mot entier.
+    expect(tronquer('Quel est le reste à recouvrer par filière ?', 26)).toBe(
+      'Quel est le reste à…'
+    );
+  });
+
+  it('coupe net quand le dernier espace est trop tôt', () => {
+    // Sans ce garde-fou, une chaîne sans espace tardif se réduirait à deux
+    // lettres suivies d'une ellipse.
+    expect(tronquer('Récapitulatif budgétaire annuel consolidé', 12)).toBe('Récapitulati…');
+  });
+
+  it('accepte une entrée absente', () => {
+    expect(tronquer(null)).toBe('');
+    expect(tronquer(undefined)).toBe('');
   });
 });

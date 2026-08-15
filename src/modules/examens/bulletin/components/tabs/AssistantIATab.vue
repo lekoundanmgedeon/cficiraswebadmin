@@ -17,22 +17,22 @@ import AssistantPanneau from '@/modules/assistant/components/AssistantPanneau.vu
 
 const AMORCES = [
   {
-    icone: 'mdi-podium',
+    icone: 'bi-bar-chart-steps',
     libelle: 'Comparer les classes',
     question: 'Compare les classes sur leur moyenne générale et leur taux de réussite ce semestre.',
   },
   {
-    icone: 'mdi-school-outline',
+    icone: 'bi-mortarboard',
     libelle: 'Réussite par filière',
     question: 'Quel est le taux de réussite par filière ? Donne le nombre de bulletins par ligne.',
   },
   {
-    icone: 'mdi-medal-outline',
+    icone: 'bi-award',
     libelle: 'Mentions décernées',
     question: 'Combien de mentions de chaque niveau ont été décernées, et dans quelles classes ?',
   },
   {
-    icone: 'mdi-book-alert-outline',
+    icone: 'bi-journal-x',
     libelle: 'Modules les plus échoués',
     question: 'Sur quels modules les moyennes sont-elles les plus basses ?',
   },

@@ -25,23 +25,23 @@ import AssistantPanneau from '@/modules/assistant/components/AssistantPanneau.vu
 
 const AMORCES = [
   {
-    icone: 'mdi-account-group',
+    icone: 'bi-people',
     libelle: 'Effectifs par filière',
     question: "Combien d'étudiants par filière cette année ?",
   },
   {
-    icone: 'mdi-gauge',
+    icone: 'bi-speedometer2',
     libelle: 'Classes les plus remplies',
     question:
       'Quelles sont les 10 classes au plus fort taux de remplissage ? Donne effectif, capacité et taux.',
   },
   {
-    icone: 'mdi-sitemap',
+    icone: 'bi-diagram-3',
     libelle: 'Répartition par cycle',
     question: 'Combien de filières et de classes par cycle, et quel effectif dans chacun ?',
   },
   {
-    icone: 'mdi-book-open-variant',
+    icone: 'bi-book',
     libelle: 'Modules par classe',
     question: 'Quelles classes ont le plus de modules, et pour combien de crédits au total ?',
   },

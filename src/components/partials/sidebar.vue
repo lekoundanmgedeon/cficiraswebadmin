@@ -589,6 +589,29 @@
         </router-link>
       </li>
 
+      <!--
+        Espace de chat — un `a target="_blank"`, et non un `router-link`.
+
+        L'espace s'ouvre hors du layout applicatif, dans son propre onglet : une
+        conversation veut toute la hauteur de l'écran, que cette barre et
+        l'en-tête lui prendraient. Y naviguer depuis ici remplacerait
+        l'application par lui dans le même onglet — exactement ce qu'on ne veut
+        pas. Il partage en revanche la session : l'onglet s'ouvre connecté.
+      -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          href="/espace-chat"
+          target="_blank"
+          rel="noopener"
+          :title="repliee ? 'Espace de chat' : ''"
+        >
+          <i class="mdi mdi-forum-outline menu-icon text-primary"></i>
+          <span class="menu-title">Espace de chat</span>
+          <i class="mdi mdi-open-in-new ms-2 small text-muted"></i>
+        </a>
+      </li>
+
       <!-- Paramètres -->
       <li class="nav-item">
         <router-link
