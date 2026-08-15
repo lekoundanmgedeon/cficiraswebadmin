@@ -99,14 +99,6 @@ const { repliee, petit } = useSidebarRepli();
 
 /* ─── Écrans moyens et petits ──────────────────────────────────────────── */
 
-/* Le logo complet ne tient plus dans un bandeau de 70 px ; le gabarit masque
-   alors les deux, laissant un carré vide à côté du titre. On garde le petit. */
-@media (min-width: 992px) {
-  .sidebar-icon-only .navbar .navbar-brand-wrapper .navbar-brand-inner-wrapper .brand-logo-mini {
-    display: inline-block;
-  }
-}
-
 /* Chaque pixel de marge pris ici est un pixel de moins pour un tableau. Sur un
    portable, les 2,1 rem verticales du gabarit coûtent une ligne de tableau. */
 .ecran-petit .content-wrapper {

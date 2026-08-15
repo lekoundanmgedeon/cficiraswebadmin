@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { _reinitialiserRepli } from '@/shared/composables/useSidebarRepli';
+import { _reinitialiserRepli, basculerRepli } from '@/shared/composables/useSidebarRepli';
 import Sidebar from './sidebar.vue';
 
 vi.mock('vue-router', () => ({
@@ -83,17 +83,22 @@ describe('Sidebar', () => {
     expect(item.classes()).not.toContain('hover-open');
   });
 
-  it('replie et déploie sur commande, quelle que soit la largeur', async () => {
+  it('se replie aussi sur commande, et pas seulement sur la largeur', async () => {
+    // Le basculeur vit dans le bandeau de marque (`header.vue`) ; ce qui se
+    // vérifie ici, c'est que la barre en tient compte comme d'une mesure.
     window.innerWidth = 1920;
     const wrapper = monter();
+    expect(wrapper.find('a[title="Tableau de Bord"]').exists()).toBe(false);
 
-    const bascule = wrapper.find('.sidebar-bascule');
-    expect(bascule.attributes('title')).toBe('Replier le menu');
+    basculerRepli();
+    await wrapper.vm.$nextTick();
 
-    await bascule.trigger('click');
-
-    expect(wrapper.find('.sidebar-bascule').attributes('title')).toBe('Déployer le menu');
-    // Le repli commandé vaut le repli mesuré : les infobulles reviennent.
+    // Repli commandé, mêmes conséquences qu'un repli mesuré : les infobulles
+    // reviennent, et les groupes s'ouvrent en surimpression.
     expect(wrapper.find('a[title="Tableau de Bord"]').exists()).toBe(true);
+
+    const item = groupe(wrapper);
+    await item.trigger('click');
+    expect(item.classes()).toContain('hover-open');
   });
 });

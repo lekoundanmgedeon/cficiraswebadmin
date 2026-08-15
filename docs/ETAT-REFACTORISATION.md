@@ -1528,9 +1528,10 @@ fonctionnait correctement :
 - celui de droite basculait un état local que **rien ne rétablissait au redimensionnement** :
   replié sur un portable puis rouvert sur un grand écran, on gardait une barre en icônes.
 
-Les deux sont supprimés. `shared/composables/useSidebarRepli.js` fixe désormais un **défaut**
-d'après la largeur de la fenêtre, et un basculeur posé **sur la barre latérale** — sur ce qu'il
-commande — permet de le contredire :
+Il n'en reste qu'un : un chevron, **à hauteur du logo**, à la place exacte du bouton mort du
+gabarit. C'est là qu'il revient — le bandeau de marque et la barre latérale forment une seule
+colonne, qui se rétrécit d'un bloc de 257 px à 70 px. `shared/composables/useSidebarRepli.js` fixe
+le **défaut** d'après la largeur de la fenêtre, le chevron le contredit :
 
 | Largeur (pixels CSS) | Mode    | Barre latérale par défaut | Contenu           |
 | -------------------- | ------- | ------------------------- | ----------------- |
@@ -1572,10 +1573,11 @@ commande — permet de le contredire :
 visible plutôt que subi : sous 1024 px la page prend une largeur minimale et défile
 horizontalement, au lieu de se disloquer.
 
-**17 tests** : les trois seuils, le suivi du redimensionnement **dans les deux sens** (le défaut de
+**20 tests** : les trois seuils, le suivi du redimensionnement **dans les deux sens** (le défaut de
 l'ancien bouton), le retrait de l'écouteur quand plus aucun composant n'observe, le choix explicite
 qui prime sur la largeur et se conserve, le retour au mode automatique, l'ouverture des groupes au
-survol **et** au clic uniquement quand la barre est repliée, et les infobulles. ⚠️ Même réserve
+survol **et** au clic uniquement quand la barre est repliée, les infobulles, et le chevron unique du
+bandeau de marque — sens du mouvement, `aria-expanded`, aller-retour. ⚠️ Même réserve
 qu'au §1.22 : **rien n'a pu être vérifié en navigateur**, faute de pouvoir en démarrer un ici — ce
 qui a précisément laissé passer le défaut des pixels CSS.
 

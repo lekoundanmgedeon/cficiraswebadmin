@@ -137,6 +137,22 @@ const estRepliee = computed(() =>
   choix.value === 'auto' ? mode.value !== 'large' : choix.value === 'repliee'
 );
 
+/**
+ * Replie ou déploie, et retient la décision.
+ *
+ * Définie au niveau du module, et non dans le composable : l'état est partagé,
+ * la commande doit l'être aussi — deux composants qui basculeraient chacun leur
+ * propre fonction se contrediraient au premier clic.
+ */
+export function basculerRepli() {
+  ecrireChoix(estRepliee.value ? 'deployee' : 'repliee');
+}
+
+/** Rend la main à la largeur de la fenêtre. */
+export function suivreEcran() {
+  ecrireChoix('auto');
+}
+
 export function useSidebarRepli() {
   // Mesure **avant le premier rendu**, et non dans `onMounted` : un composant
   // monté après un redimensionnement — changement d'écran, fenêtre restaurée —
@@ -167,15 +183,8 @@ export function useSidebarRepli() {
     /** L'utilisateur a-t-il imposé un état, ou laisse-t-il l'écran décider ? */
     choix: readonly(choix),
 
-    /** Replie ou déploie, et retient la décision. */
-    basculer() {
-      ecrireChoix(estRepliee.value ? 'deployee' : 'repliee');
-    },
-
-    /** Rend la main à la largeur de la fenêtre. */
-    suivreEcran() {
-      ecrireChoix('auto');
-    },
+    basculer: basculerRepli,
+    suivreEcran,
   };
 }
 

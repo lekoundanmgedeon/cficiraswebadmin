@@ -10,6 +10,25 @@
         <a class="navbar-brand brand-logo-mini" href="/home"
           ><img src="/img/logo1.ico" alt="logo"
         /></a>
+
+        <!--
+          Le basculeur de la barre latérale, à hauteur du logo — là où le
+          gabarit avait placé un bouton qui n'a jamais rien commandé.
+
+          Il est ici, et non sur la barre latérale, parce que le bandeau de
+          marque et la barre ne font qu'une colonne : ils se rétrécissent
+          ensemble, de 257 px à 70 px.
+        -->
+        <button
+          type="button"
+          class="navbar-bascule"
+          :title="repliee ? 'Déployer le menu' : 'Replier le menu'"
+          :aria-label="repliee ? 'Déployer le menu' : 'Replier le menu'"
+          :aria-expanded="!repliee"
+          @click="basculer"
+        >
+          <i class="mdi" :class="repliee ? 'mdi-chevron-right' : 'mdi-chevron-left'"></i>
+        </button>
       </div>
     </div>
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -98,32 +117,74 @@
 import { useAuthStore } from '@/core/auth/authStore';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
+import { useSidebarRepli } from '@/shared/composables/useSidebarRepli';
 
 /**
  * La barre du haut.
  *
- * ## Les deux boutons « menu » ont été retirés
+ * ## Un seul basculeur, à hauteur du logo
  *
- * Elle en portait deux, à ses deux extrémités :
+ * Elle en portait deux, à ses deux extrémités, et aucun ne fonctionnait :
  *
  *  - celui du bandeau de marque (`data-toggle="minimize"`), hérité du gabarit
  *    HTML d'origine, **sans aucun gestionnaire** : il ne faisait rien. Le
  *    script jQuery qui l'aurait animé (`public/js/template.js`) bascule la
  *    classe sur `body`, là où l'application la pose sur `.container-scroller` ;
- *  - celui de droite, qui émettait `toggle-sidebar` vers la mise en page.
+ *  - celui de droite, qui émettait `toggle-sidebar` vers une mise en page dont
+ *    l'état ne se rétablissait jamais au redimensionnement : replié sur un
+ *    portable puis rouvert sur un grand écran, on gardait une barre en icônes.
  *
- * Le repli de la barre latérale ne se demande plus : il suit la largeur de la
- * fenêtre (`shared/composables/useSidebarRepli.js`). Un état que
- * l'application sait déduire n'a pas à occuper un bouton — d'autant que
- * l'ancien ne se rétablissait jamais au redimensionnement.
+ * Il n'en reste qu'un, à la place du premier : le bandeau de marque et la barre
+ * latérale forment une seule colonne, qui se rétrécit d'un bloc de 257 px à
+ * 70 px. Le chevron indique le sens du mouvement, et son choix se conserve —
+ * la largeur de la fenêtre ne fixe plus qu'un défaut
+ * (`shared/composables/useSidebarRepli.js`).
  */
 
 const authStore = useAuthStore();
 const { user, isAuthenticated } = storeToRefs(authStore);
 const router = useRouter();
 
+const { repliee, basculer } = useSidebarRepli();
+
 const handleLogout = async () => {
   await authStore.logoutUser();
   router.push('/auth/login');
 };
 </script>
+
+<style scoped>
+/* Le chevron reprend la place — et la discrétion — du bouton du gabarit :
+   pas de fond, pas de bordure, il ne se remarque qu'au survol. */
+.navbar-bascule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #9b9b9b;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.navbar-bascule:hover {
+  color: #4d83ff;
+  background-color: #f0f8ff;
+}
+
+.navbar-bascule .mdi {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+/* Replié, le bandeau ne fait plus que 70 px : le gabarit y masque les deux
+   logos, et le chevron occupe seul la place — centré, c'est lui qui rouvre. */
+.sidebar-icon-only .navbar-bascule {
+  margin: 0 auto;
+}
+</style>

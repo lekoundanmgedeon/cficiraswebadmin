@@ -3,27 +3,9 @@
        sortie d'écran prévue pour les téléphones — que plus aucun bouton ne
        ramenait une fois le basculeur de la barre du haut supprimé. -->
   <nav id="sidebar" class="sidebar">
-    <!--
-      Le basculeur vit ici, sur ce qu'il commande, et non dans la barre du haut
-      où deux boutons se disputaient autrefois ce rôle sans qu'aucun ne le
-      remplisse.
-
-      Il **prime sur la largeur de la fenêtre** : celle-ci ne fixe qu'un défaut,
-      et elle se trompe dès que le système applique une mise à l'échelle — un
-      écran 1920 réglé à 150 % ne présente que 1280 pixels CSS.
-    -->
-    <button
-      type="button"
-      class="sidebar-bascule"
-      :title="repliee ? 'Déployer le menu' : 'Replier le menu'"
-      :aria-label="repliee ? 'Déployer le menu' : 'Replier le menu'"
-      :aria-expanded="!repliee"
-      @click="basculer"
-    >
-      <i class="mdi" :class="repliee ? 'mdi-chevron-right' : 'mdi-chevron-left'"></i>
-      <span v-if="!repliee" class="sidebar-bascule-libelle">Replier</span>
-    </button>
-
+    <!-- Le basculeur n'est pas ici mais dans le bandeau de marque, à hauteur du
+         logo (`partials/header.vue`) : il commande la largeur de la colonne
+         entière, bandeau compris. -->
     <ul class="nav">
       <li class="nav-item">
         <router-link
@@ -648,7 +630,7 @@ import { useSidebarRepli } from '@/shared/composables/useSidebarRepli';
  */
 const route = useRoute();
 
-const { repliee, basculer } = useSidebarRepli();
+const { repliee } = useSidebarRepli();
 
 /** Le groupe dont le sous-menu est ouvert en surimpression. */
 const survole = ref(null);
@@ -722,42 +704,6 @@ const isParentActive = (childRoutes) => {
 </script>
 
 <style scoped>
-/* Le basculeur : discret, mais toujours au même endroit — en haut de ce qu'il
-   commande. Replié, il ne reste que le chevron, centré comme les icônes. */
-.sidebar-bascule {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.35rem;
-  width: 100%;
-  padding: 0.45rem 1.1rem;
-  border: 0;
-  border-bottom: 1px solid #e3e3e3;
-  background: transparent;
-  color: #9b9b9b;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: color 0.2s ease;
-}
-
-.sidebar-bascule:hover {
-  color: #4d83ff;
-  background-color: #f0f8ff;
-}
-
-.sidebar-bascule .mdi {
-  font-size: 1.05rem;
-  line-height: 1;
-}
-
-/* Réduite à 70 px, la barre ne laisse plus de place qu'au chevron. */
-.sidebar-icon-only .sidebar-bascule {
-  justify-content: center;
-  padding-left: 0;
-  padding-right: 0;
-}
-
 /*
   ─── Les groupes, une fois la barre repliée ──────────────────────────────
 
