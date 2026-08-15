@@ -1517,6 +1517,70 @@ montage (jsdom) verrouillent le balisage produit, pas sa mise en page.
 
 ---
 
+### 1.23 La barre latérale — repli automatique, et fin du bouton « menu »
+
+Le repli dépendait d'un bouton de la barre du haut. Elle en portait **deux**, et aucun ne
+fonctionnait correctement :
+
+- celui du bandeau de marque (`data-toggle="minimize"`, hérité du gabarit HTML) **n'avait aucun
+  gestionnaire** — le script jQuery qui l'aurait animé (`public/js/template.js`) bascule la classe
+  sur `body`, là où l'application la pose sur `.container-scroller` ;
+- celui de droite basculait un état local que **rien ne rétablissait au redimensionnement** :
+  replié sur un portable puis rouvert sur un grand écran, on gardait une barre en icônes.
+
+Les deux sont supprimés. `shared/composables/useSidebarRepli.js` fixe désormais un **défaut**
+d'après la largeur de la fenêtre, et un basculeur posé **sur la barre latérale** — sur ce qu'il
+commande — permet de le contredire :
+
+| Largeur (pixels CSS) | Mode    | Barre latérale par défaut | Contenu           |
+| -------------------- | ------- | ------------------------- | ----------------- |
+| ≥ 1280 px            | `large` | déployée (257 px)         | marges normales   |
+| 1100 – 1279 px       | `moyen` | icônes (70 px)            | marges normales   |
+| < 1100 px            | `petit` | icônes (70 px)            | marges resserrées |
+
+> #### `window.innerWidth` compte des pixels CSS, pas des pixels d'écran
+>
+> Le seuil valait d'abord 1440 px, choisi sur la place restant au contenu. Il repliait la barre sur
+> un **1920×1080** : Windows y recommande une mise à l'échelle de 150 %, qui ne présente que
+> **1280 pixels CSS**. Signalé à l'usage — « pourtant ma résolution est de 1920×1080 ». Deux
+> conséquences, tirées ensemble : le seuil descend à 1280, et surtout **la largeur ne décide plus
+> seule**. Le choix de l'utilisateur prime et se conserve (`localStorage`, clé
+> `cfi.sidebar.repli`) : c'est un réglage d'espace de travail, pas un état de navigation.
+
+> #### Trois défauts que ce basculement a mis au jour
+>
+> - **Le mode icônes rendait sept rubriques sur dix inatteignables.** Leur entrée de premier niveau
+>   n'est pas une route, seulement l'en-tête d'un groupe, et le gabarit masque les sous-menus
+>   repliés. Ses règles `.hover-open` prévoyaient une ouverture en surimpression, mais la classe
+>   était posée par `public/js/hoverable-collapse.js`, conditionnée à `body.sidebar-icon-only` :
+>   **elle ne s'est jamais déclenchée**. C'est `sidebar.vue` qui la pose maintenant — au survol
+>   **et au clic** : s'en remettre au seul survol suppose une souris, et un clic sans effet visible
+>   est ce qui donne l'impression que le menu ne répond plus. La surimpression elle-même est
+>   décrite dans `sidebar.vue` plutôt que laissée aux règles du gabarit, qui reposent sur trop
+>   d'hypothèses (`@media`, `overflow`, `position`) pour qu'un affichage vital en dépende. Les
+>   entrées sans sous-menu reçoivent une infobulle.
+> - **`.sidebar-icon-only .main-panel` était écrit dans un `<style scoped>`** de `sidebar.vue` :
+>   Vue n'ajoute son attribut qu'au dernier sélecteur, et `.main-panel` appartient à `DefaultLayout`
+>   — la règle ne visait rien. La barre se réduisait à 70 px, le panneau restait calculé sur 257, et
+>   187 px de blanc s'ouvraient entre les deux. Ce bloc dupliquait par ailleurs, en moins complet,
+>   ce que la feuille du gabarit décrit déjà : il est supprimé.
+> - **L'ouverture « hors-canevas » pour téléphone** (`.sidebar-offcanvas.active`) n'avait plus de
+>   déclencheur une fois le bouton retiré : la barre aurait disparu sous 992 px sans moyen de la
+>   ramener. Elle est neutralisée.
+
+**Le format téléphone et la tablette de format courant ne sont pas desservis**, et c'est désormais
+visible plutôt que subi : sous 1024 px la page prend une largeur minimale et défile
+horizontalement, au lieu de se disloquer.
+
+**17 tests** : les trois seuils, le suivi du redimensionnement **dans les deux sens** (le défaut de
+l'ancien bouton), le retrait de l'écouteur quand plus aucun composant n'observe, le choix explicite
+qui prime sur la largeur et se conserve, le retour au mode automatique, l'ouverture des groupes au
+survol **et** au clic uniquement quand la barre est repliée, et les infobulles. ⚠️ Même réserve
+qu'au §1.22 : **rien n'a pu être vérifié en navigateur**, faute de pouvoir en démarrer un ici — ce
+qui a précisément laissé passer le défaut des pixels CSS.
+
+---
+
 ## 2. Ce qui reste
 
 ### 2.1 Modules à migrer (par ordre conseillé)

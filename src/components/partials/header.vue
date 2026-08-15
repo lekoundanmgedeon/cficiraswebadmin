@@ -10,13 +10,6 @@
         <a class="navbar-brand brand-logo-mini" href="/home"
           ><img src="/img/logo1.ico" alt="logo"
         /></a>
-        <button
-          class="navbar-toggler navbar-toggler align-self-center"
-          type="button"
-          data-toggle="minimize"
-        >
-          <span class="mdi mdi-sort-variant"></span>
-        </button>
       </div>
     </div>
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -98,13 +91,6 @@
           </div>
         </li>
       </ul>
-      <button
-        class="navbar-toggler navbar-toggler align-self-center"
-        type="button"
-        @click="$emit('toggle-sidebar')"
-      >
-        <span class="mdi mdi-menu"></span>
-      </button>
     </div>
   </nav>
 </template>
@@ -112,6 +98,25 @@
 import { useAuthStore } from '@/core/auth/authStore';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
+
+/**
+ * La barre du haut.
+ *
+ * ## Les deux boutons « menu » ont été retirés
+ *
+ * Elle en portait deux, à ses deux extrémités :
+ *
+ *  - celui du bandeau de marque (`data-toggle="minimize"`), hérité du gabarit
+ *    HTML d'origine, **sans aucun gestionnaire** : il ne faisait rien. Le
+ *    script jQuery qui l'aurait animé (`public/js/template.js`) bascule la
+ *    classe sur `body`, là où l'application la pose sur `.container-scroller` ;
+ *  - celui de droite, qui émettait `toggle-sidebar` vers la mise en page.
+ *
+ * Le repli de la barre latérale ne se demande plus : il suit la largeur de la
+ * fenêtre (`shared/composables/useSidebarRepli.js`). Un état que
+ * l'application sait déduire n'a pas à occuper un bouton — d'autant que
+ * l'ancien ne se rétablissait jamais au redimensionnement.
+ */
 
 const authStore = useAuthStore();
 const { user, isAuthenticated } = storeToRefs(authStore);
