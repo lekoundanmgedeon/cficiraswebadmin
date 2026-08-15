@@ -1,27 +1,47 @@
 <script setup>
 import { ref } from 'vue';
+import { useAuthStore } from '@/core/auth/authStore';
 
 /**
- * Les requêtes SQL derrière une réponse.
+ * Les requêtes SQL derrière une réponse — **réservées au rôle ADMIN**.
  *
- * Repliées par défaut : l'interlocuteur veut la réponse, pas le SQL. Mais sur
- * des chiffres qui engagent l'établissement — un montant encaissé, un effectif
- * transmis à une tutelle — pouvoir vérifier d'où sort un nombre n'est pas un
- * luxe de développeur. C'est ce qui sépare un assistant vérifiable d'un oracle.
+ * ## Pourquoi les montrer
  *
  * Un modèle de langage peut se tromper de vue ou de filtre sans que la phrase
- * produite trahisse quoi que ce soit : la requête, elle, le montre.
+ * produite trahisse quoi que ce soit : la requête, elle, le montre. Sur des
+ * chiffres qui engagent l'établissement — un effectif transmis à une tutelle,
+ * un montant encaissé — pouvoir vérifier d'où sort un nombre est ce qui sépare
+ * un assistant vérifiable d'un oracle.
+ *
+ * ## Pourquoi ne les montrer qu'à l'administrateur
+ *
+ * Le SQL ne s'adresse pas à un chef de scolarité : il ne lui apprend rien qu'il
+ * puisse contrôler, et il expose le nom des vues et des colonnes de la base —
+ * une carte du schéma offerte à chaque réponse, dont on se passe volontiers en
+ * dehors de l'exploitation.
+ *
+ * La vérifiabilité n'est pas perdue pour autant : **le serveur journalise
+ * chaque échange avec ses appels d'outils** (`assistant_echanges`), et
+ * `GET /api/assistant/historique` les rend. Ce qui change ici, c'est qui les
+ * lit à l'écran, pas ce qui est conservé.
+ *
+ * ⚠️ Le rôle vient du profil en mémoire (`authStore.user`), que la connexion
+ * renseigne mais qu'un rechargement de page perd. Les écrans qui montent
+ * l'assistant appellent donc `fetchCurrentUser()` — sans quoi le bloc
+ * resterait caché à un administrateur après un F5. Le défaut, s'il revenait,
+ * se ferait dans le sens sûr : on masque, on ne divulgue pas.
  */
 defineProps({
   /** @type {import('vue').PropType<Array<{intention: string|null, sql: string, nbLignes: number|null}>>} */
   requetes: { type: Array, default: () => [] },
 });
 
+const auth = useAuthStore();
 const ouvert = ref(false);
 </script>
 
 <template>
-  <div v-if="requetes.length" class="mt-2">
+  <div v-if="auth.isAdmin && requetes.length" class="mt-2">
     <button
       type="button"
       class="btn btn-link btn-sm p-0 text-muted text-decoration-none"

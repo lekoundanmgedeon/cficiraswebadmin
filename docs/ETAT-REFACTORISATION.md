@@ -838,7 +838,8 @@ Il n'existe par ailleurs **pas de `POST /notes`** : les notes préexistent, l'é
 tous des `ref([...])` codés en dur — jusqu'à `mockClasses = ref(['Master 1 Info', …])`.
 `RapportsTab.vue` et `semestre2/{devoir,rappel,session}-s2.vue` étaient **vides**
 (`<template></template>`) : leurs onglets ne rendaient rien. L'onglet « Assistant IA » — une
-conversation aux messages codés en dur — a été retiré : **aucun backend ne l'alimente**.
+conversation aux messages codés en dur — a été retiré : aucun backend ne l'alimentait alors.
+_(Il est revenu depuis, branché sur `POST /api/assistant/question` — voir §1.22.)_
 
 Or les quatre routes de résultats existaient depuis toujours, ainsi que leur store
 (`resultStore.js`) : **aucune vue ne les appelait**.
@@ -1052,8 +1053,9 @@ filière et plan, paginé et exportable ; les boutons « Encaisser » et « Rela
 >   formateurs (« PRF-001 », taux horaires) sont un `ref([...])`. Aucune table `honoraires` ni
 >   `vacations` en base, aucune route. Les heures existent (`moduleclasse.heures`,
 >   `vue_attributions_cours`) ; **les taux, non** — c'est ce qui manque pour rendre l'écran réel.
-> - **Rapports → Assistant IA** : conversation aux réponses écrites d'avance, servies après un
->   `setTimeout`. Même cas que l'onglet « Assistant IA » des délibérations, déjà retiré (§1.11).
+> - ~~**Rapports → Assistant IA** : conversation aux réponses écrites d'avance, servies après un
+>   `setTimeout`.~~ **Corrigé** : l'onglet est branché sur l'assistant réel, cadré sur les finances
+>   (§1.22).
 
 ### 1.17 Le module `pedagogies` — terminé (le plus gros, 4 écrans, backend créé)
 
@@ -1424,6 +1426,88 @@ base autant que par le contrôleur.
 **18 tests** sur les trois stores : cumuls du fonds, séparation catalogue / mémoires, finalistes sans
 sujet, moyenne d'avancement calculée sur les seuls travaux engagés, séparation des demandes ouvertes
 et closes, et miroir des transitions autorisées.
+
+---
+
+### 1.22 L'assistant IA — mise en forme des réponses, et quatre onglets de domaine
+
+L'assistant existait (`src/modules/assistant/`, `POST /api/assistant/question`) mais n'était
+accessible que depuis son écran de plateforme, et **ses réponses ne rendaient rien de leur mise en
+forme** : le fil les affichait en `white-space: pre-wrap`, par crainte — justifiée — d'une injection
+HTML. Un tableau de quinze filières s'y lisait comme une bouillie de barres verticales.
+
+**Trois interventions, dans cet ordre. Aucune ne suffisait seule** — vérifié en interrogeant
+`llama-3.3-70b` après chacune :
+
+| Où                                     | Quoi                                                                                                             |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `assistant/prompt.js` (backend)        | section « Mettre en forme » : markdown GFM, **tableau obligatoire dès trois lignes**, placée **après** le catalogue |
+| `assistant/tools/index.js` (backend)   | le même rappel au pied de chaque résultat d'outil de trois lignes ou plus                                          |
+| `assistant/utils/markdown.js` (front)  | rendu markdown sûr : HTML brut échappé, liens bornés à `http`/`https`/`mailto`, images refusées                   |
+
+> La consigne de forme placée avant le catalogue **ne tient pas** : celui-ci pèse quelques milliers
+> de jetons, et au moment de rédiger, le modèle a sous les yeux le résultat SQL, pas la règle. Trois
+> reformulations en amont n'y ont rien changé ; le rappel posé au pied du résultat, si.
+> Une règle de `REGLES_REPONSE` la contredisait par ailleurs (« réponds à l'oral d'un collègue »).
+
+**Quatre onglets « Assistant IA »**, un seul composant (`AssistantPanneau.vue`, disposition reprise
+de l'onglet financier) :
+
+| Écran                                        | `cadrage`               | Répond sur                                     |
+| -------------------------------------------- | ----------------------- | ---------------------------------------------- |
+| Structure académique → **Semestres**         | `structure-academique`  | années, cycles, filières, niveaux, classes, UE |
+| Scolarité → **Délibération**                 | `scolarite`             | dossiers, inscriptions, notes, jury            |
+| Examens → **Rapports**                       | `examens`               | bulletins, moyennes, rangs, mentions           |
+| Finances → **Rapports** (mock remplacé)      | `finances`              | encaissements, impayés, échéances              |
+
+Le `cadrage` transite jusqu'au prompt (`CADRAGES`) et **n'accorde aucun droit** : le cloisonnement
+reste le catalogue filtré par rôle. Un cadrage inconnu répond `400` plutôt que d'être ignoré. Le
+store est instancié **par cadrage** : un store unique aurait fait partager un seul fil serveur aux
+quatre onglets, chacun héritant du contexte des autres.
+
+L'onglet financier servait jusqu'ici quatre réponses codées en dur, choisies par mot-clé après un
+`setTimeout(1200)` : « trésorerie » rendait toujours les mêmes 8 450 000 FCFA, base vide comprise.
+`DeliberationView` et `RapportsView` (examens) sont passées en onglets pour l'accueillir ; leurs
+actions d'export et de publication ont suivi le contenu auquel elles s'appliquent.
+
+**La place laissée à la réponse.** Un tableau de quatre colonnes sortait comprimé de sa bulle : la
+conversation occupe désormais neuf colonnes sur douze (contre huit), la bulle de **réponse** n'est
+plus bridée à 78 % de largeur — celle de la **question** l'est toujours, c'est ce qui distingue les
+deux interlocuteurs —, le fil passe de 42 à 58 vh, et les colonnes de nombres (celles que le modèle
+aligne à droite) ne se replient plus : le tableau défile dans son cadre plutôt que d'écraser ses
+colonnes.
+
+**Le SQL des réponses est réservé au rôle ADMIN.** Il n'apprend rien de contrôlable à un chef de
+scolarité et expose le schéma de la base à chaque réponse. La vérifiabilité n'est pas perdue : le
+serveur journalise les appels d'outils dans `assistant_echanges`, que `GET /assistant/historique`
+rend. ⚠️ Le rôle vient du profil **en mémoire**, que la connexion renseigne mais qu'un rechargement
+de page perd : les écrans qui montent l'assistant appellent donc `fetchCurrentUser()`. À défaut, le
+bloc se serait masqué à un administrateur revenu par F5 — le défaut se fait dans le sens sûr.
+
+> #### Trois défauts du catalogue serveur, révélés en exerçant les onglets
+>
+> - **`principales` n'ordonnait rien.** La liste ne servait que de drapeau : la coupe à huit colonnes
+>   suivait l'ordre de la base, où l'état civil précède tout. `vue_statistiques_resultats` promettait
+>   « taux de réussite et classements » en masquant `filiere`, `moyenne_generale` et `rang_etudiant`
+>   derrière `etudiant_id, matricule, nom, prenom, sexe` — le modèle groupait par **classe** une
+>   question posée par **filière**, sans que rien ne le signale. L'ordre déclaré est désormais
+>   respecté (`catalog/index.js`), et les deux vues réordonnées. Coût : +237 caractères de prompt.
+> - **Le fan-out des capacités n'était pas documenté** pour l'assistant : `v_organisation_filieres`
+>   et `v_organisation_cycles` annoncent 33 790 places pour 5 400 réelles (vérifié en base). Leurs
+>   colonnes de capacité et de taux portent maintenant une glose « NE PAS UTILISER », et la
+>   description oriente vers `v_organisation_classes`. Vérifié : l'assistant s'y conforme.
+> - Une glose de colonne reste affichée même quand la colonne sort des huit premières — c'est ce qui
+>   maintient `rang_etudiant` connu du modèle sans dépenser une place.
+
+**Vérifié contre `localhost:3500`** avec les quatre cadrages : tableaux markdown corrects, chiffres
+recoupés en base, sources saines choisies, cadrage inconnu refusé en `400`. **17 tests front**
+(rendu markdown et réponses hostiles, fil, panneau, isolation des fils par écran, SQL réservé à
+ADMIN dans les deux sens) et **8 tests backend** (catalogue, rappel de tableau, transit du cadrage).
+
+⚠️ **Le rendu à l'écran n'a pas pu être vérifié en navigateur** : Chromium ne démarre pas dans cet
+environnement (`libnspr4.so` absente, `npx playwright install-deps chromium` demande les droits
+d'administration). Les largeurs et hauteurs ci-dessus sont raisonnées, pas constatées ; les tests de
+montage (jsdom) verrouillent le balisage produit, pas sa mise en page.
 
 ---
 

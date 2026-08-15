@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
+import { useAuthStore } from '@/core/auth/authStore';
 import { useAssistantStore } from '../store';
 import AssistantFil from '../components/AssistantFil.vue';
 import AssistantChamp from '../components/AssistantChamp.vue';
@@ -23,6 +24,7 @@ import AssistantChamp from '../components/AssistantChamp.vue';
  * reposer la question.
  */
 const store = useAssistantStore();
+const auth = useAuthStore();
 
 onMounted(() => {
   // Seul appel bon marché : il dit si le module est utilisable avant que
@@ -30,6 +32,9 @@ onMounted(() => {
   // plusieurs secondes et ne sont jamais lancées au montage.
   store.fetchSante();
   store.fetchConversations();
+  // Le rôle décide de l'affichage du SQL sous chaque réponse ; un
+  // rechargement de page vide le profil en mémoire (voir `AssistantRequetes`).
+  auth.fetchCurrentUser();
 });
 </script>
 

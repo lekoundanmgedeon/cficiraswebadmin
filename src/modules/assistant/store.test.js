@@ -76,7 +76,7 @@ describe('Poser une question', () => {
     expect(store.conversationId).toBe('fil-1');
 
     await store.demander('Et ensuite ?');
-    expect(poserQuestion).toHaveBeenLastCalledWith('Et ensuite ?', 'fil-1');
+    expect(poserQuestion).toHaveBeenLastCalledWith('Et ensuite ?', 'fil-1', null);
   });
 
   it('n’ouvre pas de fil sur la première question', async () => {
@@ -85,7 +85,7 @@ describe('Poser une question', () => {
 
     await store.demander('Première question');
 
-    expect(poserQuestion).toHaveBeenNthCalledWith(1, 'Première question', null);
+    expect(poserQuestion).toHaveBeenNthCalledWith(1, 'Première question', null, null);
   });
 
   it('ignore une question vide ou un envoi pendant qu’un appel court', async () => {
@@ -162,6 +162,40 @@ describe('Disponibilité', () => {
   it('vaut null tant que le diagnostic n’a pas tourné', () => {
     // `false` ferait afficher « indisponible » avant toute vérification.
     expect(useAssistantStore().utilisable).toBeNull();
+  });
+});
+
+describe('Cadrage par écran', () => {
+  it('transmet le cadrage à chaque question', async () => {
+    const store = useAssistantStore('structure-academique');
+    poserQuestion.mockResolvedValue(reponse());
+
+    await store.demander('Combien de classes ?');
+
+    expect(poserQuestion).toHaveBeenCalledWith(
+      'Combien de classes ?',
+      null,
+      'structure-academique'
+    );
+  });
+
+  it('donne un fil distinct à chaque écran', async () => {
+    // Sans cela, une question posée depuis la délibération apparaîtrait dans
+    // l'onglet des semestres, et les deux écrans partageraient une seule
+    // conversation côté serveur — chacun héritant du contexte de l'autre.
+    const scolarite = useAssistantStore('scolarite');
+    const examens = useAssistantStore('examens');
+    poserQuestion.mockResolvedValue(reponse());
+
+    await scolarite.demander('Une question de scolarité');
+
+    expect(scolarite.messages).toHaveLength(2);
+    expect(examens.messages).toHaveLength(0);
+    expect(examens.conversationId).toBeNull();
+  });
+
+  it('rend la même instance pour un même écran', () => {
+    expect(useAssistantStore('examens')).toBe(useAssistantStore('examens'));
   });
 });
 

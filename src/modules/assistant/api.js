@@ -17,14 +17,22 @@ const assistantClient = createHttpClient('/assistant');
 /**
  * Pose une question en langage naturel.
  *
+ * Le `cadrage` nomme l'écran d'où part la question — l'assistant est ouvert
+ * depuis quatre onglets, et « et par filière ? » n'y a pas le même sens. Il
+ * oriente la lecture du modèle ; il **ne restreint aucun droit** : le
+ * cloisonnement reste celui du catalogue filtré par rôle, côté serveur. Un
+ * cadrage inconnu est refusé en 400 plutôt qu'ignoré (voir `CADRAGES` du
+ * backend).
+ *
  * @param {string} question
  * @param {string|null} [conversationId] Poursuit un fil existant ; absent, en ouvre un.
+ * @param {string|null} [cadrage] `structure-academique` | `scolarite` | `examens` | `finances`.
  * @returns {Promise<{data: {conversationId: string, reponse: string, aboutie: boolean,
  *   requetes: Array<{intention: string|null, sql: string, nbLignes: number|null}>,
  *   tours: number, dureeMs: number}}>}
  */
-export const poserQuestion = (question, conversationId = null) =>
-  assistantClient.post('/question', { question, conversationId });
+export const poserQuestion = (question, conversationId = null, cadrage = null) =>
+  assistantClient.post('/question', { question, conversationId, cadrage });
 
 /**
  * Les conversations de l'utilisateur, la plus récente d'abord.

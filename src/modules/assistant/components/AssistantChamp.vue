@@ -10,18 +10,33 @@ import { ref } from 'vue';
 const props = defineProps({
   enCours: { type: Boolean, default: false },
   desactive: { type: Boolean, default: false },
+
+  /**
+   * Les amorces proposées au-dessus du champ — un champ vide n'indique pas ce
+   * que l'assistant sait faire. Les onglets les affichent dans leur propre
+   * colonne, cadrées sur leur domaine : ils passent un tableau vide pour ne pas
+   * les voir deux fois.
+   *
+   * La liste par défaut est écrite ici même : `defineProps` est hissé à la
+   * compilation et ne peut référencer aucune variable du module.
+   *
+   * @type {import('vue').PropType<string[]>}
+   */
+  suggestions: {
+    type: Array,
+    default: () => [
+      'Combien d’étudiants dans chaque classe ?',
+      'Quel est le taux de réussite par filière ce semestre ?',
+      'Quels étudiants ont des échéances en retard ?',
+    ],
+  },
+
+  placeholder: { type: String, default: 'Posez votre question en français…' },
 });
 
 const emit = defineEmits(['demander']);
 
 const texte = ref('');
-
-/** Quelques amorces : un champ vide n'indique pas ce que l'assistant sait faire. */
-const SUGGESTIONS = [
-  'Combien d’étudiants dans chaque classe ?',
-  'Quel est le taux de réussite par filière ce semestre ?',
-  'Quels étudiants ont des échéances en retard ?',
-];
 
 function envoyer() {
   const question = texte.value.trim();
@@ -37,9 +52,9 @@ function proposer(suggestion) {
 
 <template>
   <div>
-    <div v-if="!texte && !enCours" class="mb-2 d-flex flex-wrap gap-2">
+    <div v-if="suggestions.length && !texte && !enCours" class="mb-2 d-flex flex-wrap gap-2">
       <button
-        v-for="suggestion in SUGGESTIONS"
+        v-for="suggestion in suggestions"
         :key="suggestion"
         type="button"
         class="btn btn-sm btn-outline-secondary"
@@ -56,7 +71,7 @@ function proposer(suggestion) {
         class="form-control"
         rows="2"
         :disabled="enCours || desactive"
-        :placeholder="desactive ? 'Assistant indisponible' : 'Posez votre question en français…'"
+        :placeholder="desactive ? 'Assistant indisponible' : placeholder"
         @keydown.enter.exact.prevent="envoyer"
       ></textarea>
 
