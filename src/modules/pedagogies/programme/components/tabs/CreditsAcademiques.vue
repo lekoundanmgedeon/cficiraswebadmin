@@ -126,7 +126,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ue in mockUeDistribution" :key="ue.code">
+                <tr v-for="ue in uesPage" :key="ue.code">
                   <td class="ps-4 font-monospace fw-bold text-primary">{{ ue.code }}</td>
                   <td class="fw-semibold text-dark">{{ ue.nom }}</td>
                   <td class="text-center small text-muted">{{ ue.heures }} h</td>
@@ -152,6 +152,14 @@
             </table>
           </div>
 
+          <div class="px-3 pt-3">
+            <Pagination
+              v-model="page"
+              v-model:items-per-page="itemsPerPage"
+              :total-items="mockUeDistribution.length"
+            />
+          </div>
+
           <!-- Note technique d'information ERP -->
           <div class="p-3 bg-light border-top m-3 rounded">
             <div class="d-flex">
@@ -173,6 +181,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useMaquetteStore } from '@/modules/pedagogies/programme/store';
 
 /**
@@ -183,6 +193,16 @@ import { useMaquetteStore } from '@/modules/pedagogies/programme/store';
 const store = useMaquetteStore();
 const { ueDistribution: mockUeDistribution } = storeToRefs(store);
 onMounted(() => store.fetchReferentiels());
+
+/**
+ * Pagination de la répartition des UE.
+ *
+ * Une ligne par module : **450** sur le jeu de démonstration. Aucun filtre ne
+ * s'applique à ce tableau — d'où l'absence de `resetKey` —, mais le volume
+ * suffit à noyer la note de règle placée juste dessous, qu'on ne voyait plus
+ * qu'après avoir fait défiler quatre cent cinquante lignes.
+ */
+const { page, itemsPerPage, paginated: uesPage } = usePagination(mockUeDistribution);
 
 // État du cycle sélectionné
 const selectedCycle = ref('Master');

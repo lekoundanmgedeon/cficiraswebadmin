@@ -191,7 +191,7 @@
         <div class="card-footer bg-white border-0 py-3">
           <Pagination
             v-model="currentPage"
-            :items-per-page="itemsPerPage"
+            v-model:items-per-page="itemsPerPage"
             :total-items="filteredFormateurs.length"
           />
         </div>
@@ -251,6 +251,11 @@ const filteredFormateurs = computed(() =>
 );
 
 // Logique de Pagination (inchangée)
+//
+// ⚠️ `itemsPerPage` doit être lié en **deux sens**. `Pagination.vue` émet
+// `update:itemsPerPage` quand on change « Afficher N éléments » ; avec un simple
+// `:items-per-page`, l'émission ne trouvait pas d'écouteur : le sélecteur
+// changeait d'apparence et le tableau ne bougeait pas.
 const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
 const paginatedFormateurs = computed(() =>
   filteredFormateurs.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)

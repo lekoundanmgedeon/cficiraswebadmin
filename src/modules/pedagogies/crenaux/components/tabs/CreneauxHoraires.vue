@@ -217,7 +217,7 @@
               </thead>
 
               <tbody>
-                <tr v-for="slot in filteredSchedules" :key="slot.id" class="transition-all">
+                <tr v-for="slot in creneauxPage" :key="slot.id" class="transition-all">
                   <!-- Date & Créneau Horaire -->
                   <td class="ps-4">
                     <div class="fw-bold text-dark">{{ formatDate(slot.date) }}</div>
@@ -282,6 +282,14 @@
             </table>
           </div>
         </div>
+
+        <div class="card-footer bg-white border-0 py-3">
+          <Pagination
+            v-model="page"
+            v-model:items-per-page="itemsPerPage"
+            :total-items="filteredSchedules.length"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -290,6 +298,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useScheduleStore } from '@/modules/pedagogies/crenaux/store';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
 
@@ -406,6 +416,23 @@ const filteredSchedules = computed(() => {
   if (tableFilterClasse.value === 'Toutes') return schedules.value;
   return schedules.value.filter((s) => s.classe === tableFilterClasse.value);
 });
+
+/**
+ * Pagination du tableau des séances.
+ *
+ * `vue_horaire_details` rend **1 351 créneaux** sur le jeu de démonstration, que
+ * l'onglet posait d'un bloc — chacun avec sa date formatée, ses pastilles et ses
+ * deux boutons d'action.
+ *
+ * `resetKey` sur le filtre de classe : passer de « Toutes » à une classe donnée
+ * depuis la page 12 n'a plus de sens, cette classe n'ayant que quelques
+ * dizaines de séances.
+ */
+const {
+  page,
+  itemsPerPage,
+  paginated: creneauxPage,
+} = usePagination(filteredSchedules, { resetKey: () => tableFilterClasse.value });
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';

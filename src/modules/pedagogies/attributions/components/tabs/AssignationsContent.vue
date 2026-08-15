@@ -125,7 +125,7 @@
               </thead>
 
               <tbody>
-                <tr v-for="assign in filteredAssignments" :key="assign.id" class="transition-all">
+                <tr v-for="assign in assignationsPage" :key="assign.id" class="transition-all">
                   <!-- Classe Cible -->
                   <td class="ps-4">
                     <span class="badge bg-light text-primary border px-3 py-2 fw-bold">
@@ -207,6 +207,14 @@
             </table>
           </div>
         </div>
+
+        <div class="card-footer bg-white border-0 py-3">
+          <Pagination
+            v-model="page"
+            v-model:items-per-page="itemsPerPage"
+            :total-items="filteredAssignments.length"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -215,6 +223,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useAttributionStore } from '@/modules/pedagogies/attributions/store';
 
 /**
@@ -293,6 +303,26 @@ const filteredAssignments = computed(() => {
     return matName.includes(term) || profName.includes(term) || className.includes(term);
   });
 });
+
+/**
+ * Pagination — indispensable ici, pas décorative.
+ *
+ * `vue_attributions_cours` rend **4 050 lignes** sur le jeu de démonstration, et
+ * l'onglet les posait toutes dans le DOM. Chaque ligne construit une pastille,
+ * un avatar d'initiales et trois résolutions par identifiant
+ * (`getMatiereName`, `getFormateurName`, `getModuleNameByMatiere`), chacune
+ * balayant son référentiel : la recherche relançait donc ces parcours pour les
+ * 4 050 lignes à chaque frappe.
+ *
+ * `resetKey` sur la recherche : sans lui, filtrer depuis la page 40 laisse
+ * l'utilisateur sur une page 40 qui ne parle plus de la même chose — souvent
+ * vide.
+ */
+const {
+  page,
+  itemsPerPage,
+  paginated: assignationsPage,
+} = usePagination(filteredAssignments, { resetKey: () => searchQuery.value });
 
 // --- Actions ---
 const handleAssign = async () => {

@@ -178,7 +178,7 @@
               </thead>
 
               <tbody>
-                <tr v-for="rule in filteredRules" :key="rule.id" class="transition-all">
+                <tr v-for="rule in reglesPage" :key="rule.id" class="transition-all">
                   <!-- Classe & Semestre -->
                   <td class="ps-4">
                     <div class="fw-bold text-dark">{{ rule.classe }}</div>
@@ -248,6 +248,14 @@
             </table>
           </div>
         </div>
+
+        <div class="card-footer bg-white border-0 py-3">
+          <Pagination
+            v-model="page"
+            v-model:items-per-page="itemsPerPage"
+            :total-items="filteredRules.length"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -256,6 +264,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useMaquetteStore } from '@/modules/pedagogies/programme/store';
 
 /**
@@ -328,6 +338,22 @@ const filteredRules = computed(() => {
   if (tableFilterClasse.value === 'Toutes') return mockRules.value;
   return mockRules.value.filter((r) => r.classe === tableFilterClasse.value);
 });
+
+/**
+ * Pagination de la maquette.
+ *
+ * `maquette_pedagogique` compte **1 350 lignes** sur le jeu de démonstration —
+ * une par matière, classe et semestre. Sans découpage, l'onglet posait sept
+ * colonnes de badges pour chacune.
+ *
+ * `resetKey` sur le filtre de classe : une classe donnée n'a qu'une trentaine
+ * de lignes, rester en page 30 après l'avoir choisie n'afficherait rien.
+ */
+const {
+  page,
+  itemsPerPage,
+  paginated: reglesPage,
+} = usePagination(filteredRules, { resetKey: () => tableFilterClasse.value });
 </script>
 
 <style scoped>
