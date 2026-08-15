@@ -45,7 +45,16 @@
                   <option v-for="f in uniqueFilieres" :key="f" :value="f">{{ f }}</option>
                 </select>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
+                <select
+                  v-model="filterPeriode"
+                  class="form-select text-sm bg-light border-0 py-2.5 shadow-none"
+                >
+                  <option value="">Toutes les années</option>
+                  <option v-for="p in uniquePeriodes" :key="p" :value="p">{{ p }}</option>
+                </select>
+              </div>
+              <div class="col-md-2">
                 <select
                   v-model="filterStatut"
                   class="form-select text-sm bg-light border-0 py-2.5 shadow-none"
@@ -55,9 +64,9 @@
                   <option value="inactif">Inactifs uniquement</option>
                 </select>
               </div>
-              <div class="col-md-2 text-md-end">
+              <div class="col-md-1 text-md-end">
                 <span class="text-xs text-muted font-monospace fw-bold">
-                  {{ filteredSemestres.length }} Semestre(s)
+                  {{ filteredSemestres.length }}
                 </span>
               </div>
             </div>
@@ -71,7 +80,7 @@
       <p class="text-muted text-sm mt-2">Génération de la cartographie pédagogique...</p>
     </div>
 
-    <div v-else-if="groupedSemestres.length > 0" class="row g-4">
+    <div v-else-if="groupedSemestres.length > 0" class="row g-4 mb-3">
       <div v-for="group in groupedSemestres" :key="group.niveau" class="col-12">
         <div class="d-flex align-items-center mb-3">
           <h5 class="fw-bold text-secondary mb-0 text-uppercase tracking-wider fs-6 me-3">
@@ -157,14 +166,33 @@
       <h5 class="text-secondary fw-bold">Aucune correspondance trouvée</h5>
       <p class="text-muted text-sm">Modifiez vos mots-clés ou réinitialisez vos filtres globaux.</p>
     </div>
+
+    <Pagination
+      v-if="filteredSemestres.length"
+      v-model="page"
+      v-model:items-per-page="itemsPerPage"
+      :total-items="filteredSemestres.length"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useSemestreStore } from '../../store';
 import { useSemestreForm } from '../../composables/useSemestreForm';
 import { highlight } from '@/shared/utils/text';
+
+/**
+ * Cartographie des maquettes : une carte par couple semestre × classe.
+ *
+ * `GET /semestres/stats/organisations` ne filtre sur aucune année et groupe par
+ * classe : il renvoie **810 lignes** sur le jeu de démonstration, que l'écran
+ * rendait toutes d'un bloc. D'où la pagination, et le filtre par année
+ * académique — le champ `periode` était servi par l'API et n'était affiché que
+ * dans le coin d'une carte, sans qu'on puisse s'en servir pour trier le lot.
+ */
 
 /* ========================================================
     Initialisation du Store Pinia
@@ -174,6 +202,7 @@ const semestreStore = useSemestreStore();
 // Filtres locaux
 const filterQuery = ref('');
 const filterFiliere = ref('');
+const filterPeriode = ref('');
 const filterStatut = ref('tous');
 
 /* ========================================================
@@ -182,9 +211,16 @@ const filterStatut = ref('tous');
 const loading = computed(() => semestreStore.loading);
 const rawSemestres = computed(() => semestreStore.organisation || []);
 
-// Extraction dynamique des filières uniques présentes pour alimenter le select
+// Extraction dynamique des valeurs présentes pour alimenter les selects
 const uniqueFilieres = computed(() => {
   return [...new Set(rawSemestres.value.map((s) => s.filiere).filter(Boolean))];
+});
+
+// Les années les plus récentes d'abord : c'est celle en cours qu'on consulte.
+const uniquePeriodes = computed(() => {
+  return [...new Set(rawSemestres.value.map((s) => s.periode).filter(Boolean))].sort((a, b) =>
+    String(b).localeCompare(String(a))
+  );
 });
 
 // Filtrage logique des semestres
@@ -197,17 +233,24 @@ const filteredSemestres = computed(() => {
 
     const matchesFiliere = filterFiliere.value === '' || s.filiere === filterFiliere.value;
 
+    const matchesPeriode = filterPeriode.value === '' || s.periode === filterPeriode.value;
+
     const matchesStatut =
       filterStatut.value === 'tous' ||
       (filterStatut.value === 'actif' && s.actif) ||
       (filterStatut.value === 'inactif' && !s.actif);
 
-    return matchesSearch && matchesFiliere && matchesStatut;
+    return matchesSearch && matchesFiliere && matchesPeriode && matchesStatut;
   });
 });
 
+const { page, itemsPerPage, paginated } = usePagination(filteredSemestres, {
+  perPage: 10,
+  resetKey: () => [filterQuery.value, filterFiliere.value, filterPeriode.value, filterStatut.value],
+});
+
 // Groupement par niveau d'étude
-const SnowyGroup = (items) => {
+const grouperParNiveau = (items) => {
   const groups = {};
   items.forEach((item) => {
     const key = item.niveau || 'Niveau Non Défini';
@@ -219,9 +262,10 @@ const SnowyGroup = (items) => {
   return Object.keys(groups).map((key) => ({ niveau: key, items: groups[key] }));
 };
 
-const groupedSemestres = computed(() => {
-  return SnowyGroup(filteredSemestres.value);
-});
+// Le regroupement porte sur la **page** affichée, et non sur la collection
+// entière : grouper d'abord puis paginer couperait un niveau en deux sans
+// jamais afficher le reste.
+const groupedSemestres = computed(() => grouperParNiveau(paginated.value));
 
 // Mise en surbrillance (Highlight) des textes cherchés
 /**

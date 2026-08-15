@@ -4,6 +4,8 @@ import { storeToRefs } from 'pinia';
 import ItemActions from '@/shared/components/ItemActions.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useNiveauStore } from '../store';
 import { useCycleStore } from '../../cycle/store';
 import { useNiveauForm } from '../composables/useNiveauForm';
@@ -28,8 +30,6 @@ const { items: cycles } = storeToRefs(cycleStore);
 
 /** Code du cycle sélectionné, `null` pour « tous les cycles ». */
 const selectedCycleCode = ref(null);
-const currentPage = ref(1);
-const PAGE_SIZE = 10;
 
 // Les deux listes sont servies par le cache si elles ont déjà été chargées.
 onMounted(() => Promise.all([niveauStore.fetchAll(), cycleStore.fetchAll()]));
@@ -40,18 +40,16 @@ const filteredNiveaux = computed(() =>
     : niveaux.value
 );
 
-const startIndex = computed(() => (currentPage.value - 1) * PAGE_SIZE);
-
-const paginatedNiveaux = computed(() =>
-  filteredNiveaux.value.slice(startIndex.value, startIndex.value + PAGE_SIZE)
-);
-
-const pageCount = computed(() => Math.ceil(filteredNiveaux.value.length / PAGE_SIZE) || 1);
+const {
+  page: currentPage,
+  itemsPerPage,
+  startIndex,
+  paginated: paginatedNiveaux,
+} = usePagination(filteredNiveaux, { perPage: 10, resetKey: () => selectedCycleCode.value });
 
 /** @param {string|null} cycleCode */
 function filterByCycle(cycleCode) {
   selectedCycleCode.value = cycleCode;
-  currentPage.value = 1;
 }
 
 /** @param {number} value */
@@ -162,24 +160,11 @@ function onAction({ key, item }) {
         </table>
       </div>
 
-      <nav v-if="pageCount > 1" class="d-flex justify-content-center mt-3">
-        <ul class="pagination mb-0">
-          <li class="page-item" :class="{ disabled: currentPage === 1 }">
-            <button class="page-link" @click="currentPage--">Précédent</button>
-          </li>
-          <li
-            v-for="page in pageCount"
-            :key="page"
-            class="page-item"
-            :class="{ active: page === currentPage }"
-          >
-            <button class="page-link" @click="currentPage = page">{{ page }}</button>
-          </li>
-          <li class="page-item" :class="{ disabled: currentPage === pageCount }">
-            <button class="page-link" @click="currentPage++">Suivant</button>
-          </li>
-        </ul>
-      </nav>
+      <Pagination
+        v-model="currentPage"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="filteredNiveaux.length"
+      />
     </template>
 
     <NiveauFormModal />

@@ -1,11 +1,13 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useCycleStore } from '../../store';
 import { useCycleForm } from '../../composables/useCycleForm';
 
@@ -13,10 +15,30 @@ const cycleStore = useCycleStore();
 const { items: cycles, loading } = storeToRefs(cycleStore);
 const { openEdit } = useCycleForm();
 
+const recherche = ref('');
+
+const cyclesFiltres = computed(() => {
+  const terme = recherche.value.trim().toLowerCase();
+  if (!terme) return cycles.value;
+
+  return cycles.value.filter((cycle) =>
+    [cycle.code, cycle.designation, cycle.diplome].some((champ) =>
+      String(champ ?? '')
+        .toLowerCase()
+        .includes(terme)
+    )
+  );
+});
+
+const { page, itemsPerPage, startIndex, paginated } = usePagination(cyclesFiltres, {
+  perPage: 10,
+  resetKey: () => recherche.value,
+});
+
 onMounted(() => cycleStore.fetchAll());
 
 const exportRows = computed(() =>
-  cycles.value.map((cycle, index) => ({
+  cyclesFiltres.value.map((cycle, index) => ({
     Rang: index + 1,
     Référence: cycle.code,
     Désignation: cycle.designation,
@@ -64,7 +86,11 @@ function onAction({ key, item }) {
           Consultez, modifiez ou supprimez les cycles académiques déclarés.
         </p>
       </div>
-      <ExportMenu @excel="exportToExcel" @pdf="exportToPdf" />
+      <ExportMenu
+        :disabled="cyclesFiltres.length === 0"
+        @excel="exportToExcel"
+        @pdf="exportToPdf"
+      />
     </div>
 
     <LoadingSpinner v-if="loading" />
@@ -75,56 +101,90 @@ function onAction({ key, item }) {
       description="Créez un premier cycle depuis le bouton « Ajouter un nouveau »."
     />
 
-    <div v-else class="table-responsive">
-      <table class="table align-middle mb-0 custom-table-minimal">
-        <thead>
-          <tr>
-            <th class="ps-4">#</th>
-            <th>REF</th>
-            <th>Désignation</th>
-            <th>Diplôme</th>
-            <th class="text-center">Cursus</th>
-            <th class="text-center">Volume (Crédits)</th>
-            <th class="text-end pe-4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(cycle, index) in cycles" :key="cycle.id">
-            <td class="ps-4 text-muted small">{{ String(index + 1).padStart(2, '0') }}</td>
-            <td>
-              <span class="code-box">{{ cycle.code }}</span>
-            </td>
-            <td>
-              <div class="fw-bold text-dark">{{ cycle.designation }}</div>
-              <div class="x-small text-muted text-uppercase">Cycle académique</div>
-            </td>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="icon-indicator me-2 bg-soft-primary">
-                  <i class="mdi mdi-certificate text-primary"></i>
+    <template v-else>
+      <div class="row g-2 align-items-center mb-3">
+        <div class="col-md-5">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              v-model="recherche"
+              type="text"
+              class="form-control border-start-0 ps-0"
+              placeholder="Rechercher un cycle, un diplôme…"
+            />
+          </div>
+        </div>
+      </div>
+
+      <EmptyState
+        v-if="cyclesFiltres.length === 0"
+        title="Aucun cycle ne correspond"
+        description="Modifiez votre recherche pour retrouver un cycle."
+        :size="80"
+      />
+
+      <div v-else class="table-responsive">
+        <table class="table align-middle mb-0 custom-table-minimal">
+          <thead>
+            <tr>
+              <th class="ps-4">#</th>
+              <th>REF</th>
+              <th>Désignation</th>
+              <th>Diplôme</th>
+              <th class="text-center">Cursus</th>
+              <th class="text-center">Volume (Crédits)</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(cycle, index) in paginated" :key="cycle.id">
+              <td class="ps-4 text-muted small">
+                {{ String(startIndex + index + 1).padStart(2, '0') }}
+              </td>
+              <td>
+                <span class="code-box">{{ cycle.code }}</span>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ cycle.designation }}</div>
+                <div class="x-small text-muted text-uppercase">Cycle académique</div>
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="icon-indicator me-2 bg-soft-primary">
+                    <i class="mdi mdi-certificate text-primary"></i>
+                  </div>
+                  <span class="small fw-medium">{{ cycle.diplome }}</span>
                 </div>
-                <span class="small fw-medium">{{ cycle.diplome }}</span>
-              </div>
-            </td>
-            <td class="text-center">
-              <div class="small text-dark fw-bold">{{ cycle.duree_annees }} An(s)</div>
-              <div class="x-small text-muted">Durée standard</div>
-            </td>
-            <td class="text-center">
-              <span class="credit-pill">{{ cycle.credits_total }} ECTS</span>
-            </td>
-            <td class="text-end pe-4">
-              <ItemActions
-                :item="cycle"
-                :label="cycle.designation"
-                :actions="actions"
-                @action="onAction"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              </td>
+              <td class="text-center">
+                <div class="small text-dark fw-bold">{{ cycle.duree_annees }} An(s)</div>
+                <div class="x-small text-muted">Durée standard</div>
+              </td>
+              <td class="text-center">
+                <span class="credit-pill">{{ cycle.credits_total }} ECTS</span>
+              </td>
+              <td class="text-end pe-4">
+                <ItemActions
+                  :item="cycle"
+                  :label="cycle.designation"
+                  :actions="actions"
+                  @action="onAction"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <Pagination
+        v-if="cyclesFiltres.length"
+        v-model="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="cyclesFiltres.length"
+      />
+    </template>
   </div>
 </template>
 

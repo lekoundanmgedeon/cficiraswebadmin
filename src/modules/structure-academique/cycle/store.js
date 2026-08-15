@@ -4,7 +4,6 @@ import {
   getCycleArchitecture,
   getCycleDistributionStats,
   getCycleFilieres,
-  getCycleOrganisation,
 } from './api';
 
 /**
@@ -25,10 +24,8 @@ export const useCycleStore = createCrudStore({
     filieres: [],
     /** @type {any|null} Arborescence cycles → filières. */
     architecture: null,
-    /** @type {any[]} */
-    organisation: [],
-    /** @type {any|null} Statistiques de répartition. */
-    stats: null,
+    /** @type {any[]} Répartition des effectifs par cycle (`v_distribution_cycle`). */
+    stats: [],
   }),
 
   getters: {
@@ -64,20 +61,23 @@ export const useCycleStore = createCrudStore({
       });
     },
 
-    async fetchOrganisation() {
-      return this.run(() => getCycleOrganisation(), {
-        failure: "Échec du chargement de l'organisation des cycles.",
-        onSuccess: (response) => {
-          this.organisation = response.data ?? [];
-        },
-      });
-    },
-
+    /**
+     * Répartition des effectifs par cycle.
+     *
+     * `v_distribution_cycle` compte des étudiants **distincts** ; la somme des
+     * effectifs de classes, elle, compte des inscriptions. Les deux chiffres
+     * cohabitent dans l'onglet « Statistiques » : ils ne répondent pas à la
+     * même question.
+     *
+     * L'action `fetchOrganisation()` a été retirée : sa vue
+     * (`v_organisation_cycles`) sert une capacité gonflée par un fan-out de
+     * jointure — voir `useCycleStatistiques` et la note dans `api.js`.
+     */
     async fetchDistributionStats() {
       return this.run(() => getCycleDistributionStats(), {
         failure: 'Échec du chargement des statistiques.',
         onSuccess: (response) => {
-          this.stats = response.data ?? null;
+          this.stats = response.data ?? [];
         },
       });
     },

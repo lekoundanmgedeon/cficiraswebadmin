@@ -5,7 +5,9 @@ import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useModuleStore } from '@/modules/matieres/store';
 import AssignationModal from '@/modules/matieres/components/AssignationModal.vue';
@@ -111,6 +113,13 @@ const nombre = (valeur) => Number(valeur ?? 0) || 0;
 const creditUe = (ue) => nombre(ue.credits ?? ue.credit);
 const heuresUe = (ue) => nombre(ue.heures ?? ue.volume_horaire);
 const libelleUe = (ue) => ue.libelle ?? ue.designation ?? '—';
+
+// La page revient à 1 dès qu'on change de semestre ou de classe : la liste
+// affichée n'est plus la même.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(ues, {
+  perPage: 10,
+  resetKey: () => [selectedSemestreId.value, selectedClasseId.value],
+});
 
 const totaux = computed(() => ({
   nbUes: ues.value.length,
@@ -309,44 +318,52 @@ watch(
         :size="80"
       />
 
-      <div v-else class="table-responsive card border-0 shadow-sm">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th class="ps-3" style="width: 60px">#</th>
-              <th>Code</th>
-              <th>Unité d'enseignement</th>
-              <th class="text-center">Crédits</th>
-              <th class="text-center">Volume</th>
-              <th class="text-end pe-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(ue, index) in ues" :key="ue.attribution_id">
-              <td class="ps-3 text-muted">{{ index + 1 }}</td>
-              <td>
-                <strong class="text-dark">{{ ue.code }}</strong>
-              </td>
-              <td class="fw-semibold text-dark">{{ libelleUe(ue) }}</td>
-              <td class="text-center">
-                <span class="badge bg-primary-subtle text-primary px-2 py-1 rounded">
-                  {{ creditUe(ue) }} ECTS
-                </span>
-              </td>
-              <td class="text-center">{{ heuresUe(ue) }} h</td>
-              <td class="text-end pe-3">
-                <ItemActions
-                  :item="ue"
-                  :label="libelleUe(ue)"
-                  :actions="actions"
-                  :loading="moduleLoading"
-                  @action="onAction"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <template v-else>
+        <div class="table-responsive card border-0 shadow-sm">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3" style="width: 60px">#</th>
+                <th>Code</th>
+                <th>Unité d'enseignement</th>
+                <th class="text-center">Crédits</th>
+                <th class="text-center">Volume</th>
+                <th class="text-end pe-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(ue, index) in paginated" :key="ue.attribution_id">
+                <td class="ps-3 text-muted">{{ startIndex + index + 1 }}</td>
+                <td>
+                  <strong class="text-dark">{{ ue.code }}</strong>
+                </td>
+                <td class="fw-semibold text-dark">{{ libelleUe(ue) }}</td>
+                <td class="text-center">
+                  <span class="badge bg-primary-subtle text-primary px-2 py-1 rounded">
+                    {{ creditUe(ue) }} ECTS
+                  </span>
+                </td>
+                <td class="text-center">{{ heuresUe(ue) }} h</td>
+                <td class="text-end pe-3">
+                  <ItemActions
+                    :item="ue"
+                    :label="libelleUe(ue)"
+                    :actions="actions"
+                    :loading="moduleLoading"
+                    @action="onAction"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="ues.length"
+        />
+      </template>
     </template>
   </div>
 </template>

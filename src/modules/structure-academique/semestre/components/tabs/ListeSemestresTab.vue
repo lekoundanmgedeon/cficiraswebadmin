@@ -5,7 +5,9 @@ import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useSemestreStore } from '../../store';
 import { useSemestreForm } from '../../composables/useSemestreForm';
@@ -30,6 +32,8 @@ const semestres = computed(() =>
     actif: semestre.est_actif,
   }))
 );
+
+const { page, itemsPerPage, startIndex, paginated } = usePagination(semestres, { perPage: 10 });
 
 const exportRows = computed(() =>
   semestres.value.map((semestre, index) => ({
@@ -104,44 +108,52 @@ function onAction({ key, item }) {
       description="Créez un premier semestre depuis le bouton « Ajouter un nouveau »."
     />
 
-    <div v-else class="table-responsive card border-0 shadow-sm">
-      <table class="table align-middle mb-0 table-hover">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-3" style="width: 60px">#</th>
-            <th>Code</th>
-            <th>Année académique</th>
-            <th>Date début</th>
-            <th>Date fin</th>
-            <th class="text-center">Statut</th>
-            <th class="text-end pe-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(semestre, index) in semestres" :key="semestre.id">
-            <td class="ps-3 text-muted">{{ index + 1 }}</td>
-            <td>
-              <strong class="text-dark">{{ semestre.code }}</strong>
-            </td>
-            <td>{{ semestre.annee || '-' }}</td>
-            <td>{{ formatDate(semestre.dateDebut) }}</td>
-            <td>{{ formatDate(semestre.dateFin) }}</td>
-            <td class="text-center">
-              <span class="badge" :class="semestre.actif ? 'bg-success' : 'bg-secondary'">
-                {{ semestre.actif ? 'Actif' : 'Inactif' }}
-              </span>
-            </td>
-            <td class="text-end pe-3">
-              <ItemActions
-                :item="semestre"
-                :label="semestre.code"
-                :actions="actionsFor(semestre)"
-                @action="onAction"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <template v-else>
+      <div class="table-responsive card border-0 shadow-sm">
+        <table class="table align-middle mb-0 table-hover">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3" style="width: 60px">#</th>
+              <th>Code</th>
+              <th>Année académique</th>
+              <th>Date début</th>
+              <th>Date fin</th>
+              <th class="text-center">Statut</th>
+              <th class="text-end pe-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(semestre, index) in paginated" :key="semestre.id">
+              <td class="ps-3 text-muted">{{ startIndex + index + 1 }}</td>
+              <td>
+                <strong class="text-dark">{{ semestre.code }}</strong>
+              </td>
+              <td>{{ semestre.annee || '-' }}</td>
+              <td>{{ formatDate(semestre.dateDebut) }}</td>
+              <td>{{ formatDate(semestre.dateFin) }}</td>
+              <td class="text-center">
+                <span class="badge" :class="semestre.actif ? 'bg-success' : 'bg-secondary'">
+                  {{ semestre.actif ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td class="text-end pe-3">
+                <ItemActions
+                  :item="semestre"
+                  :label="semestre.code"
+                  :actions="actionsFor(semestre)"
+                  @action="onAction"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <Pagination
+        v-model="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="semestres.length"
+      />
+    </template>
   </div>
 </template>

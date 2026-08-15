@@ -82,7 +82,7 @@ async function submit() {
       <div class="modal-content">
         <div class="modal-header bg-secondary text-white">
           <h5 class="modal-title">{{ isEdit ? 'Modifier' : 'Créer' }} un niveau</h5>
-          <button 
+          <button
             type="button"
             class="btn-close btn-close-white"
             data-bs-dismiss="modal"

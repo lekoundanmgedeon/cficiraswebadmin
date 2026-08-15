@@ -5,7 +5,9 @@ import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useClasseStore } from '../../store';
 import { useClasseForm } from '../../composables/useClasseForm';
 import { useFiliereStore } from '../../../filiere/store';
@@ -123,6 +125,13 @@ const classesFiltrees = computed(() => {
   return classes.value.filter(
     (classe) => String(classe[cleClasse.value]) === String(selectedId.value)
   );
+});
+
+// La page revient à 1 quand on change de filière ou de niveau : la page 3 de la
+// sélection précédente n'a aucun sens pour la suivante.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(classesFiltrees, {
+  perPage: 10,
+  resetKey: () => selectedId.value,
 });
 
 const nombre = (valeur) => Number(valeur ?? 0) || 0;
@@ -284,61 +293,69 @@ watch(
         :size="80"
       />
 
-      <div v-else class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr>
-              <th class="ps-3">#</th>
-              <th>Code</th>
-              <th>{{ libelles.colonne }}</th>
-              <th class="text-center">Effectif / Capacité max</th>
-              <th style="min-width: 160px">Remplissage</th>
-              <th class="text-end pe-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(classe, index) in classesFiltrees" :key="classe.id">
-              <td class="ps-3 text-muted">{{ index + 1 }}</td>
-              <td>
-                <strong class="text-dark">{{ classe.code }}</strong>
-              </td>
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">
-                  {{ (parFiliere ? classe.niveau_code : classe.filiere_nom) || '—' }}
-                </span>
-              </td>
-              <td class="text-center">
-                <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-semibold">
-                  {{ classe.nb_etudiants ?? 0 }} / {{ classe.capacite_max ?? 0 }}
-                </span>
-              </td>
-              <td>
-                <div class="d-flex align-items-center gap-2">
-                  <div class="progress flex-grow-1" style="height: 6px">
-                    <div
-                      class="progress-bar"
-                      :class="barreTaux(tauxClasse(classe))"
-                      role="progressbar"
-                      :style="{ width: `${Math.min(tauxClasse(classe), 100)}%` }"
-                    ></div>
+      <template v-else>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th class="ps-3">#</th>
+                <th>Code</th>
+                <th>{{ libelles.colonne }}</th>
+                <th class="text-center">Effectif / Capacité max</th>
+                <th style="min-width: 160px">Remplissage</th>
+                <th class="text-end pe-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(classe, index) in paginated" :key="classe.id">
+                <td class="ps-3 text-muted">{{ startIndex + index + 1 }}</td>
+                <td>
+                  <strong class="text-dark">{{ classe.code }}</strong>
+                </td>
+                <td>
+                  <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded">
+                    {{ (parFiliere ? classe.niveau_code : classe.filiere_nom) || '—' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success-subtle text-success px-2 py-1 rounded fw-semibold">
+                    {{ classe.nb_etudiants ?? 0 }} / {{ classe.capacite_max ?? 0 }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 6px">
+                      <div
+                        class="progress-bar"
+                        :class="barreTaux(tauxClasse(classe))"
+                        role="progressbar"
+                        :style="{ width: `${Math.min(tauxClasse(classe), 100)}%` }"
+                      ></div>
+                    </div>
+                    <small class="text-muted font-monospace">
+                      {{ tauxClasse(classe).toFixed(0) }} %
+                    </small>
                   </div>
-                  <small class="text-muted font-monospace">
-                    {{ tauxClasse(classe).toFixed(0) }} %
-                  </small>
-                </div>
-              </td>
-              <td class="text-end pe-3">
-                <ItemActions
-                  :item="classe"
-                  :label="classe.code"
-                  :actions="actions"
-                  @action="onAction"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                </td>
+                <td class="text-end pe-3">
+                  <ItemActions
+                    :item="classe"
+                    :label="classe.code"
+                    :actions="actions"
+                    @action="onAction"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="classesFiltrees.length"
+        />
+      </template>
     </template>
   </div>
 </template>

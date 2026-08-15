@@ -8,7 +8,6 @@ import {
   getClassesByFiliere,
   getClassesByNiveau,
   getClassesOrganisationTree,
-  getGlobalInfrastructureKPIs,
 } from './api';
 
 /** Store des classes. (Ancien `classeStore.js` : 270 lignes.) */
@@ -19,10 +18,8 @@ export const useClasseStore = createCrudStore({
   cacheKey: 'classes',
 
   state: () => ({
-    /** @type {any|null} Arborescence d'organisation. */
-    organisationTree: null,
-    /** @type {any|null} Indicateurs globaux d'infrastructure. */
-    analytics: null,
+    /** @type {any[]} Une ligne par classe (`v_organisation_classes`). */
+    organisationTree: [],
     /** @type {any[]} Étudiants de la classe consultée. */
     etudiants: [],
     /** @type {any[]} Modules de la classe consultée. */
@@ -42,20 +39,21 @@ export const useClasseStore = createCrudStore({
       return this.fetchAll();
     },
 
+    /**
+     * Une ligne par classe, avec cycle, filière, niveau, effectif et capacité.
+     *
+     * C'est la lecture de référence des onglets « Organisation » et
+     * « Statistiques », ici **et** dans l'écran des cycles : `v_organisation_classes`
+     * est groupée par classe, donc sa capacité est juste. L'action
+     * `fetchAnalytics()` a été retirée pour cette raison — sa vue
+     * (`v_dashboard_global_classe`) sommait `capacite_max` après une jointure sur
+     * `inscriptions`, voir la note dans `api.js`.
+     */
     async fetchOrganisationTree() {
       return this.run(() => getClassesOrganisationTree(), {
         failure: "Échec du chargement de l'organisation des classes.",
         onSuccess: (response) => {
-          this.organisationTree = response.data ?? null;
-        },
-      });
-    },
-
-    async fetchAnalytics() {
-      return this.run(() => getGlobalInfrastructureKPIs(), {
-        failure: 'Échec du chargement des indicateurs.',
-        onSuccess: (response) => {
-          this.analytics = response.data ?? null;
+          this.organisationTree = response.data ?? [];
         },
       });
     },

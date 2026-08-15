@@ -124,6 +124,68 @@ absorbés :
 Couverts par `ClassesFiltreesTab.test.js` (5 tests) et `UesSemestreTab.test.js` (5 tests). Là encore,
 **aucune route backend n'a été touchée**.
 
+**Ajout depuis la migration — les onglets « Statistiques » des cycles, des classes et des semestres,
+et la pagination de tous les tableaux de l'écran.**
+
+> #### ⚠️ Trois vues SQL servent des agrégats faux
+>
+> Découvert en lisant les définitions en base (`\sv`), puis vérifié chiffre par chiffre :
+> `v_organisation_cycles`, `v_organisation_filieres` et `v_dashboard_global_classe` somment
+> `classe.capacite_max` **après** une jointure sur `inscriptions`. Chaque classe y compte donc autant
+> de fois qu'elle a d'inscrits, et la capacité est multipliée d'autant.
+>
+> | Vue                         | Capacité annoncée | Capacité réelle | Conséquence                      |
+> | --------------------------- | ----------------- | --------------- | -------------------------------- |
+> | `v_dashboard_global_classe` | 36 325 places     | 5 400           | taux d'occupation 2,5 % au lieu de 15 % |
+> | `v_organisation_filieres`   | 2 370 (une filière) | 360           | 2,45 % de remplissage pour **toutes** les filières |
+> | `v_organisation_cycles`     | 11 130 (un cycle) | 1 800           | idem, et un `statut` qui en découle |
+>
+> **Le correctif est côté base** — il n'a pas été appliqué ici. En attendant, les écrans des cycles et
+> des classes recomposent leurs agrégats depuis `v_organisation_classes`
+> (`GET /classes/stats/organisations`), groupée **par classe** : sa capacité est une constante du
+> groupe, jamais sommée en travers d'une jointure, et elle porte cycle, filière, niveau et statut. Un
+> avertissement est posé sur les deux endpoints désormais inutilisés (`cycle/api.js`,
+> `classe/api.js`). **L'onglet « Organisation » des filières lit toujours la vue fautive** : sa
+> colonne « Taux de remplissage » reste fausse tant que la base n'est pas corrigée, et le dit.
+
+| Onglet                      | Avant                                                                                                                                   | Après                                                                                                          |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Cycles → Statistiques       | tableau plat de `/cycles/stats/distribution`, colonne « Actif/Inactif » redondante, et un `cycle_nom` **absent de toute vue** → libellé de secours partout | 4 indicateurs, 3 graphiques, diagnostics dérivés, détail paginé et exportable                                  |
+| Cycles → Organisation       | capacité et taux issus de la vue fautive ; « Filières disponibles » affichait le **nombre** `3` dans un badge, la colonne étant traitée comme une liste | agrégats sains, filières réellement nommées, recherche + pagination                                            |
+| Classes → Statistiques      | 4 compteurs de `/classes/analytics/dashboard-global`, dont **3 faux**, plus une barre de progression                                     | indicateurs recomposés, agrégation au choix par cycle / filière / niveau, paliers de remplissage, diagnostics   |
+| Classes → Organisation      | **135 lignes d'un bloc** ; filtre de statut proposant `VIDE` (que la vue ne produit jamais) et omettant `COMPLÈTE`                       | pagination, options de filtre déduites des données, export                                                     |
+| Semestres → Statistiques    | sélecteur d'année **calculé sur la date du jour**, limité à deux exercices ; 3 valeurs fabriquées affichées ; matrice de 90 lignes d'un bloc | années issues de `GET /annees`, valeurs fabriquées retirées, matrice paginée, recherche et filtre par semestre |
+| Semestres → Organisation    | **810 cartes d'un bloc**, aucun filtre par année                                                                                        | pagination et filtre par année académique                                                                      |
+
+> #### ⚠️ `/semestres/analytics/dashboard` contient des chiffres inventés
+>
+> | Champ                        | Ce qu'il vaut réellement                                                        |
+> | ---------------------------- | -------------------------------------------------------------------------------- |
+> | `kpis.taux_assiduite_global` | la constante `92.4`, écrite en dur dans `get_kpis_analytics`                     |
+> | `matrix[].moyenne_generale`  | `AVG(12.5 + RANDOM() * 3)` — **une autre valeur à chaque appel**                  |
+> | `typology`                   | une seule ligne, sans `GROUP BY` : toujours « 100 % »                            |
+> | `llm_summary`                | **n'est pas dans la réponse** — l'encadré affichait toujours son message de repli |
+>
+> Aucune table de présence n'existant en base, l'assiduité **ne peut pas** être calculée. Les quatre
+> sont retirés de l'écran ; ce qui les remplace (conformité des maquettes, volume moyen par UE,
+> répartition par semestre et par filière) est déduit de la matrice, qui, elle, est réelle.
+
+Trois pièges transverses sont désormais tenus par des tests : `pg` sert ses `COUNT` et `NUMERIC` en
+**chaînes** (`'40' + '35'` vaut `'4035'`), `v_organisation_classes` **arrondit** son `taux` à l'entier
+(recalculé ici, sinon toute moyenne dérive), et `semestre_id` **se répète** d'une filière à l'autre
+dans la matrice (donc inutilisable comme clé de liste).
+
+Mutualisé au passage : `shared/utils/remplissage.js` (conversion, seuils, palette, couleurs, formats —
+les repères nés dans `filiere/constants.js`, qui les réexporte) et
+`shared/composables/usePagination.js`, qui remplace le triplet `slice`/`pageCount`/garde-fou recopié
+dans chaque onglet, avec un retour en première page au changement de filtre. Les **11 tableaux** de
+l'écran passent sur `components/shared/Pagination.vue`, y compris les deux qui paginaient à la main
+sans sélecteur de taille ni décompte.
+
++41 tests (`usePagination`, `useCycleStatistiques`, `useClasseStatistiques`, `useSemestreAnalytique`,
+et le montage des trois onglets refondus). **Aucune route backend n'a été touchée** ; les endpoints
+appelés ont été exercés contre `localhost:3500`, les trois années comprises.
+
 ### 1.4 Le module `etudiants` — terminé
 
 ```
