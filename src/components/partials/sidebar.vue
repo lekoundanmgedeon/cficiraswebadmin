@@ -588,7 +588,18 @@
           <span class="badge badge-info ms-2 small" style="font-size: 10px"> Beta </span>
         </router-link>
       </li>
-
+      <!-- Paramètres -->
+      <li class="nav-item">
+        <router-link
+          class="nav-link"
+          to="/settings"
+          :class="{ 'menu-active': isMenuActive('/settings') }"
+          :title="repliee ? 'Paramètres' : ''"
+        >
+          <i class="mdi mdi-settings menu-icon"></i>
+          <span class="menu-title">Paramètres</span>
+        </router-link>
+      </li>
       <!--
         Espace de chat — un `a target="_blank"`, et non un `router-link`.
 
@@ -610,19 +621,6 @@
           <span class="menu-title">Espace de chat</span>
           <i class="mdi mdi-open-in-new ms-2 small text-muted"></i>
         </a>
-      </li>
-
-      <!-- Paramètres -->
-      <li class="nav-item">
-        <router-link
-          class="nav-link"
-          to="/settings"
-          :class="{ 'menu-active': isMenuActive('/settings') }"
-          :title="repliee ? 'Paramètres' : ''"
-        >
-          <i class="mdi mdi-settings menu-icon"></i>
-          <span class="menu-title">Paramètres</span>
-        </router-link>
       </li>
     </ul>
   </nav>
