@@ -68,6 +68,9 @@ recadrage quand la collection rétrécit, et retour en première page au changem
 > | Scolarité → Notes officielles, Délibérations, Répartition     | jusqu'à l'effectif d'une classe |
 > | Dossier scolaire → Pièces, Situation financière              | quelques lignes                |
 > | Imports (étudiants, tuteurs, planning) → lignes rejetées      | autant que le fichier en compte |
+> | Finances → Registre des encaissements, Factures, Rapports     | 200 chargées sur 7 497 / 1 803 (§1.16) |
+> | Finances → Contrôle par classe, Archives, Suivi des traites   | 135 à 6 223                    |
+> | Concours → Candidatures, Délibération                        | 132 candidats                  |
 >
 > Deux écrans restent volontairement sans pagination : le **parcours académique** (trois périodes
 > au plus, dont les matières sont un détail interne à chaque carte) et le **profil** d'un dossier
@@ -669,6 +672,51 @@ profondément.
 Éditer le « Concours Ingénieur 2025 » — de type `CONCOURS_INGE` — lui aurait fait **perdre son
 type**, celui-ci n'étant pas dans la liste proposée.
 
+#### Ajout depuis la migration — l'écran de configuration d'un concours
+
+> #### ⚠️ La grille de saisie n'a jamais affiché une seule note
+>
+> `TabNotes` construisait ses lignes à partir de la seule liste des candidats, avec `note: ''`
+> **écrit en dur**. On voyait donc les candidats — jamais leurs notes, y compris juste après les
+> avoir saisies et rechargé l'écran. Aucune erreur, aucun indice : un opérateur ne pouvait pas
+> distinguer « pas encore notée » de « note perdue », et risquait de resaisir par-dessus.
+>
+> La lecture existait pourtant : `GET /candidats/concours/:id/epreuve?epreuve_code=`, servie par
+> `v_candidats_epreuves`, qui joint `notes_epreuves_concours` en `LEFT JOIN` — 132 candidats, tous
+> notés, sur le jeu de démonstration. Le store l'exposait même sous `fetchByEpreuve` : **aucun écran
+> ne l'appelait**.
+>
+> La grille est désormais préremplie. `fetchByEpreuve` écrasait `items` — la collection que lit aussi
+> l'onglet « Candidatures » — d'où `fetchNotesEpreuve`, qui range les notes sous le code de
+> l'épreuve, à part (même piège que `classeStore.fetchByFiliere`). Une note venue du serveur se
+> distingue visuellement d'une case vide, et remplacer une note existante le dit avant
+> l'enregistrement. Après sauvegarde, la grille est **relue depuis le serveur** plutôt que présumée
+> conforme.
+
+| Onglet              | Ajout                                                                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2. Candidatures     | **recherche intelligente** (plusieurs termes dans n'importe quel ordre, insensible aux accents et à la casse, sur n° de table, identité, courriel, téléphone, lieu, ville, statut), filtre par statut de dossier, **export Excel / PDF** de la sélection, colonne « Dossier » et bouton **Détails** |
+| 3. Saisie des notes | notes existantes affichées (voir l'encadré)                                                                                                                   |
+| 4. Délibération     | classement paginé — 132 candidats rendus d'un bloc ; les compteurs et la simulation restent calculés sur **tout** le classement, la proclamation engageant tous les candidats |
+
+Le **dossier complet** (`CandidatDossierModal`) rassemble ce que trois lectures savent du candidat :
+`GET /candidats/:id` (identité, contact, dossier de candidature), une note par épreuve, et la
+moyenne et le rang de `GET /concours/:id/classement`. Les notes sont demandées épreuve par épreuve —
+quatre requêtes ici — puis gardées par le store : le dossier suivant ne coûte plus rien. Il **ne
+montre pas les pièces justificatives** : `POST /candidats/:id/pieces` les dépose, mais aucune route
+ne les liste — mieux vaut un bloc absent qu'un bloc vide laissant croire qu'aucune pièce n'a été
+versée.
+
+> #### ⚠️ Un quatrième bug backend corrigé — `GET /candidats/:id` répondait 400
+>
+> Le modèle interrogeait `FROM candidat`, **au singulier** ; la table s'appelle `candidats`. La
+> route rendait donc l'erreur SQL brute « relation "candidat" does not exist » : **le détail d'un
+> candidat n'a jamais pu être consulté**. Corrigé dans `cfibackend`, avec la jointure du dossier de
+> candidature (statut, motif de rejet, date de dépôt) que faisait déjà `findByConcours` — c'est ce
+> que l'appelant vient chercher. Suite backend : **224 tests, 23 suites, tous au vert**.
+
+Couvert par `TabNotes.test.js` (5 tests) et `TabCandidats.test.js` (6 tests).
+
 ### 1.11 Le module `notes` et la délibération — terminé
 
 ```
@@ -885,6 +933,56 @@ existaient déjà côté serveur ; aucune vue ne les affichait.
 
 > Le statut d'ensemble suit la **hiérarchie des échéances** (§1.5, constants) : le retard prime. Dès
 > qu'une période est en retard, l'étudiant est « en retard », même s'il a réglé les autres.
+
+#### Ajout depuis la migration — pagination, et deux troncatures silencieuses corrigées
+
+Les six tableaux réels du module sont paginés : registre des encaissements, contrôle par classe,
+archives par exercice, registre des factures, rapport des paiements, balance par filière.
+
+> #### ⚠️ Le serveur plafonne à 200 lignes, et les écrans ne le disaient pas
+>
+> `paiement.model.js` et `facture.model.js` appliquent le même défaut :
+> `values.push(Number(limite) > 0 ? Number(limite) : 200)`. Les deux registres affichaient donc les
+> **200 lignes les plus récentes** — sur 7 497 encaissements et 1 803 factures — sans rien indiquer,
+> et leurs cumuls (« Total collecté ») portaient sur cet échantillon : un chiffre faux présenté comme
+> un total. Les filtres, appliqués côté client, ne filtraient eux aussi que ces 200 lignes.
+>
+> | Écran                | Correctif                                                                                                                                     |
+> | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+> | Registre des paiements | sélecteur de **profondeur** (200 / 1 000 / 5 000 / tout), périmètre chargé affiché, cumul explicitement rattaché à ce périmètre. Le registre complet pèse **8 Mo** : le charger d'office serait payer cher une exhaustivité pas toujours utile |
+> | Registre des factures  | chargé en entier (`limite`), 1 803 lignes pour 1,2 Mo                                                                                        |
+> | Rapport des paiements  | les deux graphiques passent sur `GET /finance/rapports/repartition-modes` et `/rapports/encaissements-mensuels` — des agrégats **serveur**, exacts sur tout le registre pour quelques centaines d'octets. Le store les servait déjà : **aucun écran ne les appelait**. Le tableau reste un extrait des 200 derniers, et l'annonce |
+>
+> Le vrai correctif reste **le filtrage serveur** : `GET /finance/paiements` accepte `cycle`,
+> `filiere_id`, `classe_id`, `mois`, `mode`, `statut` et `recherche` (voir `api.js`), qu'aucun écran
+> ne transmet aujourd'hui.
+
+**L'onglet « Plans d'échelonnement » était intégralement simulé.** Ses trois « plans types » et ses
+quatre traites étaient des `ref([...])` — « Moussa Diallo », « ETU-2026-001 » — et son filtre par
+filière proposait deux valeurs écrites dans le balisage. Ses trois boutons ne faisaient qu'un
+`alert()` : `encaisserTraite` modifiait l'objet local puis annonçait « Le grand livre comptable a été
+mis à jour » sans qu'aucune requête ne parte. Or **les deux lectures existaient** :
+`GET /finance/plans` (7 plans réels) et `GET /finance/echeanciers/suivi` (6 223 échéances) — la même
+source que la balance âgée de l'onglet « Factures ». L'onglet est rebranché, filtrable par statut,
+filière et plan, paginé et exportable ; les boutons « Encaisser » et « Relancer » ont été retirés
+(l'encaissement a son écran, et **aucune route de relance n'existe**). Couvert par
+`RapportEcheance.test.js` (6 tests).
+
+> #### ⚠️ Trois écrans restent simulés, faute de backend
+>
+> Aucun n'a été paginé : mettre une barre de pagination sous quatre lignes inventées ne ferait
+> qu'habiller l'illusion.
+>
+> - **Facturation → Archives** : un journal de caisse (salaires, électricité, fournitures) dont
+>   `saveTransaction()` fait un `unshift` local suivi d'un `alert('Transaction enregistrée !')`.
+>   **Aucune table ni route de dépenses n'existe** dans le domaine `/finance`, qui couvre plans,
+>   échéanciers, factures, paiements, tarifs et rapports.
+> - **Facturation → États d'honoraires** (`FacturationForm.vue`, malgré son nom) : les vacations des
+>   formateurs (« PRF-001 », taux horaires) sont un `ref([...])`. Aucune table `honoraires` ni
+>   `vacations` en base, aucune route. Les heures existent (`moduleclasse.heures`,
+>   `vue_attributions_cours`) ; **les taux, non** — c'est ce qui manque pour rendre l'écran réel.
+> - **Rapports → Assistant IA** : conversation aux réponses écrites d'avance, servies après un
+>   `setTimeout`. Même cas que l'onglet « Assistant IA » des délibérations, déjà retiré (§1.11).
 
 ### 1.17 Le module `pedagogies` — terminé (le plus gros, 4 écrans, backend créé)
 

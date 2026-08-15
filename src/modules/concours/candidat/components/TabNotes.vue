@@ -2,7 +2,9 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useCandidatStore } from '../store';
 import { useEpreuveConcoursStore } from '../../epreuve/store';
 import { IMPORT_ACCEPT } from '../../constants';
@@ -14,7 +16,7 @@ const props = defineProps({
 /**
  * Saisie des notes, épreuve par épreuve.
  *
- * La grille de saisie est celle de l'original. Deux défauts corrigés :
+ * La grille de saisie est celle de l'original. Trois défauts corrigés :
  *
  * - Elle annonçait « Toutes les notes ont été enregistrées avec succès »
  *   **inconditionnellement**, après la boucle. Comme l'ancien store avalait ses
@@ -22,13 +24,22 @@ const props = defineProps({
  *   sauvegardé. On compte désormais les vrais succès.
  * - L'import de notes limitait le fichier à 5 Mo mais ne vérifiait **pas son
  *   extension**.
+ * - **Les notes déjà enregistrées ne s'affichaient jamais.** La grille était
+ *   bâtie à partir de la seule liste des candidats, avec `note: ''` en dur : on
+ *   voyait les candidats, jamais leurs notes — y compris juste après les avoir
+ *   saisies et rechargé l'écran. La lecture existait pourtant
+ *   (`GET /candidats/concours/:id/epreuve?epreuve_code=`, servie par
+ *   `v_candidats_epreuves`, qui joint `notes_epreuves_concours`) et le store
+ *   l'exposait sous `fetchByEpreuve` — **aucun écran ne l'appelait**. La grille
+ *   est désormais préremplie, et une note déjà saisie se distingue d'une case
+ *   vide.
  */
 
 const candidatStore = useCandidatStore();
 const epreuveStore = useEpreuveConcoursStore();
 const notifications = useNotificationStore();
 
-const { items: candidats, loading: candidatsLoading } = storeToRefs(candidatStore);
+const { items: candidats, notesParEpreuve, loading: candidatsLoading } = storeToRefs(candidatStore);
 const { ordonnees: epreuves, loading: epreuvesLoading } = storeToRefs(epreuveStore);
 
 const loading = computed(() => candidatsLoading.value || epreuvesLoading.value);
@@ -51,24 +62,86 @@ const currentEpreuve = computed(() =>
   epreuves.value.find((epreuve) => epreuve.id === selectedEpreuveId.value)
 );
 
-/** La grille se reconstruit à chaque changement d'épreuve ou de liste. */
-watch([currentEpreuve, candidats], () => {
-  notesRows.value = candidats.value.map((candidat) => ({
-    id: candidat.id,
-    num_table: candidat.num_table,
-    nom: candidat.nom,
-    prenom: candidat.prenom,
-    note: '',
-    error: null,
-    isModified: false,
-  }));
+/** Les notes déjà enregistrées pour l'épreuve retenue, par numéro de table. */
+const notesEnregistrees = computed(() => {
+  const lignes = notesParEpreuve.value[currentEpreuve.value?.code] ?? [];
+  return new Map(lignes.map((ligne) => [ligne.num_table, ligne]));
 });
+
+// Changer d'épreuve, c'est changer de jeu de notes : on va les chercher.
+watch(
+  currentEpreuve,
+  (epreuve) => {
+    if (epreuve?.code) candidatStore.fetchNotesEpreuve(props.concoursId, epreuve.code);
+  },
+  { immediate: true }
+);
+
+/**
+ * La grille se reconstruit à chaque changement d'épreuve, de liste de candidats
+ * ou d'arrivée des notes.
+ *
+ * `noteInitiale` garde ce que le serveur a renvoyé : c'est ce qui distingue une
+ * case vide d'une note effacée, et ce qui permet de dire quelles lignes sont
+ * déjà enregistrées.
+ */
+watch(
+  [currentEpreuve, candidats, notesEnregistrees],
+  () => {
+    notesRows.value = candidats.value.map((candidat) => {
+      const enregistree = notesEnregistrees.value.get(candidat.num_table);
+      // `pg` sert `NUMERIC` en chaîne ; `null` signifie « pas encore notée ».
+      const note = enregistree?.note == null ? '' : Number(enregistree.note);
+
+      return {
+        id: candidat.id,
+        num_table: candidat.num_table,
+        nom: candidat.nom,
+        prenom: candidat.prenom,
+        note,
+        noteInitiale: note,
+        error: null,
+        isModified: false,
+      };
+    });
+  },
+  { immediate: true }
+);
 
 const totalSaisies = computed(
   () => notesRows.value.filter((row) => row.note !== '' && row.note !== null).length
 );
 
+/** Notes venues du serveur — celles qui étaient invisibles jusqu'ici. */
+const dejaEnregistrees = computed(
+  () => notesRows.value.filter((row) => row.noteInitiale !== '').length
+);
+
 const modifiees = computed(() => notesRows.value.filter((row) => row.isModified));
+
+/**
+ * La grille se parcourt page par page — 132 candidats sur le jeu de
+ * démonstration, soit autant de champs de saisie rendus d'un bloc.
+ *
+ * ⚠️ **La pagination ne découpe que l'affichage.** `notesRows` reste un seul
+ * tableau : une note saisie en page 1 survit au passage en page 2, et
+ * « Enregistrer » envoie **toutes** les lignes modifiées, quelle que soit la
+ * page où elles ont été saisies. Le compteur « non enregistrée(s) » porte lui
+ * aussi sur l'ensemble — sans quoi on croirait avoir tout sauvegardé en ne
+ * voyant plus ses modifications.
+ *
+ * Changer d'épreuve reconstruit la grille : on repart de la première page.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(notesRows, {
+  perPage: 25,
+  resetKey: () => selectedEpreuveId.value,
+});
+
+/** Les lignes modifiées qui ne sont pas sous les yeux de l'utilisateur. */
+const modifieesHorsPage = computed(() => {
+  const visibles = new Set(paginated.value.map((row) => row.id));
+  return modifiees.value.filter((row) => !visibles.has(row.id)).length;
+});
 
 /** @param {any} row */
 function validateRow(row) {
@@ -125,6 +198,14 @@ async function saveAllNotes() {
   }
 
   saving.value = false;
+
+  // Le serveur fait foi : on relit ce qu'il a réellement enregistré plutôt que
+  // de supposer que la grille locale lui correspond.
+  if (succes > 0) {
+    await candidatStore.fetchNotesEpreuve(props.concoursId, currentEpreuve.value.code, {
+      force: true,
+    });
+  }
 
   const echecs = aEnregistrer.length - succes;
 
@@ -209,6 +290,13 @@ async function handleFileChange(event) {
             <span class="badge bg-light text-secondary border">
               {{ totalSaisies }} / {{ notesRows.length }} note(s) saisie(s)
             </span>
+            <span
+              v-if="dejaEnregistrees > 0"
+              class="badge bg-success-subtle text-success ms-2"
+              title="Notes déjà enregistrées, relues depuis le serveur"
+            >
+              {{ dejaEnregistrees }} enregistrée(s)
+            </span>
             <span v-if="modifiees.length > 0" class="badge bg-warning-subtle text-warning ms-2">
               {{ modifiees.length }} non enregistrée(s)
             </span>
@@ -243,15 +331,18 @@ async function handleFileChange(event) {
       <table class="table table-hover align-middle mb-0 text-sm">
         <thead class="table-light text-uppercase text-xs text-muted">
           <tr>
-            <th class="ps-3">N° table</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>N° table</th>
             <th>Candidat</th>
             <th style="width: 160px">Note / 20</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr v-for="row in notesRows" :key="row.id">
-            <td class="ps-3">
+          <tr v-for="(row, index) in paginated" :key="row.id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+
+            <td>
               <span class="font-monospace fw-bold text-secondary">{{ row.num_table }}</span>
             </td>
 
@@ -262,7 +353,10 @@ async function handleFileChange(event) {
                 v-model="row.note"
                 type="number"
                 class="form-control form-control-sm font-monospace"
-                :class="{ 'is-invalid': row.error }"
+                :class="{
+                  'is-invalid': row.error,
+                  'border-success': !row.error && !row.isModified && row.noteInitiale !== '',
+                }"
                 min="0"
                 max="20"
                 step="0.25"
@@ -271,16 +365,31 @@ async function handleFileChange(event) {
               <div v-if="row.error" class="invalid-feedback d-block text-xs">
                 {{ row.error }}
               </div>
+              <div
+                v-else-if="row.isModified && row.noteInitiale !== ''"
+                class="text-xs text-warning mt-1"
+              >
+                Remplace {{ row.noteInitiale }}/20
+              </div>
             </td>
           </tr>
 
           <tr v-if="notesRows.length === 0">
-            <td colspan="3" class="text-center py-5 text-muted">
+            <td colspan="4" class="text-center py-5 text-muted">
               Aucun candidat n'est inscrit à ce concours.
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div v-if="notesRows.length > 0" class="border-top py-3 px-3">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="notesRows.length"
+          :items-per-page-options="[25, 50, 100, 200]"
+        />
+      </div>
     </div>
   </div>
 </template>

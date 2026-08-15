@@ -1,311 +1,345 @@
 <template>
   <div class="echeancier-container">
     <!-- Header de la section -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <div>
-        <h3 class="fw-bold mb-1">Plans d'Échelonnement & Échéanciers</h3>
+        <h3 class="fw-bold mb-1">Plans d'échelonnement &amp; échéanciers</h3>
         <p class="text-muted small mb-0">
           <i class="bi bi-calendar-range-fill text-primary me-1"></i>
-          Configuration des traites, fractionnement des scolarités et suivi des échéances par
-          classe.
+          Modalités de fractionnement de la scolarité, et suivi des traites étudiant par étudiant.
         </p>
       </div>
 
-      <!-- Action de création -->
-      <button @click="openModalSetup" class="btn btn-sm btn-primary border-0 shadow-sm py-2 px-3">
-        <i class="bi bi-plus-circle me-1"></i> Définir un nouveau Plan
-      </button>
+      <ExportMenu
+        :disabled="traitesFiltrees.length === 0"
+        @excel="exportToExcel"
+        @pdf="exportToPdf"
+      />
     </div>
 
-    <!-- Section 1 : Configuration des Plans Types (Modèles d'échelonnement) -->
-    <div class="row g-3 mb-4">
-      <div v-for="plan in plansTypes" :key="plan.id" class="col-md-4">
+    <!-- Section 1 : les plans réellement déclarés -->
+    <LoadingSpinner v-if="loadingPlans && plans.length === 0" />
+
+    <div v-else class="row g-3 mb-4">
+      <div v-for="(plan, index) in plans" :key="plan.id" class="col-md-4">
         <div
-          class="card border-0 shadow-sm rounded-4 bg-white p-3 border-top border-3"
-          :class="'border-' + plan.color"
+          class="card border-0 shadow-sm rounded-4 bg-white p-3 border-top border-3 h-100"
+          :class="`border-${couleurPlan(index)}`"
         >
           <div class="d-flex justify-content-between align-items-start mb-2">
             <h6 class="fw-bold text-dark mb-0">{{ plan.nom }}</h6>
-            <span class="badge bg-light text-dark border font-monospace text-xs"
-              >{{ plan.nombreTraites }} échéances</span
-            >
+            <span class="badge bg-light text-dark border font-monospace text-xs">
+              {{ plan.nombre_traites }} échéance(s)
+            </span>
           </div>
+
           <p class="text-muted text-xs mb-3">{{ plan.description }}</p>
 
-          <!-- Traites détaillées -->
-          <div class="timeline-traites small mb-3">
-            <div
-              v-for="(traite, idx) in plan.repartition"
-              :key="idx"
-              class="d-flex justify-content-between text-xs py-1 border-bottom border-light font-monospace"
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge bg-light text-secondary border font-monospace text-xs">
+              {{ plan.code }}
+            </span>
+            <span class="badge bg-light text-secondary border text-xs">
+              Périodicité : {{ plan.periodicite }}
+            </span>
+            <span class="badge bg-light text-secondary border text-xs">
+              Assiette : {{ plan.assiette }}
+            </span>
+            <span v-if="plan.jour_echeance" class="badge bg-light text-secondary border text-xs">
+              Échéance le {{ plan.jour_echeance }}
+            </span>
+            <span
+              class="badge text-xs"
+              :class="plan.actif ? 'bg-soft-success text-success' : 'bg-light text-muted border'"
             >
-              <span class="text-secondary"
-                ><i class="bi bi-arrow-right-short"></i> Traite {{ idx + 1 }} :</span
-              >
-              <span class="fw-bold text-dark"
-                >{{ traite.pourcentage }}% ({{ traite.periode }})</span
-              >
-            </div>
+              {{ plan.actif ? 'Actif' : 'Inactif' }}
+            </span>
           </div>
 
-          <div class="d-flex justify-content-between align-items-center pt-2">
-            <span class="text-xs text-muted"
-              >Classes : <strong class="text-dark">{{ plan.classesAssociees }}</strong></span
-            >
-            <button
-              class="btn btn-xs btn-light text-primary border-0 font-semibold py-1 px-2"
-              style="font-size: 11px"
-            >
-              <i class="bi bi-pencil-square"></i> Gérer
-            </button>
+          <!--
+            `classes_associees` est une chaîne de codes séparés par des virgules,
+            et elle peut en compter plus de cent : on annonce le nombre, et on
+            détaille au survol plutôt que de noyer la carte.
+          -->
+          <div class="text-xs text-muted mt-auto pt-2 border-top">
+            <span :title="plan.classes_associees || 'Aucune classe rattachée'">
+              <i class="bi bi-diagram-3 me-1"></i>
+              {{ nbClassesAssociees(plan) }} classe(s) rattachée(s)
+            </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Section 2 : Registre de Suivi des Traites Étudiants -->
+    <!-- Section 2 : registre de suivi des traites -->
     <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
-      <div
-        class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center"
-      >
-        <h5 class="fw-bold text-dark mb-0">
-          <i class="bi bi-person-lines-fill text-secondary me-2"></i>État des Échéances
-          Individuelles (Mois en cours)
-        </h5>
-        <div class="d-flex gap-2">
-          <select
-            class="form-select form-select-sm text-xs shadow-none border"
-            style="width: 150px"
-          >
-            <option>Toutes les filières</option>
-            <option>Informatique</option>
-            <option>Management</option>
-          </select>
+      <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5 class="fw-bold text-dark mb-0">
+              <i class="bi bi-person-lines-fill text-secondary me-2"></i>
+              État des échéances individuelles
+            </h5>
+            <p class="text-muted text-xs mb-0">
+              {{ compteurs.enRetard }} traite(s) en retard sur {{ traites.length }} échéance(s)
+              suivies.
+            </p>
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <select
+              v-model="filtreStatut"
+              class="form-select form-select-sm text-xs shadow-none border"
+              style="width: 160px"
+            >
+              <option value="">Tous les statuts</option>
+              <option
+                v-for="statut in STATUT_ECHEANCE_LIST"
+                :key="statut.code"
+                :value="statut.code"
+              >
+                {{ statut.label }}
+              </option>
+            </select>
+
+            <select
+              v-model="filtreFiliere"
+              class="form-select form-select-sm text-xs shadow-none border"
+              style="width: 190px"
+            >
+              <option value="">Toutes les filières</option>
+              <option v-for="filiere in filieres" :key="filiere" :value="filiere">
+                {{ filiere }}
+              </option>
+            </select>
+
+            <select
+              v-model="filtrePlan"
+              class="form-select form-select-sm text-xs shadow-none border"
+              style="width: 200px"
+            >
+              <option value="">Tous les plans</option>
+              <option v-for="plan in plansPresents" :key="plan" :value="plan">{{ plan }}</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div class="card-body p-0">
-        <div class="table-responsive">
+        <LoadingSpinner v-if="loadingTraites && traites.length === 0" />
+
+        <EmptyState
+          v-else-if="traites.length === 0"
+          title="Aucune échéance suivie"
+          description="Aucun échéancier n'a encore été généré. Ils se créent depuis l'écran des paiements, à l'inscription de l'étudiant."
+        />
+
+        <EmptyState
+          v-else-if="traitesFiltrees.length === 0"
+          title="Aucune traite ne correspond"
+          description="Modifiez les filtres pour retrouver une échéance."
+          :size="80"
+        />
+
+        <div v-else class="table-responsive">
           <table class="table table-hover align-middle mb-0 text-center">
             <thead class="bg-light text-secondary small">
               <tr>
-                <th class="ps-4 py-3 text-start">Étudiant & Plan</th>
-                <th>Traite N°</th>
-                <th>Montant Traite</th>
-                <th>Date Échéance</th>
-                <th>Statut Traite</th>
-                <th>Retard</th>
-                <th class="text-end pe-4">Actions</th>
+                <th class="ps-4 py-3 text-start" style="width: 70px">#</th>
+                <th class="text-start">Étudiant &amp; plan</th>
+                <th>Traite n°</th>
+                <th>Montant</th>
+                <th>Réglé</th>
+                <th>Date d'échéance</th>
+                <th>Statut</th>
+                <th class="text-end pe-4">Retard</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="traite in suiviTraites" :key="traite.id">
-                <!-- Étudiant -->
-                <td class="ps-4 text-start">
+              <tr v-for="(traite, index) in paginated" :key="traite.id">
+                <td class="ps-4 text-start text-muted small">{{ startIndex + index + 1 }}</td>
+
+                <td class="text-start">
                   <div class="fw-bold text-dark mb-0">{{ traite.etudiant }}</div>
-                  <small class="text-muted font-monospace text-xs"
-                    >{{ traite.matricule }} • {{ traite.plan }}</small
-                  >
+                  <small class="text-muted font-monospace text-xs">
+                    {{ traite.matricule }} • {{ traite.plan }}
+                  </small>
+                  <div class="text-xs text-muted">
+                    {{ traite.classe_code }} · {{ traite.filiere }}
+                  </div>
                 </td>
-                <!-- Numéro de la traite -->
+
                 <td>
-                  <span class="badge bg-light text-secondary border font-monospace"
-                    >T{{ traite.numero }} / {{ traite.totalTraites }}</span
-                  >
+                  <span class="badge bg-light text-secondary border font-monospace">
+                    T{{ traite.numero }} / {{ traite.total_traites }}
+                  </span>
+                  <div class="text-xs text-muted mt-1">{{ traite.libelle }}</div>
                 </td>
-                <!-- Montant -->
-                <td class="font-monospace fw-bold">{{ formatPrice(traite.montant) }}</td>
-                <!-- Échéance -->
-                <td class="font-monospace text-muted small">
-                  {{ formatDate(traite.dateEcheance) }}
-                </td>
-                <!-- Statut -->
+
+                <td class="font-monospace fw-bold">{{ formatMoney(traite.montant) }}</td>
+
+                <td class="font-monospace text-success">{{ formatMoney(traite.montant_regle) }}</td>
+
+                <td class="font-monospace text-muted small">{{ traite.date_echeance_fr }}</td>
+
                 <td>
                   <span
                     class="badge px-2 py-1 rounded-pill fw-bold"
-                    :class="getStatutClass(traite.statut)"
+                    :class="`bg-soft-${infoStatut(traite.statut).variant} text-${infoStatut(traite.statut).variant}`"
                   >
-                    <i class="bi me-1" :class="getStatutIcon(traite.statut)"></i>
-                    {{ traite.statut }}
+                    {{ traite.statut_libelle || infoStatut(traite.statut).label }}
                   </span>
                 </td>
-                <!-- Retard -->
-                <td class="font-monospace text-xs fw-bold text-danger">
-                  {{ traite.joursRetard > 0 ? '+' + traite.joursRetard + ' j' : '--' }}
-                </td>
-                <!-- Actions contextuelles -->
-                <td class="text-end pe-4">
-                  <div class="btn-group btn-group-xs">
-                    <button
-                      @click="encaisserTraite(traite)"
-                      class="btn btn-sm btn-success border-0 py-1 px-2"
-                      :disabled="traite.statut === 'Payée'"
-                      title="Encaisser la traite"
-                    >
-                      <i class="bi bi-cash-coin"></i>
-                    </button>
-                    <button
-                      @click="envoyerRappel(traite)"
-                      class="btn btn-sm btn-light border py-1 px-2 text-danger"
-                      :disabled="traite.statut === 'Payée'"
-                      title="Relancer par SMS/Email"
-                    >
-                      <i class="bi bi-bell"></i>
-                    </button>
-                  </div>
+
+                <td class="text-end pe-4 font-monospace text-xs fw-bold text-danger">
+                  {{ Number(traite.jours_retard) > 0 ? `+${traite.jours_retard} j` : '—' }}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+
+      <div v-if="traitesFiltrees.length" class="card-footer bg-white border-0 py-3 px-4">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="traitesFiltrees.length"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ExportMenu from '@/shared/components/ExportMenu.vue';
+import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
+import { useEcheancierStore } from '@/modules/finances/stores/echeanciers';
+import { usePlanStore } from '@/modules/finances/stores/plans';
+import {
+  formatMoney,
+  statutInfo,
+  STATUTS_ECHEANCE,
+  STATUT_ECHEANCE_LIST,
+} from '@/modules/finances/constants';
 
-// Modèles de structures d'échelons financiers applicables
-const plansTypes = ref([
-  {
-    id: 1,
-    nom: 'Plan Standard Classique',
-    description: 'Structure de paiement de scolarité de base répartie sur le premier semestre.',
-    nombreTraites: 3,
-    classesAssociees: 'Licences (L1, L2, L3)',
-    color: 'primary',
-    repartition: [
-      { pourcentage: 40, periode: "À l'inscription" },
-      { pourcentage: 30, periode: 'Fin Novembre' },
-      { pourcentage: 30, periode: 'Fin Janvier' },
-    ],
-  },
-  {
-    id: 2,
-    nom: 'Plan Mensualisé Étendu',
-    description: "Accords spécifiques pour aménagement social étalé sur l'année complète.",
-    nombreTraites: 6,
-    classesAssociees: 'Dérogations / Cas Sociaux',
-    color: 'warning',
-    repartition: [
-      { pourcentage: 20, periode: "À l'inscription" },
-      { pourcentage: 16, periode: 'Mensuel (Nov à Mar)' },
-    ],
-  },
-  {
-    id: 3,
-    nom: 'Plan Executive Master',
-    description: 'Frais de scolarité élevés scindés en deux gros acomptes de rentrée.',
-    nombreTraites: 2,
-    classesAssociees: 'Masters (M1, M2)',
-    color: 'dark',
-    repartition: [
-      { pourcentage: 50, periode: "À l'inscription" },
-      { pourcentage: 50, periode: 'Fin Décembre' },
-    ],
-  },
-]);
+/**
+ * Plans d'échelonnement et suivi des traites.
+ *
+ * ## L'écran était intégralement simulé
+ *
+ * Ses trois « plans types » (« Plan Standard Classique », « Plan Executive
+ * Master ») et ses quatre traites (« Moussa Diallo », « ETU-2026-001 ») étaient
+ * des `ref([...])` codés en dur. Le filtre par filière proposait deux valeurs
+ * écrites dans le balisage, « Informatique » et « Management ». Et ses trois
+ * boutons ne faisaient rien d'autre qu'un `alert()` — `encaisserTraite`
+ * modifiait l'objet local puis annonçait « Le grand livre comptable a été mis à
+ * jour », sans qu'aucune requête ne parte.
+ *
+ * Or **les deux lectures existaient déjà** et sont servies par le store du
+ * module : `GET /finance/plans` (7 plans réels, avec leur périodicité, leur
+ * assiette et leurs classes rattachées) et `GET /finance/echeanciers/suivi`
+ * (6 223 échéances, avec le reste dû, le statut et les jours de retard). C'est
+ * la même source que la balance âgée de l'onglet « Factures ».
+ *
+ * ## Ce qui a été retiré, et pourquoi
+ *
+ * Les boutons « Encaisser » et « Relancer » ont disparu : l'encaissement a son
+ * écran — Paiements → Encaisser — qui passe par `POST /finance/paiements` et
+ * émet un reçu, et **aucune route de relance n'existe** (ni SMS, ni e-mail) dans
+ * le backend. Mieux vaut pas de bouton qu'un bouton qui ment. « Définir un
+ * nouveau plan » suit le même sort : `POST /finance/plans` existe, mais le
+ * bouton n'ouvrait aucun formulaire — il annonçait l'ouverture d'un panneau
+ * inexistant.
+ */
 
-// État des traites en temps réel
-const suiviTraites = ref([
-  {
-    id: 101,
-    matricule: 'ETU-2026-001',
-    etudiant: 'Moussa Diallo',
-    plan: 'Plan Standard',
-    numero: 2,
-    totalTraites: 3,
-    montant: 150000,
-    dateEcheance: '2026-05-15',
-    statut: 'En retard',
-    joursRetard: 4,
-  },
-  {
-    id: 102,
-    matricule: 'ETU-2026-002',
-    etudiant: 'Awa Ndiaye',
-    plan: 'Plan Standard',
-    numero: 2,
-    totalTraites: 3,
-    montant: 150000,
-    dateEcheance: '2026-05-15',
-    statut: 'Payée',
-    joursRetard: 0,
-  },
-  {
-    id: 103,
-    matricule: 'ETU-2026-114',
-    etudiant: 'Ibrahima Diallo',
-    plan: 'Plan Executive',
-    numero: 2,
-    totalTraites: 2,
-    montant: 300000,
-    dateEcheance: '2026-04-30',
-    statut: 'Contentieux',
-    joursRetard: 19,
-  },
-  {
-    id: 104,
-    matricule: 'ETU-2026-204',
-    etudiant: 'Oumar Sy',
-    plan: 'Plan Mensuel',
-    numero: 4,
-    totalTraites: 6,
-    montant: 75000,
-    dateEcheance: '2026-05-25',
-    statut: 'En attente',
-    joursRetard: 0,
-  },
-]);
+const echeancierStore = useEcheancierStore();
+const planStore = usePlanStore();
 
-const formatPrice = (val) => {
-  return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
-};
+const { items: plans, loading: loadingPlans } = storeToRefs(planStore);
+const { traites, loading: loadingTraites } = storeToRefs(echeancierStore);
 
-const formatDate = (dateStr) => {
-  return new Date(dateStr).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-};
+const filtreStatut = ref('');
+const filtreFiliere = ref('');
+const filtrePlan = ref('');
 
-// Classes et icônes d'alerte pour les badges de l'échéancier
-const getStatutClass = (statut) => {
-  if (statut === 'Payée') return 'bg-soft-success text-success';
-  if (statut === 'En attente') return 'bg-soft-primary text-primary';
-  if (statut === 'En retard') return 'bg-soft-warning text-warning';
-  if (statut === 'Contentieux') return 'bg-soft-danger text-danger';
-  return 'bg-light text-dark';
-};
+onMounted(() => {
+  planStore.fetchAll();
+  // Le défaut serveur plafonne à 500 lignes : le suivi complet en compte 6 223,
+  // et les compteurs affichés ici porteraient sinon sur un échantillon.
+  echeancierStore.fetchSuivi({ limite: 10000 });
+});
 
-const getStatutIcon = (statut) => {
-  if (statut === 'Payée') return 'bi-check-circle-fill';
-  if (statut === 'En attente') return 'bi-clock-history';
-  if (statut === 'En retard') return 'bi-exclamation-triangle-fill';
-  if (statut === 'Contentieux') return 'bi-shield-slash-fill';
-  return 'bi-circle';
-};
+/** Teintes de bordure des cartes de plan, sans signification métier. */
+const COULEURS = ['primary', 'success', 'warning', 'info', 'dark', 'danger', 'secondary'];
+const couleurPlan = (index) => COULEURS[index % COULEURS.length];
 
-// Actions rapides
-const openModalSetup = () => {
-  alert("Ouverture du panneau de configuration des matrices d'échelonnement académique.");
-};
+/** @param {any} plan */
+const nbClassesAssociees = (plan) =>
+  String(plan.classes_associees ?? '')
+    .split(',')
+    .map((code) => code.trim())
+    .filter(Boolean).length;
 
-const encaisserTraite = (traite) => {
-  traite.statut = 'Payée';
-  traite.joursRetard = 0;
-  alert(
-    `Traite enregistrée avec succès pour ${traite.etudiant}. Le grand livre comptable a été mis à jour.`
-  );
-};
+const infoStatut = (statut) => statutInfo(STATUTS_ECHEANCE, statut);
 
-const envoyerRappel = (traite) => {
-  alert(
-    `Relance automatique envoyée à ${traite.etudiant} (${traite.matricule}).\nCanal utilisé : SMS & Notification Portail.`
-  );
-};
+const valeursDistinctes = (champ) =>
+  [...new Set(traites.value.map((traite) => traite[champ]).filter(Boolean))].sort();
+
+const filieres = computed(() => valeursDistinctes('filiere'));
+const plansPresents = computed(() => valeursDistinctes('plan'));
+
+const traitesFiltrees = computed(() =>
+  traites.value.filter(
+    (traite) =>
+      (!filtreStatut.value || traite.statut === filtreStatut.value) &&
+      (!filtreFiliere.value || traite.filiere === filtreFiliere.value) &&
+      (!filtrePlan.value || traite.plan === filtrePlan.value)
+  )
+);
+
+const compteurs = computed(() => ({
+  enRetard: traites.value.filter((traite) => traite.statut === 'EN_RETARD').length,
+}));
+
+const { page, itemsPerPage, startIndex, paginated } = usePagination(traitesFiltrees, {
+  perPage: 15,
+  resetKey: () => [filtreStatut.value, filtreFiliere.value, filtrePlan.value],
+});
+
+const { exportToExcel, exportToPdf } = useTableExport({
+  rows: computed(() =>
+    traitesFiltrees.value.map((traite) => ({
+      Matricule: traite.matricule,
+      Étudiant: traite.etudiant,
+      Classe: traite.classe_code ?? '—',
+      Filière: traite.filiere ?? '—',
+      Plan: traite.plan ?? '—',
+      Traite: `${traite.numero}/${traite.total_traites}`,
+      Libellé: traite.libelle ?? '—',
+      Montant: Number(traite.montant ?? 0),
+      Réglé: Number(traite.montant_regle ?? 0),
+      Reste: Number(traite.reste ?? 0),
+      Échéance: traite.date_echeance_fr,
+      Statut: traite.statut_libelle || infoStatut(traite.statut).label,
+      'Jours de retard': Number(traite.jours_retard ?? 0),
+    }))
+  ),
+  title: 'Suivi des traites',
+  fileBaseName: 'suivi_traites',
+  filters: () => [
+    { label: 'Statut', value: filtreStatut.value || 'Tous' },
+    { label: 'Filière', value: filtreFiliere.value || 'Toutes' },
+    { label: 'Plan', value: filtrePlan.value || 'Tous' },
+    { label: 'Traites', value: traitesFiltrees.value.length },
+  ],
+});
 </script>
 
 <style scoped>
@@ -321,6 +355,9 @@ const envoyerRappel = (traite) => {
 }
 .bg-soft-primary {
   background-color: rgba(0, 123, 255, 0.08);
+}
+.bg-soft-secondary {
+  background-color: rgba(108, 117, 125, 0.1);
 }
 
 .text-xs {

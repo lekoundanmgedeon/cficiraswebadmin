@@ -55,6 +55,37 @@
             </select>
           </div>
         </div>
+
+        <!--
+          Le périmètre chargé est dit, et il se choisit : sans cela, l'écran
+          affichait les 200 derniers encaissements en laissant croire qu'il les
+          montrait tous — et son cumul portait sur ces 200.
+        -->
+        <div class="row g-2 align-items-center mt-1">
+          <div class="col-md-4 d-flex align-items-center gap-2">
+            <label for="profondeur-registre" class="text-muted small text-nowrap mb-0">
+              Périmètre chargé :
+            </label>
+            <select
+              id="profondeur-registre"
+              v-model.number="profondeur"
+              class="form-select form-select-sm border-0 shadow-sm"
+              :disabled="loading"
+            >
+              <option v-for="option in PROFONDEURS" :key="option.valeur" :value="option.valeur">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-8 text-md-end">
+            <span class="text-muted small">
+              <i class="bi bi-info-circle me-1"></i>
+              {{ paiements.length }} encaissement(s) chargé(s) ·
+              {{ filteredPaiements.length }} après filtres. Les filtres ci-dessus s'appliquent au
+              périmètre chargé.
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -65,7 +96,8 @@
           <table class="table table-hover align-middle mb-0 text-center">
             <thead class="bg-light text-secondary small">
               <tr>
-                <th class="ps-4 py-3 text-start">Matricule</th>
+                <th class="ps-4 py-3 text-start" style="width: 70px">#</th>
+                <th class="text-start">Matricule</th>
                 <th class="text-start">Nom & Prénom</th>
                 <th>Montant</th>
                 <th>Type de frais</th>
@@ -76,8 +108,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="paiement in filteredPaiements" :key="paiement.id">
-                <td class="ps-4 text-start font-monospace fw-bold text-primary">
+              <tr v-for="(paiement, index) in paginated" :key="paiement.id">
+                <td class="ps-4 text-start text-muted small">{{ startIndex + index + 1 }}</td>
+                <td class="text-start font-monospace fw-bold text-primary">
                   {{ paiement.matricule }}
                 </td>
                 <td class="text-start fw-semibold text-dark">
@@ -122,10 +155,11 @@
                 </td>
               </tr>
 
-              <!-- Ligne de Résumé Financier (Cumul dynamique) -->
+              <!-- Cumul de la sélection entière, et non de la page affichée -->
               <tr v-if="filteredPaiements.length > 0" class="table-light border-top fw-bold">
-                <td colspan="2" class="ps-4 text-start py-3 text-uppercase text-muted small">
-                  Total Collecté Filtré :
+                <td colspan="3" class="ps-4 text-start py-3 text-uppercase text-muted small">
+                  Total collecté sur le périmètre chargé ({{ filteredPaiements.length }}
+                  encaissement(s)) :
                 </td>
                 <td class="text-primary fs-6">{{ formatCurrency(totalFiltré) }}</td>
                 <td colspan="5"></td>
@@ -133,7 +167,7 @@
 
               <!-- Aucun paiement trouvé -->
               <tr v-if="filteredPaiements.length === 0">
-                <td colspan="8" class="text-center py-5 text-muted">
+                <td colspan="9" class="text-center py-5 text-muted">
                   <i class="bi bi-folder-x display-4 text-light d-block mb-2"></i>
                   <p class="small mb-0">Aucun paiement ne correspond à ces critères.</p>
                 </td>
@@ -142,15 +176,25 @@
           </table>
         </div>
       </div>
+
+      <div v-if="filteredPaiements.length" class="card-footer bg-white border-0 py-3 px-4">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filteredPaiements.length"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { usePaiementStore } from '@/modules/finances/stores/paiements';
 import { imprimerRecu } from '@/modules/finances/utils/recu';
 
@@ -171,7 +215,7 @@ import { imprimerRecu } from '@/modules/finances/utils/recu';
 
 const store = usePaiementStore();
 const notifications = useNotificationStore();
-const { items: paiements } = storeToRefs(store);
+const { items: paiements, loading } = storeToRefs(store);
 
 const moisListe = [
   'Janvier',
@@ -195,7 +239,34 @@ const filters = ref({
   classe: '',
 });
 
-onMounted(() => store.fetchAll());
+/**
+ * Profondeur de chargement.
+ *
+ * ⚠️ **Le serveur plafonne à 200 lignes** quand `limite` n'est pas transmis
+ * (`paiement.model.js` : `values.push(Number(limite) > 0 ? Number(limite) : 200)`).
+ * L'écran affichait donc les 200 encaissements les plus récents **sans le dire**,
+ * et son « total collecté » ne portait que sur eux — un chiffre faux présenté
+ * comme le total.
+ *
+ * Le registre complet pèse 8 Mo pour 7 497 lignes : le charger d'office à chaque
+ * ouverture serait payer cher une exhaustivité dont on n'a pas toujours besoin.
+ * La profondeur est donc **choisie**, et affichée.
+ */
+const PROFONDEURS = [
+  { valeur: 200, label: '200 derniers' },
+  { valeur: 1000, label: '1 000 derniers' },
+  { valeur: 5000, label: '5 000 derniers' },
+  { valeur: 100000, label: 'Tout le registre' },
+];
+
+const profondeur = ref(200);
+
+const charger = () => store.fetchAll({ params: { limite: profondeur.value } });
+
+onMounted(charger);
+
+// Recharger, et non filtrer : la profondeur est une question posée au serveur.
+watch(profondeur, charger);
 
 /**
  * Les options des filtres sont déduites des paiements chargés, et non d'une
@@ -225,8 +296,26 @@ const filteredPaiements = computed(() =>
   })
 );
 
+/**
+ * Le registre rendait toutes les lignes chargées d'un bloc. La page revient à 1
+ * dès qu'un filtre ou la profondeur change : la page 40 du registre complet n'a
+ * aucun sens une fois le mois de mars retenu.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(filteredPaiements, {
+  perPage: 15,
+  resetKey: () => [
+    filters.value.cycle,
+    filters.value.filiere,
+    filters.value.mois,
+    filters.value.classe,
+    profondeur.value,
+  ],
+});
+
 // Les montants arrivent en chaînes (`NUMERIC` PostgreSQL) : sans `Number()`,
 // l'addition les concaténerait.
+// ⚠️ Le cumul porte sur **toute la sélection**, pas sur la page affichée : un
+// total qui changerait en tournant les pages ne voudrait rien dire.
 const totalFiltré = computed(() =>
   filteredPaiements.value.reduce((total, paiement) => total + Number(paiement.montant ?? 0), 0)
 );

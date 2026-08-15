@@ -92,7 +92,8 @@
               <table class="table table-hover align-middle mb-0 text-center">
                 <thead class="bg-light text-secondary small">
                   <tr>
-                    <th class="ps-4 py-3 text-start">Classe / Promotion</th>
+                    <th class="ps-4 py-3 text-start" style="width: 70px">#</th>
+                    <th class="text-start">Classe / Promotion</th>
                     <th>Effectif</th>
                     <th>Total Attendu</th>
                     <th>Total Perçu</th>
@@ -101,8 +102,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in archiveRecords" :key="item.classe">
-                    <td class="ps-4 text-start fw-bold text-dark">{{ item.classe }}</td>
+                  <tr v-for="(item, index) in paginated" :key="item.classe">
+                    <td class="ps-4 text-start text-muted small">{{ startIndex + index + 1 }}</td>
+                    <td class="text-start fw-bold text-dark">{{ item.classe }}</td>
                     <td class="text-muted small">{{ item.effectif }} étudiants</td>
                     <td class="font-monospace fw-semibold text-secondary">
                       {{ formatCurrency(item.attendu) }}
@@ -129,6 +131,14 @@
                 </tbody>
               </table>
             </div>
+
+            <div v-if="archiveRecords.length" class="border-top py-3 px-4">
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="archiveRecords.length"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -147,7 +157,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
 
@@ -181,6 +193,13 @@ const summary = computed(() => ({
 }));
 
 const archiveRecords = computed(() => store.bilanClasses);
+
+// Une ligne par classe : 135 sur le jeu de démonstration, rendues d'un bloc.
+// Changer d'exercice repart de la première page.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(archiveRecords, {
+  perPage: 15,
+  resetKey: () => selectedExercice.value,
+});
 
 const loadArchiveData = async () => {
   if (!selectedExercice.value) {

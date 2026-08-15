@@ -117,7 +117,8 @@
               <table class="table table-hover align-middle mb-0 text-center">
                 <thead class="bg-light text-secondary small">
                   <tr>
-                    <th class="ps-4 py-3 text-start">Filière</th>
+                    <th class="ps-4 py-3 text-start" style="width: 70px">#</th>
+                    <th class="text-start">Filière</th>
                     <th>Attendu</th>
                     <th>Perçu</th>
                     <th>Taux d'Efficacité</th>
@@ -125,8 +126,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in balanceFilières" :key="item.filiere">
-                    <td class="ps-4 text-start fw-bold text-dark">{{ item.filiere }}</td>
+                  <tr v-for="(item, index) in paginated" :key="item.filiere">
+                    <td class="ps-4 text-start text-muted small">{{ startIndex + index + 1 }}</td>
+                    <td class="text-start fw-bold text-dark">{{ item.filiere }}</td>
                     <td class="font-monospace text-muted small">{{ formatPrice(item.attendu) }}</td>
                     <td class="font-monospace fw-semibold text-success">
                       {{ formatPrice(item.percu) }}
@@ -151,6 +153,15 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div v-if="balanceFilières.length" class="border-top py-3 px-4">
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="balanceFilières.length"
+                :items-per-page-options="[10, 15, 20, 30]"
+              />
             </div>
           </div>
         </div>
@@ -218,6 +229,8 @@
 
 <script setup>
 import { computed, onMounted } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
 
 /**
@@ -255,6 +268,11 @@ const kpi = computed(() => ({
 }));
 
 const balanceFilières = computed(() => store.bilanFilieres);
+
+// Une ligne par filière : quinze aujourd'hui, autant que l'école en ouvrira.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(balanceFilières, {
+  perPage: 10,
+});
 
 const soldeNet = computed(() => kpi.value.totalEncaisse - kpi.value.totalCharges);
 

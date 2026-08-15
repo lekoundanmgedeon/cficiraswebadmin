@@ -70,7 +70,8 @@
           <table class="table table-hover mb-0">
             <thead class="bg-white text-uppercase small fw-bold">
               <tr>
-                <th class="ps-4">N° Facture</th>
+                <th class="ps-4" style="width: 70px">#</th>
+                <th>N° Facture</th>
                 <th>Étudiant</th>
                 <th>Total Dû</th>
                 <th>Déjà Payé</th>
@@ -80,8 +81,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="facture in filteredFactures" :key="facture.id" class="align-middle">
-                <td class="ps-4 fw-bold text-primary">#{{ facture.numero }}</td>
+              <tr v-for="(facture, index) in paginated" :key="facture.id" class="align-middle">
+                <td class="ps-4 text-muted small">{{ startIndex + index + 1 }}</td>
+                <td class="fw-bold text-primary">#{{ facture.numero }}</td>
                 <td>
                   <div class="fw-bold">{{ facture.etudiant }}</div>
                   <div class="text-muted extra-small">{{ facture.matricule }}</div>
@@ -121,7 +123,7 @@
                 </td>
               </tr>
               <tr v-if="filteredFactures.length === 0">
-                <td colspan="7" class="text-center py-5">
+                <td colspan="8" class="text-center py-5">
                   <img src="/img/empty-box.svg" alt="Vide" width="60" class="mb-2 opacity-50" />
                   <p class="text-muted">Aucune facture trouvée.</p>
                 </td>
@@ -130,13 +132,23 @@
           </table>
         </div>
       </div>
+
+      <div v-if="filteredFactures.length" class="card-footer bg-white border-0 py-3 px-4">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filteredFactures.length"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import { useFactureStore } from '@/modules/finances/stores/factures';
@@ -170,7 +182,12 @@ const searchQuery = ref('');
 const statusFilter = ref('tous');
 
 onMounted(() => {
-  store.fetchAll();
+  // ⚠️ `GET /finance/factures` plafonne à 200 lignes sans `limite`
+  // (`facture.model.js`) : le registre en affichait donc 200 sur 1 803, sans le
+  // dire, et ses compteurs de tête portaient sur cet échantillon. Le registre
+  // complet pèse 1,2 Mo — assez léger pour être chargé d'un coup, contrairement
+  // aux 8 Mo des encaissements.
+  store.fetchAll({ params: { limite: 100000 } });
   anneeStore.fetchAll();
   classeStore.fetchAll();
 });
@@ -209,6 +226,15 @@ const filteredFactures = computed(() =>
     return matchesSearch && matchesStatus;
   })
 );
+
+/**
+ * Le registre porte **1 803 factures** sur le jeu de démonstration, rendues
+ * d'un bloc. Une recherche ou un changement de statut ramène en première page.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(filteredFactures, {
+  perPage: 15,
+  resetKey: () => [searchQuery.value, statusFilter.value],
+});
 
 const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' F';
 

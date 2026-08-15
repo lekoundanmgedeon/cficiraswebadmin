@@ -85,6 +85,34 @@ export const SEXES = [
 export const sexeLabel = (code) => SEXES.find((sexe) => sexe.code === code)?.label ?? '—';
 
 /**
+ * Statuts d'un dossier de candidature.
+ *
+ * Relevés sur la contrainte `CHECK` de `dossiers_candidature` :
+ * `statut IN ('INCOMPLET', 'COMPLET', 'VERIFIE', 'REJETE')`. Un candidat peut
+ * n'avoir **aucun** dossier — la jointure est un `LEFT JOIN` : `statut_dossier`
+ * vaut alors `null`, ce qui n'est pas « incomplet » mais « non déposé ».
+ */
+export const STATUTS_DOSSIER = {
+  INCOMPLET: { code: 'INCOMPLET', label: 'Incomplet', variant: 'warning' },
+  COMPLET: { code: 'COMPLET', label: 'Complet', variant: 'info' },
+  VERIFIE: { code: 'VERIFIE', label: 'Vérifié', variant: 'success' },
+  REJETE: { code: 'REJETE', label: 'Rejeté', variant: 'danger' },
+};
+
+export const STATUT_DOSSIER_LIST = Object.values(STATUTS_DOSSIER);
+
+/** @param {string|null|undefined} raw @returns {{code: string, label: string, variant: string}} */
+export function statutDossierInfo(raw) {
+  const code = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+
+  if (!code) return { code: 'ABSENT', label: 'Non déposé', variant: 'secondary' };
+
+  return STATUTS_DOSSIER[code] ?? { code: 'INCONNU', label: raw, variant: 'secondary' };
+}
+
+/**
  * Règles de validation d'un candidat, portées par la **base** et non par le
  * contrôleur : une saisie non conforme remonterait en erreur SQL brute
  * (« violates check constraint »), illisible pour l'utilisateur.

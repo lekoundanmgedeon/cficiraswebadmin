@@ -112,7 +112,9 @@
                 <dt class="col-6 text-muted fw-normal">Total dû</dt>
                 <dd class="col-6 text-end fw-bold">{{ formatMoney(synthese.du) }}</dd>
                 <dt class="col-6 text-muted fw-normal">Déjà réglé</dt>
-                <dd class="col-6 text-end fw-bold text-success">{{ formatMoney(synthese.regle) }}</dd>
+                <dd class="col-6 text-end fw-bold text-success">
+                  {{ formatMoney(synthese.regle) }}
+                </dd>
                 <dt class="col-6 text-muted fw-normal">Reste à payer</dt>
                 <dd class="col-6 text-end fw-bold" :class="synthese.reste > 0 ? 'text-danger' : ''">
                   {{ formatMoney(synthese.reste) }}
@@ -318,7 +320,8 @@ const situationControle = computed(() => ({
 watch(
   situationControle,
   async (situation) => {
-    qrDataUrl.value = echeances.value.length > 0 ? await toQrDataUrl(chargeSituation(situation)) : null;
+    qrDataUrl.value =
+      echeances.value.length > 0 ? await toQrDataUrl(chargeSituation(situation)) : null;
   },
   { deep: true }
 );

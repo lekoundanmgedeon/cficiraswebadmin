@@ -37,19 +37,25 @@
       </div>
     </div>
 
-    <!-- Registre Complet du Rapport -->
+    <!-- Extrait du registre : les graphiques, eux, portent sur tout l'exercice -->
     <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
       <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
         <h5 class="fw-bold text-dark mb-0">
           <i class="bi bi-list-check text-primary me-2"></i>Détail des flux comptabilisés
         </h5>
+        <p class="text-muted small mb-0">
+          Les {{ PROFONDEUR_APERCU }} encaissements les plus récents. Les graphiques ci-dessus, eux,
+          portent sur l'intégralité du registre ; le registre complet se consulte dans « Paiements
+          ».
+        </p>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 text-center">
             <thead class="bg-light text-secondary small">
               <tr>
-                <th class="ps-4 py-3 text-start">Matricule</th>
+                <th class="ps-4 py-3 text-start" style="width: 70px">#</th>
+                <th class="text-start">Matricule</th>
                 <th class="text-start">Nom & Prénom</th>
                 <th>Montant</th>
                 <th>Type de frais</th>
@@ -59,8 +65,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="paiement in paiements" :key="paiement.id">
-                <td class="ps-4 text-start font-monospace fw-bold text-primary">
+              <tr v-for="(paiement, index) in paginated" :key="paiement.id">
+                <td class="ps-4 text-start text-muted small">{{ startIndex + index + 1 }}</td>
+                <td class="text-start font-monospace fw-bold text-primary">
                   {{ paiement.matricule }}
                 </td>
                 <td class="text-start fw-semibold text-dark">
@@ -96,7 +103,7 @@
                 </td>
               </tr>
               <tr v-if="paiements.length === 0">
-                <td colspan="7" class="text-center py-5 text-muted">
+                <td colspan="8" class="text-center py-5 text-muted">
                   <i class="bi bi-folder-x display-4 text-light d-block mb-2"></i>
                   <p class="small mb-0">Aucun paiement enregistré pour générer le rapport.</p>
                 </td>
@@ -104,6 +111,14 @@
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div v-if="paiements.length" class="card-footer bg-white border-0 py-3 px-4">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="paiements.length"
+        />
       </div>
     </div>
   </div>
@@ -113,7 +128,10 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import Chart from 'chart.js/auto';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { usePaiementStore } from '@/modules/finances/stores/paiements';
+import { useRapportStore } from '@/modules/finances/stores/rapports';
 
 /**
  * Rapport des paiements.
@@ -128,6 +146,7 @@ import { usePaiementStore } from '@/modules/finances/stores/paiements';
  */
 
 const store = usePaiementStore();
+const rapportStore = useRapportStore();
 const { items: paiements } = storeToRefs(store);
 
 /** @type {import('vue').Ref<Chart|null>} */
@@ -135,35 +154,55 @@ const chartModeInstance = ref(null);
 /** @type {import('vue').Ref<Chart|null>} */
 const chartMontantsInstance = ref(null);
 
-onMounted(() => store.fetchAll());
+/**
+ * ⚠️ **`GET /finance/paiements` plafonne à 200 lignes** quand `limite` n'est pas
+ * transmis. Les deux graphiques, qui étaient recomposés à partir de cette liste,
+ * ne portaient donc que sur les 200 encaissements les plus récents — pour 7 497
+ * en base — sans que rien ne le signale.
+ *
+ * Les deux agrégats existent côté serveur, et le store les servait déjà sans
+ * qu'aucun écran ne les appelle : `GET /finance/rapports/repartition-modes` et
+ * `/rapports/encaissements-mensuels`. Ils portent sur **tout** le registre, pour
+ * quelques centaines d'octets — là où charger les 7 497 lignes coûterait 8 Mo.
+ *
+ * Le tableau, lui, reste un extrait : c'est un aperçu du registre, et il le dit.
+ */
+const PROFONDEUR_APERCU = 200;
 
-/** Répartition par mode, en nombre de versements. */
+onMounted(() => {
+  store.fetchAll({ params: { limite: PROFONDEUR_APERCU } });
+  rapportStore.fetchRepartitionModes();
+  rapportStore.fetchEncaissementsMensuels();
+});
+
+const { page, itemsPerPage, startIndex, paginated } = usePagination(paiements, { perPage: 15 });
+
+/** Répartition par mode, en nombre de versements — sur tout le registre. */
 const repartitionModes = computed(() => {
   const compteurs = {};
-  for (const paiement of paiements.value) {
-    if (!paiement.mode) continue;
-    compteurs[paiement.mode] = (compteurs[paiement.mode] || 0) + 1;
+  for (const ligne of rapportStore.repartitionModes) {
+    if (!ligne.mode) continue;
+    compteurs[ligne.mode] = Number(ligne.nb_paiements ?? 0);
   }
   return compteurs;
 });
 
 /**
- * Volume encaissé par mois.
+ * Volume encaissé par mois — sur tout le registre.
  *
- * `date` est servie au format JJ/MM/AAAA : `new Date('20/10/2023')` est invalide
- * en JavaScript. On s'appuie donc sur `date_paiement` (ISO), que la vue serveur
- * fournit à côté.
+ * Le serveur rend `mois` au format `AAAA-MM`, du plus récent au plus ancien :
+ * on le remet dans l'ordre chronologique et on l'écrit en toutes lettres.
  */
 const volumeParMois = computed(() => {
   const totaux = {};
 
-  for (const paiement of paiements.value) {
-    const date = new Date(paiement.date_paiement);
-    if (Number.isNaN(date.getTime())) continue;
+  for (const ligne of [...rapportStore.encaissementsMensuels].reverse()) {
+    const [annee, mois] = String(ligne.mois ?? '').split('-');
+    if (!annee || !mois) continue;
 
-    const mois = date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-    const libelle = mois.charAt(0).toUpperCase() + mois.slice(1);
-    totaux[libelle] = (totaux[libelle] || 0) + Number(paiement.montant ?? 0);
+    const date = new Date(Number(annee), Number(mois) - 1, 1);
+    const libelle = date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+    totaux[libelle.charAt(0).toUpperCase() + libelle.slice(1)] = Number(ligne.total ?? 0);
   }
 
   return totaux;
@@ -228,7 +267,9 @@ function dessinerGraphiques() {
 
 // `nextTick` : les `<canvas>` sont sous un `v-if` sur la liste ; ils n'existent
 // dans le DOM qu'au rendu qui suit l'arrivée des données.
-watch(paiements, async () => {
+// Les graphiques suivent désormais les **agrégats**, et non la liste paginée :
+// les observer aurait redessiné sur une donnée qui ne les alimente plus.
+watch([repartitionModes, volumeParMois], async () => {
   await nextTick();
   dessinerGraphiques();
 });

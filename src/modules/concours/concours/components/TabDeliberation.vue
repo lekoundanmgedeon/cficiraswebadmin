@@ -3,6 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import ConfirmModal from '@/shared/components/ConfirmModal.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useConcoursStore } from '../store';
 import { SEUIL_ADMISSION_DEFAUT } from '../../constants';
 
@@ -58,6 +60,19 @@ const classes = computed(() =>
 const admis = computed(() =>
   classes.value.filter((candidat) => (moyenne(candidat.moyenne_generale) ?? -1) >= seuil.value)
 );
+
+/**
+ * Le classement est rendu page par page — 132 candidats sur le jeu de
+ * démonstration, et un concours d'entrée en compte couramment davantage.
+ *
+ * ⚠️ Les compteurs et la simulation restent calculés sur **tout** le classement :
+ * un taux de réussite qui ne porterait que sur la page affichée serait faux, et
+ * la proclamation, elle, engage tous les candidats.
+ */
+const { page, itemsPerPage, paginated } = usePagination(classes, {
+  perPage: 15,
+  resetKey: () => props.concoursId,
+});
 
 const stats = computed(() => {
   const total = classes.value.length;
@@ -226,7 +241,7 @@ const telechargerPV = () => concoursStore.downloadAdmisList(props.concoursId, 'p
 
           <tbody>
             <tr
-              v-for="candidat in classes"
+              v-for="candidat in paginated"
               :key="candidat.candidat_id"
               :class="{
                 'table-success-subtle': (moyenne(candidat.moyenne_generale) ?? -1) >= seuil,
@@ -255,6 +270,14 @@ const telechargerPV = () => concoursStore.downloadAdmisList(props.concoursId, 'p
             </tr>
           </tbody>
         </table>
+
+        <div class="border-top py-3 px-3">
+          <Pagination
+            v-model="page"
+            v-model:items-per-page="itemsPerPage"
+            :total-items="classes.length"
+          />
+        </div>
       </div>
     </div>
 

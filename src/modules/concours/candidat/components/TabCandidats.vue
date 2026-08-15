@@ -3,11 +3,16 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import * as XLSX from 'xlsx';
 import Pagination from '@/components/shared/Pagination.vue';
+import ExportMenu from '@/shared/components/ExportMenu.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
+import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useCandidatStore } from '../store';
-import { IMPORT_ACCEPT, sexeLabel } from '../../constants';
+import { useEpreuveConcoursStore } from '../../epreuve/store';
+import CandidatDossierModal from './CandidatDossierModal.vue';
+import { IMPORT_ACCEPT, sexeLabel, statutDossierInfo, STATUT_DOSSIER_LIST } from '../../constants';
 
 const props = defineProps({
   concoursId: { type: String, required: true },
@@ -30,6 +35,7 @@ const props = defineProps({
  */
 
 const candidatStore = useCandidatStore();
+const epreuveStore = useEpreuveConcoursStore();
 const notifications = useNotificationStore();
 
 const { items: candidats, loading } = storeToRefs(candidatStore);
@@ -38,24 +44,122 @@ const fileInput = ref(null);
 const selectedFile = ref(null);
 const dernierImport = ref('');
 
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
+const recherche = ref('');
+const filtreStatut = ref('');
+/** Candidat dont le dossier est ouvert, `null` quand la modale est fermée. */
+const candidatConsulte = ref(null);
 
-onMounted(() => candidatStore.fetchByConcours(props.concoursId));
+onMounted(() => {
+  candidatStore.fetchByConcours(props.concoursId);
+  // Les épreuves servent au dossier (une note par épreuve) ; elles sont
+  // partagées avec les autres onglets et ne coûtent qu'une requête.
+  epreuveStore.fetchByConcours(props.concoursId);
+});
 
 watch(
   () => props.concoursId,
   (id) => {
-    currentPage.value = 1;
     candidatStore.fetchByConcours(id);
+    epreuveStore.fetchByConcours(id);
   }
 );
 
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
+/**
+ * Normalisation de recherche : minuscules, **accents retirés**.
+ *
+ * Sans cela, « NGuema » ne trouve pas « N'Guéma » et « prenom » ne trouve pas
+ * « Prénom » — ce qui est précisément ce qu'on tape dans une barre de recherche.
+ * `NFD` décompose les caractères accentués, et la plage `̀-ͯ` retire
+ * les diacritiques ainsi isolés. Elle est écrite en échappements plutôt qu'en
+ * caractères littéraux : des marques combinantes dans le source sont invisibles
+ * à la relecture, et un éditeur peut les normaliser en silence.
+ *
+ * @param {any} valeur
+ */
+const normaliser = (valeur) =>
+  String(valeur ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 
-const paginatedCandidats = computed(() =>
-  candidats.value.slice(startIndex.value, startIndex.value + itemsPerPage.value)
-);
+/** Les champs sur lesquels porte la recherche, concaténés une fois par candidat. */
+const indexRecherche = (candidat) =>
+  normaliser(
+    [
+      candidat.num_table,
+      candidat.nom,
+      candidat.prenom,
+      candidat.email,
+      candidat.tel,
+      candidat.lieunais,
+      candidat.ville,
+      candidat.nationalite,
+      sexeLabel(candidat.sexe),
+      statutDossierInfo(candidat.statut_dossier).label,
+    ].join(' ')
+  );
+
+/**
+ * Recherche multi-termes : chaque mot saisi doit se retrouver quelque part dans
+ * la fiche, dans n'importe quel ordre. « diallo t-2026 » trouve donc le
+ * candidat DIALLO portant un numéro de table commençant par T-2026, ce qu'une
+ * recherche sur une seule chaîne continue manquerait.
+ */
+const candidatsFiltres = computed(() => {
+  const termes = normaliser(recherche.value).split(/\s+/).filter(Boolean);
+
+  return candidats.value.filter((candidat) => {
+    const statut = statutDossierInfo(candidat.statut_dossier).code;
+    if (filtreStatut.value && statut !== filtreStatut.value) return false;
+    if (termes.length === 0) return true;
+
+    const index = indexRecherche(candidat);
+    return termes.every((terme) => index.includes(terme));
+  });
+});
+
+const {
+  page,
+  itemsPerPage,
+  startIndex,
+  paginated: paginatedCandidats,
+} = usePagination(candidatsFiltres, {
+  perPage: 10,
+  resetKey: () => [recherche.value, filtreStatut.value, props.concoursId],
+});
+
+const { exportToExcel, exportToPdf } = useTableExport({
+  rows: computed(() =>
+    candidatsFiltres.value.map((candidat, index) => ({
+      'N°': index + 1,
+      'N° table': candidat.num_table,
+      Nom: candidat.nom,
+      Prénom: candidat.prenom,
+      Sexe: sexeLabel(candidat.sexe),
+      Naissance: formatDate(candidat.datenais, '—'),
+      'Lieu de naissance': candidat.lieunais ?? '—',
+      Nationalité: candidat.nationalite ?? '—',
+      Courriel: candidat.email ?? '—',
+      Téléphone: candidat.tel ?? '—',
+      Ville: candidat.ville ?? '—',
+      Dossier: statutDossierInfo(candidat.statut_dossier).label,
+      'Inscrit le': formatDate(candidat.date_inscription, '—'),
+    }))
+  ),
+  title: 'Liste des candidats',
+  fileBaseName: 'candidats_concours',
+  filters: () => [
+    { label: 'Recherche', value: recherche.value || '—' },
+    {
+      label: 'Dossier',
+      value:
+        STATUT_DOSSIER_LIST.find((statut) => statut.code === filtreStatut.value)?.label ?? 'Tous',
+    },
+    { label: 'Candidats', value: candidatsFiltres.value.length },
+    { label: "Date d'édition", value: new Date().toLocaleDateString('fr-FR') },
+  ],
+});
 
 const triggerFileSelect = () => fileInput.value?.click();
 
@@ -91,7 +195,7 @@ async function uploadFile() {
   if (result === undefined) return;
 
   cancelSelection();
-  currentPage.value = 1;
+  page.value = 1;
 
   dernierImport.value = new Date().toLocaleString('fr-FR', {
     day: 'numeric',
@@ -134,9 +238,17 @@ function downloadTemplate() {
         <p class="text-muted small mb-0">Importez la liste des candidats inscrits à ce concours.</p>
       </div>
 
-      <button class="btn btn-sm btn-light border text-secondary" @click="downloadTemplate">
-        <i class="bi bi-file-earmark-excel me-1"></i> Modèle Excel
-      </button>
+      <div class="d-flex gap-2">
+        <ExportMenu
+          label="Exporter la liste"
+          :disabled="candidatsFiltres.length === 0"
+          @excel="exportToExcel"
+          @pdf="exportToPdf"
+        />
+        <button class="btn btn-sm btn-light border text-secondary" @click="downloadTemplate">
+          <i class="bi bi-file-earmark-excel me-1"></i> Modèle Excel
+        </button>
+      </div>
     </div>
 
     <div class="card border-0 shadow-sm mb-4">
@@ -185,23 +297,78 @@ function downloadTemplate() {
       </div>
     </div>
 
+    <!-- Recherche intelligente : plusieurs mots, dans n'importe quel ordre, sans
+         se soucier des accents ni de la casse. -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-6">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted">
+                <i class="bi bi-search"></i>
+              </span>
+              <input
+                v-model="recherche"
+                type="search"
+                class="form-control border-start-0 ps-0"
+                placeholder="Nom, prénom, n° table, courriel, téléphone, ville…"
+              />
+              <button
+                v-if="recherche"
+                class="btn btn-outline-secondary"
+                type="button"
+                title="Effacer la recherche"
+                @click="recherche = ''"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <select v-model="filtreStatut" class="form-select form-select-sm">
+              <option value="">Tous les dossiers</option>
+              <option v-for="statut in STATUT_DOSSIER_LIST" :key="statut.code" :value="statut.code">
+                {{ statut.label }}
+              </option>
+              <option value="ABSENT">Non déposé</option>
+            </select>
+          </div>
+
+          <div class="col-md-3 text-md-end">
+            <span class="text-muted small">
+              <strong>{{ candidatsFiltres.length }}</strong> candidat(s)
+              <template v-if="candidatsFiltres.length !== candidats.length">
+                sur {{ candidats.length }}
+              </template>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <LoadingSpinner v-if="loading && candidats.length === 0" />
 
     <div v-else class="table-responsive border rounded-3 shadow-sm bg-white">
       <table class="table table-hover align-middle mb-0 text-sm">
         <thead class="table-light text-uppercase text-xs text-muted">
           <tr>
-            <th class="ps-3">N° table</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>N° table</th>
             <th>Candidat</th>
             <th class="text-center">Sexe</th>
             <th>Naissance</th>
             <th>Contact</th>
+            <th class="text-center">Dossier</th>
+            <th class="text-end pe-3">Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr v-for="candidat in paginatedCandidats" :key="candidat.id">
-            <td class="ps-3">
+          <tr v-for="(candidat, index) in paginatedCandidats" :key="candidat.id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+
+            <td>
               <span class="font-monospace fw-bold text-secondary">{{ candidat.num_table }}</span>
             </td>
 
@@ -224,26 +391,57 @@ function downloadTemplate() {
               <div>{{ candidat.email ?? '—' }}</div>
               <div class="text-muted">{{ candidat.tel ?? '—' }}</div>
             </td>
+
+            <td class="text-center">
+              <span
+                class="badge rounded-pill px-2 py-1"
+                :class="`bg-${statutDossierInfo(candidat.statut_dossier).variant}-subtle text-${statutDossierInfo(candidat.statut_dossier).variant}`"
+              >
+                {{ statutDossierInfo(candidat.statut_dossier).label }}
+              </span>
+            </td>
+
+            <td class="text-end pe-3">
+              <button
+                class="btn btn-sm btn-outline-primary"
+                title="Voir le dossier complet du candidat"
+                @click="candidatConsulte = candidat"
+              >
+                <i class="bi bi-eye me-1"></i> Détails
+              </button>
+            </td>
           </tr>
 
           <tr v-if="candidats.length === 0">
-            <td colspan="5" class="text-center py-5 text-muted">
+            <td colspan="8" class="text-center py-5 text-muted">
               <i class="bi bi-people d-block mb-2 fs-3"></i>
               Aucun candidat n'est encore inscrit à ce concours.
+            </td>
+          </tr>
+
+          <tr v-else-if="candidatsFiltres.length === 0">
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="bi bi-search d-block mb-2 fs-3"></i>
+              Aucun candidat ne correspond à cette recherche.
             </td>
           </tr>
         </tbody>
       </table>
 
-      <div v-if="candidats.length > 0" class="card-footer bg-white border-top py-3">
+      <div v-if="candidatsFiltres.length > 0" class="card-footer bg-white border-top py-3">
         <Pagination
-          v-model="currentPage"
-          :items-per-page="itemsPerPage"
-          :total-items="candidats.length"
-          @update:items-per-page="itemsPerPage = $event"
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="candidatsFiltres.length"
         />
       </div>
     </div>
+
+    <CandidatDossierModal
+      :candidat="candidatConsulte"
+      :concours-id="concoursId"
+      @close="candidatConsulte = null"
+    />
   </div>
 </template>
 

@@ -4,6 +4,7 @@ import {
   addNoteEpreuve,
   addPieceCandidat,
   createCandidat,
+  getCandidatById,
   getCandidatsByConcours,
   getCandidatsByEpreuve,
   importCandidats,
@@ -26,6 +27,21 @@ export const useCandidatStore = defineStore('candidats', {
     items: [],
     /** @type {string|null} */
     concoursId: null,
+    /**
+     * Notes déjà enregistrées, indexées par **code d'épreuve**.
+     *
+     * `GET /candidats/concours/:id/epreuve?epreuve_code=` renvoie les candidats
+     * **avec leur note** (`v_candidats_epreuves`, jointure gauche sur
+     * `notes_epreuves_concours`). Elles sont rangées ici, et non dans `items` :
+     * `items` est la liste des candidats, que lisent l'onglet « Candidatures »
+     * et la grille de saisie. L'ancienne action `fetchByEpreuve` l'écrasait —
+     * c'est le même piège que `classeStore.fetchByFiliere`, documenté ailleurs.
+     *
+     * @type {Record<string, any[]>}
+     */
+    notesParEpreuve: {},
+    /** @type {any|null} Dossier du candidat consulté. */
+    dossier: null,
     /** @type {any|null} Compte rendu du dernier import. */
     importReport: null,
     loading: false,
@@ -84,13 +100,63 @@ export const useCandidatStore = defineStore('candidats', {
       });
     },
 
-    /** @param {string} concoursId @param {string} epreuveCode */
+    /**
+     * Les candidats d'une épreuve, **avec la note déjà enregistrée**.
+     *
+     * Le résultat est rangé sous le code de l'épreuve, sans toucher à `items` :
+     * la grille de saisie a besoin des deux — la liste des candidats et leurs
+     * notes — et l'onglet « Candidatures » lit la même collection.
+     *
+     * @param {string} concoursId @param {string} epreuveCode
+     * @param {{force?: boolean}} [options] Ignore ce qui est déjà en mémoire.
+     */
+    async fetchNotesEpreuve(concoursId, epreuveCode, { force = false } = {}) {
+      if (!concoursId || !epreuveCode) return undefined;
+      if (!force && this.notesParEpreuve[epreuveCode]) return this.notesParEpreuve[epreuveCode];
+
+      return this.run(() => getCandidatsByEpreuve(concoursId, epreuveCode), {
+        failure: 'Erreur lors du chargement des notes de l’épreuve.',
+        onSuccess: (response) => {
+          this.notesParEpreuve = {
+            ...this.notesParEpreuve,
+            [epreuveCode]: response.data ?? [],
+          };
+        },
+      });
+    },
+
+    /**
+     * @deprecated Écrase `items` avec les lignes d'une épreuve. Utiliser
+     * `fetchNotesEpreuve`, qui range le résultat à part.
+     * @param {string} concoursId @param {string} epreuveCode
+     */
     async fetchByEpreuve(concoursId, epreuveCode) {
       return this.run(() => getCandidatsByEpreuve(concoursId, epreuveCode), {
         failure: 'Erreur lors du chargement des candidats de l’épreuve.',
         onSuccess: (response) => {
           this.items = response.data ?? [];
           this.concoursId = concoursId;
+        },
+      });
+    },
+
+    /**
+     * Dossier d'un candidat.
+     *
+     * ⚠️ `GET /candidats/:id` répondait **400** — « relation "candidat" does not
+     * exist » : le modèle interrogeait la table au singulier. Corrigé côté
+     * backend, la route joint désormais le dossier de candidature (statut, motif
+     * de rejet, date de dépôt).
+     *
+     * @param {string} id
+     */
+    async fetchDossier(id) {
+      this.dossier = null;
+
+      return this.run(() => getCandidatById(id), {
+        failure: 'Erreur lors du chargement du dossier du candidat.',
+        onSuccess: (response) => {
+          this.dossier = response.data ?? null;
         },
       });
     },
@@ -143,6 +209,9 @@ export const useCandidatStore = defineStore('candidats', {
         failure: 'Erreur lors de l’import des notes.',
         onSuccess: (response) => {
           this.importReport = response.data ?? null;
+          // Les notes en mémoire viennent d'être remplacées côté serveur : les
+          // garder afficherait l'état d'avant l'import.
+          this.notesParEpreuve = {};
         },
       });
     },

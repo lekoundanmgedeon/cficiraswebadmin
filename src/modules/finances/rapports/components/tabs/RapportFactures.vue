@@ -92,9 +92,12 @@
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
       <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
         <h5 class="fw-bold text-dark mb-0">
-          <i class="bi bi-list-ol text-primary me-2"></i>Top 5 des Plus Grands Restes à Recouvrer
-          Individuels
+          <i class="bi bi-list-ol text-primary me-2"></i>Top 10 des plus grands restes à recouvrer
         </h5>
+        <p class="text-muted small mb-0">
+          Classement volontairement borné aux dix dossiers les plus anciens : c'est une liste
+          d'arbitrage, pas le registre des impayés — celui-ci se consulte dans « Factures ».
+        </p>
       </div>
 
       <div class="card-body p-0">

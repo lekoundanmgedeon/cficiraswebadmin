@@ -100,7 +100,8 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="bg-light text-secondary small">
               <tr>
-                <th class="ps-4 py-3">Matricule</th>
+                <th class="ps-4 py-3" style="width: 70px">#</th>
+                <th>Matricule</th>
                 <th>Nom & Prénom</th>
                 <th class="text-end">Dû</th>
                 <th class="text-end">Réglé</th>
@@ -109,8 +110,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="ligne in lignesFiltrees" :key="ligne.etudiant_id">
-                <td class="ps-4 font-monospace fw-bold text-primary">{{ ligne.matricule }}</td>
+              <tr v-for="(ligne, index) in paginated" :key="ligne.etudiant_id">
+                <td class="ps-4 text-muted small">{{ startIndex + index + 1 }}</td>
+                <td class="font-monospace fw-bold text-primary">{{ ligne.matricule }}</td>
                 <td class="fw-semibold">{{ ligne.etudiant }}</td>
                 <td class="text-end">{{ formatMoney(ligne.du) }}</td>
                 <td class="text-end text-success">{{ formatMoney(ligne.regle) }}</td>
@@ -128,7 +130,7 @@
               </tr>
 
               <tr v-if="lignesFiltrees.length === 0">
-                <td colspan="6" class="text-center py-4 text-muted small">
+                <td colspan="7" class="text-center py-4 text-muted small">
                   Aucun étudiant ne correspond à ce statut.
                 </td>
               </tr>
@@ -136,15 +138,25 @@
           </table>
         </div>
       </div>
+
+      <div v-if="lignesFiltrees.length" class="card-footer bg-white border-0 py-3 px-4">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="lignesFiltrees.length"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import { useEcheancierStore } from '@/modules/finances/stores/echeanciers';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatMoney, statutInfo, STATUTS_ECHEANCE } from '@/modules/finances/constants';
 
 /**
@@ -221,6 +233,13 @@ const lignes = computed(() => {
 const lignesFiltrees = computed(() =>
   filtreStatut.value ? lignes.value.filter((l) => l.statut === filtreStatut.value) : lignes.value
 );
+
+// La page revient à 1 quand on change de classe ou de statut : la liste
+// affichée n'est plus la même.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(lignesFiltrees, {
+  perPage: 15,
+  resetKey: () => [classeId.value, filtreStatut.value],
+});
 
 const compteur = computed(() => {
   const base = { PAYE: 0, PARTIEL: 0, EN_RETARD: 0, EN_ATTENTE: 0 };

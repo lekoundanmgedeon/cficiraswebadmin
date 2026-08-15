@@ -1,0 +1,141 @@
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+import * as candidatApi from '../api';
+import * as epreuveApi from '../../epreuve/api';
+import TabNotes from './TabNotes.vue';
+
+vi.mock('vue3-toastify', () => ({
+  toast: Object.assign(vi.fn(), {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  }),
+}));
+
+const CONCOURS_ID = 'c-1';
+
+const EPREUVES = {
+  success: true,
+  data: [
+    { id: 'e1', code: 'CG', designation: 'Culture générale', coefficient: 2, ordre: 1 },
+    { id: 'e2', code: 'MATH', designation: 'Mathématiques', coefficient: 3, ordre: 2 },
+  ],
+};
+
+const CANDIDATS = {
+  success: true,
+  data: [
+    { id: 'k1', num_table: 'T-2026-0001', nom: 'NIANGA', prenom: 'Xavier', sexe: 'M' },
+    { id: 'k2', num_table: 'T-2026-0002', nom: 'DIALLO', prenom: 'Aïcha', sexe: 'F' },
+  ],
+};
+
+/**
+ * `v_candidats_epreuves` joint `notes_epreuves_concours` en `LEFT JOIN` : une
+ * note absente vaut `null`, et `pg` sert `NUMERIC` en **chaîne**.
+ */
+const NOTES_CG = {
+  success: true,
+  data: [
+    { candidat_id: 'k1', num_table: 'T-2026-0001', nom: 'NIANGA', note: '10.75' },
+    { candidat_id: 'k2', num_table: 'T-2026-0002', nom: 'DIALLO', note: null },
+  ],
+};
+
+const NOTES_MATH = {
+  success: true,
+  data: [
+    { candidat_id: 'k1', num_table: 'T-2026-0001', nom: 'NIANGA', note: '14.00' },
+    { candidat_id: 'k2', num_table: 'T-2026-0002', nom: 'DIALLO', note: '8.50' },
+  ],
+};
+
+const texteNormalise = (wrapper) => wrapper.text().replace(/\s+/g, ' ');
+
+describe('onglet Saisie des notes', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  const monter = async () => {
+    vi.spyOn(epreuveApi, 'getEpreuvesByConcours').mockResolvedValue(EPREUVES);
+    vi.spyOn(candidatApi, 'getCandidatsByConcours').mockResolvedValue(CANDIDATS);
+    vi.spyOn(candidatApi, 'getCandidatsByEpreuve').mockImplementation((_id, code) =>
+      Promise.resolve(code === 'CG' ? NOTES_CG : NOTES_MATH)
+    );
+
+    const wrapper = mount(TabNotes, { props: { concoursId: CONCOURS_ID } });
+    await flushPromises();
+    return wrapper;
+  };
+
+  it('préremplit la grille avec les notes déjà enregistrées', async () => {
+    const wrapper = await monter();
+    const champs = wrapper.findAll('tbody input[type="number"]');
+
+    // C'est tout le défaut corrigé : la grille naissait avec `note: ''`.
+    expect(champs).toHaveLength(2);
+    expect(champs[0].element.value).toBe('10.75');
+    // Une note absente reste une case vide, et non un zéro.
+    expect(champs[1].element.value).toBe('');
+  });
+
+  it('demande les notes de l’épreuve, sans écraser la liste des candidats', async () => {
+    const wrapper = await monter();
+
+    expect(candidatApi.getCandidatsByEpreuve).toHaveBeenCalledWith(CONCOURS_ID, 'CG');
+    // `items` reste la liste des candidats : les deux lignes sont toujours là.
+    expect(wrapper.findAll('tbody tr')).toHaveLength(2);
+    expect(texteNormalise(wrapper)).toContain('T-2026-0002');
+  });
+
+  it('compte les notes venues du serveur', async () => {
+    const texte = texteNormalise(await monter());
+
+    expect(texte).toContain('1 enregistrée(s)');
+    expect(texte).toContain('1 / 2 note(s) saisie(s)');
+  });
+
+  it('recharge les notes quand on change d’épreuve', async () => {
+    const wrapper = await monter();
+
+    await wrapper.find('select').setValue('e2');
+    await flushPromises();
+
+    expect(candidatApi.getCandidatsByEpreuve).toHaveBeenCalledWith(CONCOURS_ID, 'MATH');
+
+    const champs = wrapper.findAll('tbody input[type="number"]');
+    expect(champs[0].element.value).toBe('14');
+    expect(champs[1].element.value).toBe('8.5');
+  });
+
+  it('relit le serveur après enregistrement plutôt que de croire la grille', async () => {
+    const wrapper = await monter();
+    vi.spyOn(candidatApi, 'addNoteEpreuve').mockResolvedValue({ success: true, data: {} });
+
+    const champs = wrapper.findAll('tbody input[type="number"]');
+    await champs[1].setValue('12');
+    await champs[1].trigger('input');
+    await flushPromises();
+
+    await wrapper.find('button.btn-primary').trigger('click');
+    await flushPromises();
+
+    expect(candidatApi.addNoteEpreuve).toHaveBeenCalledWith('T-2026-0002', {
+      concours_id: CONCOURS_ID,
+      code_epreuve: 'CG',
+      note: 12,
+      appreciation: null,
+    });
+    // Deux appels pour CG : le chargement initial, puis la relecture forcée.
+    const appelsCG = candidatApi.getCandidatsByEpreuve.mock.calls.filter(
+      ([, code]) => code === 'CG'
+    );
+    expect(appelsCG).toHaveLength(2);
+  });
+});
