@@ -21,6 +21,11 @@ export const IMPORT_ACCEPT = '.xlsx,.xls,.csv';
  * @param {string[]} schema.required Colonnes dont la valeur est obligatoire.
  * @param {Record<string, any>} schema.example Ligne d'exemple du gabarit.
  * @param {string[]} [schema.booleans] Colonnes attendues en oui/non.
+ * @param {(row: Record<string, any>) => string[]} [schema.validate]
+ *   Contrôles propres au domaine, en plus des contrôles génériques ci-dessus :
+ *   valeur dans une énumération, borne numérique, code introuvable dans un
+ *   référentiel déjà chargé… Renvoie les erreurs trouvées, un tableau vide si la
+ *   ligne est bonne. Les deux jeux d'erreurs sont concaténés.
  * @param {string} [templateName] Suffixe du fichier modèle téléchargé.
  */
 export function useImportFile(schema, templateName = 'import') {
@@ -74,6 +79,13 @@ export function useImportFile(schema, templateName = 'import') {
       if (valeur && !BOOLEENS_CONNUS.includes(valeur)) {
         errors.push(`${column} : attendu oui/non`);
       }
+    }
+
+    // Les règles du domaine, quand le module en déclare : type dans une
+    // énumération, pondération bornée, code introuvable… Elles ne peuvent pas
+    // vivre ici, où l'on ne connaît ni les référentiels ni les contraintes.
+    if (typeof schema.validate === 'function') {
+      errors.push(...schema.validate(row));
     }
 
     return errors;

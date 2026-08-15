@@ -2,6 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { statutInfo } from '@/modules/inscriptions/constants';
 import { formatMoney } from '@/modules/finances/constants';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
@@ -39,6 +41,11 @@ async function charger() {
     loading.value = false;
   }
 }
+
+const { page, itemsPerPage, paginated } = usePagination(lignes, {
+  perPage: 10,
+  resetKey: () => props.etudiantId,
+});
 
 onMounted(charger);
 
@@ -147,7 +154,7 @@ const echeancesEnRetard = computed(() => somme('nb_echeances_retard'));
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="ligne in lignes" :key="ligne.inscription_id">
+                <tr v-for="ligne in paginated" :key="ligne.inscription_id">
                   <td class="ps-4">
                     <div class="fw-semibold text-dark">{{ ligne.classe_code ?? '—' }}</div>
                     <small class="text-muted">
@@ -180,6 +187,14 @@ const echeancesEnRetard = computed(() => somme('nb_echeances_retard'));
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div class="card-footer bg-white border-0 py-3 px-4">
+          <Pagination
+            v-model="page"
+            v-model:items-per-page="itemsPerPage"
+            :total-items="lignes.length"
+          />
         </div>
       </div>
     </div>

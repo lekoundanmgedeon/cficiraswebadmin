@@ -1,5 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useEtudiantStore } from '../../store';
 import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 import { IMPORT_ACCEPT } from '../../constants';
@@ -43,6 +45,10 @@ const annees = computed(() => anneeStore.items ?? []);
 /** Lignes rejetées : la partie du compte rendu sur laquelle on peut agir. */
 const echecs = computed(() => report.value?.details?.echecs ?? []);
 const summary = computed(() => report.value?.summary ?? null);
+
+// Un fichier de plusieurs centaines de lignes peut être rejeté en bloc : le
+// compte rendu se lit alors page par page, comme n'importe quelle liste.
+const { page, itemsPerPage, paginated: echecsPagines } = usePagination(echecs, { perPage: 10 });
 
 onMounted(async () => {
   await anneeStore.fetchAll();
@@ -251,13 +257,19 @@ function formatSize(bytes) {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="echec in echecs" :key="echec.ligne">
+                  <tr v-for="echec in echecsPagines" :key="echec.ligne">
                     <td class="fw-semibold">{{ echec.ligne }}</td>
                     <td>{{ echec.etudiant }}</td>
                     <td class="small">{{ echec.erreur }}</td>
                   </tr>
                 </tbody>
               </table>
+
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="echecs.length"
+              />
             </div>
           </div>
         </div>

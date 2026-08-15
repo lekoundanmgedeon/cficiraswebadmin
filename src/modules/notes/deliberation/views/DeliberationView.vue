@@ -7,7 +7,9 @@ import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import ConfirmModal from '@/shared/components/ConfirmModal.vue';
 import ItemActions from '@/shared/components/ItemActions.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import { useBulletinStore } from '@/modules/examens/bulletin/store';
 import BulletinContexte from '@/modules/examens/bulletin/components/BulletinContexte.vue';
@@ -81,6 +83,13 @@ const classe = computed(() => classes.value.find((item) => item.id === contexte.
 const classement = computed(() =>
   [...bulletins.value].sort((a, b) => Number(a.rang_etudiant ?? 0) - Number(b.rang_etudiant ?? 0))
 );
+
+// Le palmarès d'une classe tient sur plusieurs dizaines de lignes ; on revient
+// en première page dès que le contexte (année, semestre, classe) change.
+const { page, itemsPerPage, paginated } = usePagination(classement, {
+  perPage: 15,
+  resetKey: () => [contexte.value.anneeId, contexte.value.semestreId, contexte.value.classeId],
+});
 
 /** @param {any} value */
 const moyenne = (value) => {
@@ -242,7 +251,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
                 </thead>
 
                 <tbody>
-                  <tr v-for="bulletin in classement" :key="bulletin.id">
+                  <tr v-for="bulletin in paginated" :key="bulletin.id">
                     <td class="ps-4 fw-bold text-secondary">{{ bulletin.rang_etudiant ?? '—' }}</td>
 
                     <td>
@@ -296,6 +305,13 @@ const { exportToExcel, exportToPdf } = useTableExport({
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              v-if="classement.length"
+              v-model="page"
+              v-model:items-per-page="itemsPerPage"
+              :total-items="classement.length"
+            />
           </div>
         </div>
       </div>

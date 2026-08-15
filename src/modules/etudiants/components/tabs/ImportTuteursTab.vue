@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useEtudiantStore } from '../../store';
 import { useImportFile, IMPORT_ACCEPT } from '@/shared/composables/useImportFile';
 import { IMPORT_TUTEURS_SCHEMA, LIENS_PARENTE } from '../../constants';
@@ -44,6 +46,21 @@ const loading = computed(() => etudiantStore.loading);
 const report = computed(() => etudiantStore.tuteursImportReport);
 const summary = computed(() => report.value?.summary ?? null);
 const echecs = computed(() => report.value?.details?.echecs ?? []);
+
+// Les deux listes du compte rendu se lisent page par page : un fichier fautif de
+// plusieurs centaines de lignes noyait sinon l'écran. L'aperçu, lui, est déjà
+// borné à cinq lignes par `useImportFile`.
+const {
+  page: pageInvalides,
+  itemsPerPage: parPageInvalides,
+  paginated: invalidRowsPagines,
+} = usePagination(invalidRows, { perPage: 10 });
+
+const {
+  page: pageEchecs,
+  itemsPerPage: parPageEchecs,
+  paginated: echecsPagines,
+} = usePagination(echecs, { perPage: 10 });
 
 function clearFile() {
   reset();
@@ -200,13 +217,19 @@ function formatSize(bytes) {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, index) in invalidRows" :key="index">
+                <tr v-for="(row, index) in invalidRowsPagines" :key="index">
                   <td>{{ row.matricule_etudiant || '—' }}</td>
                   <td>{{ [row.nom, row.prenom].filter(Boolean).join(' ') || '—' }}</td>
                   <td class="small">{{ row._errors.join(', ') }}</td>
                 </tr>
               </tbody>
             </table>
+
+            <Pagination
+              v-model="pageInvalides"
+              v-model:items-per-page="parPageInvalides"
+              :total-items="invalidRows.length"
+            />
           </div>
         </div>
 
@@ -262,7 +285,7 @@ function formatSize(bytes) {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="echec in echecs" :key="echec.ligne">
+                  <tr v-for="echec in echecsPagines" :key="echec.ligne">
                     <td class="fw-semibold">{{ echec.ligne }}</td>
                     <td>{{ echec.matricule_cible }}</td>
                     <td>{{ echec.tuteur }}</td>
@@ -270,6 +293,12 @@ function formatSize(bytes) {
                   </tr>
                 </tbody>
               </table>
+
+              <Pagination
+                v-model="pageEchecs"
+                v-model:items-per-page="parPageEchecs"
+                :total-items="echecs.length"
+              />
             </div>
           </div>
         </div>

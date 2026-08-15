@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 
 /**
@@ -72,6 +74,18 @@ const groupes = computed(() => {
       capacite: items.reduce((total, classe) => total + capacite(classe), 0),
     }))
     .sort((a, b) => b.effectif - a.effectif);
+});
+
+// La pagination porte sur les **groupes** (une carte par filière) et non sur les
+// classes : couper un groupe en deux afficherait un cumul d'en-tête qui ne
+// correspondrait à aucune des lignes visibles.
+const {
+  page,
+  itemsPerPage,
+  paginated: groupesPagines,
+} = usePagination(groupes, {
+  perPage: 5,
+  resetKey: () => searchQuery.value,
 });
 
 const totalEtudiants = computed(() =>
@@ -208,7 +222,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
     />
 
     <div v-else class="d-flex flex-column gap-4">
-      <div v-for="groupe in groupes" :key="groupe.filiere" class="card border-0 shadow-sm">
+      <div v-for="groupe in groupesPagines" :key="groupe.filiere" class="card border-0 shadow-sm">
         <div
           class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center"
         >
@@ -267,6 +281,13 @@ const { exportToExcel, exportToPdf } = useTableExport({
           </div>
         </div>
       </div>
+
+      <Pagination
+        v-model="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="groupes.length"
+        :items-per-page-options="[5, 10, 15, 20]"
+      />
     </div>
   </div>
 </template>

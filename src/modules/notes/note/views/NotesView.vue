@@ -5,7 +5,9 @@ import PageHeader from '@/shared/components/PageHeader.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
 import { useSessionStore } from '@/modules/examens/session/store';
 import { useEpreuveStore } from '@/modules/examens/epreuve/store';
@@ -78,6 +80,13 @@ const notesOfficielles = computed(() =>
 
 /** Notes existantes mais encore en cours de traitement — comptées, jamais montrées. */
 const enAttente = computed(() => parStatut.value.SAISIE);
+
+// Une épreuve porte autant de notes que sa classe compte d'inscrits : la page
+// revient à 1 quand on change d'épreuve, la liste n'étant plus la même.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(notesOfficielles, {
+  perPage: 15,
+  resetKey: () => evaluationId.value,
+});
 
 const stats = computed(() => {
   const valeurs = notesOfficielles.value
@@ -250,14 +259,17 @@ function ouvrirEspace() {
                 <table class="table table-hover align-middle mb-0">
                   <thead class="table-light">
                     <tr>
-                      <th class="ps-4">Matricule</th>
+                      <th class="ps-4" style="width: 60px">#</th>
+                      <th>Matricule</th>
                       <th>Étudiant</th>
                       <th style="width: 140px">Note / 20</th>
                       <th class="text-center">Statut</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="note in notesOfficielles" :key="note.note_id">
+                    <tr v-for="(note, index) in paginated" :key="note.note_id">
+                      <td class="ps-4 text-muted small">{{ startIndex + index + 1 }}</td>
+
                       <td class="ps-4">
                         <span class="badge bg-light text-dark border font-monospace">
                           {{ note.matricule }}
@@ -280,6 +292,12 @@ function ouvrirEspace() {
                   </tbody>
                 </table>
               </div>
+
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="notesOfficielles.length"
+              />
             </div>
           </div>
         </div>

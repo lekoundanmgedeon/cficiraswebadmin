@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import ItemActions from '@/shared/components/ItemActions.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { openModal } from '@/shared/utils/modal';
 import { formatDate } from '@/shared/utils/date';
 import { useDossierStore } from '../../store';
@@ -96,6 +98,8 @@ async function confirmerRejet() {
 }
 
 const aucunePiece = computed(() => pieces.value.length === 0);
+
+const { page, itemsPerPage, paginated } = usePagination(pieces, { perPage: 10 });
 </script>
 
 <template>
@@ -135,7 +139,7 @@ const aucunePiece = computed(() => pieces.value.length === 0);
             </thead>
 
             <tbody>
-              <tr v-for="piece in pieces" :key="piece.id">
+              <tr v-for="piece in paginated" :key="piece.id">
                 <td class="ps-4 fw-semibold text-dark">
                   {{ typePieceLabel(piece.type_piece) }}
                 </td>
@@ -174,6 +178,14 @@ const aucunePiece = computed(() => pieces.value.length === 0);
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div class="card-footer bg-white border-0 py-3 px-4">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="pieces.length"
+        />
       </div>
     </div>
 
