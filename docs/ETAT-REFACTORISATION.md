@@ -1470,12 +1470,18 @@ L'onglet financier servait jusqu'ici quatre réponses codées en dur, choisies p
 `DeliberationView` et `RapportsView` (examens) sont passées en onglets pour l'accueillir ; leurs
 actions d'export et de publication ont suivi le contenu auquel elles s'appliquent.
 
-**La place laissée à la réponse.** Un tableau de quatre colonnes sortait comprimé de sa bulle : la
-conversation occupe désormais neuf colonnes sur douze (contre huit), la bulle de **réponse** n'est
-plus bridée à 78 % de largeur — celle de la **question** l'est toujours, c'est ce qui distingue les
-deux interlocuteurs —, le fil passe de 42 à 58 vh, et les colonnes de nombres (celles que le modèle
-aligne à droite) ne se replient plus : le tableau défile dans son cadre plutôt que d'écraser ses
-colonnes.
+**La place laissée à la réponse.** Les tableaux sortaient comprimés, en-têtes repliés sur deux
+lignes. Quatre causes, toutes corrigées :
+
+- les amorces occupaient une **colonne** à gauche (un quart de la largeur) ; elles forment
+  désormais une **rangée** au-dessus du fil. Un seuil (« deux colonnes au-delà de 1400 px ») aurait
+  laissé le défaut intact sur une partie des écrans sans qu'on sache lesquels ;
+- la bulle de **réponse** était bridée à 78 % de largeur — celle de la **question** l'est toujours,
+  c'est ce qui distingue les deux interlocuteurs ;
+- Bootstrap pose `width: 100%` sur `.table` : la largeur du cadre décidait de tout et les colonnes
+  se comprimaient. En `width: max-content; min-width: 100%`, c'est le contenu qui fixe la largeur et
+  le cadre défile s'il ne suit pas ;
+- marges resserrées (`p-3`, fil à `0.25rem`) et fil porté de 42 à 58 vh.
 
 **Le SQL des réponses est réservé au rôle ADMIN.** Il n'apprend rien de contrôlable à un chef de
 scolarité et expose le schéma de la base à chaque réponse. La vérifiabilité n'est pas perdue : le

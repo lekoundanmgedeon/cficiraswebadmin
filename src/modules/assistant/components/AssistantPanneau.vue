@@ -22,8 +22,11 @@ import AssistantChamp from './AssistantChamp.vue';
  *
  * ## La disposition
  *
- * Colonne des amorces à gauche, conversation à droite : reprise de cet onglet
- * financier, la seule maquette validée pour cet usage dans le projet.
+ * Reprise de cet onglet financier — amorces, puis conversation —, à une
+ * différence près : les amorces forment une **rangée au-dessus** du fil et non
+ * une colonne à côté. En colonne, elles prélevaient un quart de la largeur, et
+ * les tableaux des réponses en sortaient comprimés (voir le commentaire du
+ * gabarit).
  *
  * Aucun appel au montage hormis `/sante`, qui est bon marché : une question
  * mobilise un modèle et plusieurs requêtes SQL, elle ne part que sur une action
@@ -44,7 +47,7 @@ const props = defineProps({
   intro: { type: String, required: true },
 
   /**
-   * Les amorces de la colonne de gauche.
+   * Les questions fréquentes, en rangée au-dessus de la conversation.
    * @type {import('vue').PropType<Array<{icone: string, libelle: string, question: string}>>}
    */
   amorces: { type: Array, default: () => [] },
@@ -103,70 +106,71 @@ function demander(question) {
       <strong>Assistant indisponible.</strong> {{ store.raisonIndisponible }}
     </div>
 
-    <!-- Trois colonnes pour les amorces, neuf pour la conversation : à quatre
-         et huit, un tableau de quatre colonnes sortait comprimé — c'est la
-         réponse qui a besoin de place, pas la liste d'amorces. -->
-    <div class="row g-3">
-      <div v-if="amorces.length" class="col-lg-3">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body">
-            <h6 class="text-uppercase text-secondary fw-bold small mb-3">
-              <i class="mdi mdi-lightning-bolt text-warning me-1"></i> Questions fréquentes
-            </h6>
+    <!--
+      Les amorces sont une **rangée** au-dessus de la conversation, et non une
+      colonne à côté.
 
-            <div class="d-grid gap-2">
-              <button
-                v-for="amorce in amorces"
-                :key="amorce.question"
-                type="button"
-                class="btn btn-light btn-sm text-start border-0 text-secondary assistant-amorce"
-                :disabled="store.enCours || store.utilisable === false"
-                @click="demander(amorce.question)"
-              >
-                <i class="mdi me-2 text-primary" :class="amorce.icone"></i>{{ amorce.libelle }}
-              </button>
-            </div>
+      En colonne — la disposition d'origine, reprise de l'onglet financier —
+      elles prélevaient un quart à un tiers de la largeur. Or celle-ci est déjà
+      entamée par la barre latérale de l'application et par quatre niveaux de
+      marges emboîtées : carte de page, onglets, carte du panneau, bulle. Un
+      tableau de quatre colonnes en ressortait comprimé, ses en-têtes repliés
+      sur deux lignes — signalé à l'usage.
 
-            <p v-if="perimetre" class="assistant-perimetre mt-4 mb-0 p-3 rounded text-muted">
-              <span class="fw-bold text-primary d-block mb-1">
-                <i class="mdi mdi-shield-check me-1"></i>Sur quoi il répond
-              </span>
-              {{ perimetre }}
-            </p>
-          </div>
+      Passer par un seuil (« deux colonnes au-delà de 1400 px ») aurait laissé
+      le défaut intact sur une partie des écrans, sans qu'on sache lesquels.
+      Une rangée coûte de la hauteur ; c'est la largeur qui manque à un tableau,
+      jamais la hauteur.
+    -->
+    <div v-if="amorces.length" class="card border-0 shadow-sm mb-3">
+      <div class="card-body p-3">
+        <h6 class="text-uppercase text-secondary fw-bold small mb-2">
+          <i class="mdi mdi-lightning-bolt text-warning me-1"></i> Questions fréquentes
+        </h6>
+
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            v-for="amorce in amorces"
+            :key="amorce.question"
+            type="button"
+            class="btn btn-light btn-sm text-start border-0 text-secondary assistant-amorce"
+            :disabled="store.enCours || store.utilisable === false"
+            @click="demander(amorce.question)"
+          >
+            <i class="mdi me-2 text-primary" :class="amorce.icone"></i>{{ amorce.libelle }}
+          </button>
         </div>
+
+        <!-- Sur une seule ligne : le périmètre se lit une fois, il n'a pas à
+             occuper un encadré au-dessus de chaque conversation. -->
+        <p v-if="perimetre" class="assistant-perimetre text-muted mb-0 mt-2">
+          <i class="mdi mdi-shield-check text-primary me-1"></i>{{ perimetre }}
+        </p>
       </div>
+    </div>
 
-      <div :class="amorces.length ? 'col-lg-9' : 'col-12'">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body d-flex flex-column">
-            <div v-if="store.estVide" class="text-center text-muted flex-grow-1 py-5">
-              <i class="mdi mdi-robot-outline" style="font-size: 2.2rem"></i>
-              <p class="mt-2 mb-0 small">{{ intro }}</p>
-              <p class="mb-0 small text-body-secondary">
-                Les réponses s'appuient sur les données auxquelles votre rôle donne accès.
-              </p>
-            </div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex flex-column p-3">
+        <div v-if="store.estVide" class="text-center text-muted py-5">
+          <i class="mdi mdi-robot-outline" style="font-size: 2.2rem"></i>
+          <p class="mt-2 mb-0 small">{{ intro }}</p>
+          <p class="mb-0 small text-body-secondary">
+            Les réponses s'appuient sur les données auxquelles votre rôle donne accès.
+          </p>
+        </div>
 
-            <!-- 42vh laissait un tableau de quinze lignes défiler dans une
-                 fenêtre de trois : la hauteur suit la taille des réponses. -->
-            <AssistantFil
-              v-else
-              :messages="store.messages"
-              :en-cours="store.enCours"
-              hauteur="58vh"
-            />
+        <!-- 42vh laissait un tableau de quinze lignes défiler dans une fenêtre
+             de trois : la hauteur suit la taille des réponses. -->
+        <AssistantFil v-else :messages="store.messages" :en-cours="store.enCours" hauteur="58vh" />
 
-            <div class="mt-3">
-              <AssistantChamp
-                :en-cours="store.enCours"
-                :desactive="store.utilisable === false"
-                :suggestions="[]"
-                :placeholder="placeholder"
-                @demander="demander"
-              />
-            </div>
-          </div>
+        <div class="mt-3">
+          <AssistantChamp
+            :en-cours="store.enCours"
+            :desactive="store.utilisable === false"
+            :suggestions="[]"
+            :placeholder="placeholder"
+            @demander="demander"
+          />
         </div>
       </div>
     </div>
@@ -181,14 +185,15 @@ function demander(question) {
     background-color 0.15s ease-in-out;
 }
 
+/* Un léger soulèvement, et non un décalage latéral : en rangée, celui-ci
+   ferait chevaucher la pastille voisine. */
 .assistant-amorce:hover:not(:disabled) {
   background-color: #f0f2f5;
   color: #212529 !important;
-  transform: translateX(3px);
+  transform: translateY(-1px);
 }
 
 .assistant-perimetre {
-  background-color: rgba(101, 113, 255, 0.08);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
 }
 </style>

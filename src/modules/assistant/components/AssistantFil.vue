@@ -81,13 +81,15 @@ watch(
 </template>
 
 <style scoped>
+/* Marges resserrées : quatre conteneurs emboîtés séparent déjà le tableau du
+   bord de l'écran, et chacun prélève sa part de la largeur utile. */
 .assistant-fil {
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: 0.25rem;
 }
 
 .assistant-bulle {
-  padding: 0.7rem 1rem;
+  padding: 0.65rem 0.85rem;
   border-radius: 12px;
   /* Un enfant de conteneur flex refuse de rétrécir sous la largeur de son
      contenu : sans cela, un tableau large pousse la bulle hors du cadre au lieu
@@ -143,7 +145,21 @@ watch(
   margin: 0.5rem 0;
 }
 
+/**
+ * Le tableau prend sa largeur naturelle, et déborde plutôt que de se comprimer.
+ *
+ * Bootstrap pose `width: 100%` sur `.table` : le navigateur répartit alors
+ * l'espace disponible entre les colonnes, quitte à replier « Qualité Hygiène
+ * Sécurité Environnement » sur trois lignes et à coller les nombres. C'est ce
+ * qui rendait les tableaux serrés — la largeur du cadre décidait de tout.
+ *
+ * `max-content` inverse le rapport : c'est le contenu qui fixe la largeur, et
+ * le cadre défile s'il ne suit pas (`.table-responsive`). `min-width: 100%`
+ * garde le tableau étalé quand il tient à l'aise.
+ */
 .assistant-markdown :deep(table) {
+  width: max-content;
+  min-width: 100%;
   font-size: 0.82rem;
   background: #fff;
 }
