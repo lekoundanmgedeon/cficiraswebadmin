@@ -16,7 +16,33 @@
           </div>
 
           <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
-            <ExportMenu @excel="exportToExcel" @pdf="exportToPdf" />
+            <!--
+              Deux sorties, deux usages : l'export sert à **retravailler** la
+              donnée (une ligne par créneau), la publication à **afficher**
+              l'emploi du temps (une grille par classe). Les confondre donnerait
+              soit un tableau illisible sur une porte de salle, soit un document
+              impossible à filtrer dans un tableur.
+            -->
+            <button
+              type="button"
+              class="btn btn-outline-success mt-2 mt-xl-0"
+              :disabled="estVide"
+              @click="exportToExcel"
+            >
+              <i class="mdi mdi-file-excel me-1"></i> Exporter en Excel
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-outline-dark mt-2 mt-xl-0"
+              :disabled="estVide"
+              @click="publier"
+            >
+              <i class="mdi mdi-printer-outline me-1"></i> Publier l'emploi du temps
+            </button>
+
+            <ExportMenu label="Autres exports" @excel="exportToExcel" @pdf="exportToPdf" />
+
             <RouterLink to="/crenaux-horaires" class="btn btn-primary mt-2 mt-xl-0">
               <i class="mdi mdi-pencil me-1"></i> Planifier des créneaux
             </RouterLink>
@@ -69,7 +95,9 @@ import { RouterLink } from 'vue-router';
 import AppTabs from '@/shared/components/AppTabs.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import { useNotificationStore } from '@/shared/stores/notificationStore';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { publierEmploiDuTemps } from '../utils/publication';
 import FiltresEmploiDuTemps from '../components/FiltresEmploiDuTemps.vue';
 import GrilleJours from '../components/GrilleJours.vue';
 import VueParCycle from '../components/VueParCycle.vue';
@@ -93,7 +121,43 @@ import { libelleJour, plageHoraire } from '../constants';
  * lecture seule et renvoie vers l'autre pour planifier.
  */
 const store = useEmploiDuTempsStore();
+const notifications = useNotificationStore();
 const { filtres, loading, estVide, resume, creneaux } = storeToRefs(store);
+
+/**
+ * Le périmètre en toutes lettres, tel qu'il figurera sur la page de garde du
+ * document publié : un emploi du temps affiché sans dire ce qu'il couvre invite
+ * à le prendre pour l'emploi du temps de tout le monde.
+ */
+const perimetre = computed(() => {
+  const classes = new Set(creneaux.value.map((c) => c.classe_code).filter(Boolean));
+  if (classes.size === 1) return `Classe ${[...classes][0]}`;
+
+  const filieres = new Set(creneaux.value.map((c) => c.filiere).filter(Boolean));
+  if (filieres.size === 1) return `Filière ${[...filieres][0]} — ${classes.size} classe(s)`;
+
+  return `${classes.size} classe(s), ${filieres.size} filière(s)`;
+});
+
+/** Semestres couverts, quand le périmètre en cible un seul. */
+const periode = computed(() => {
+  const semestres = new Set(creneaux.value.map((c) => c.semestre).filter(Boolean));
+  return semestres.size === 1 ? `Semestre ${[...semestres][0]}` : '';
+});
+
+function publier() {
+  try {
+    const classes = publierEmploiDuTemps(creneaux.value, {
+      perimetre: perimetre.value,
+      periode: periode.value,
+    });
+    notifications.notifySuccess(`Emploi du temps publié : ${classes} classe(s), une page chacune.`);
+  } catch (error) {
+    // Fenêtre bloquée ou périmètre vide : les deux se disent, plutôt que de
+    // laisser l'utilisateur devant un bouton qui n'a rien fait.
+    notifications.notifyError(error, 'La publication n’a pas pu être ouverte.');
+  }
+}
 
 const tabs = [
   { id: 'jours', label: 'Par jour', component: GrilleJours },

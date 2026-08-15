@@ -28,7 +28,8 @@
         <table class="table table-hover align-middle mb-0 text-sm">
           <thead class="bg-light text-secondary text-xs">
             <tr>
-              <th class="ps-2">Horaire</th>
+              <th class="ps-2" style="width: 52px">#</th>
+              <th>Horaire</th>
               <th>Classe</th>
               <th>Type</th>
               <th>Matière</th>
@@ -38,8 +39,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="creneau in creneauxDuJour" :key="creneau.id">
-              <td class="ps-2 font-monospace text-xs fw-bold text-primary">
+            <tr v-for="(creneau, index) in paginated" :key="creneau.id">
+              <td class="ps-2 text-muted text-xs">{{ startIndex + index + 1 }}</td>
+              <td class="font-monospace text-xs fw-bold text-primary">
                 {{ plageHoraire(creneau) }}
               </td>
               <td>
@@ -65,7 +67,7 @@
             </tr>
 
             <tr v-if="!creneauxDuJour.length">
-              <td colspan="7" class="p-0">
+              <td colspan="8" class="p-0">
                 <EmptyState
                   :title="`Aucun cours le ${libelleJourActif.toLowerCase()}`"
                   description="Aucun créneau n'est planifié ce jour-là sur le périmètre sélectionné."
@@ -76,6 +78,13 @@
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        v-if="creneauxDuJour.length"
+        v-model="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="creneauxDuJour.length"
+      />
     </div>
   </div>
 </template>
@@ -84,6 +93,8 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import EmptyState from '@/shared/components/EmptyState.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useEmploiDuTempsStore } from '../store';
 import { infoType, plageHoraire } from '../constants';
 
@@ -95,6 +106,17 @@ const jourActif = ref('LUNDI');
 const creneauxDuJour = computed(
   () => parJour.value.find((jour) => jour.id === jourActif.value)?.creneaux ?? []
 );
+
+/**
+ * Une journée porte plus de deux cents créneaux, toutes classes confondues
+ * (1 351 sur la semaine du jeu de démonstration) : la liste était rendue d'un
+ * bloc. Changer de jour repart de la première page — ce n'est plus la même
+ * journée.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(creneauxDuJour, {
+  perPage: 20,
+  resetKey: () => jourActif.value,
+});
 
 const libelleJourActif = computed(
   () => parJour.value.find((jour) => jour.id === jourActif.value)?.label ?? ''

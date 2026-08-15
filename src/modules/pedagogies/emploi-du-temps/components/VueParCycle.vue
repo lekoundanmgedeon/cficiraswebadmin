@@ -10,11 +10,11 @@
     <!-- Vue transversale demandée : tous les cycles, leurs filières, leurs
          classes. Chaque niveau est repliable, sans quoi une année complète
          donnerait une page illisible. -->
-    <div v-for="cycle in parCycleFiliereClasse" :key="cycle.cycle" class="mb-4">
+    <div v-for="cycle in arborescencePage" :key="cycle.cycle" class="mb-4">
       <div class="d-flex align-items-center gap-2 mb-2">
         <span class="badge bg-soft-primary text-primary font-monospace">{{ cycle.cycle }}</span>
         <span class="text-muted text-xs">
-          {{ cycle.filieres.length }} filière(s) · {{ compterCreneaux(cycle) }} créneau(x)
+          {{ cycle.filieres.length }} filière(s) · {{ cycle.creneaux }} créneau(x) sur cette page
         </span>
       </div>
 
@@ -71,18 +71,69 @@
         </div>
       </div>
     </div>
+
+    <Pagination
+      v-if="classesAPlat.length"
+      v-model="page"
+      v-model:items-per-page="itemsPerPage"
+      :total-items="classesAPlat.length"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import EmptyState from '@/shared/components/EmptyState.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useEmploiDuTempsStore } from '../store';
 import { infoType, libelleJour, plageHoraire } from '../constants';
 
 const store = useEmploiDuTempsStore();
 const { parCycleFiliereClasse } = storeToRefs(store);
+
+/**
+ * La pagination porte sur les **classes**, pas sur les cycles.
+ *
+ * Il y a cinq cycles pour 135 classes : paginer les cycles n'aurait presque rien
+ * découpé, alors que le sommaire, lui, aligne une ligne par classe. On aplatit
+ * donc l'arborescence, on pagine, puis on **reconstruit les cycles et filières
+ * de la page affichée** — sans quoi une filière aurait été coupée sans jamais
+ * montrer sa suite.
+ */
+const classesAPlat = computed(() =>
+  parCycleFiliereClasse.value.flatMap((cycle) =>
+    cycle.filieres.flatMap((filiere) =>
+      filiere.classes.map((classe) => ({ cycle: cycle.cycle, filiere: filiere.filiere, classe }))
+    )
+  )
+);
+
+const { page, itemsPerPage, paginated } = usePagination(classesAPlat, { perPage: 15 });
+
+/** L'arborescence reconstruite sur la seule page affichée. */
+const arborescencePage = computed(() => {
+  const cycles = new Map();
+
+  for (const entree of paginated.value) {
+    if (!cycles.has(entree.cycle)) cycles.set(entree.cycle, new Map());
+    const filieres = cycles.get(entree.cycle);
+
+    if (!filieres.has(entree.filiere)) filieres.set(entree.filiere, []);
+    filieres.get(entree.filiere).push(entree.classe);
+  }
+
+  return [...cycles.entries()].map(([cycle, filieres]) => ({
+    cycle,
+    filieres: [...filieres.entries()].map(([filiere, classes]) => ({ filiere, classes })),
+    // Le compte affiché est celui de la page : annoncer le total du cycle alors
+    // qu'on n'en montre qu'une partie induirait en erreur.
+    creneaux: [...filieres.values()]
+      .flat()
+      .reduce((total, classe) => total + classe.creneaux.length, 0),
+  }));
+});
 
 /** Les classes dépliées. Tout est replié au départ : la vue est un sommaire. */
 const ouvertes = ref(new Set());
@@ -96,13 +147,6 @@ const basculer = (classe) => {
   else suivant.add(classe);
   ouvertes.value = suivant;
 };
-
-const compterCreneaux = (cycle) =>
-  cycle.filieres.reduce(
-    (total, filiere) =>
-      total + filiere.classes.reduce((sous, classe) => sous + classe.creneaux.length, 0),
-    0
-  );
 </script>
 
 <style scoped>

@@ -75,6 +75,7 @@ recadrage quand la collection rétrécit, et retour en première page au changem
 > | Bibliothèque → Catalogue, Mémoires                            | 30 ouvrages · 208 mémoires     |
 > | Coordination → Attributions, Suivi, Finalistes, Dossiers, Planning | 208 à 291                 |
 > | Diplômes & documents → Demandes en cours, Historique          | 455 demandes                   |
+> | Emploi du temps → Par jour, Par cycle & filière               | 1 351 créneaux · 135 classes   |
 >
 > Restent volontairement sans pagination : le **parcours académique** (trois périodes au plus, dont
 > les matières sont un détail interne à chaque carte), le **profil** d'un dossier (un ou deux
@@ -1092,6 +1093,41 @@ Par écran :
 > Relocalisés tels quels pour ne pas casser l'UI : `crenaux/{TravauxPratiques, TravauxDiriges}` (stats/archives) ; `attributions/{CoursMatieres` (recoupe le module `matieres`)`, ChargesHoraires, RessourcesPedagogiques, RapportsAcademiques, ArchivesPedagogiques}` ; `programme/{ResumeProgramme, CreditsECTS}` (**nécessitent des résultats** — bulletins vides, voir §2.5.13).
 
 Nettoyage : suppression des orphelins `src/api/pedagogies/pedagogieApi.js` et `src/stores/pedagogieStore/*` (3 stores), et de `src/routes/pedagogie.routes.js` (le module porte ses routes).
+
+#### Ajout depuis la migration — la publication de l'emploi du temps
+
+L'écran `/schedule` gagne la pagination de ses deux onglets et **deux sorties distinctes**, parce
+qu'elles ne servent pas à la même chose :
+
+| Bouton                        | Ce qu'il produit                                                                 | À quoi ça sert                    |
+| ----------------------------- | -------------------------------------------------------------------------------- | --------------------------------- |
+| « Exporter en Excel »         | une ligne par créneau, dix colonnes                                              | retravailler la donnée, filtrer   |
+| « Publier l'emploi du temps » | un document A4 paysage, **une page par classe**, en grille jour × tranche horaire | afficher, distribuer, imprimer    |
+
+Les confondre donnait soit un tableau illisible sur une porte de salle, soit un document impossible
+à filtrer dans un tableur. La publication est composée en HTML puis confiée à la fenêtre
+d'impression du navigateur — même procédé que les reçus de caisse (`finances/utils/recu.js`) : rien
+n'est ajouté au balisage des écrans, et le navigateur gère seul la pagination et l'enregistrement en
+PDF.
+
+**Ce que « dynamique » veut dire ici** — rien n'est figé dans le gabarit : les tranches horaires sont
+celles que les créneaux portent réellement (une classe qui commence à 7 h 30 a sa ligne 7 h 30), les
+colonnes sont les seuls jours occupés (une classe à trois jours de cours n'affiche pas cinq colonnes
+vides), et une page de garde annonce le périmètre publié — un emploi du temps affiché sans dire ce
+qu'il couvre invite à le prendre pour celui de tout le monde.
+
+> #### Les conflits d'agenda sont montrés, pas masqués
+>
+> Deux cours d'une même classe sur la même tranche sont conservés **tous les deux** dans la case, qui
+> passe en rouge. Ce n'est pas un cas d'école : sur le jeu de démonstration, LP-COM-L1-B porte
+> **trois** cours le lundi à 15 h 45, dans trois salles différentes. Un gabarit qui n'aurait gardé
+> qu'une valeur par case aurait publié un emploi du temps faux, sans que personne ne s'en aperçoive.
+
+La pagination de l'onglet « Par cycle & filière » aplatit l'arborescence, pagine les **classes**
+(cinq cycles pour 135 classes : paginer les cycles n'aurait rien découpé), puis reconstruit cycles et
+filières **de la page affichée**. Couvert par `publication.test.js` (10 tests) ;
+`apercu.manuel.test.js` régénère le document à partir d'un extrait réel pour juger la mise en page à
+l'œil (ignoré sans la variable d'environnement `APERCU_CRENEAUX`).
 
 ### 1.18 Le module `dashboard` — terminé (zéro travail backend)
 
