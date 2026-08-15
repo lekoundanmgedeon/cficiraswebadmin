@@ -60,10 +60,14 @@ export const useEpreuveStore = createCrudStore({
      * partout.
      *
      * @param {Array<{numero: number, libelle: string, payload: object}>} lignes
+     * @param {Array<{ligne: number, epreuve: string, erreur: string}>} [rejetsPrealables]
+     *   Lignes écartées avant l'envoi — un code de module ou de session
+     *   introuvable, par exemple. Elles rejoignent le compte rendu pour que
+     *   l'opérateur n'ait qu'une seule liste à corriger.
      */
-    async importPlanning(lignes) {
+    async importPlanning(lignes, rejetsPrealables = []) {
       const notifications = useNotificationStore();
-      const echecs = [];
+      const echecs = [...rejetsPrealables];
       let succes = 0;
 
       this.loading = true;
@@ -87,15 +91,17 @@ export const useEpreuveStore = createCrudStore({
         this.loading = false;
       }
 
+      const total = lignes.length + rejetsPrealables.length;
+
       this.importReport = {
-        summary: { totalTraite: lignes.length, totalSucces: succes, totalEchecs: echecs.length },
-        details: { echecs },
+        summary: { totalTraite: total, totalSucces: succes, totalEchecs: echecs.length },
+        details: { echecs: echecs.sort((a, b) => a.ligne - b.ligne) },
       };
 
       // Une seule invalidation, après coup : le calendrier reflète le résultat.
       if (succes > 0) await this.invalidate();
 
-      const message = `${succes}/${lignes.length} épreuve(s) planifiée(s)${
+      const message = `${succes}/${total} épreuve(s) planifiée(s)${
         echecs.length > 0 ? ` — ${echecs.length} rejetée(s)` : ''
       }.`;
 

@@ -38,9 +38,7 @@ defineProps({
               >
                 {{ step }}
               </p>
-              <p v-if="index < breadcrumb.length - 1" class="text-muted mb-0">
-                &nbsp;/&nbsp;
-              </p>
+              <p v-if="index < breadcrumb.length - 1" class="text-muted mb-0">&nbsp;/&nbsp;</p>
             </template>
           </div>
         </div>

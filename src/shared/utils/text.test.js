@@ -3,9 +3,7 @@ import { escapeHtml, escapeRegExp, highlight } from './text';
 
 describe('escapeHtml', () => {
   it('neutralise les balises', () => {
-    expect(escapeHtml('<script>alert(1)</script>')).toBe(
-      '&lt;script&gt;alert(1)&lt;/script&gt;'
-    );
+    expect(escapeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
 
   it('tolère null et undefined', () => {

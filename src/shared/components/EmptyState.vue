@@ -17,12 +17,7 @@ defineProps({
 
 <template>
   <div class="text-center py-5">
-    <img
-      src="/img/empty-box.svg"
-      alt=""
-      class="mb-3 opacity-50"
-      :style="{ width: `${size}px` }"
-    />
+    <img src="/img/empty-box.svg" alt="" class="mb-3 opacity-50" :style="{ width: `${size}px` }" />
     <h6 class="text-muted mb-1">{{ title }}</h6>
     <p v-if="description" class="text-muted small mb-0">{{ description }}</p>
     <!-- Action facultative : « Créer le premier élément », par exemple. -->

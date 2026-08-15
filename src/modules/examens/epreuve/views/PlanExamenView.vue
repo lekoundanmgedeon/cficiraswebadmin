@@ -4,6 +4,8 @@ import { storeToRefs } from 'pinia';
 import ItemActions from '@/shared/components/ItemActions.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import ExamenHeader from '../../components/ExamenHeader.vue';
 import EpreuveFormModal from '../components/EpreuveFormModal.vue';
@@ -53,6 +55,13 @@ const epreuves = computed(() => {
   const rows = epreuveStore.bySession(props.id);
   if (!filterType.value) return rows;
   return rows.filter((epreuve) => epreuve.type_eval === filterType.value);
+});
+
+// Une session porte jusqu'à plusieurs centaines d'épreuves : 675 sur le jeu de
+// démonstration. La page revient à 1 quand on change de filtre de type.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(epreuves, {
+  perPage: 15,
+  resetKey: () => filterType.value,
 });
 
 /** La somme des pondérations doit atteindre 100 % pour que la session soit cohérente. */
@@ -141,6 +150,7 @@ const refresh = () => epreuveStore.fetchAll({ force: true });
               <table class="table table-hover align-middle">
                 <thead>
                   <tr>
+                    <th style="width: 60px">#</th>
                     <th>Module</th>
                     <th>Désignation</th>
                     <th>Type</th>
@@ -150,7 +160,8 @@ const refresh = () => epreuveStore.fetchAll({ force: true });
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="epreuve in epreuves" :key="epreuve.id">
+                  <tr v-for="(epreuve, index) in paginated" :key="epreuve.id">
+                    <td class="text-muted">{{ startIndex + index + 1 }}</td>
                     <td>
                       <span class="badge bg-light text-dark border">
                         {{ epreuve.code_module ?? '—' }}
@@ -177,6 +188,12 @@ const refresh = () => epreuveStore.fetchAll({ force: true });
                   </tr>
                 </tbody>
               </table>
+
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="epreuves.length"
+              />
             </div>
           </div>
         </div>

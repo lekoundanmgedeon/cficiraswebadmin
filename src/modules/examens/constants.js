@@ -94,7 +94,14 @@ export const TYPES_SALLE = ['Amphi', 'Cours', 'TD', 'TP', 'Labo'];
  * nullable de la table `evaluations`.
  */
 export const IMPORT_PLANNING_SCHEMA = {
-  columns: ['code_session', 'code_module', 'type_eval', 'designation', 'ponderation', 'date_prevue'],
+  columns: [
+    'code_session',
+    'code_module',
+    'type_eval',
+    'designation',
+    'ponderation',
+    'date_prevue',
+  ],
   required: ['code_session', 'code_module', 'type_eval', 'designation', 'ponderation'],
   example: {
     code_session: 'SN-2025-S1',
@@ -128,8 +135,8 @@ export const IMPORT_PLANNING_SCHEMA = {
       }
     }
 
-    if (row.date_prevue && Number.isNaN(new Date(row.date_prevue).getTime())) {
-      erreurs.push('date_prevue illisible (attendu : AAAA-MM-JJ)');
+    if (row.date_prevue && dateISO(row.date_prevue) === null) {
+      erreurs.push('date_prevue illisible (attendu : AAAA-MM-JJ ou JJ/MM/AAAA)');
     }
 
     return erreurs;
@@ -143,13 +150,58 @@ export const IMPORT_PLANNING_SCHEMA = {
  * objet `Date`, une cellule texte en chaîne. Les deux doivent aboutir au même
  * format, celui qu'attend la colonne `date_prevue`.
  *
+ * ⚠️ **`new Date(chaîne)` ne peut pas servir ici.** Son analyse de repli est
+ * bien trop permissive dans un sens et trop stricte dans l'autre — relevé sur
+ * Node 24 :
+ *
+ * | Saisie         | `new Date(…)`  |
+ * | -------------- | -------------- |
+ * | `15 janvier`   | **2001-01-15** |
+ * | `15/01/2026`   | **Invalid**    |
+ *
+ * Un libellé français serait donc enregistré comme une date de 2001, en
+ * silence, tandis que la notation JJ/MM/AAAA — la plus naturelle pour qui
+ * saisit le fichier — serait rejetée. Les deux formats acceptés sont donc lus
+ * par motif, et leurs composantes vérifiées : le 31/02 n'est pas une date.
+ *
  * @param {any} valeur
- * @returns {string|null}
+ * @returns {string|null} `null` si la valeur est absente ou illisible.
  */
 export function dateISO(valeur) {
   if (!valeur) return null;
-  const date = valeur instanceof Date ? valeur : new Date(valeur);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+
+  if (valeur instanceof Date) {
+    if (Number.isNaN(valeur.getTime())) return null;
+    // Composantes **locales** : `toISOString()` bascule d'un jour sur les
+    // fuseaux négatifs, et une date d'examen ne se décale pas.
+    return composerISO(valeur.getFullYear(), valeur.getMonth() + 1, valeur.getDate());
+  }
+
+  const texte = String(valeur).trim();
+
+  const iso = texte.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return composerISO(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+
+  const fr = texte.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (fr) return composerISO(Number(fr[3]), Number(fr[2]), Number(fr[1]));
+
+  return null;
+}
+
+/**
+ * Assemble `AAAA-MM-JJ` après avoir vérifié que le triplet désigne un jour qui
+ * existe — un 31 avril repasserait sinon au 1ᵉʳ mai sans rien dire.
+ * @param {number} annee @param {number} mois @param {number} jour
+ * @returns {string|null}
+ */
+function composerISO(annee, mois, jour) {
+  const date = new Date(annee, mois - 1, jour);
+  const reel =
+    date.getFullYear() === annee && date.getMonth() === mois - 1 && date.getDate() === jour;
+
+  if (!reel) return null;
+
+  return `${String(annee).padStart(4, '0')}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
 }
 
 /**

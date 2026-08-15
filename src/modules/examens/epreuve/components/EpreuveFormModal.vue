@@ -3,12 +3,23 @@ import { computed, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useModuleStore } from '@/modules/matieres/store';
 import { useEpreuveStore } from '../store';
+import { useSessionStore } from '../../session/store';
 import { useEpreuveForm } from '../composables/useEpreuveForm';
 import { EPREUVE_MODAL_ID, PONDERATION, TYPES_EPREUVE } from '../../constants';
 
 const props = defineProps({
-  /** La session à laquelle l'épreuve est rattachée. */
-  sessionId: { type: String, required: true },
+  /**
+   * La session à laquelle l'épreuve est rattachée.
+   *
+   * Vide depuis un écran qui n'en fixe pas une — le calendrier, par exemple :
+   * le formulaire propose alors de la choisir.
+   */
+  sessionId: { type: String, default: '' },
+  /**
+   * Restreint les sessions proposées à ce type (`NORMALE` / `RATTRAPAGE`).
+   * Sans effet quand `sessionId` est fourni.
+   */
+  typeSession: { type: String, default: '' },
 });
 
 /**
@@ -23,18 +34,38 @@ const props = defineProps({
  *
  *  - `type_eval` ∈ { CC, TP, EXAMEN, PROJET }
  *  - `ponderation` ∈ ]0, 100]
+ *
+ * ## Deux façons d'y entrer
+ *
+ * Depuis les épreuves d'une session, celle-ci est **imposée** par l'écran
+ * (`sessionId`). Depuis le calendrier, aucune session n'est en contexte : le
+ * formulaire en propose la liste, filtrée sur le type d'onglet. C'est la même
+ * planification unitaire dans les deux cas — dupliquer le formulaire pour cette
+ * seule différence aurait fait diverger les deux copies.
  */
 
 const epreuveStore = useEpreuveStore();
 const moduleStore = useModuleStore();
+const sessionStore = useSessionStore();
 
 const { selectedEpreuve, close } = useEpreuveForm();
 const { items: modules } = storeToRefs(moduleStore);
+const { items: sessions } = storeToRefs(sessionStore);
+
+/** Vrai quand l'écran appelant n'impose pas de session. */
+const choisirSession = computed(() => !props.sessionId);
+
+const sessionsProposees = computed(() =>
+  props.typeSession
+    ? sessions.value.filter((session) => session.type_session === props.typeSession)
+    : sessions.value
+);
 
 const loading = computed(() => epreuveStore.loading);
 const isEdit = computed(() => Boolean(selectedEpreuve.value?.id));
 
 const EMPTY_FORM = {
+  session_id: '',
   module_id: '',
   type_eval: 'EXAMEN',
   designation: '',
@@ -46,6 +77,9 @@ const form = reactive({ ...EMPTY_FORM });
 const errorMessage = ref('');
 
 moduleStore.fetchAll();
+// Les sessions ne servent qu'au sélecteur ; le cache du store les rend gratuites
+// quand un autre écran les a déjà chargées.
+if (choisirSession.value) sessionStore.fetchAll();
 
 watch(
   selectedEpreuve,
@@ -56,13 +90,14 @@ watch(
       form,
       epreuve
         ? {
+            session_id: epreuve.session_id ?? props.sessionId ?? '',
             module_id: epreuve.module_id ?? '',
             type_eval: epreuve.type_eval ?? 'EXAMEN',
             designation: epreuve.designation ?? '',
             ponderation: Number(epreuve.ponderation ?? 100),
             date_prevue: epreuve.date_prevue ? String(epreuve.date_prevue).slice(0, 10) : '',
           }
-        : EMPTY_FORM
+        : { ...EMPTY_FORM, session_id: props.sessionId ?? '' }
     );
   },
   { immediate: true }
@@ -70,6 +105,10 @@ watch(
 
 /** @returns {boolean} */
 function validate() {
+  if (!props.sessionId && !form.session_id) {
+    errorMessage.value = 'Choisissez la session d’évaluation.';
+    return false;
+  }
   if (!form.module_id) {
     errorMessage.value = 'Choisissez le module évalué.';
     return false;
@@ -94,7 +133,7 @@ async function submit() {
 
   const payload = {
     module_id: form.module_id,
-    session_id: props.sessionId,
+    session_id: props.sessionId || form.session_id,
     type_eval: form.type_eval,
     designation: form.designation.trim(),
     ponderation: Number(form.ponderation),
@@ -131,6 +170,24 @@ async function submit() {
         <form @submit.prevent="submit">
           <div class="modal-body p-4">
             <div class="row g-3">
+              <!-- Le calendrier n'impose aucune session : elle se choisit ici. -->
+              <div v-if="choisirSession" class="col-md-12">
+                <label class="form-label fw-bold small">Session d'évaluation *</label>
+                <select v-model="form.session_id" class="form-select" required :disabled="loading">
+                  <option value="" disabled>— Sélectionnez une session —</option>
+                  <option
+                    v-for="session in sessionsProposees"
+                    :key="session.id"
+                    :value="session.id"
+                  >
+                    {{ session.code }} — {{ session.designation }}
+                  </option>
+                </select>
+                <div v-if="sessionsProposees.length === 0" class="form-text text-warning">
+                  Aucune session de ce type n'est déclarée : créez-en une depuis la planification.
+                </div>
+              </div>
+
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Module évalué *</label>
                 <select v-model="form.module_id" class="form-select" required :disabled="loading">

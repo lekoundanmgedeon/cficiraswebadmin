@@ -46,8 +46,32 @@ if (result !== undefined) close(); // la modale ne se ferme que si ça a vraimen
 **Composants** — `AppTabs` (⚠️ le plus important, voir §1.4), `ItemActions`, `ConfirmModal`,
 `EmptyState`, `LoadingSpinner`, `PageHeader`, `PageCard`, `ExportMenu`.
 
-**Composable** — `useTableExport` : remplace le triplet export répété dans 11 fichiers. Les
-colonnes sont **dérivées des lignes**, elles ne peuvent plus se désynchroniser.
+**Composables** — `useTableExport` : remplace le triplet export répété dans 11 fichiers. Les
+colonnes sont **dérivées des lignes**, elles ne peuvent plus se désynchroniser. `useImportFile` :
+dépôt, lecture SheetJS, validation ligne à ligne, aperçu et gabarit, paramétrés par un schéma —
+dont un `validate` facultatif pour les règles propres au module. `usePagination` : découpage,
+recadrage quand la collection rétrécit, et retour en première page au changement de filtre.
+
+> #### La pagination, écran par écran
+>
+> Le découpage était recopié à la main là où il existait — dix lignes par page en dur, sans
+> sélecteur de taille, sans décompte, et souvent sans garde-fou : appliquer un filtre depuis la
+> page 4 laissait l'utilisateur devant un tableau vide. Ailleurs, les listes étaient rendues d'un
+> bloc. Toutes passent désormais par `usePagination` + `components/shared/Pagination.vue` :
+>
+> | Écran                                                        | Lignes rendues d'un bloc avant |
+> | ------------------------------------------------------------ | ------------------------------ |
+> | Semestres → Organisation                                     | **810**                        |
+> | Examens → Calendrier · Épreuves d'une session                 | **675 à 1 800**                |
+> | Classes → Liste, Organisation, Par filière, Par niveau        | 135                            |
+> | Cycles, Filières, Niveaux, Semestres (listes et organisation) | 5 à 90                         |
+> | Scolarité → Notes officielles, Délibérations, Répartition     | jusqu'à l'effectif d'une classe |
+> | Dossier scolaire → Pièces, Situation financière              | quelques lignes                |
+> | Imports (étudiants, tuteurs, planning) → lignes rejetées      | autant que le fichier en compte |
+>
+> Deux écrans restent volontairement sans pagination : le **parcours académique** (trois périodes
+> au plus, dont les matières sont un détail interne à chaque carte) et le **profil** d'un dossier
+> (un ou deux tuteurs) — une barre de pagination y serait du bruit.
 
 **Utils** — `cache.js` (TTL + purge), `date.js`, `text.js` (`escapeHtml`, `escapeRegExp`,
 `highlight`), `modal.js`, `exportExcel.js`, `exportPDF.js`, `toast.js`.
@@ -518,6 +542,59 @@ formulaire de session offrait de son côté un état **« Brouillon »**, qui n'
   l'`await` réussissait toujours).
 - `Examens.vue` empilait la planification et le calendrier dans une page dotée d'un « + Ajouter »
   visant `#exampleModal` — **inexistante**. La route redirige désormais vers la planification.
+
+#### Ajout depuis la migration — publication du calendrier et planification par lot
+
+| Ajout                            | Détail                                                                                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pagination du calendrier         | le planning rendait **jusqu'à 1 800 lignes d'un bloc** (675 épreuves par session dans le jeu de démonstration) ; idem pour les épreuves d'une session (`PlanExamenView`)     |
+| « Publier le calendrier »        | export Excel / PDF de la **sélection entière**, jamais de la page affichée, avec périmètre, session, type et date d'édition en tête — une pièce affichable, pas un dump      |
+| Groupe de boutons                | « Planifier une épreuve » (unitaire) et « Importer un planning » (lot), côte à côte au-dessus du planning                                                                    |
+| Planification unitaire           | `EpreuveFormModal` accepte désormais une session **vide** : elle se choisit dans la modale, la liste étant restreinte au type de l'onglet. Une seule modale pour les deux écrans |
+| Import Excel / CSV d'un planning | `PlanningImportModal`, bâtie sur `useImportFile` : glisser-déposer, gabarit téléchargeable, validation ligne à ligne, aperçu, compte rendu paginé                            |
+
+> #### ⚠️ Il n'existe pas de route d'import pour les évaluations
+>
+> Les étudiants et les tuteurs ont leur `POST /academique/imports/…` ; les évaluations, non. Les
+> lignes du classeur sont donc créées **une par une** sur `POST /evaluations/evaluation`, la seule
+> route qui existe. Trois conséquences, assumées et écrites dans `importPlanning` :
+>
+> - **l'import n'est pas atomique** — un fichier à moitié fautif laisse les lignes valides créées ;
+>   le compte rendu dit lesquelles ont échoué et invite à ne réimporter que celles-là ;
+> - une requête par ligne, séquentielle (un planning se compte en dizaines de lignes) ;
+> - `create()` de la fabrique n'est **pas** utilisé : il notifie et recharge la liste à chaque appel.
+>   Cent lignes auraient produit cent messages et cent rechargements.
+>
+> Une route d'import par lot côté backend reste souhaitable : elle rendrait l'opération atomique.
+
+Le fichier désigne le module et la session par leur **code** — personne ne saisit un UUID dans un
+tableur ; la résolution en identifiants se fait à l'envoi, et une correspondance introuvable devient
+un rejet motivé (« code_module « ZZZ » introuvable ») plutôt qu'un 400 opaque.
+
+> #### ⚠️ `new Date(chaîne)` ne peut pas valider une date de classeur
+>
+> Relevé sur Node 24, en écrivant les tests : `new Date('15 janvier')` rend **2001-01-15**, tandis
+> que `new Date('15/01/2026')` rend **Invalid Date**. Un libellé français serait donc enregistré
+> comme une date de 2001, en silence, et la notation la plus naturelle pour qui remplit le fichier
+> serait refusée. `dateISO` lit les deux formats acceptés **par motif**, et vérifie que le triplet
+> désigne un jour réel — un 31/02 est rejeté au lieu de glisser au 3 mars.
+
+`useImportFile` accepte maintenant un `schema.validate` facultatif : les règles du domaine (type
+d'épreuve dans l'énumération, pondération bornée, date lisible) vivent chez le module, la mécanique
+reste écrite une fois.
+
+> #### ⚠️ Sept exports Excel ne produisaient aucun fichier
+>
+> Découvert par le test de montage du calendrier : `book_append_sheet` lève « Sheet names cannot
+> exceed 31 chars », et `useTableExport` passait le **titre** — une phrase lisible — en nom
+> d'onglet. Tout export dont le titre dépassait 31 caractères échouait donc en silence pour
+> l'utilisateur, qui voyait un bouton ne rien produire : « Répartition des étudiants par classe »,
+> « Statistiques de performance par filière », « Historique des demandes de documents », « Grand
+> livre — synthèse par classe », « Contrôle des paiements par classe », « Attribution des thèmes de
+> mémoire », « Suivi financier des inscriptions ». `nomOngletValide` abrège l'onglet et retire les
+> caractères qu'Excel refuse (`: \ / ? * [ ]`) — le titre complet reste en tête du PDF et dans le
+> nom du fichier. Corrigé pour **tous** les appelants d'un coup, couvert par
+> `shared/utils/exportExcel.test.js`.
 
 ### 1.10 Le module `concours` — terminé
 

@@ -62,7 +62,9 @@ const confirmConfig = computed(() => {
   const confirm = pending.value?.confirm ?? {};
   return {
     title: confirm.title ?? 'Confirmation',
-    message: confirm.message ?? `Voulez-vous vraiment ${pending.value?.label.toLowerCase()} « ${props.label} » ?`,
+    message:
+      confirm.message ??
+      `Voulez-vous vraiment ${pending.value?.label.toLowerCase()} « ${props.label} » ?`,
     confirmLabel: confirm.confirmLabel ?? pending.value?.label,
     variant: confirm.variant ?? pending.value?.variant ?? 'primary',
   };

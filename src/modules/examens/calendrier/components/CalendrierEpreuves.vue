@@ -2,10 +2,18 @@
 import { computed, onMounted, reactive } from 'vue';
 import { storeToRefs } from 'pinia';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import ExportMenu from '@/shared/components/ExportMenu.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
+import { openModal } from '@/shared/utils/modal';
 import { formatDate } from '@/shared/utils/date';
+import EpreuveFormModal from '../../epreuve/components/EpreuveFormModal.vue';
+import PlanningImportModal from '../../epreuve/components/PlanningImportModal.vue';
+import { useEpreuveForm } from '../../epreuve/composables/useEpreuveForm';
 import { useEpreuveStore } from '../../epreuve/store';
 import { useSessionStore } from '../../session/store';
-import { TYPES_EPREUVE, typeEpreuveLabel } from '../../constants';
+import { PLANNING_IMPORT_MODAL_ID, TYPES_EPREUVE, typeEpreuveLabel } from '../../constants';
 
 const props = defineProps({
   /** `NORMALE` ou `RATTRAPAGE` — le type de session dont on montre les épreuves. */
@@ -83,18 +91,91 @@ const sorted = computed(() =>
 );
 
 const estRattrapage = computed(() => props.typeSession === 'RATTRAPAGE');
+
+const libelleType = computed(() => (estRattrapage.value ? 'Rattrapage' : 'Session normale'));
+
+/**
+ * Le planning complet compte plusieurs centaines de lignes — 675 épreuves pour
+ * une seule session du jeu de démonstration. Il était rendu d'un bloc.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(sorted, {
+  perPage: 15,
+  resetKey: () => [filters.sessionId, filters.typeEval, filters.search],
+});
+
+/** La session retenue dans le filtre, quand il y en a une. */
+const sessionFiltree = computed(() =>
+  sessionsDuType.value.find((session) => session.id === filters.sessionId)
+);
+
+/**
+ * Publication officielle du calendrier.
+ *
+ * L'export porte sur **la sélection affichée**, pas sur la page : un calendrier
+ * publié amputé de ses pages suivantes serait pire que pas de calendrier. Les
+ * métadonnées (périmètre, session, date d'édition) accompagnent le document —
+ * c'est ce qui distingue une pièce affichable d'un tableau exporté à la volée.
+ */
+const { exportToExcel, exportToPdf } = useTableExport({
+  rows: computed(() =>
+    sorted.value.map((epreuve, index) => ({
+      'N°': index + 1,
+      'Date prévue': formatDate(epreuve.date_prevue, 'Non planifiée'),
+      Session: epreuve.code_session ?? '—',
+      Matière: epreuve.designation_module ?? '—',
+      Code: epreuve.code_module ?? '—',
+      Épreuve: epreuve.designation,
+      Type: typeEpreuveLabel(epreuve.type_eval),
+      Pondération: `${Number(epreuve.ponderation)} %`,
+    }))
+  ),
+  title: `Calendrier officiel des épreuves — ${libelleType.value}`,
+  fileBaseName: `calendrier_epreuves_${estRattrapage.value ? 'rattrapage' : 'normale'}`,
+  filters: () => [
+    { label: 'Périmètre', value: libelleType.value },
+    { label: 'Session', value: sessionFiltree.value?.designation ?? 'Toutes les sessions' },
+    {
+      label: "Type d'épreuve",
+      value: TYPES_EPREUVE.find((type) => type.code === filters.typeEval)?.label ?? 'Tous',
+    },
+    { label: 'Épreuves publiées', value: sorted.value.length },
+    { label: "Date d'édition", value: new Date().toLocaleDateString('fr-FR') },
+  ],
+});
+
+const { openCreate } = useEpreuveForm();
+
+const ouvrirImport = () => openModal(PLANNING_IMPORT_MODAL_ID);
 </script>
 
 <template>
   <div>
-    <div class="row align-items-center mb-3">
-      <div class="col-md-8">
-        <h4 class="fw-bold text-dark mb-1">
-          Planification — {{ estRattrapage ? 'Rattrapage' : 'Session normale' }}
-        </h4>
+    <div class="row align-items-center mb-3 g-2">
+      <div class="col-lg-6">
+        <h4 class="fw-bold text-dark mb-1">Planification — {{ libelleType }}</h4>
         <p class="text-muted small mb-0">
           Visualisation chronologique des épreuves, d'après leur date prévue.
         </p>
+      </div>
+
+      <div class="col-lg-6 d-flex justify-content-lg-end align-items-center gap-2 flex-wrap">
+        <!-- Publication officielle : le document reprend la sélection entière,
+             pas la page affichée. -->
+        <ExportMenu
+          label="Publier le calendrier"
+          :disabled="sorted.length === 0"
+          @excel="exportToExcel"
+          @pdf="exportToPdf"
+        />
+
+        <div class="btn-group" role="group" aria-label="Ajouter des épreuves">
+          <button type="button" class="btn btn-sm btn-primary" @click="openCreate">
+            <i class="bi bi-calendar-plus me-1"></i> Planifier une épreuve
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-primary" @click="ouvrirImport">
+            <i class="bi bi-file-earmark-arrow-up me-1"></i> Importer un planning
+          </button>
+        </div>
       </div>
     </div>
 
@@ -167,7 +248,8 @@ const estRattrapage = computed(() => props.typeSession === 'RATTRAPAGE');
               <table class="table table-hover align-middle mb-0 text-sm">
                 <thead class="table-light text-secondary text-uppercase text-xs">
                   <tr>
-                    <th class="ps-4">Date prévue</th>
+                    <th class="ps-4" style="width: 60px">#</th>
+                    <th>Date prévue</th>
                     <th>Matière</th>
                     <th>Épreuve</th>
                     <th>Type</th>
@@ -177,11 +259,13 @@ const estRattrapage = computed(() => props.typeSession === 'RATTRAPAGE');
                 </thead>
                 <tbody>
                   <tr
-                    v-for="epreuve in sorted"
+                    v-for="(epreuve, index) in paginated"
                     :key="epreuve.id"
                     :class="{ 'table-warning-subtle': estRattrapage }"
                   >
-                    <td class="ps-4">
+                    <td class="ps-4 text-muted">{{ startIndex + index + 1 }}</td>
+
+                    <td>
                       <div class="fw-bold text-dark">
                         {{ formatDate(epreuve.date_prevue, 'Non planifiée') }}
                       </div>
@@ -222,10 +306,23 @@ const estRattrapage = computed(() => props.typeSession === 'RATTRAPAGE');
                 </tbody>
               </table>
             </div>
+
+            <div v-if="sorted.length" class="px-4 py-3 border-top">
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="sorted.length"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Planification unitaire : la session se choisit dans la modale, cet écran
+         n'en fixant aucune. Le type d'onglet restreint la liste proposée. -->
+    <EpreuveFormModal :type-session="typeSession" />
+    <PlanningImportModal />
   </div>
 </template>
 
