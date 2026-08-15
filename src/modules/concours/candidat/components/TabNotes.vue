@@ -297,8 +297,19 @@ async function handleFileChange(event) {
             >
               {{ dejaEnregistrees }} enregistrée(s)
             </span>
-            <span v-if="modifiees.length > 0" class="badge bg-warning-subtle text-warning ms-2">
+            <span
+              v-if="modifiees.length > 0"
+              class="badge bg-warning-subtle text-warning ms-2"
+              :title="
+                modifieesHorsPage > 0
+                  ? `${modifieesHorsPage} sur une autre page — « Enregistrer » les envoie toutes`
+                  : ''
+              "
+            >
               {{ modifiees.length }} non enregistrée(s)
+              <template v-if="modifieesHorsPage > 0">
+                (dont {{ modifieesHorsPage }} hors page)
+              </template>
             </span>
           </div>
 

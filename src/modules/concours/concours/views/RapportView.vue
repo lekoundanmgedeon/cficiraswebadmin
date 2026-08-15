@@ -1,15 +1,15 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, markRaw, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
+import AppTabs from '@/shared/components/AppTabs.vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
-import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
-import ExportMenu from '@/shared/components/ExportMenu.vue';
-import { useTableExport } from '@/shared/composables/useTableExport';
+import RapportClassementTab from '../components/RapportClassementTab.vue';
+import RapportStatistiquesTab from '../components/RapportStatistiquesTab.vue';
 import { useConcoursStore } from '../store';
 
 /**
- * Rapport de concours : le classement des candidats.
+ * Rapports de concours.
  *
  * `RapportConcours.vue` affichait — dans un « rapport de concours » — une liste
  * de **formateurs** codés en dur (« John Doe », « Anna Smith »), servie après un
@@ -17,12 +17,18 @@ import { useConcoursStore } from '../store';
  * dans `RapportExamens.vue` : ni l'un ni l'autre n'avait de rapport avec des
  * résultats.
  *
- * Le classement, lui, est réel : `GET /concours/:id/classement` renvoie la
- * moyenne générale et le rang de chaque candidat.
+ * L'écran porte désormais deux onglets — le classement, et les statistiques de
+ * résultats. Le **sélecteur de concours reste ici**, au-dessus des onglets :
+ * c'est le même périmètre pour les deux, et le dupliquer dans chacun aurait
+ * permis d'en consulter deux différents sans s'en apercevoir.
+ *
+ * Le classement est chargé une fois, à ce niveau : les deux onglets le lisent,
+ * et `AppTabs` ne monte que l'onglet actif — le recharger à chaque bascule
+ * serait une requête pour rien.
  */
 
 const concoursStore = useConcoursStore();
-const { items: concoursList, classement, loading } = storeToRefs(concoursStore);
+const { items: concoursList } = storeToRefs(concoursStore);
 
 const concoursId = ref('');
 
@@ -32,35 +38,18 @@ watch(concoursId, (id) => concoursStore.fetchClassement(id));
 
 const concours = computed(() => concoursList.value.find((item) => item.id === concoursId.value));
 
-/** @param {any} value */
-const moyenne = (value) => {
-  const number = Number(value);
-  return Number.isNaN(number) ? '—' : number.toFixed(2);
-};
+const tabs = computed(() => {
+  const props = { concoursId: concoursId.value, designation: concours.value?.designation ?? '' };
 
-const classes = computed(() =>
-  [...classement.value].sort((a, b) => Number(a.rang ?? 0) - Number(b.rang ?? 0))
-);
-
-const exportRows = computed(() =>
-  classes.value.map((candidat) => ({
-    Rang: candidat.rang,
-    'N° table': candidat.num_table,
-    Nom: candidat.nom,
-    Prénom: candidat.prenom,
-    'Moyenne générale': moyenne(candidat.moyenne_generale),
-  }))
-);
-
-const { exportToExcel, exportToPdf } = useTableExport({
-  rows: exportRows,
-  title: 'Classement du concours',
-  fileBaseName: 'classement_concours',
-  filters: () => [
-    { label: 'Concours', value: concours.value?.designation ?? '—' },
-    { label: 'Candidats classés', value: classes.value.length },
-    { label: "Date d'édition", value: new Date().toLocaleDateString('fr-FR') },
-  ],
+  return [
+    { id: 'classement', label: 'Classement', component: markRaw(RapportClassementTab), props },
+    {
+      id: 'statistiques',
+      label: 'Statistiques des résultats',
+      component: markRaw(RapportStatistiquesTab),
+      props,
+    },
+  ];
 });
 
 const telechargerAdmis = () => concoursStore.downloadAdmisList(concoursId.value, 'pdf');
@@ -70,7 +59,7 @@ const telechargerAdmis = () => concoursStore.downloadAdmisList(concoursId.value,
   <div>
     <PageHeader
       title="Rapports de concours"
-      subtitle="Classement des candidats et liste des admis"
+      subtitle="Classement, statistiques de résultats et liste des admis"
       :breadcrumb="['concours', 'rapports']"
     />
 
@@ -80,8 +69,12 @@ const telechargerAdmis = () => concoursStore.downloadAdmisList(concoursId.value,
           <div class="card-body">
             <div class="row g-3 align-items-end mb-4">
               <div class="col-md-5">
-                <label class="form-label fw-bold small">Concours</label>
-                <select v-model="concoursId" class="form-select form-select-sm">
+                <label for="rapport-concours" class="form-label fw-bold small">Concours</label>
+                <select
+                  id="rapport-concours"
+                  v-model="concoursId"
+                  class="form-select form-select-sm"
+                >
                   <option value="">— Sélectionnez un concours —</option>
                   <option v-for="item in concoursList" :key="item.id" :value="item.id">
                     {{ item.designation }} ({{ item.code_annee }})
@@ -90,14 +83,9 @@ const telechargerAdmis = () => concoursStore.downloadAdmisList(concoursId.value,
               </div>
 
               <div class="col-md-7 text-md-end">
-                <ExportMenu
-                  :disabled="classes.length === 0"
-                  @excel="exportToExcel"
-                  @pdf="exportToPdf"
-                />
                 <button
-                  class="btn btn-sm btn-outline-danger ms-2"
-                  :disabled="!concoursId || loading"
+                  class="btn btn-sm btn-outline-danger"
+                  :disabled="!concoursId"
                   @click="telechargerAdmis"
                 >
                   <i class="mdi mdi-file-pdf-box me-1"></i> Liste des admis (PDF)
@@ -105,58 +93,19 @@ const telechargerAdmis = () => concoursStore.downloadAdmisList(concoursId.value,
               </div>
             </div>
 
-            <LoadingSpinner v-if="loading" />
-
             <EmptyState
-              v-else-if="!concoursId"
+              v-if="!concoursId"
               title="Choisissez un concours"
-              description="Le classement ne se consulte qu'au sein d'un concours."
+              description="Le classement et les statistiques ne se consultent qu'au sein d'un concours."
             />
 
-            <EmptyState
-              v-else-if="classes.length === 0"
-              title="Aucun classement"
-              description="Ce concours n'a pas encore de classement. Lancez le calcul des moyennes et des rangs depuis l'onglet « Résultats »."
-            />
-
-            <div v-else class="table-responsive">
-              <table class="table table-hover align-middle mb-0 text-sm">
-                <thead class="table-light text-uppercase text-xs text-muted">
-                  <tr>
-                    <th class="ps-3" style="width: 80px">Rang</th>
-                    <th>N° table</th>
-                    <th>Candidat</th>
-                    <th class="text-center pe-3">Moyenne générale</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="candidat in classes" :key="candidat.candidat_id">
-                    <td class="ps-3 fw-bold text-secondary">{{ candidat.rang }}</td>
-                    <td>
-                      <span class="font-monospace fw-bold text-secondary">
-                        {{ candidat.num_table }}
-                      </span>
-                    </td>
-                    <td class="fw-semibold text-dark">{{ candidat.nom }} {{ candidat.prenom }}</td>
-                    <td class="text-center pe-3 fw-bold font-monospace">
-                      {{ moyenne(candidat.moyenne_generale) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <!-- La clé force le remontage à chaque changement de concours : sans
+                 elle, l'onglet actif garderait l'état — pagination, graphiques —
+                 du concours précédent. -->
+            <AppTabs v-else :key="concoursId" :tabs="tabs" />
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.text-xs {
-  font-size: 0.72rem;
-}
-.text-sm {
-  font-size: 0.875rem;
-}
-</style>

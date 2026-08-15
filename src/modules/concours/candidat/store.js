@@ -37,9 +37,17 @@ export const useCandidatStore = defineStore('candidats', {
      * et la grille de saisie. L'ancienne action `fetchByEpreuve` l'écrasait —
      * c'est le même piège que `classeStore.fetchByFiliere`, documenté ailleurs.
      *
+     * ⚠️ La clé est le **code** de l'épreuve, et un code n'est unique que dans
+     * son concours : deux concours peuvent tous deux avoir une épreuve « CG ».
+     * D'où `notesConcoursId`, qui dit à quel concours ce cache appartient — sans
+     * lui, passer d'un concours à l'autre servirait les notes du premier pour le
+     * second, en silence.
+     *
      * @type {Record<string, any[]>}
      */
     notesParEpreuve: {},
+    /** @type {string|null} Concours auquel se rapporte `notesParEpreuve`. */
+    notesConcoursId: null,
     /** @type {any|null} Dossier du candidat consulté. */
     dossier: null,
     /** @type {any|null} Compte rendu du dernier import. */
@@ -112,6 +120,14 @@ export const useCandidatStore = defineStore('candidats', {
      */
     async fetchNotesEpreuve(concoursId, epreuveCode, { force = false } = {}) {
       if (!concoursId || !epreuveCode) return undefined;
+
+      // Le cache appartient à un concours : on le vide en changeant de concours,
+      // sous peine de servir les notes de « CG » de l'un pour le « CG » de l'autre.
+      if (this.notesConcoursId !== concoursId) {
+        this.notesParEpreuve = {};
+        this.notesConcoursId = concoursId;
+      }
+
       if (!force && this.notesParEpreuve[epreuveCode]) return this.notesParEpreuve[epreuveCode];
 
       return this.run(() => getCandidatsByEpreuve(concoursId, epreuveCode), {

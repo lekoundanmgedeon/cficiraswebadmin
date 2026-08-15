@@ -33,6 +33,18 @@ const CANDIDATS = {
   ],
 };
 
+/** 30 candidats : de quoi dépasser les 25 lignes d'une page. */
+const CANDIDATS_NOMBREUX = {
+  success: true,
+  data: Array.from({ length: 30 }, (_, index) => ({
+    id: `k${index}`,
+    num_table: `T-2026-${String(index + 1).padStart(4, '0')}`,
+    nom: `CANDIDAT${index}`,
+    prenom: 'Test',
+    sexe: 'M',
+  })),
+};
+
 /**
  * `v_candidats_epreuves` joint `notes_epreuves_concours` en `LEFT JOIN` : une
  * note absente vaut `null`, et `pg` sert `NUMERIC` en **chaîne**.
@@ -112,6 +124,89 @@ describe('onglet Saisie des notes', () => {
     const champs = wrapper.findAll('tbody input[type="number"]');
     expect(champs[0].element.value).toBe('14');
     expect(champs[1].element.value).toBe('8.5');
+  });
+
+  describe('pagination de la grille', () => {
+    const monterNombreux = async () => {
+      vi.spyOn(epreuveApi, 'getEpreuvesByConcours').mockResolvedValue(EPREUVES);
+      vi.spyOn(candidatApi, 'getCandidatsByConcours').mockResolvedValue(CANDIDATS_NOMBREUX);
+      vi.spyOn(candidatApi, 'getCandidatsByEpreuve').mockResolvedValue({ success: true, data: [] });
+
+      const wrapper = mount(TabNotes, { props: { concoursId: CONCOURS_ID } });
+      await flushPromises();
+      return wrapper;
+    };
+
+    const allerPage = async (wrapper, numero) => {
+      const bouton = wrapper
+        .findAll('.pagination .page-link')
+        .find((lien) => lien.text() === String(numero));
+      await bouton.trigger('click');
+      await flushPromises();
+    };
+
+    it('découpe la grille en pages de 25 lignes', async () => {
+      const wrapper = await monterNombreux();
+
+      expect(wrapper.findAll('tbody tr')).toHaveLength(25);
+      expect(texteNormalise(wrapper)).toContain('Affichage de 1 à 25 sur 30 résultats');
+    });
+
+    it('conserve une note saisie quand on change de page', async () => {
+      const wrapper = await monterNombreux();
+
+      const champ = wrapper.findAll('tbody input[type="number"]')[0];
+      await champ.setValue('15');
+      await champ.trigger('input');
+      await flushPromises();
+
+      // La pagination ne découpe que l'affichage : la saisie vit dans
+      // `notesRows`, pas dans la ligne rendue.
+      await allerPage(wrapper, 2);
+      expect(texteNormalise(wrapper)).toContain('1 non enregistrée(s)');
+      expect(texteNormalise(wrapper)).toContain('dont 1 hors page');
+
+      await allerPage(wrapper, 1);
+      expect(wrapper.findAll('tbody input[type="number"]')[0].element.value).toBe('15');
+    });
+
+    it('envoie les lignes modifiées de toutes les pages, pas seulement de la page affichée', async () => {
+      const wrapper = await monterNombreux();
+      const addNote = vi
+        .spyOn(candidatApi, 'addNoteEpreuve')
+        .mockResolvedValue({ success: true, data: {} });
+
+      const premier = wrapper.findAll('tbody input[type="number"]')[0];
+      await premier.setValue('11');
+      await premier.trigger('input');
+
+      await allerPage(wrapper, 2);
+      const dernier = wrapper.findAll('tbody input[type="number"]')[0];
+      await dernier.setValue('12');
+      await dernier.trigger('input');
+      await flushPromises();
+
+      await wrapper.find('button.btn-primary').trigger('click');
+      await flushPromises();
+
+      expect(addNote).toHaveBeenCalledTimes(2);
+      expect(addNote.mock.calls.map(([numTable]) => numTable)).toEqual([
+        'T-2026-0001',
+        'T-2026-0026',
+      ]);
+    });
+
+    it('revient en première page quand on change d’épreuve', async () => {
+      const wrapper = await monterNombreux();
+
+      await allerPage(wrapper, 2);
+      expect(texteNormalise(wrapper)).toContain('Affichage de 26 à 30');
+
+      await wrapper.find('select').setValue('e2');
+      await flushPromises();
+
+      expect(texteNormalise(wrapper)).toContain('Affichage de 1 à 25');
+    });
   });
 
   it('relit le serveur après enregistrement plutôt que de croire la grille', async () => {

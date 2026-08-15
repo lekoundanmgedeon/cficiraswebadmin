@@ -70,11 +70,23 @@ recadrage quand la collection rétrécit, et retour en première page au changem
 > | Imports (étudiants, tuteurs, planning) → lignes rejetées      | autant que le fichier en compte |
 > | Finances → Registre des encaissements, Factures, Rapports     | 200 chargées sur 7 497 / 1 803 (§1.16) |
 > | Finances → Contrôle par classe, Archives, Suivi des traites   | 135 à 6 223                    |
-> | Concours → Candidatures, Délibération                        | 132 candidats                  |
+> | Concours → Candidatures, Saisie des notes, Délibération, Rapports | 132 candidats              |
+> | Examens → Rapports (palmarès d'une classe)                    | effectif d'une classe          |
 >
 > Deux écrans restent volontairement sans pagination : le **parcours académique** (trois périodes
 > au plus, dont les matières sont un détail interne à chaque carte) et le **profil** d'un dossier
 > (un ou deux tuteurs) — une barre de pagination y serait du bruit.
+>
+> **Ce qui reste** : une cinquantaine de tableaux, dans les modules non encore repris de ce point de
+> vue — `pedagogies` (le plus gros contingent, une vingtaine), `dashboard`, `stats`, `coordination`,
+> `documents`, `bibliotheque`, `espace-notes`, plus quelques isolés (`ExamenList`, `SallesView`,
+> `TabEpreuves`, `ResultatsTab`, `ListeAnneesTab`). Les recenser :
+>
+> ```bash
+> for f in $(grep -rl "<table" src/modules --include=*.vue); do
+>   grep -q "Pagination" "$f" || echo "$f"
+> done
+> ```
 
 **Utils** — `cache.js` (TTL + purge), `date.js`, `text.js` (`escapeHtml`, `escapeRegExp`,
 `highlight`), `modal.js`, `exportExcel.js`, `exportPDF.js`, `toast.js`.
@@ -696,7 +708,7 @@ type**, celui-ci n'étant pas dans la liste proposée.
 | Onglet              | Ajout                                                                                                                                                         |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2. Candidatures     | **recherche intelligente** (plusieurs termes dans n'importe quel ordre, insensible aux accents et à la casse, sur n° de table, identité, courriel, téléphone, lieu, ville, statut), filtre par statut de dossier, **export Excel / PDF** de la sélection, colonne « Dossier » et bouton **Détails** |
-| 3. Saisie des notes | notes existantes affichées (voir l'encadré)                                                                                                                   |
+| 3. Saisie des notes | notes existantes affichées (voir l'encadré) ; grille paginée par 25 — **le découpage ne porte que sur l'affichage** : une note saisie en page 1 survit au passage en page 2, « Enregistrer » envoie les lignes modifiées de **toutes** les pages, et le compteur signale celles qui ne sont plus sous les yeux |
 | 4. Délibération     | classement paginé — 132 candidats rendus d'un bloc ; les compteurs et la simulation restent calculés sur **tout** le classement, la proclamation engageant tous les candidats |
 
 Le **dossier complet** (`CandidatDossierModal`) rassemble ce que trois lectures savent du candidat :
@@ -715,7 +727,47 @@ versée.
 > candidature (statut, motif de rejet, date de dépôt) que faisait déjà `findByConcours` — c'est ce
 > que l'appelant vient chercher. Suite backend : **224 tests, 23 suites, tous au vert**.
 
-Couvert par `TabNotes.test.js` (5 tests) et `TabCandidats.test.js` (6 tests).
+#### Ajout depuis la migration — l'écran des rapports de concours
+
+L'écran s'ouvre désormais sur **deux onglets** — « Classement » et « Statistiques des résultats » —,
+le sélecteur de concours restant au-dessus : c'est le même périmètre pour les deux, et le dupliquer
+dans chacun aurait permis d'en consulter deux différents sans s'en apercevoir. Le classement est
+chargé une fois, à ce niveau.
+
+Les statistiques ne sont que des **dérivées de lectures existantes** : moyenne générale et
+écart-type (de population — on décrit la promotion, on n'estime pas une population plus large),
+distribution des moyennes par palier, décision du jury, performance épreuve par épreuve (moyenne,
+bornes, taux de réussite), répartition par sexe. Export Excel / PDF du tableau par épreuve, les
+indicateurs d'ensemble figurant en tête du document — c'est ce qui distingue un rapport d'un export
+de lignes.
+
+> #### ⚠️ Les décisions du jury n'étaient lisibles nulle part
+>
+> `proclamerAdmissions` écrit `admis`, `decision_jury` et `date_proclamation` dans
+> `admissions_concours` — 77 admis, 44 en liste d'attente, 11 ajournés sur le jeu de démonstration.
+> Mais `GET /concours/:id/classement` ne renvoyait pas ces colonnes, et le seul autre accès était
+> `GET /concours/:id/admis/export`, **un fichier binaire** : impossible d'en tirer un rapport, ni
+> même d'afficher la décision d'un candidat. L'écran de délibération ne pouvait donc montrer qu'une
+> *simulation* à un seuil, jamais la délibération réelle.
+>
+> Un `LEFT JOIN` a été ajouté au classement côté backend (avec `sexe`, utile aux répartitions). Le
+> `LEFT` compte : un concours non proclamé rend ces colonnes nulles et le classement reste
+> consultable. L'écran distingue alors « non proclamé » de « tout le monde en attente » — un taux
+> d'admission de 0 % serait faux tant qu'aucun jury n'a statué.
+>
+> `decision_jury` accepte `EN_ATTENTE`, `ADMIS`, `LISTE_ATTENTE` et **`A_A_JOURNER`** — cette
+> dernière graphie est celle de la contrainte `CHECK`, pas une coquille.
+
+> #### ⚠️ `Number(null)` vaut 0 — et une absence de note n'est pas un zéro
+>
+> Relevé par un test en écrivant les statistiques par épreuve : la jointure des notes est un
+> `LEFT JOIN`, donc un candidat non noté arrive avec `note: null`. Converti naïvement, il comptait
+> comme ayant obtenu **0** — la moyenne de l'épreuve s'effondrait, le nombre de « notés » était faux,
+> et rien ne le signalait. Le helper `nombre()` distingue désormais l'absence de valeur (`null`,
+> `undefined`, chaîne vide) d'un zéro réel.
+
+Couvert par `TabNotes.test.js` (9 tests), `TabCandidats.test.js` (6 tests),
+`useStatistiquesResultats.test.js` (13 tests) et `RapportStatistiquesTab.test.js` (7 tests).
 
 ### 1.11 Le module `notes` et la délibération — terminé
 

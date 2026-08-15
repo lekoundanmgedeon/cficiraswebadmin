@@ -129,6 +129,43 @@ export const CANDIDAT_RULES = {
   DATE_NAISSANCE_MIN: '1900-01-02',
 };
 
+/**
+ * Décisions du jury, telles qu'elles sont écrites dans `admissions_concours`.
+ *
+ * Relevées sur la contrainte `CHECK` — y compris `A_A_JOURNER`, dont
+ * l'orthographe est celle de la base et non une coquille de ce fichier :
+ * `decision_jury IN ('EN_ATTENTE', 'ADMIS', 'LISTE_ATTENTE', 'A_A_JOURNER')`.
+ *
+ * ⚠️ Ces décisions n'étaient **lisibles nulle part** : `proclamerAdmissions` les
+ * écrit, mais le classement ne les renvoyait pas et le seul autre accès était
+ * l'export binaire de la liste des admis. La jointure a été ajoutée côté backend
+ * (`getClassementConcours`).
+ */
+export const DECISIONS_JURY = {
+  ADMIS: { code: 'ADMIS', label: 'Admis', variant: 'success' },
+  LISTE_ATTENTE: { code: 'LISTE_ATTENTE', label: "Liste d'attente", variant: 'warning' },
+  A_A_JOURNER: { code: 'A_A_JOURNER', label: 'Ajourné', variant: 'danger' },
+  EN_ATTENTE: { code: 'EN_ATTENTE', label: 'En attente', variant: 'secondary' },
+};
+
+export const DECISION_JURY_LIST = Object.values(DECISIONS_JURY);
+
+/**
+ * @param {string|null|undefined} raw
+ * @returns {{code: string, label: string, variant: string}}
+ */
+export function decisionJuryInfo(raw) {
+  const code = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+
+  // Un concours non proclamé n'a aucune décision : ce n'est pas « en attente »,
+  // c'est « pas encore délibéré ».
+  if (!code) return { code: 'NON_PROCLAME', label: 'Non proclamé', variant: 'light' };
+
+  return DECISIONS_JURY[code] ?? { code: 'INCONNU', label: raw, variant: 'secondary' };
+}
+
 /** Seuil d'admission par défaut, aligné sur celui du backend (`proclamerAdmissions`). */
 export const SEUIL_ADMISSION_DEFAUT = 10;
 

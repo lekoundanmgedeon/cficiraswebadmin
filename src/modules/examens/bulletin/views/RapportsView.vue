@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useClasseStore } from '@/modules/structure-academique/classe/store';
 import ExamenHeader from '../../components/ExamenHeader.vue';
 import { decisionInfo, publicationInfo } from '../constants';
@@ -55,6 +57,17 @@ const classe = computed(() => classes.value.find((item) => item.id === contexte.
 const classement = computed(() =>
   [...bulletins.value].sort((a, b) => Number(a.rang_etudiant ?? 0) - Number(b.rang_etudiant ?? 0))
 );
+
+/**
+ * Le palmarès se lit page par page ; changer de contexte (année, semestre,
+ * classe) repart de la première — ce n'est plus la même classe.
+ *
+ * ⚠️ L'export porte sur **tout** le palmarès, pas sur la page affichée.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(classement, {
+  perPage: 20,
+  resetKey: () => [contexte.value.anneeId, contexte.value.semestreId, contexte.value.classeId],
+});
 
 /** @param {any} value */
 const moyenne = (value) => {
@@ -148,9 +161,11 @@ const publier = () => bulletinStore.publier();
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(bulletin, index) in classement" :key="bulletin.id">
+                  <tr v-for="(bulletin, index) in paginated" :key="bulletin.id">
+                    <!-- Le rang de repli compte sur **toute** la liste : avec
+                         l'index de page, il repartirait à 1 à chaque page. -->
                     <td class="ps-4 fw-bold text-secondary">
-                      {{ bulletin.rang_etudiant ?? index + 1 }}
+                      {{ bulletin.rang_etudiant ?? startIndex + index + 1 }}
                     </td>
                     <td>
                       <div class="fw-bold text-dark">
@@ -177,6 +192,12 @@ const publier = () => bulletinStore.publier();
                   </tr>
                 </tbody>
               </table>
+
+              <Pagination
+                v-model="page"
+                v-model:items-per-page="itemsPerPage"
+                :total-items="classement.length"
+              />
             </div>
           </div>
         </div>
