@@ -5,7 +5,9 @@ import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useBibliothequeStore } from '../../store';
 import { useOuvrageForm } from '../../composables/useOuvrageForm';
 import { disponibiliteInfo, typeOuvrageLabel, TYPES_OUVRAGE } from '../../constants';
@@ -45,6 +47,14 @@ const filtres = computed(() => {
       .filter(Boolean)
       .some((champ) => String(champ).toLowerCase().includes(terme));
   });
+});
+
+// Le catalogue grandit à chaque acquisition ; il était rendu d'un bloc. La page
+// revient à 1 dès qu'un filtre change — sans quoi filtrer depuis la page 3
+// laisserait devant un tableau vide.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(filtres, {
+  perPage: 15,
+  resetKey: () => [recherche.value, categorie.value, type.value, disponiblesSeulement.value],
 });
 
 const { exportToExcel, exportToPdf } = useTableExport({
@@ -200,7 +210,8 @@ function onAction({ key, item }) {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-3">Cote</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>Cote</th>
             <th>Titre</th>
             <th>Auteur</th>
             <th>Type</th>
@@ -210,8 +221,9 @@ function onAction({ key, item }) {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="ouvrage in filtres" :key="ouvrage.id">
-            <td class="ps-3">
+          <tr v-for="(ouvrage, index) in paginated" :key="ouvrage.id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+            <td>
               <span class="badge bg-light text-dark border font-monospace">{{ ouvrage.cote }}</span>
             </td>
             <td class="fw-semibold text-dark">
@@ -244,6 +256,14 @@ function onAction({ key, item }) {
           </tr>
         </tbody>
       </table>
+
+      <div class="card-footer bg-white border-top py-3 px-3">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filtres.length"
+        />
+      </div>
     </div>
   </div>
 </template>

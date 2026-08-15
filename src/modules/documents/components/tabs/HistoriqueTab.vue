@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useDocumentStore } from '../../store';
 import { statutDemandeInfo } from '../../constants';
@@ -36,6 +38,13 @@ const filtres = computed(() => {
       .filter(Boolean)
       .some((champ) => String(champ).toLowerCase().includes(terme));
   });
+});
+
+// 228 demandes traitées, et l'historique ne fait que grossir. La page revient
+// à 1 dès qu'un filtre change.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(filtres, {
+  perPage: 15,
+  resetKey: () => [recherche.value, issue.value],
 });
 
 /** Délai réellement constaté entre le dépôt et la sortie. */
@@ -158,7 +167,8 @@ const { exportToExcel, exportToPdf } = useTableExport({
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-3">Numéro</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>Numéro</th>
             <th>Étudiant</th>
             <th>Document</th>
             <th>Dépôt → sortie</th>
@@ -167,8 +177,9 @@ const { exportToExcel, exportToPdf } = useTableExport({
           </tr>
         </thead>
         <tbody>
-          <tr v-for="demande in filtres" :key="demande.id">
-            <td class="ps-3 font-monospace small fw-semibold">{{ demande.numero }}</td>
+          <tr v-for="(demande, index) in paginated" :key="demande.id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+            <td class="font-monospace small fw-semibold">{{ demande.numero }}</td>
             <td>
               <span class="fw-semibold text-dark d-block">
                 {{ demande.nom }} {{ demande.prenom }}
@@ -209,6 +220,14 @@ const { exportToExcel, exportToPdf } = useTableExport({
           </tr>
         </tbody>
       </table>
+
+      <div class="card-footer bg-white border-top py-3 px-3">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filtres.length"
+        />
+      </div>
     </div>
   </div>
 </template>

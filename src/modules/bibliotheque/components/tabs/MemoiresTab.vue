@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { mentionLabel } from '@/modules/examens/bulletin/constants';
 import { useBibliothequeStore } from '../../store';
@@ -50,6 +52,13 @@ const filtres = computed(() => {
       .filter(Boolean)
       .some((champ) => String(champ).toLowerCase().includes(terme));
   });
+});
+
+// 208 mémoires archivés, rendus en fiches de deux par ligne : c'était une page
+// de plus de cent lignes. Douze fiches par page, soit six lignes.
+const { page, itemsPerPage, paginated } = usePagination(filtres, {
+  perPage: 12,
+  resetKey: () => [recherche.value, type.value, publiesSeulement.value],
 });
 
 const { exportToExcel, exportToPdf } = useTableExport({
@@ -138,7 +147,7 @@ const { exportToExcel, exportToPdf } = useTableExport({
     />
 
     <div v-else class="row g-3">
-      <div v-for="memoire in filtres" :key="memoire.id" class="col-lg-6">
+      <div v-for="memoire in paginated" :key="memoire.id" class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -188,6 +197,15 @@ const { exportToExcel, exportToPdf } = useTableExport({
             </ul>
           </div>
         </div>
+      </div>
+
+      <div class="col-12">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filtres.length"
+          :items-per-page-options="[12, 24, 48, 96]"
+        />
       </div>
     </div>
   </div>

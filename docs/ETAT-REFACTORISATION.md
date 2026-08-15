@@ -72,10 +72,28 @@ recadrage quand la collection rétrécit, et retour en première page au changem
 > | Finances → Contrôle par classe, Archives, Suivi des traites   | 135 à 6 223                    |
 > | Concours → Candidatures, Saisie des notes, Délibération, Rapports | 132 candidats              |
 > | Examens → Rapports (palmarès d'une classe)                    | effectif d'une classe          |
+> | Bibliothèque → Catalogue, Mémoires                            | 30 ouvrages · 208 mémoires     |
+> | Coordination → Attributions, Suivi, Finalistes, Dossiers, Planning | 208 à 291                 |
+> | Diplômes & documents → Demandes en cours, Historique          | 455 demandes                   |
 >
-> Deux écrans restent volontairement sans pagination : le **parcours académique** (trois périodes
-> au plus, dont les matières sont un détail interne à chaque carte) et le **profil** d'un dossier
-> (un ou deux tuteurs) — une barre de pagination y serait du bruit.
+> Restent volontairement sans pagination : le **parcours académique** (trois périodes au plus, dont
+> les matières sont un détail interne à chaque carte), le **profil** d'un dossier (un ou deux
+> tuteurs), le **catalogue des types de documents** (13 types en trois groupes), la **progression**
+> des travaux (des agrégats, pas une liste) et le sélecteur de soutenance des **procès-verbaux**
+> (une liste déroulante ne se pagine pas).
+>
+> Deux découpages méritent l'attention, parce qu'un découpage naïf y aurait détruit du travail ou
+> menti :
+>
+> - **Saisie des notes de concours** et **suivi des travaux** portent des saisies en cours. La
+>   pagination ne touche que l'affichage : les valeurs vivent dans un tableau (ou un brouillon)
+>   indexé par identifiant, l'enregistrement porte sur **toutes** les lignes modifiées, et le
+>   compteur signale celles qui ne sont plus sous les yeux.
+> - **Planning des soutenances** : les séances sont groupées par journée, mais une session tient
+>   couramment sur **une seule** (208 le même jour en démonstration). Paginer les journées n'aurait
+>   rien découpé : ce sont les séances qui le sont, et le regroupement porte sur la page — sans quoi
+>   une journée aurait été coupée sans jamais montrer sa suite. L'en-tête dit alors combien de
+>   séances sont visibles sur le total de la journée. Couvert par `PlanningTab.test.js`.
 >
 > **Ce qui reste** : une cinquantaine de tableaux, dans les modules non encore repris de ce point de
 > vue — `pedagogies` (le plus gros contingent, une vingtaine), `dashboard`, `stats`, `coordination`,

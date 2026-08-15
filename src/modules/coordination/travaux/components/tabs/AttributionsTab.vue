@@ -5,7 +5,9 @@ import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useTravailStore } from '../../store';
 import { useTravailForm } from '../../composables/useTravailForm';
@@ -49,6 +51,12 @@ const filtres = computed(() => {
       .filter(Boolean)
       .some((champ) => String(champ).toLowerCase().includes(terme));
   });
+});
+// 273 travaux de recherche, rendus d'un bloc. La page revient à 1 dès qu'un
+// filtre change.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(filtres, {
+  perPage: 15,
+  resetKey: () => [recherche.value, statut.value, type.value],
 });
 
 const { exportToExcel, exportToPdf } = useTableExport({
@@ -198,7 +206,8 @@ function onAction({ key, item }) {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-3">Étudiant</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>Étudiant</th>
             <th>Thème</th>
             <th>Directeur</th>
             <th>Échéance</th>
@@ -208,8 +217,9 @@ function onAction({ key, item }) {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="travail in filtres" :key="travail.id">
-            <td class="ps-3">
+          <tr v-for="(travail, index) in paginated" :key="travail.id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+            <td>
               <span class="fw-semibold text-dark d-block">
                 {{ travail.etudiant_nom }} {{ travail.etudiant_prenom }}
               </span>
@@ -269,6 +279,14 @@ function onAction({ key, item }) {
           </tr>
         </tbody>
       </table>
+
+      <div class="card-footer bg-white border-top py-3 px-3">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filtres.length"
+        />
+      </div>
     </div>
   </div>
 </template>

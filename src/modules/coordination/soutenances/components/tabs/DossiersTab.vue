@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useSoutenanceStore } from '../../store';
 import {
@@ -44,6 +46,17 @@ const archives = computed(() => {
       .filter(Boolean)
       .some((champ) => String(champ).toLowerCase().includes(terme));
   });
+});
+
+/**
+ * 208 dossiers archivés, dépliés dans un accordéon rendu d'un bloc.
+ *
+ * ⚠️ Le dossier ouvert est mémorisé par son identifiant (`ouvertId`), pas par sa
+ * position : changer de page ne rouvre donc pas arbitrairement une autre fiche.
+ */
+const { page, itemsPerPage, paginated } = usePagination(archives, {
+  perPage: 10,
+  resetKey: () => recherche.value,
 });
 
 watch(ouvertId, (id) => {
@@ -113,7 +126,11 @@ const { exportToExcel, exportToPdf } = useTableExport({
     />
 
     <div v-else id="accordion-dossiers" class="accordion">
-      <div v-for="soutenance in archives" :key="soutenance.id" class="card border-0 shadow-sm mb-2">
+      <div
+        v-for="soutenance in paginated"
+        :key="soutenance.id"
+        class="card border-0 shadow-sm mb-2"
+      >
         <button
           class="btn text-start w-100 p-3 d-flex justify-content-between align-items-center gap-2"
           type="button"
@@ -258,6 +275,12 @@ const { exportToExcel, exportToPdf } = useTableExport({
           </div>
         </div>
       </div>
+
+      <Pagination
+        v-model="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="archives.length"
+      />
     </div>
   </div>
 </template>

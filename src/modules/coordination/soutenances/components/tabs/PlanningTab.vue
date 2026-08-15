@@ -5,6 +5,8 @@ import ItemActions from '@/shared/components/ItemActions.vue';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { useTableExport } from '@/shared/composables/useTableExport';
 import { formatDate } from '@/shared/utils/date';
 import { useSoutenanceStore } from '../../store';
@@ -42,21 +44,58 @@ const filtres = computed(() => {
 });
 
 /** Regroupement par date : une session se lit par journée. */
+const jourDe = (soutenance) => String(soutenance.date_soutenance ?? '').slice(0, 10);
+
+/**
+ * Le planning, à plat, dans l'ordre où il s'affiche : jour le plus récent
+ * d'abord, puis par horaire. C'est cette liste que l'on pagine — et non les
+ * journées : une session de soutenances tient couramment sur **une seule
+ * journée** (208 sur le même jour dans le jeu de démonstration), si bien que
+ * paginer par jour ne découperait rien du tout.
+ */
+const triees = computed(() =>
+  [...filtres.value].sort((a, b) => {
+    const parJour = jourDe(b).localeCompare(jourDe(a));
+    if (parJour !== 0) return parJour;
+    return String(a.heure_debut).localeCompare(String(b.heure_debut));
+  })
+);
+
+const { page, itemsPerPage, paginated } = usePagination(triees, {
+  perPage: 20,
+  resetKey: () => [recherche.value, statut.value],
+});
+
+/** Nombre total de séances par journée, toutes pages confondues. */
+const totalParJour = computed(() => {
+  const compteur = new Map();
+  for (const soutenance of triees.value) {
+    const jour = jourDe(soutenance);
+    compteur.set(jour, (compteur.get(jour) ?? 0) + 1);
+  }
+  return compteur;
+});
+
+/**
+ * Le regroupement porte sur la **page** affichée, et non sur la collection
+ * entière : grouper d'abord puis paginer aurait coupé une journée sans jamais
+ * en montrer la suite. L'en-tête dit alors combien de séances de la journée sont
+ * visibles ici, sur son total.
+ */
 const journees = computed(() => {
   const parJour = new Map();
 
-  for (const soutenance of filtres.value) {
-    const jour = String(soutenance.date_soutenance ?? '').slice(0, 10);
+  for (const soutenance of paginated.value) {
+    const jour = jourDe(soutenance);
     if (!parJour.has(jour)) parJour.set(jour, []);
     parJour.get(jour).push(soutenance);
   }
 
-  return [...parJour.entries()]
-    .map(([jour, seances]) => ({
-      jour,
-      seances: seances.sort((a, b) => String(a.heure_debut).localeCompare(String(b.heure_debut))),
-    }))
-    .sort((a, b) => b.jour.localeCompare(a.jour));
+  return [...parJour.entries()].map(([jour, seances]) => ({
+    jour,
+    seances,
+    total: totalParJour.value.get(jour) ?? seances.length,
+  }));
 });
 
 const heure = (valeur) => String(valeur ?? '').slice(0, 5);
@@ -197,7 +236,12 @@ function onAction({ key, item }) {
         <h6 class="text-uppercase text-secondary small fw-bold mb-2">
           <i class="bi bi-calendar-event me-1"></i>
           {{ formatDate(journee.jour) }}
-          <span class="text-muted fw-normal">— {{ journee.seances.length }} soutenance(s)</span>
+          <span class="text-muted fw-normal">
+            — {{ journee.seances.length }} soutenance(s)
+            <template v-if="journee.total !== journee.seances.length">
+              affichée(s) sur {{ journee.total }}
+            </template>
+          </span>
         </h6>
 
         <div class="table-responsive card border-0 shadow-sm">
@@ -280,6 +324,12 @@ function onAction({ key, item }) {
           </table>
         </div>
       </div>
+
+      <Pagination
+        v-model="page"
+        v-model:items-per-page="itemsPerPage"
+        :total-items="triees.length"
+      />
     </div>
   </div>
 </template>

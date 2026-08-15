@@ -4,7 +4,9 @@ import { storeToRefs } from 'pinia';
 import ExportMenu from '@/shared/components/ExportMenu.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useTravailStore } from '../../../travaux/store';
 import { useTravailForm } from '../../../travaux/composables/useTravailForm';
@@ -49,6 +51,11 @@ const filtres = computed(() => {
       .filter(Boolean)
       .some((champ) => String(champ).toLowerCase().includes(terme));
   });
+});
+// 291 finalistes : la promotion entière était rendue d'un bloc.
+const { page, itemsPerPage, startIndex, paginated } = usePagination(filtres, {
+  perPage: 15,
+  resetKey: () => [recherche.value, situation.value, sansSujet.value],
 });
 
 const { exportToExcel, exportToPdf } = useTableExport({
@@ -175,7 +182,8 @@ const { exportToExcel, exportToPdf } = useTableExport({
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-3">Étudiant</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>Étudiant</th>
             <th>Classe & cycle</th>
             <th>Sujet</th>
             <th>Situation</th>
@@ -186,8 +194,9 @@ const { exportToExcel, exportToPdf } = useTableExport({
           </tr>
         </thead>
         <tbody>
-          <tr v-for="etudiant in filtres" :key="etudiant.etudiant_id">
-            <td class="ps-3">
+          <tr v-for="(etudiant, index) in paginated" :key="etudiant.etudiant_id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+            <td>
               <span class="fw-semibold text-dark d-block">
                 {{ etudiant.nom }} {{ etudiant.prenom }}
               </span>
@@ -249,6 +258,14 @@ const { exportToExcel, exportToPdf } = useTableExport({
           </tr>
         </tbody>
       </table>
+
+      <div class="card-footer bg-white border-top py-3 px-3">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="filtres.length"
+        />
+      </div>
     </div>
   </div>
 </template>

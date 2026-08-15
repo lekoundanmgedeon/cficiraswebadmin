@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import LoadingSpinner from '@/shared/components/LoadingSpinner.vue';
+import Pagination from '@/components/shared/Pagination.vue';
+import { usePagination } from '@/shared/composables/usePagination';
 import { formatDate } from '@/shared/utils/date';
 import { useTravailStore } from '../../store';
 import {
@@ -39,6 +41,20 @@ const lignes = computed(() =>
       String(a.date_soumission_prevue).localeCompare(String(b.date_soumission_prevue))
     )
 );
+
+/**
+ * 273 travaux suivis, rendus d'un bloc — chacun avec son curseur d'avancement.
+ *
+ * ⚠️ Le découpage ne porte que sur l'affichage. Les modifications en cours
+ * vivent dans `brouillon`, indexé par identifiant de travail : une progression
+ * ajustée en page 1 est toujours là au retour, et chaque ligne s'enregistre
+ * séparément — il n'y a pas d'enregistrement global qui pourrait oublier les
+ * lignes hors page.
+ */
+const { page, itemsPerPage, startIndex, paginated } = usePagination(lignes, {
+  perPage: 15,
+  resetKey: () => filtreRetard.value,
+});
 
 /** @param {any} travail @param {string} champ */
 function valeur(travail, champ) {
@@ -125,7 +141,8 @@ const barre = (progression) => {
       <table class="table align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th class="ps-3">Étudiant & thème</th>
+            <th class="ps-3" style="width: 60px">#</th>
+            <th>Étudiant & thème</th>
             <th style="width: 190px">Avancement</th>
             <th style="width: 150px">Statut</th>
             <th style="width: 150px">Situation</th>
@@ -136,8 +153,9 @@ const barre = (progression) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="travail in lignes" :key="travail.id">
-            <td class="ps-3">
+          <tr v-for="(travail, index) in paginated" :key="travail.id">
+            <td class="ps-3 text-muted small">{{ startIndex + index + 1 }}</td>
+            <td>
               <span class="fw-semibold text-dark d-block">{{ travail.theme }}</span>
               <span class="text-muted small">
                 {{ travail.etudiant_nom }} {{ travail.etudiant_prenom }} · échéance
@@ -243,6 +261,14 @@ const barre = (progression) => {
           </tr>
         </tbody>
       </table>
+
+      <div class="card-footer bg-white border-top py-3 px-3">
+        <Pagination
+          v-model="page"
+          v-model:items-per-page="itemsPerPage"
+          :total-items="lignes.length"
+        />
+      </div>
     </div>
   </div>
 </template>
