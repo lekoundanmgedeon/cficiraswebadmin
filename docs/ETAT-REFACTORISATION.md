@@ -1778,6 +1778,58 @@ voisines. Elle basculera avec la barre, pas avant.
 
 ---
 
+### 1.26 Pagination des onglets d'« Affaires pédagogiques »
+
+Quatre tableaux du domaine posaient **toutes** leurs lignes dans le DOM. Les volumes, mesurés contre
+`localhost:3500` sur le jeu de démonstration :
+
+| Onglet                                              | Source                     | Lignes    |
+| --------------------------------------------------- | -------------------------- | --------- |
+| `attributions/tabs/AssignationsContent.vue`         | `vue_attributions_cours`   | **4 050** |
+| `crenaux/tabs/CreneauxHoraires.vue`                 | `vue_horaire_details`      | **1 351** |
+| `programme/tabs/ProgrammeCours.vue`                 | `maquette_pedagogique`     | **1 350** |
+| `programme/tabs/CreditsAcademiques.vue`             | `GET /modules`             | **450**   |
+
+Le premier est le plus coûteux : chaque ligne construit une pastille, un avatar d'initiales et
+**trois résolutions par identifiant** (`getMatiereName`, `getFormateurName`,
+`getModuleNameByMatiere`), chacune balayant son référentiel — la recherche relançait donc ces
+parcours pour 4 050 lignes à chaque frappe.
+
+Tous passent par `shared/composables/usePagination.js` et `components/shared/Pagination.vue`, avec
+`resetKey` sur le critère de filtre là où il en existe un (recherche pour les assignations, classe
+pour les créneaux et la maquette). `CreditsAcademiques` n'a aucun filtre — donc pas de `resetKey` —,
+mais ses 450 lignes noyaient la note de règle placée juste dessous.
+
+#### Un défaut trouvé dans le seul onglet déjà paginé
+
+`formateurs/tabs/FormateursContent.vue` liait `:items-per-page` **à sens unique**.
+`Pagination.vue` émet `update:itemsPerPage` quand on change « Afficher N éléments » ; sans écouteur,
+le menu changeait d'apparence et le tableau ne bougeait pas. Corrigé en `v-model:items-per-page`.
+
+#### Ce qui n'a **pas** été paginé, et pourquoi
+
+Les quinze autres tableaux du domaine sont alimentés par des tableaux `mock*` **codés en dur dans le
+composant** — `ArchivesPedagogiques`, `ChargesHoraires`, `RapportsAcademiques`,
+`RessourcesPedagogiques`, `CoursMatieres`, `TravauxDiriges`, `TravauxPratiques`, `SuiviPedagogique`,
+`CreditsECTS`, `ResumeProgramme`… Y ajouter une pagination habillerait une fiction : quatre lignes
+inventées n'ont pas de page 2. Ils relèvent du branchement backend, pas de la pagination.
+
+⚠️ **Piège de lecture** : dans `CreneauxHoraires`, `ProgrammeCours` et `CreditsAcademiques`, les noms
+`mock*` **ont été conservés alors que les données sont réelles** (documenté dans leurs en-têtes) —
+`mockRules`, `mockUeDistribution`, `mockSchedules` viennent tous du store. Se fier au préfixe pour
+juger de la nature d'une donnée est faux dans ce module.
+
+`EmploisDuTemps` est également écarté : son tableau est une grille horaire (une ligne par tranche,
+une colonne par jour), pas une liste — la paginer découperait la semaine.
+
+**8 tests** (`pedagogies/pagination.test.js`) verrouillent les trois pièges qui se voient mal : le
+`:total-items` doit recevoir le **total filtré** et non la tranche (sinon une seule page, et le reste
+du tableau devient inatteignable), la liaison de la taille de page doit être **bidirectionnelle**, et
+un changement de filtre doit ramener en page 1. Éprouvés en réintroduisant chacun des deux premiers
+défauts : le test correspondant échoue, et lui seul.
+
+---
+
 ## 2. Ce qui reste
 
 ### 2.1 Modules à migrer (par ordre conseillé)
