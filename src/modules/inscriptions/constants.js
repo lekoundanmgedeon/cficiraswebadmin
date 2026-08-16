@@ -1,5 +1,7 @@
 /** Constantes du module Inscriptions. */
 
+import { formatMontant } from '@/shared/utils/parametres';
+
 export const IMPORT_INSCRIPTIONS_MODAL_ID = 'importInscriptionsModal';
 export const IMPORT_REINSCRIPTIONS_MODAL_ID = 'importReinscriptionsModal';
 export const PAIEMENT_MODAL_ID = 'paiementInscriptionModal';
@@ -168,9 +170,15 @@ export const IMPORT_SCHEMAS = {
   },
 };
 
-/** @param {number|string|null|undefined} amount @returns {string} */
+/**
+ * Formate un montant avec la devise réglée.
+ *
+ * Le symbole vient du paramètre `finances.devise_symbole` et non plus d'un
+ * « FCFA » écrit en dur. Le repli est « FCFA » : les tests qui l'attendent
+ * restent donc justes tant que l'établissement ne change pas de devise.
+ *
+ * @param {number|string|null|undefined} amount @returns {string}
+ */
 export function formatMoney(amount) {
-  const value = Number(amount ?? 0);
-  if (Number.isNaN(value)) return '0 FCFA';
-  return `${new Intl.NumberFormat('fr-FR').format(value)} FCFA`;
+  return formatMontant(amount);
 }

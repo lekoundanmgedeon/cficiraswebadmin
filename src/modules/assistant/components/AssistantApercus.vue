@@ -45,10 +45,10 @@ const groupes = computed(() => apercusPour(props.catalogue));
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body p-3">
             <div class="d-flex align-items-center mb-2">
-              <span class="apercus-pastille" :class="`bg-${groupe.couleur}-subtle`">
-                <i class="bi" :class="[groupe.icone, `text-${groupe.couleur}-emphasis`]"></i>
+              <span class="apercus-pastille" :class="`bg-light`">
+                <i class="bi" :class="[groupe.icone, `text-${groupe.couleur}`]"></i>
               </span>
-              <h6 class="mb-0 ms-2 fw-semibold">{{ groupe.libelle }}</h6>
+              <h6 class="mb-0 ms-2 fw-bold">{{ groupe.libelle }}</h6>
             </div>
 
             <div class="d-flex flex-column gap-1">

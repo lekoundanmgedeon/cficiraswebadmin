@@ -197,6 +197,7 @@ import { useTableExport } from '@/shared/composables/useTableExport';
 import { usePagination } from '@/shared/composables/usePagination';
 import { usePaiementStore } from '@/modules/finances/stores/paiements';
 import { imprimerRecu } from '@/modules/finances/utils/recu';
+import { formatMontant } from '@/shared/utils/parametres';
 
 /**
  * Registre des encaissements.
@@ -320,8 +321,8 @@ const totalFiltré = computed(() =>
   filteredPaiements.value.reduce((total, paiement) => total + Number(paiement.montant ?? 0), 0)
 );
 
-const formatCurrency = (value) =>
-  new Intl.NumberFormat('fr-FR').format(Number(value ?? 0)) + ' FCFA';
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatCurrency = (value) => formatMontant(value);
 
 const exportRows = computed(() =>
   filteredPaiements.value.map((paiement) => ({

@@ -74,12 +74,9 @@ const groupes = computed(() => {
       :aria-expanded="ouvert"
       @click="ouvert = !ouvert"
     >
-      <i
-        class="bi text-body-secondary"
-        :class="ouvert ? 'bi-chevron-down' : 'bi-chevron-right'"
-      ></i>
+      <i class="bi text-muted" :class="ouvert ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
 
-      <span class="small fw-semibold">
+      <span class="small fw-bold">
         Les {{ nbVues }} sources que votre rôle permet d'interroger
       </span>
 
@@ -88,7 +85,7 @@ const groupes = computed(() => {
           v-for="domaine in domaines"
           :key="domaine"
           class="badge rounded-pill"
-          :class="`bg-${domaineInfo(domaine).couleur}-subtle text-${domaineInfo(domaine).couleur}-emphasis`"
+          :class="`bg-light text-${domaineInfo(domaine).couleur} border`"
         >
           {{ domaineInfo(domaine).libelle }}
         </span>
@@ -99,21 +96,21 @@ const groupes = computed(() => {
       <!-- Le catalogue n'est pas encore arrivé : on a le compte et les
            domaines par `/sante`, pas le détail. Le dire vaut mieux qu'un vide
            qu'on prendrait pour une absence de sources. -->
-      <p v-if="!groupes.length" class="small text-body-secondary mb-0">
+      <p v-if="!groupes.length" class="small text-muted mb-0">
         Le détail des sources n'a pas pu être chargé. Les domaines ci-dessus restent exacts.
       </p>
 
       <div v-for="groupe in groupes" :key="groupe.domaine" class="mt-3">
-        <h6 class="small fw-bold mb-2" :class="`text-${groupe.couleur}-emphasis`">
+        <h6 class="small fw-bold mb-2" :class="`text-${groupe.couleur}`">
           <i class="bi me-1" :class="groupe.icone"></i>{{ groupe.libelle }}
-          <span class="text-body-secondary fw-normal">({{ groupe.vues.length }})</span>
+          <span class="text-muted fw-normal">({{ groupe.vues.length }})</span>
         </h6>
 
         <div class="row g-2">
           <div v-for="vue in groupe.vues" :key="vue.nom" class="col-md-6 col-xl-4">
             <div class="h-100 px-2 py-2 sources-vue">
               <code class="d-block small">{{ vue.nom }}</code>
-              <p class="mb-0 sources-description text-body-secondary">
+              <p class="mb-0 sources-description text-muted">
                 {{ vue.description || 'Sans description.' }}
               </p>
             </div>

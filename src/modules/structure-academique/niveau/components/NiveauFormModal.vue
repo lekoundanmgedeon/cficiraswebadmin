@@ -4,6 +4,10 @@ import { storeToRefs } from 'pinia';
 import { useNiveauStore } from '../store';
 import { useCycleStore } from '../../cycle/store';
 import { useNiveauForm, NIVEAU_MODAL_ID } from '../composables/useNiveauForm';
+import { parametre } from '@/shared/utils/parametres';
+// Le libellé suit la devise réglée : afficher « (FCFA) » sur un établissement
+// qui a changé de devise contredirait les montants juste à côté.
+const devise = computed(() => parametre('finances.devise_symbole', 'FCFA'));
 
 /** Formulaire de création / édition d'un niveau. */
 
@@ -143,7 +147,7 @@ async function submit() {
                   min="0"
                   class="form-control"
                 />
-                <small class="text-muted">En FCFA.</small>
+                <small class="text-muted">En {{ devise }}.</small>
               </div>
             </div>
 

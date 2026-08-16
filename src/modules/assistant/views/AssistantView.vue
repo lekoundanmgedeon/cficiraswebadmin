@@ -128,7 +128,7 @@ function ouvrirEspace() {
                 <i class="bi bi-robot"></i>
               </span>
               <h5 class="mt-2 mb-1 fw-bold">Que voulez-vous savoir ?</h5>
-              <p class="text-body-secondary small mb-0">
+              <p class="text-muted small mb-0">
                 Posez une question sur les étudiants, la scolarité, les résultats, les enseignants —
                 ou les finances si votre rôle y donne accès.
               </p>

@@ -162,6 +162,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { formatMontant } from '@/shared/utils/parametres';
 
 const viewType = ref('mois');
 const honoraires = ref([
@@ -204,7 +205,8 @@ const totalHonoraires = computed(() => {
   return honoraires.value.reduce((acc, curr) => acc + curr.heures * curr.taux, 0);
 });
 
-const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatPrice = (val) => formatMontant(val);
 
 const handleFileChange = (e) => {
   if (e.target.files.length > 0) {

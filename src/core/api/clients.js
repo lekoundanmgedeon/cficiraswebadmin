@@ -18,3 +18,12 @@ export const evaluationClient = createHttpClient('/evaluations');
 export const bibliothequeClient = createHttpClient('/bibliotheque');
 export const coordinationClient = createHttpClient('/coordination');
 export const documentClient = createHttpClient('/documents');
+
+/**
+ * Paramètres et comptes.
+ *
+ * Client sans préfixe : le module backend sert `/parametres` **et**
+ * `/utilisateurs`, deux domaines distincts qu'aucun préfixe commun ne
+ * décrirait honnêtement. Les chemins sont donc écrits en entier dans `api.js`.
+ */
+export const plateformeClient = createHttpClient('');

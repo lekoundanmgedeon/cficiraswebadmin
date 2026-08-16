@@ -83,12 +83,12 @@ function nouvelle() {
       class="barre-laterale d-flex flex-column"
       :class="{ 'barre-laterale--fermee': !barreOuverte }"
     >
-      <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom border-secondary-subtle">
+      <div class="d-flex align-items-center gap-2 px-3 py-2 border-bottom border-light">
         <i class="bi bi-robot text-primary fs-5"></i>
         <span class="fw-bold small flex-grow-1">Assistant IA</span>
         <button
           type="button"
-          class="btn btn-sm btn-link text-body-secondary p-0"
+          class="btn btn-sm btn-link text-muted p-0"
           title="Replier la liste"
           @click="barreOuverte = false"
         >
@@ -103,19 +103,19 @@ function nouvelle() {
         @nouvelle="nouvelle"
       />
 
-      <div class="px-3 py-2 border-top border-secondary-subtle">
+      <div class="px-3 py-2 border-top border-light">
         <router-link
           v-if="auth.isAdmin"
           :to="`${ESPACE_CHAT_BASE}/audit`"
-          class="d-block small text-decoration-none text-body-secondary mb-2"
+          class="d-block small text-decoration-none text-muted mb-2"
         >
           <i class="bi bi-journal-text me-1"></i> Journal et statistiques
         </router-link>
 
         <div class="d-flex align-items-center gap-2">
           <div class="flex-grow-1 min-w-0">
-            <div class="small fw-semibold text-truncate">{{ identite }}</div>
-            <div class="text-body-secondary espace-role">{{ auth.user?.role }}</div>
+            <div class="small fw-bold text-truncate">{{ identite }}</div>
+            <div class="text-muted espace-role">{{ auth.user?.role }}</div>
           </div>
 
           <!-- Un lien, pas un `router-link` : l'application est dans l'autre
@@ -124,7 +124,7 @@ function nouvelle() {
             href="/"
             target="_blank"
             rel="noopener"
-            class="btn btn-sm btn-link text-body-secondary p-0"
+            class="btn btn-sm btn-link text-muted p-0"
             title="Ouvrir l'application"
           >
             <i class="bi bi-box-arrow-up-right"></i>

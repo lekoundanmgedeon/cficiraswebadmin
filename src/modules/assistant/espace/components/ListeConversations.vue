@@ -69,7 +69,7 @@ const domainesPresents = computed(() => {
 
 <template>
   <div class="liste-conversations d-flex flex-column h-100">
-    <div class="p-3 border-bottom border-secondary-subtle">
+    <div class="p-3 border-bottom border-light">
       <button type="button" class="btn btn-primary btn-sm w-100 mb-3" @click="emit('nouvelle')">
         <i class="bi bi-plus-lg me-1"></i> Nouvelle conversation
       </button>
@@ -107,7 +107,7 @@ const domainesPresents = computed(() => {
         <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
       </div>
 
-      <p v-else-if="!store.conversations.length" class="small text-body-secondary px-2 py-3 mb-0">
+      <p v-else-if="!store.conversations.length" class="small text-muted px-2 py-3 mb-0">
         <template v-if="store.recherche || store.filtreCadrage">
           Aucune conversation ne correspond à ce filtre.
         </template>
@@ -126,7 +126,7 @@ const domainesPresents = computed(() => {
         :class="{ 'liste-item--actif': fil.conversation_id === props.actif }"
         @click="emit('ouvrir', fil.conversation_id)"
       >
-        <div class="small fw-semibold text-truncate" :title="fil.titre">
+        <div class="small fw-bold text-truncate" :title="fil.titre">
           {{ tronquer(fil.titre, 60) }}
         </div>
 
@@ -135,21 +135,19 @@ const domainesPresents = computed(() => {
             v-for="cle in fil.cadrages"
             :key="cle"
             class="badge rounded-pill"
-            :class="`bg-${cadrageInfo(cle).couleur}-subtle text-${cadrageInfo(cle).couleur}-emphasis`"
+            :class="`bg-light text-${cadrageInfo(cle).couleur} border`"
           >
             {{ cadrageInfo(cle).libelle }}
           </span>
-          <span class="text-body-secondary ms-auto">{{
-            formatRelatif(fil.derniere_activite)
-          }}</span>
+          <span class="text-muted ms-auto">{{ formatRelatif(fil.derniere_activite) }}</span>
         </div>
       </button>
     </div>
 
-    <div class="p-2 border-top border-secondary-subtle">
+    <div class="p-2 border-top border-light">
       <button
         type="button"
-        class="btn btn-sm btn-link text-decoration-none w-100 text-start text-body-secondary"
+        class="btn btn-sm btn-link text-decoration-none w-100 text-start text-muted"
         @click="basculerArchivees"
       >
         <i class="bi me-1" :class="store.archivees ? 'bi-arrow-left' : 'bi-archive'"></i>

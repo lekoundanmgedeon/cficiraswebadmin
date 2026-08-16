@@ -32,7 +32,7 @@
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">Montant (FCFA)</label>
+                  <label class="form-label fw-bold">Montant ({{ devise }})</label>
                   <input
                     v-model.number="form.montant"
                     type="number"
@@ -161,11 +161,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useNotificationStore } from '@/shared/stores/notificationStore';
 import { useInscriptionStore } from '@/modules/inscriptions/store';
 import { usePaiementStore } from '@/modules/finances/stores/paiements';
 import { imprimerRecu } from '@/modules/finances/utils/recu';
+import { parametre } from '@/shared/utils/parametres';
+// Le libellé suit la devise réglée : afficher « (FCFA) » sur un établissement
+// qui a changé de devise contredirait les montants juste à côté.
+const devise = computed(() => parametre('finances.devise_symbole', 'FCFA'));
 
 /**
  * Guichet d'encaissement.

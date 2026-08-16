@@ -1772,6 +1772,112 @@ classe `bi-xxx` sans sa base, et tout nom déclaré en constante conforme à `/^
 Éprouvé en réintroduisant volontairement un `mdi-school` : les deux assertions concernées échouent
 et nomment le fichier.
 
+---
+
+### 1.27 L'écran Paramètres — réglages, comptes, notifications et journaux
+
+`/settings` affichait le profil de la session en lecture seule et un encart listant ce qui manquait.
+C'était honnête — l'écran d'origine était **la page de paramètres de Kaggle recopiée**, texte anglais
+compris — mais vide : on ne pouvait ni changer son mot de passe, ni gérer un compte, ni régler quoi
+que ce soit.
+
+Rien de tout cela n'avait de backend. Ce qui existait, en revanche, dormait en base :
+
+| Besoin | Ce qui existait | État |
+| --- | --- | --- |
+| Comptes | `users` (8 comptes, 8 rôles), `POST /auth/signup` | lister/modifier/retirer : **créés** |
+| Mon compte | `GET /auth/user` | modification et mot de passe : **créés** |
+| Réglages | **aucune table** | table + 11 clés : **créées** |
+| Notifications | `notifications`, **1 778 lignes réelles**, aucune route | routes : **créées** |
+| Journaux | `audit_financier` **7 517 lignes**, `import_logs` | routes de lecture : **créées** |
+
+#### Migration 019 — et pourquoi il n'y a pas de suppression de compte
+
+`parametres_plateforme` est une table **catalogue** : chaque clé y est semée avec son libellé, son
+type et sa catégorie. Le formulaire s'en déduit — une clé ajoutée en base apparaît sans qu'on touche
+au front —, et le serveur refuse en 404 toute clé qu'il ne connaît pas : le client ne peut pas
+fabriquer un réglage que rien ne lit. Le semis est en `ON CONFLICT DO UPDATE` sur les seules colonnes
+de description : rejouer la migration corrige un libellé sans écraser une valeur saisie.
+
+Sur `users` : `actif` et `derniere_connexion`. **Aucun `DELETE`, et c'est le point central** — onze
+tables désignent un compte pour dire *qui a fait quoi* (`notes.saisi_par`,
+`paiements_all.encaisse_par`, `factures.emise_par`…), toutes en `ON DELETE SET NULL`. Supprimer
+effacerait l'auteur des actes **sans effacer les actes** : un paiement garderait son montant et
+perdrait son encaisseur, définitivement.
+
+#### Quatre verrous, sans lesquels la fonctionnalité serait fausse ou dangereuse
+
+1. **`POST /auth/login` refuse un compte inactif.** Sans cette ligne, « désactiver » serait purement
+   décoratif. Le refus est un 403 distinct de « identifiants incorrects » : le mot de passe était bon,
+   et laisser croire le contraire enverrait l'utilisateur en réinitialiser un qui fonctionne.
+2. **`auth.middleware` aussi**, et c'est la moitié qu'on oublie : un jeton vit huit heures. Sans
+   contrôle à chaque requête, le compte qu'on vient de désactiver continuerait d'écrire tout ce
+   temps — or c'est précisément là qu'une désactivation est urgente. En **401** et non 403, pour que
+   `onUnauthorized` nettoie la session côté front.
+3. **On ne peut ni se désactiver soi-même, ni retirer son propre rôle ADMIN, ni désactiver le dernier
+   ADMIN actif** : chacun laisse une plateforme que plus personne ne peut administrer par
+   l'interface.
+4. **La diffusion de notifications est bornée et comptée avant d'écrire.** `etudiant_id` est
+   `NOT NULL` : « à tous » écrit **893 lignes**. La cible est fermée (classe, filière, tous — jamais
+   un filtre libre), et le décompte est rendu par une route distincte, sans écriture.
+
+La purge ne touche **que les notifications lues** : supprimer une non lue priverait l'étudiant d'un
+message qu'il n'a pas vu.
+
+#### Front — un module neuf, et deux branchements transverses
+
+`src/modules/parametres/` (api, store, constantes, cinq onglets). `/settings` quitte `plateforme` —
+le module des écrans *sans* backend — en gardant son chemin et son nom de route. Les onglets suivent
+le rôle : seul un ADMIN voit Comptes, Réglages, Notifications et Journaux. ⚠️ **C'est du confort, pas
+une sécurité** — le serveur refuse en 403 quoi qu'il arrive.
+
+Les réglages sont **effectivement lus**, sans quoi l'écran promettrait un effet qu'il n'a pas :
+
+- `shared/utils/exportPDF.js` compose désormais son en-tête avec le nom de l'établissement et ses
+  coordonnées, là où l'identité n'existait que **gravée dans les pixels** de la bannière `logoBase64` ;
+- `shared/utils/parametres.js` porte `formatMontant`, qui lit `finances.devise_symbole`. Il remplace
+  les copies locales de `formatCurrency` / `formatPrice` / `formatMoney` (huit fichiers) et les
+  libellés « (FCFA) » écrits en dur (quatre écrans).
+
+⚠️ **Inversion de dépendance à connaître.** La règle du dépôt est `modules → shared → core` : un
+utilitaire partagé ne peut pas importer le store des paramètres. C'est donc `shared/utils/parametres.js`
+qui **détient** les valeurs, et le store qui les y **dépose** (`appliquerParametres`) après chaque
+lecture *et après chaque écriture* — sans ce second dépôt, changer la devise n'aurait d'effet qu'au
+rechargement. Les valeurs de repli sont celles semées par la migration, si bien qu'un montant est
+juste dès la première frame.
+
+**L'année académique active n'est délibérément pas un paramètre.** Elle a déjà une source de vérité —
+`annee.est_active`, dont l'activation bascule deux lignes. La recopier en ferait une seconde vérité.
+L'écran l'affiche en lecture seule, avec un lien vers l'écran qui la décide.
+
+#### Vérification
+
+Migration appliquée puis **rejouée**. Exercé contre `localhost:3500` avec deux jetons : `PUT
+/parametres` en 403 pour `scolarite`, `password_hash` absent de toutes les réponses, clé inconnue en
+404, type refusé en 400, **lot refusé qui ne laisse rien écrit** (transaction vérifiée : `sigle`
+inchangé), compte désactivé dont le jeton **existant** cesse aussitôt de fonctionner puis qui ne peut
+plus se connecter, réactivation, changement de mot de passe dans les quatre cas d'erreur puis dans le
+cas nominal — **mot de passe d'origine rétabli**, la base servant à d'autres essais. Diffusion réelle
+sur 13 étudiants (le décompte annoncé correspondait à l'effectif réel de la classe), **puis les
+13 lignes supprimées** : la base est revenue à ses 1 778 notifications.
+
+**12 tests backend** (`tests/controllers/parametres/verrous.test.js`) et **31 tests front** : les
+quatre verrous, l'absence de `password_hash` dans le SQL, le catalogue qui refuse une clé inconnue,
+la diffusion qui n'écrit rien sur une cible vide, la purge restreinte aux lues, le dépôt des réglages
+dans `shared` (avant et après écriture), les replis, et le cloisonnement des onglets par rôle — y
+compris **le sens du défaut** : rôle inconnu, on masque.
+
+⚠️ **Piège rencontré** : `Intl.NumberFormat('fr-FR')` sépare les milliers par une **espace fine
+insécable** (U+202F), indiscernable à l'œil d'une espace ordinaire, y compris dans un message d'échec
+de test. Les tests de montants l'écrivent en `\u202f` explicite.
+
+⚠️ Même réserve qu'aux §1.22 à §1.26 : **rien n'a été vu en navigateur**. En particulier, l'en-tête
+PDF enrichi n'a pas été constaté sur un document réel.
+
+**Ce que l'écran ne fait pas, et le dit** : aucune notification n'est produite automatiquement. Les
+1 778 lignes ont été semées par le jeu de démonstration, en trois lots ; aucun déclencheur ne les
+écrit. Un producteur (échéance dépassée, note publiée) reste à écrire.
+
 **Reste en `mdi`, délibérément** : l'entrée « Espace de chat » de `src/components/partials/sidebar.vue`.
 La barre latérale est en `mdi` d'un bout à l'autre ; une seule entrée en `bi` y jurerait avec ses
 voisines. Elle basculera avec la barre, pas avant.

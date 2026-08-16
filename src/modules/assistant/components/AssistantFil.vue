@@ -75,7 +75,7 @@ watch(
         <p
           v-if="message.role === 'assistant' && (message.dureeMs || message.archive)"
           class="mb-0 mt-1 small assistant-meta"
-          :class="message.archive ? 'text-body-secondary' : 'text-muted'"
+          :class="message.archive ? 'text-muted' : 'text-muted'"
         >
           <template v-if="message.archive">
             <i class="bi bi-clock-history me-1"></i>Chiffres arrêtés au

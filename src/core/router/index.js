@@ -23,6 +23,7 @@ import statsRoutes from '@/modules/stats/routes';
 import assistantRoutes from '@/modules/assistant/routes';
 import assistantEspaceRoutes from '@/modules/assistant/espace/routes';
 import plateformeRoutes from '@/modules/plateforme/routes';
+import parametresRoutes from '@/modules/parametres/routes';
 import bibliothequeRoutes from '@/modules/bibliotheque/routes';
 import coordinationRoutes from '@/modules/coordination/routes';
 import documentsRoutes from '@/modules/documents/routes';
@@ -38,6 +39,7 @@ const protectedRoutes = [
   ...dashboardRoutes,
   ...statsRoutes,
   ...plateformeRoutes,
+  ...parametresRoutes,
   ...structureAcademiqueRoutes,
   ...etudiantsRoutes,
   ...inscriptionsRoutes,

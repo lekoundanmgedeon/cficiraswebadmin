@@ -110,7 +110,7 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
     <div class="d-flex align-items-center mb-3">
       <div>
         <h5 class="mb-0">Journal et statistiques</h5>
-        <p class="text-body-secondary small mb-0">
+        <p class="text-muted small mb-0">
           Toutes les questions posées à l'assistant, tous utilisateurs et tous écrans confondus.
         </p>
       </div>
@@ -121,9 +121,9 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
       <div class="col-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body py-2 px-3">
-            <div class="text-body-secondary audit-etiquette">Questions</div>
+            <div class="text-muted audit-etiquette">Questions</div>
             <div class="fs-5 fw-bold">{{ global.total }}</div>
-            <div class="small text-body-secondary">
+            <div class="small text-muted">
               {{ global.conversations }} conversation{{ global.conversations > 1 ? 's' : '' }},
               {{ global.utilisateurs }} utilisateur{{ global.utilisateurs > 1 ? 's' : '' }}
             </div>
@@ -134,14 +134,14 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
       <div class="col-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body py-2 px-3">
-            <div class="text-body-secondary audit-etiquette">Abouties</div>
+            <div class="text-muted audit-etiquette">Abouties</div>
             <div
               class="fs-5 fw-bold"
               :class="tauxAboutissement < 80 ? 'text-warning' : 'text-success'"
             >
               {{ tauxAboutissement }} %
             </div>
-            <div class="small text-body-secondary">
+            <div class="small text-muted">
               {{ global.en_erreur }} en erreur sur {{ global.total }}
             </div>
           </div>
@@ -151,11 +151,9 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
       <div class="col-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body py-2 px-3">
-            <div class="text-body-secondary audit-etiquette">Durée moyenne</div>
+            <div class="text-muted audit-etiquette">Durée moyenne</div>
             <div class="fs-5 fw-bold">{{ (global.duree_moyenne_ms / 1000).toFixed(1) }} s</div>
-            <div class="small text-body-secondary">
-              {{ global.tours_moyens }} tours par question
-            </div>
+            <div class="small text-muted">{{ global.tours_moyens }} tours par question</div>
           </div>
         </div>
       </div>
@@ -163,11 +161,11 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
       <div class="col-6 col-lg-3">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body py-2 px-3">
-            <div class="text-body-secondary audit-etiquette">Jetons</div>
+            <div class="text-muted audit-etiquette">Jetons</div>
             <div class="fs-5 fw-bold">
               {{ ((global.jetons_entree + global.jetons_sortie) / 1000).toFixed(0) }} k
             </div>
-            <div class="small text-body-secondary">
+            <div class="small text-muted">
               {{ (global.jetons_entree / 1000).toFixed(0) }} k entrée ·
               {{ (global.jetons_sortie / 1000).toFixed(0) }} k sortie
             </div>
@@ -181,10 +179,8 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
       <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body py-2 px-3">
-            <h6 class="small fw-bold text-uppercase text-body-secondary mb-2">
-              Par fournisseur et modèle
-            </h6>
-            <p class="small text-body-secondary mb-2">
+            <h6 class="small fw-bold text-uppercase text-muted mb-2">Par fournisseur et modèle</h6>
+            <p class="small text-muted mb-2">
               Un fournisseur qui apparaît sans être le nominal est un repli : l'appel y a basculé
               après échec du premier.
             </p>
@@ -206,8 +202,8 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
                     v-for="f in stats?.parFournisseur ?? []"
                     :key="`${f.fournisseur}-${f.modele}`"
                   >
-                    <td class="fw-semibold">{{ f.fournisseur }}</td>
-                    <td class="text-body-secondary">{{ f.modele || '—' }}</td>
+                    <td class="fw-bold">{{ f.fournisseur }}</td>
+                    <td class="text-muted">{{ f.modele || '—' }}</td>
                     <td class="text-end">{{ f.total }}</td>
                     <td class="text-end">{{ f.abouties }}</td>
                     <td class="text-end">
@@ -226,7 +222,7 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
       <div class="col-lg-5">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body py-2 px-3 d-flex flex-column">
-            <h6 class="small fw-bold text-uppercase text-body-secondary mb-2">Sur 30 jours</h6>
+            <h6 class="small fw-bold text-uppercase text-muted mb-2">Sur 30 jours</h6>
 
             <!-- Les jours sans question sont rendus par le serveur avec un
                  total nul : sans eux, deux points distants se liraient comme
@@ -286,7 +282,7 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
           <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         </div>
 
-        <p v-else-if="!lignes.length" class="small text-body-secondary py-3 mb-0">
+        <p v-else-if="!lignes.length" class="small text-muted py-3 mb-0">
           Aucun échange ne correspond à ces filtres.
         </p>
 
@@ -309,7 +305,7 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
                   <td>
                     <button
                       type="button"
-                      class="btn btn-sm btn-link p-0 text-body-secondary"
+                      class="btn btn-sm btn-link p-0 text-muted"
                       :title="deplie === ligne.id ? 'Replier' : 'Voir la réponse et le SQL'"
                       @click="deplie = deplie === ligne.id ? null : ligne.id"
                     >
@@ -319,21 +315,21 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
                       ></i>
                     </button>
                   </td>
-                  <td class="text-nowrap text-body-secondary">
+                  <td class="text-nowrap text-muted">
                     {{ formatDateTime(ligne.created_at) }}
                   </td>
                   <td>
-                    <span class="fw-semibold">{{ ligne.username || 'compte supprimé' }}</span>
+                    <span class="fw-bold">{{ ligne.username || 'compte supprimé' }}</span>
                     <!-- Le rôle est celui **au moment de la question**, recopié
                          dans le journal : c'est lui qui explique ce que
                          l'assistant a pu lire, pas le rôle actuel. -->
-                    <span class="text-body-secondary audit-role d-block">{{ ligne.role }}</span>
+                    <span class="text-muted audit-role d-block">{{ ligne.role }}</span>
                   </td>
                   <td :title="ligne.question">{{ tronquer(ligne.question, 90) }}</td>
                   <td>
                     <span
                       class="badge rounded-pill"
-                      :class="`bg-${cadrageInfo(ligne.cadrage).couleur}-subtle text-${cadrageInfo(ligne.cadrage).couleur}-emphasis`"
+                      :class="`bg-light text-${cadrageInfo(ligne.cadrage).couleur} border`"
                     >
                       {{ cadrageInfo(ligne.cadrage).libelle }}
                     </span>
@@ -355,7 +351,7 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
                 </tr>
 
                 <tr v-if="deplie === ligne.id">
-                  <td colspan="7" class="bg-body-tertiary">
+                  <td colspan="7" class="bg-light">
                     <p v-if="ligne.erreur" class="small text-danger mb-2">
                       <i class="bi bi-exclamation-triangle me-1"></i>{{ ligne.erreur }}
                     </p>
@@ -364,7 +360,7 @@ const maxJour = computed(() => Math.max(1, ...(stats.value?.parJour ?? []).map((
                       {{ ligne.reponse || 'Aucune réponse rendue.' }}
                     </p>
 
-                    <div class="small text-body-secondary mb-1">
+                    <div class="small text-muted mb-1">
                       {{ ligne.fournisseur }} · {{ ligne.modele }} · {{ ligne.nb_tours }} tour(s) ·
                       {{ ligne.jetons_entree ?? 0 }} + {{ ligne.jetons_sortie ?? 0 }} jetons
                     </div>

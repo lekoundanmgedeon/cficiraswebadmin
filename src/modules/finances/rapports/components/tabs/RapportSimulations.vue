@@ -98,7 +98,7 @@
       <div class="col-lg-7">
         <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
           <h6 class="fw-bold text-dark mb-4 small text-uppercase text-secondary tracking-wider">
-            <i class="bi bi-calculator-fill text-success me-2"></i>Projection des Résultats (FCFA)
+            <i class="bi bi-calculator-fill text-success me-2"></i>Projection des Résultats ({{ devise }})
           </h6>
 
           <!-- Tableau d'analyse d'impact -->
@@ -191,6 +191,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
+import { formatMontant } from '@/shared/utils/parametres';
+import { parametre } from '@/shared/utils/parametres';
+// Le libellé suit la devise réglée : afficher « (FCFA) » sur un établissement
+// qui a changé de devise contredirait les montants juste à côté.
+const devise = computed(() => parametre('finances.devise_symbole', 'FCFA'));
 
 /**
  * Simulateur de projections.
@@ -246,7 +251,8 @@ const projections = computed(() => {
   return { caProjete, caEcart, chargesProjetees, chargesEcart, resultatProjete, resultatEcart };
 });
 
-const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' FCFA';
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatPrice = (val) => formatMontant(val);
 
 const resetSimulateur = () => {
   scolariteModifier.value = 0;

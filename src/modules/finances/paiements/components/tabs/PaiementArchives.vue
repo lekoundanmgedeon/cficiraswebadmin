@@ -162,6 +162,7 @@ import { useTableExport } from '@/shared/composables/useTableExport';
 import { usePagination } from '@/shared/composables/usePagination';
 import { useAnneeStore } from '@/modules/structure-academique/annee/store';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
+import { formatMontant } from '@/shared/utils/parametres';
 
 /**
  * Archives : la clôture d'un exercice, ventilée classe par classe.
@@ -216,8 +217,9 @@ const loadArchiveData = async () => {
   ]);
 };
 
-const formatCurrency = (value) =>
-  new Intl.NumberFormat('fr-FR').format(Number(value ?? 0)) + ' FCFA';
+// La devise vient du réglage `finances.devise_symbole` (écran Paramètres),
+// et non plus d'un « FCFA » écrit en dur dans chaque onglet.
+const formatCurrency = (value) => formatMontant(value);
 
 const exportRows = computed(() =>
   archiveRecords.value.map((ligne) => ({

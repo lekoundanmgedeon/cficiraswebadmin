@@ -132,6 +132,7 @@ import Pagination from '@/components/shared/Pagination.vue';
 import { usePagination } from '@/shared/composables/usePagination';
 import { usePaiementStore } from '@/modules/finances/stores/paiements';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
+import { formatMontant } from '@/shared/utils/parametres';
 
 /**
  * Rapport des paiements.
@@ -279,8 +280,8 @@ onBeforeUnmount(() => {
   chartMontantsInstance.value?.destroy();
 });
 
-const formatCurrency = (value) =>
-  new Intl.NumberFormat('fr-FR').format(Number(value ?? 0)) + ' FCFA';
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatCurrency = (value) => formatMontant(value);
 
 /**
  * Le serveur sert déjà la date au format JJ/MM/AAAA. La reformater la

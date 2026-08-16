@@ -1,8 +1,10 @@
 <script setup>
+import { onMounted } from 'vue';
 import Header from '@/components/partials/header.vue';
 import Sidebar from '@/components/partials/sidebar.vue';
 import Footer from '@/components/partials/footer.vue';
 import { useSidebarRepli } from '@/shared/composables/useSidebarRepli';
+import { useParametresStore } from '@/modules/parametres/store';
 
 /**
  * La mise en page de l'administration.
@@ -27,6 +29,20 @@ import { useSidebarRepli } from '@/shared/composables/useSidebarRepli';
  * plutôt que de se disloquer. C'est une limite assumée, et visible comme telle.
  */
 const { repliee, petit } = useSidebarRepli();
+
+/**
+ * Les réglages de la plateforme sont chargés **une fois**, ici.
+ *
+ * C'est le seul point qui enveloppe tous les écrans internes. Le symbole de la
+ * devise et l'identité de l'établissement sont lus par des fonctions de
+ * `shared/utils/parametres.js` — hors composant, donc sans accès au store —, et
+ * ce chargement est ce qui les y dépose.
+ *
+ * Aucun écran n'attend cet appel : le module part avec les valeurs semées par
+ * la migration 019, si bien qu'un montant s'affiche juste dès la première
+ * frame, puis se corrige tout seul si l'établissement a changé ses réglages.
+ */
+onMounted(() => useParametresStore().fetchParametres());
 </script>
 
 <template>

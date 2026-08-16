@@ -85,10 +85,7 @@ function choisirCadrage(cle) {
           {{ store.titre || 'Nouvelle conversation' }}
         </h6>
 
-        <span
-          v-if="store.archivee"
-          class="badge bg-secondary-subtle text-secondary-emphasis flex-shrink-0"
-        >
+        <span v-if="store.archivee" class="badge bg-light text-secondary border flex-shrink-0">
           Archivée
         </span>
       </div>

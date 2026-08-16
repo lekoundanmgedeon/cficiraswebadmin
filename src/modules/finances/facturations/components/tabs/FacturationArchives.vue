@@ -191,7 +191,7 @@
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label fw-bold">Montant (FCFA)</label>
+                <label class="form-label fw-bold">Montant ({{ devise }})</label>
                 <input
                   type="number"
                   v-model="newT.montant"
@@ -213,6 +213,10 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { parametre } from '@/shared/utils/parametres';
+// Le libellé suit la devise réglée : afficher « (FCFA) » sur un établissement
+// qui a changé de devise contredirait les montants juste à côté.
+const devise = computed(() => parametre('finances.devise_symbole', 'FCFA'));
 
 const filterCategory = ref('Toutes');
 const filterMonth = ref(new Date().toISOString().slice(0, 7));

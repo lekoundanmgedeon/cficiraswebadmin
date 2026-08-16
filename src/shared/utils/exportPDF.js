@@ -1,8 +1,23 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { identiteEtablissement } from './parametres';
 
 /**
  * Génère un PDF avec bannière, titre, infos et tableau
+ *
+ * ## L'établissement vient des réglages, plus de l'image
+ *
+ * La bannière `logoBase64` reste — c'est elle qui porte le graphisme —, mais
+ * l'identité de l'établissement (nom, adresse, téléphone) est désormais **lue
+ * dans les paramètres de la plateforme** et écrite en pied de page. Auparavant,
+ * elle n'existait que gravée dans les pixels de la bannière : la changer
+ * exigeait de refaire l'image et de la recompiler dans le bundle.
+ *
+ * `identiteEtablissement()` ne dépend d'aucun composant — elle lit le dépôt de
+ * `shared/utils/parametres.js`, que le layout alimente au démarrage. Un export
+ * lancé avant que les réglages soient revenus utilise les valeurs semées par la
+ * migration 019 : le document reste juste.
+ *
  * @param {Object} options - Paramètres du PDF
  * @param {string} options.logoBase64 - Image base64 du logo
  * @param {string} options.title - Titre du document
@@ -22,6 +37,7 @@ export const exportPDF = ({
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  const etablissement = identiteEtablissement();
 
   // === BANNIÈRE SUPÉRIEURE ===
   doc.addImage(logoBase64, 'PNG', 0, 0, pageWidth, 50);
@@ -32,16 +48,34 @@ export const exportPDF = ({
   doc.setTextColor(0, 0, 0);
   doc.text(title, pageWidth / 2, 60, { align: 'center' });
 
+  // === ÉTABLISSEMENT ÉMETTEUR ===
+  if (etablissement.nom) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(etablissement.nom, pageWidth / 2, 66, { align: 'center' });
+  }
+
   // === INFORMATIONS DE FILTRAGE ===
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
 
-  let yPos = 68;
+  let yPos = etablissement.nom ? 74 : 68;
   filters.forEach(({ label, value }) => {
     doc.text(`${label}: ${value}`, 14, yPos);
     yPos += 5;
   });
+
+  /**
+   * Les coordonnées, en pied de page.
+   *
+   * Les champs vides sont **écartés** plutôt que remplacés par un tiret : un
+   * document officiel ne doit pas afficher « Téléphone : — ».
+   */
+  const coordonnees = [etablissement.adresse, etablissement.telephone, etablissement.email]
+    .filter(Boolean)
+    .join(' · ');
 
   // === TABLEAU ===
   autoTable(doc, {
@@ -73,6 +107,13 @@ export const exportPDF = ({
         pageHeight - 10,
         { align: 'center' }
       );
+
+      // Répétée sur chaque page : une page détachée du document doit rester
+      // rattachable à son émetteur.
+      if (coordonnees) {
+        doc.setFontSize(7);
+        doc.text(coordonnees, pageWidth / 2, pageHeight - 5, { align: 'center' });
+      }
     },
   });
 

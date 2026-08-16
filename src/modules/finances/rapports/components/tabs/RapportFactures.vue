@@ -157,6 +157,7 @@
 import { computed, onMounted } from 'vue';
 import { useTableExport } from '@/shared/composables/useTableExport';
 import { useEcheancierStore } from '@/modules/finances/stores/echeanciers';
+import { formatMontant } from '@/shared/utils/parametres';
 
 /**
  * Créances : balance âgée et principaux débiteurs.
@@ -241,7 +242,8 @@ const debiteursTop = computed(() => {
     .slice(0, 10);
 });
 
-const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' FCFA';
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatPrice = (val) => formatMontant(val);
 
 const getRiskBadgeClass = (jours) => {
   if (jours > 90) return 'bg-soft-danger text-danger fw-bold';

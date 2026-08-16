@@ -28,13 +28,9 @@ export default [
     component: () => import('./views/DocumentsView.vue'),
     meta: { title: 'Documents académiques' },
   },
-  {
-    // La barre latérale pointait déjà ici, sans qu'aucune route existe.
-    path: '/settings',
-    name: 'Parametres',
-    component: () => import('./views/ParametresView.vue'),
-    meta: { title: 'Paramètres' },
-  },
+  // `/settings` a quitté ce module : l'écran Paramètres a désormais un backend
+  // (migration 019), il n'est plus un écran sans serveur. Voir
+  // `modules/parametres/routes.js` — le chemin et le nom sont inchangés.
   {
     // Idem — et au singulier, comme le lien du menu.
     path: '/notification',

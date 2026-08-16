@@ -10,6 +10,7 @@ import { useNiveauStore } from '../store';
 import { useCycleStore } from '../../cycle/store';
 import { useNiveauForm } from '../composables/useNiveauForm';
 import NiveauFormModal from './NiveauFormModal.vue';
+import { formatMontant } from '@/shared/utils/parametres';
 
 /**
  * Liste des niveaux, filtrable par cycle.
@@ -53,7 +54,8 @@ function filterByCycle(cycleCode) {
 }
 
 /** @param {number} value */
-const formatMoney = (value) => `${new Intl.NumberFormat('fr-FR').format(value || 0)} FCFA`;
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatMoney = (value) => formatMontant(value);
 
 const actions = [
   { key: 'edit', label: 'Modifier', icon: 'mdi-pencil-outline' },

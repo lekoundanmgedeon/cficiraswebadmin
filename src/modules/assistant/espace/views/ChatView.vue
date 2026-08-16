@@ -106,7 +106,7 @@ watch(() => route.params.id, synchroniser);
     >
       <i class="bi bi-robot text-primary" style="font-size: 3rem"></i>
       <h5 class="mt-3 mb-1">Que voulez-vous savoir ?</h5>
-      <p class="text-body-secondary small mb-1" style="max-width: 34rem">
+      <p class="text-muted small mb-1" style="max-width: 34rem">
         Posez une question sur les étudiants, la scolarité, les résultats, les enseignants — ou les
         finances si votre rôle y donne accès. Les réponses s'appuient sur les données auxquelles
         votre rôle donne accès.

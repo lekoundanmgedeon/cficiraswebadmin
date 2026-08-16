@@ -1,5 +1,7 @@
 /** Constantes du module Finances. */
 
+import { formatMontant } from '@/shared/utils/parametres';
+
 export const PAIEMENT_MODAL_ID = 'financePaiementModal';
 export const RECU_MODAL_ID = 'financeRecuModal';
 export const FACTURE_MODAL_ID = 'financeFactureModal';
@@ -123,18 +125,21 @@ export function modeLabel(code) {
 }
 
 /**
- * Formate un montant en francs CFA.
+ * Formate un montant avec la devise réglée.
+ *
+ * La devise n'est plus « FCFA » en dur : elle vient du paramètre
+ * `finances.devise_symbole`, réglable depuis l'écran Paramètres. Le repli reste
+ * « FCFA » tant que les réglages ne sont pas revenus du serveur, si bien que le
+ * premier rendu est déjà juste.
  *
  * Les montants arrivent du serveur en chaînes (`"575000.00"`, le type `NUMERIC`
  * de PostgreSQL) : les additionner sans conversion concaténerait des textes.
- * D'où le `Number()` systématique.
+ * `formatMontant` absorbe cette conversion.
  *
  * @param {number|string|null|undefined} montant
  */
 export function formatMoney(montant) {
-  const valeur = Number(montant ?? 0);
-  if (Number.isNaN(valeur)) return '0 FCFA';
-  return `${valeur.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} FCFA`;
+  return formatMontant(montant);
 }
 
 /** Somme une colonne d'une liste, en neutralisant les montants en chaînes. */

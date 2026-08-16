@@ -232,6 +232,7 @@ import { computed, onMounted } from 'vue';
 import Pagination from '@/components/shared/Pagination.vue';
 import { usePagination } from '@/shared/composables/usePagination';
 import { useRapportStore } from '@/modules/finances/stores/rapports';
+import { formatMontant } from '@/shared/utils/parametres';
 
 /**
  * Bilans financiers.
@@ -287,7 +288,8 @@ const ratioCreances = computed(() => {
   return ((restant / kpi.value.totalEngage) * 100).toFixed(1);
 });
 
-const formatPrice = (val) => new Intl.NumberFormat('fr-FR').format(Number(val ?? 0)) + ' FCFA';
+// Devise réglée depuis l'écran Paramètres, plus « FCFA » en dur.
+const formatPrice = (val) => formatMontant(val);
 </script>
 
 <style scoped>

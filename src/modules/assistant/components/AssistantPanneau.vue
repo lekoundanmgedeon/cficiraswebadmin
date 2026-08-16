@@ -191,7 +191,7 @@ function poursuivreDansEspace() {
         <div v-if="store.estVide" class="text-center text-muted py-5">
           <i class="bi bi-robot" style="font-size: 2.2rem"></i>
           <p class="mt-2 mb-0 small">{{ intro }}</p>
-          <p class="mb-0 small text-body-secondary">
+          <p class="mb-0 small text-muted">
             Les réponses s'appuient sur les données auxquelles votre rôle donne accès.
           </p>
         </div>
