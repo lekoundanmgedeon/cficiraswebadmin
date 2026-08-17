@@ -1,0 +1,45 @@
+# Ce qui n'entre jamais dans le contexte de construction du frontend.
+#
+# La première section est la seule qui protège vraiment quelque chose : le
+# Dockerfile fait `COPY . .` avant `npm run build`, et Vite lit les `.env*` du
+# répertoire courant. Sans cette exclusion, un `.env` local pointant
+# `http://localhost:3500` serait gravé **dans le bundle** d'une image
+# déployée — le front en production appellerait alors une API qui n'existe que
+# sur le poste du développeur, et l'erreur ne se verrait qu'à l'exécution.
+#
+# Les valeurs de build arrivent par `--build-arg` (voir docker/Dockerfile).
+.env
+.env.*
+!.env.example
+
+# ─── Volumineux ou reconstruits ──────────────────────────────────────────────
+node_modules
+dist
+coverage
+*.log
+npm-debug.log
+
+# ─── Sans objet pour un build ────────────────────────────────────────────────
+.git
+.gitignore
+.github
+.claude
+.husky
+docs
+tests
+e2e
+playwright-report
+test-results
+*.test.js
+vitest.config.js
+eslint.config.js
+.prettierrc
+.prettierignore
+README.md
+DEPLOYMENT.md
+PRODUCTION_CHECKLIST.md
+CLAUDE.md
+
+# Les définitions de la pile ne servent pas *dans* l'image — sauf `docker/`,
+# que le Dockerfile copie lui-même (`nginx.conf`). D'où l'absence de `docker/`
+# dans cette liste, contrairement au backend.

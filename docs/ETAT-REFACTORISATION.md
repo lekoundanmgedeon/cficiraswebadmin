@@ -4,11 +4,12 @@ Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et *
 À tenir à jour à chaque module migré.
 
 - Branche : `refactor-main` (dernier module migré : `stats`, §1.19 — **il ne reste que les résidus**)
-- État de santé : `npm run lint` **0 erreur sur le code migré** · `npm test` **207 tests, 28 fichiers** ·
+- État de santé, mesuré le **17 août 2026** : `npm run lint` **0 erreur** (234 avertissements,
+  tous dans du legacy non migré) · `npm test` **494 tests, 68 fichiers** (1 ignoré) ·
   `npm run build` **OK**
-  Les **2 erreurs** que remonte le lint sont dans du legacy non migré, et déjà répertoriées en §2.3 :
-  `views/admin/DataTable.vue:40` (le fichier ne parse pas) et `views/notifications/notification.vue`
-  (`<template>` sans élément racine).
+  Les deux erreurs de parse répertoriées en §2.3 ne sont plus remontées.
+- **Déploiement** : le front a désormais son image (`docker/Dockerfile`) et les trois composants
+  leur dépôt d'assemblage, `~/cfiprojects/cfideploy` — voir §1.20.
 - ⚠️ **`matieres`, `examens` et `concours` ont nécessité des corrections dans `cfibackend`.**
   Voir §1.6, §1.9, §1.10 — le dépôt backend porte un commit par module.
 - **Endpoints vérifiés contre le backend local** (`localhost:3500`) : toutes les routes appelées par
@@ -1933,6 +1934,61 @@ une colonne par jour), pas une liste — la paginer découperait la semaine.
 du tableau devient inatteignable), la liaison de la taille de page doit être **bidirectionnelle**, et
 un changement de filtre doit ramener en page 1. Éprouvés en réintroduisant chacun des deux premiers
 défauts : le test correspondant échoue, et lui seul.
+
+---
+
+### 1.20 Déploiement — dépôt `cfideploy`, et l'image Docker du front
+
+**17 août 2026.** Le front n'avait pas d'image ; le déploiement des trois
+composants n'était décrit nulle part. Deux livrables :
+
+**`cficiraswebadmin/docker/`** — `Dockerfile` (build Vite → nginx 1.27),
+`nginx.conf`, et `.dockerignore` à la racine.
+
+La décision qui structure l'image : **`VITE_API_URL` est laissée vide** et
+nginx renvoie `/api` vers le service `api`. `httpClient.js` construit son
+`baseURL` avec `${import.meta.env.VITE_API_URL}/api${prefix}`, or une variable
+`VITE_*` est figée **au build** — une image construite avec une URL d'API en
+dur ne parle qu'à ce serveur-là, et la promouvoir d'iso-prod vers la production
+supposerait de la reconstruire, donc de déployer un binaire jamais testé. Vide,
+le bundle appelle `/api/...` en relatif : la même image tourne partout, aucune
+requête n'est cross-origin, et `CORS_ORIGIN` cesse d'être un point de panne.
+
+Le `.dockerignore` écarte les `.env*` **en premier** : le Dockerfile fait
+`COPY . .` avant `npm run build`, et Vite lit les `.env` du répertoire courant.
+Sans cette exclusion, un `.env` local pointant `localhost:3500` serait gravé
+dans le bundle d'une image déployée.
+
+**`~/cfiprojects/cfideploy/`** — dépôt frère, trois environnements : `dev`
+(pile complète locale), `render` (blueprint des trois services), `prod`
+(VPS/cloud + iso-prod), plus `scripts/verifier-deploiement.sh`.
+
+⚠️ **`render.yaml` à la racine de ce dépôt est obsolète** : il déclare deux
+sites statiques pointant vers des URL **Railway** (`cfibackend-production.up.railway.app`),
+y compris dans le `connect-src` de sa CSP. Le blueprint de `cfideploy/render/`
+le remplace. Ne pas laisser les deux servir de source à Render.
+
+**Ce que le montage de la pile a révélé** — et que ni le lint, ni les 494 tests,
+ni le build ne pouvaient voir : `erp-academique-db/schema.sql` était en retard
+de trois évolutions. Il manquait `users.actif` et `users.derniere_connexion`,
+les tables `assistant_conversations` et `parametres_plateforme`, et
+`assistant_echanges.cadrage`. Or `auth.middleware.js:51` lit `actif` sur
+**chaque requête authentifiée** : toute base montée depuis le dépôt rendait
+**500 sur toutes les routes protégées** — alors que `POST /auth/login`, lui,
+réussissait. La base `erp-db-demo` qui tourne, elle, portait ces colonnes : le
+défaut ne se voyait donc pas en développement.
+
+`schema.sql` a été régénéré (`scripts/schema/dump-schema.sh`, diff en ajout
+seul), et les dix contrôles de `verifier-deploiement.sh` passent au vert sur la
+pile reconstruite. C'est le **deuxième** épisode du piège de la baseline décrit
+dans `docker/initdb/20-migrations.sh` — après `018_verrou_imputation_paiement`.
+`cfideploy/docs/05-base-donnees.md` §4.1 le consigne.
+
+Reste ouvert côté dépôt de schéma : `seeds/20-demonstration.sql.gz` est un dump
+du 1er août et ne contient pas les 11 lignes de `parametres_plateforme` que la
+base de démonstration porte. Une base reconstruite en `SEED_MODE=demo` a la
+table, vide — l'écran de paramètres est donc vide. À corriger par
+`scripts/seed/construire-demo.sh` puis `dump-seed.sh`.
 
 ---
 
