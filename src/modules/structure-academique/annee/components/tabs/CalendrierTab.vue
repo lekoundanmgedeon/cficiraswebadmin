@@ -3,7 +3,7 @@
  * Calendrier académique.
  *
  * Écran non implémenté : aucun endpoint de calendrier n'existe côté backend à
- * ce jour (voir docs/13-points-a-confirmer.md). Le composant précédent importait
+ * ce jour. Le composant précédent importait
  * `ref` et `computed` sans les utiliser et affichait un tableau vide dont les
  * en-têtes ne correspondaient à aucune donnée. On assume l'état « à venir »
  * plutôt que de simuler une table vide.

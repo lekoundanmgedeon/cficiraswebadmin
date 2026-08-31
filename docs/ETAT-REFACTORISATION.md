@@ -1,21 +1,30 @@
 # État de la refactorisation — point de reprise
 
-Document de passation. Il dit **où en est le chantier**, **ce qui reste**, et **comment reprendre**.
-À tenir à jour à chaque module migré.
+Document de passation, **chronologique**. Il dit ce qui a été fait, dans quel ordre, et pourquoi.
+À tenir à jour à chaque évolution notable.
 
-- Branche : `refactor-main` (dernier module migré : `stats`, §1.19 — **il ne reste que les résidus**)
-- État de santé, mesuré le **17 août 2026** : `npm run lint` **0 erreur** (234 avertissements,
-  tous dans du legacy non migré) · `npm test` **494 tests, 68 fichiers** (1 ignoré) ·
-  `npm run build` **OK**
-  Les deux erreurs de parse répertoriées en §2.3 ne sont plus remontées.
-- **Déploiement** : le front a désormais son image (`docker/Dockerfile`) et les trois composants
-  leur dépôt d'assemblage, `~/cfiprojects/cfideploy` — voir §1.20.
-- ⚠️ **`matieres`, `examens` et `concours` ont nécessité des corrections dans `cfibackend`.**
-  Voir §1.6, §1.9, §1.10 — le dépôt backend porte un commit par module.
-- **Endpoints vérifiés contre le backend local** (`localhost:3500`) : toutes les routes appelées par
-  les modules migrés répondent, et les flux d'écriture sont exercés pour de vrai (base restaurée
-  ensuite). Voir §2.5 — c'est ce contrôle qui manquait et qui avait laissé passer un module entier
-  bâti sur des routes inexistantes.
+> **Ce n'est plus le point d'entrée de la documentation.** Pour reprendre le travail, ouvrir
+> [README.md](./README.md), qui oriente selon ce qu'on cherche :
+> [ARCHITECTURE.md](./ARCHITECTURE.md) pour la structure, [CONTRAT-API.md](./CONTRAT-API.md) pour
+> ce que le serveur expose, [modules/](./modules/) pour une fiche par module,
+> [DETTE-TECHNIQUE.md](./DETTE-TECHNIQUE.md) pour ce qui reste. Ce document-ci garde le **récit**
+> et les mesures datées, que les autres ne portent pas.
+
+- Branche : `refactor-main`. **Les vingt modules sont en place** ; il ne reste que les résidus
+  d'authentification (§2.1) et la dette listée dans `DETTE-TECHNIQUE.md`.
+- État de santé, mesuré le **31 août 2026** : `npm run lint` **0 erreur** (234 avertissements,
+  dont 194 d'ordre d'attributs) · `npm test` **494 tests, 68 fichiers** (1 ignoré) ·
+  `npm run build` **OK**. Les deux erreurs de parse répertoriées en §2.3 ont disparu avec leurs
+  fichiers.
+- **Déploiement** : le front a son image (`docker/Dockerfile`) et les trois composants leur dépôt
+  d'assemblage, `~/cfiprojects/cfideploy` — voir §1.20.
+- ⚠️ **Une dizaine de corrections ont été nécessaires dans `cfibackend`.** Le récapitulatif tenu à
+  jour est au §10 de [CONTRAT-API.md](./CONTRAT-API.md) ; le détail par module est ci-dessous
+  (§1.6, §1.9, §1.10, §1.17, §1.19, §1.21, §1.27).
+- **Endpoints vérifiés contre le backend local** (`localhost:3500`) : toutes les routes appelées
+  répondent, et les flux d'écriture ont été exercés pour de vrai (base restaurée ensuite). C'est ce
+  contrôle qui manquait et qui avait laissé passer un module entier bâti sur des routes
+  inexistantes.
 
 ---
 
@@ -1994,19 +2003,23 @@ table, vide — l'écran de paramètres est donc vide. À corriger par
 
 ## 2. Ce qui reste
 
-### 2.1 Modules à migrer (par ordre conseillé)
+### 2.1 Ce qui n'est pas encore un module
 
-**Migrés** : `structure-academique`, `etudiants`, `inscriptions`, `matieres`, `scolarite`, `examens`,
-`concours`, `notes` + `deliberation`, `finances`, `pedagogies`, `dashboard`, `stats`.
+**Les vingt modules métier sont en place** : `structure-academique`, `etudiants`, `inscriptions`,
+`scolarite`, `matieres`, `examens`, `notes`, `concours`, `finances`, `pedagogies`, `dashboard`,
+`stats`, `espace-notes`, `bibliotheque`, `coordination`, `documents`, `assistant`, `parametres`,
+`plateforme`.
 
-**Tous les modules fonctionnels sont migrés.** Il ne reste que les résidus.
+Il reste **l'authentification** : `src/views/auth/` (Login, Register), `src/views/errors/`
+(NotFound) et `src/routes/auth.routes.js`. La logique, elle, est déjà dans le noyau
+(`core/auth/`, `core/router/`) — voir la fiche
+[auth-et-session](./modules/auth-et-session.md). Ce qui manque est le déménagement des deux vues
+sous `src/modules/auth/`.
 
-| #   | Module  | Fichiers | Lignes | Pourquoi cet ordre                                                                               |
-| --- | ------- | -------- | ------ | ------------------------------------------------------------------------------------------------ |
-| 1   | Résidus | ~12      | ~1 500 | `admin`, `schedule`, `prompt`, `docf`, `support`, `settings`, `notifications`, `errors`, `auth`. |
+_(`parcours` est parti avec le module `scolarite` (§1.7). `absence` a été retiré faute de backend
+(§1.7), `structure` était vide, `admin`, `docf`, `support`, `prompt`, `schedule`, `settings` et
+`notifications` ont rejoint `plateforme`, `parametres` ou `pedagogies`.)_
 
-_(`parcours` ne figure plus ici : ses vues sont parties avec le module `scolarite`, §1.7. `absence`
-et `structure` non plus : le premier a été retiré faute de backend (§1.7), le second était vide.)_
 
 > #### ⚠️ `/statistiques` n'est pas « commenté » — il a été **supprimé**, et son code est mort
 >
@@ -2068,59 +2081,17 @@ et `structure` non plus : le premier a été retiré faute de backend (§1.7), l
 >   rouvre le 4ᵉ. `StatsKPI.vue` n'est importé nulle part.
 > - **Aucun appel API, nulle part.**
 
-### 2.2 Dette technique transverse
+### 2.2 à 2.4 — Dette technique, bugs connus, ponts de compatibilité
 
-_(Chiffres recomptés le 27/07/2026 — les précédents dataient d'avant `finances` et `pedagogies`.)_
+**Ces trois sections ont déménagé dans [DETTE-TECHNIQUE.md](./DETTE-TECHNIQUE.md)**, qui les tient
+à jour avec les commandes qui permettent de recompter chaque chiffre. Les relevés qui étaient ici
+dataient du 27/07/2026 et portaient sur des fichiers depuis supprimés — `src/api/` et
+`src/stores/academiqueStore/` n'existent plus, et les deux bugs de parse sont partis avec leurs
+fichiers.
 
-- **9 conteneurs d'onglets Bootstrap** encore en montage eager → à passer sur `AppTabs`. C'est le
-  principal gisement d'optimisation d'API restant (§1.13).
-
-  - **7 sont dans des modules déjà migrés** — `pedagogies/{formateurs,programme,crenaux,attributions}`
-    et `finances/{facturations,rapports,paiements}`. Leurs vues ont été déplacées sans toucher au
-    balisage (§1.16, §1.17) : la bascule sur `AppTabs` reste à faire.
-  - 2 dans `src/views/` — `settings/Settings.vue` et `stats/components/StatsTabs.vue` (ce dernier
-    est cassé, voir §2.1).
-
-  > ⚠️ **`grep -rl 'data-bs-toggle="tab"' src --include=*.vue` rend 11, pas 9.** Deux faux positifs :
-  > `shared/components/AppTabs.vue` et `dashboard/components/DashboardTabs.vue` ne font que
-  > **mentionner** la chaîne dans leur documentation — ce sont précisément les composants qui la
-  > remplacent. Ne pas compter un fichier sans l'ouvrir.
-
-- **6 stores legacy** dans `src/stores/` : `academiqueStore/` (1) et `messages/` (5, → §2.4).
-- **6 fichiers d'API legacy** dans `src/api/` : `config/` (3, → §2.4), `academique/academiqueApi.js`,
-  `uploads/importService.js`, `userApi.js`.
-- **12 fichiers** portent encore le bloc `<style scoped>` copié-collé (`.drag-drop-area`) — la
-  plupart avec un `body {}` **dans un style scoped, donc sans aucun effet**.
-
-### 2.3 Bugs connus, non corrigés (hors périmètre migré)
-
-Détail complet dans **`docs/DETTE-TECHNIQUE.md`**. Les bloquants :
-
-_(Recompté le 27/07/2026. Il n'en reste que **deux** — ce sont exactement les 2 erreurs du lint.)_
-
-| Fichier                                  | Bug                                                  |
-| ---------------------------------------- | ---------------------------------------------------- |
-| `views/admin/DataTable.vue:40`           | **Erreur de syntaxe** — le fichier ne parse pas.     |
-| `views/notifications/notification.vue:1` | `<template>` sans élément racine → **ne rend rien**. |
-
-_(Les entrées `views/etudiants/.../ExportData.vue` et les deux `views/examens/.../HeaderView.vue`
-ont disparu avec la migration de leurs modules — `src/views/examens/` n'existe plus. Et des
-9 composants sans élément racine, il n'en subsiste qu'un.)_
-
-### 2.4 Ponts de compatibilité à retirer en fin de migration
-
-Chacun disparaît avec son dernier appelant.
-
-| Élément                                                                                                                                                    | Remplacé par                               |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `src/api/config/serviceApi.js`, `axiosClient.js`, `apiClients.js`                                                                                          | `core/api/httpClient` + `core/api/clients` |
-| `src/stores/messages/*` (5 fichiers)                                                                                                                       | `shared/stores/notificationStore`          |
-| `src/utils/{exportExcel,exportPDF,toast}.js`                                                                                                               | ré-exports vers `shared/utils/*`           |
-| Alias `@deprecated` dans les 6 stores de `structure-academique` (`items`↔`cycles`/`filieres`/`niveaux`/`classes`/`semestres`, `fetchAll()`↔`fetchXxx()`) | noms canoniques                            |
-
-_(Les vues `etudiants/`, `inscriptions/`, `examens/` et `notes/` ont été migrées et n'utilisent plus
-que les noms canoniques. Les alias `@deprecated` n'ont donc plus, à ce stade, d'appelant connu :
-à supprimer au prochain passage.)_
+En bref, au 31 août 2026 : **7 écrans** encore sur les onglets Bootstrap (finances, pédagogies),
+**40 fichiers** avec un tableau non paginé (dont une partie volontairement), un composant orphelin,
+un panneau inatteignable, **0 erreur** de lint.
 
 ### 2.5 Questions ouvertes pour le backend
 
@@ -2241,8 +2212,8 @@ d'eux ne parle au backend.
 Un code HTTP 200 ne veut pas dire que l'opération a réussi : **lire le corps**.
 
 Le backend est dans `~/cfiprojects/cfibackend`. **Lire ses routes est plus fiable que n'importe
-quelle documentation** (celle de `09-api-et-integration-backend.md` a été reconstituée _depuis le
-frontend_ : elle décrit ce que le front appelle, pas ce que le serveur offre).
+quelle documentation** — y compris celle-ci. [CONTRAT-API.md](./CONTRAT-API.md) rassemble ce qui a
+été vérifié à ce jour ; le serveur reste la source.
 
 ```bash
 # Ce que le serveur expose réellement
@@ -2257,17 +2228,20 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3500/api/academique/<c
 ## 3. Comment reprendre
 
 0. **Ouvrir les routes du backend** (`~/cfiprojects/cfibackend/src/routes/`) et lister ce qui
-   existe vraiment pour l'entité visée. Ne pas se fier à `09-api-et-integration-backend.md`, qui a
-   été reconstitué depuis le frontend. Voir §2.6 — cette étape a coûté un module entier.
-1. Lire **`docs/ARCHITECTURE.md`** (structure et règle de dépendance), puis
-   **`docs/GUIDE-MODULE.md`** (recette pas à pas).
+   existe vraiment pour l'entité visée. Voir §2.6 — cette étape a coûté un module entier. Le
+   récapitulatif de ce que le serveur expose, et de là où il ment, est dans
+   **[CONTRAT-API.md](./CONTRAT-API.md)**.
+1. Lire **[ARCHITECTURE.md](./ARCHITECTURE.md)** (structure et règle de dépendance), puis
+   **[GUIDE-MODULE.md](./GUIDE-MODULE.md)** (recette pas à pas) et la fiche du module concerné
+   dans **[modules/](./modules/)**.
 2. Ouvrir `src/modules/structure-academique/cycle/` comme **modèle de référence** : c'est le
    sous-domaine le plus représentatif (CRUD + onglets + modale + export). Pour un module qui filtre
    ses listes, `src/modules/etudiants/` montre le couple `fetchAll({ params })` + composable de
    filtres partagé ; pour les imports de fichiers, `src/modules/inscriptions/` montre
    `useImportFile` + `ImportModal` piloté par un schéma.
-3. **Tous les modules fonctionnels sont migrés.** Ce qui reste (§2.1) tient aux résidus, à la dette
-   transverse (§2.2) et aux ponts de compatibilité (§2.4) — pas à un module.
+3. **Tous les modules fonctionnels sont migrés.** Ce qui reste tient aux résidus
+   d'authentification (§2.1) et à la dette listée dans
+   **[DETTE-TECHNIQUE.md](./DETTE-TECHNIQUE.md)** — pas à un module.
 4. Vérifier : `npm run lint && npm test && npm run build`, **puis exercer les endpoints réellement
    appelés** contre `localhost:3500` (§2.6).
 

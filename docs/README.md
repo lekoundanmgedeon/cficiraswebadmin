@@ -1,48 +1,64 @@
-# Documentation de la plateforme ERP académique
+# Documentation du frontend CFI/CIRAS
 
-Cette documentation décrit le frontend Vue.js 3 de la plateforme ERP académique développé dans le projet `cficiraswebadmin`.
+Front d'administration de l'ERP académique. Vue 3 (`<script setup>`) + Vite + Pinia,
+Bootstrap 5, Chart.js / ECharts. Français partout : interface, commentaires, commits.
 
-Elle se base exclusivement sur l'analyse du code source présent dans le dépôt, sans extrapoler de fonctionnalités non codées.
+Cette documentation a **deux usages**, et deux points d'entrée :
 
-## Architecture (documents de référence)
+| Vous voulez…                                                  | Ouvrez                                                                 |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| travailler **dans** ce dépôt                                  | [ARCHITECTURE.md](./ARCHITECTURE.md) puis [GUIDE-MODULE.md](./GUIDE-MODULE.md) |
+| **reconstruire** ce front dans une autre technologie          | [RECONSTRUCTION.md](./RECONSTRUCTION.md) puis [modules/](./modules/)    |
+| savoir **ce que le serveur expose vraiment**                  | [CONTRAT-API.md](./CONTRAT-API.md)                                     |
+| savoir **où en est le chantier**                              | [ETAT-REFACTORISATION.md](./ETAT-REFACTORISATION.md)                   |
 
-La refonte du frontend est en cours. Ces trois documents décrivent la **structure cible** et font
-autorité sur les fichiers `01` à `13`, qui décrivent l'application telle qu'elle était avant :
+## Les documents
 
-- **[ETAT-REFACTORISATION.md](./ETAT-REFACTORISATION.md)** : **point de reprise** — ce qui est
-  fait, ce qui reste, comment continuer. **À lire en premier pour reprendre le chantier.**
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** : structure par modules, noyau `core/`, règle de
-  dépendance.
-- **[GUIDE-MODULE.md](./GUIDE-MODULE.md)** : comment ajouter ou migrer un module, pas à pas.
-- **[DETTE-TECHNIQUE.md](./DETTE-TECHNIQUE.md)** : anomalies identifiées dans le code non migré.
+### Socle
 
-## Structure du dossier
+| Fichier                                            | Contenu                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)               | Découpage par module, noyau `core/`, socle `shared/`, règle de dépendance, contrats à connaître.                   |
+| [CONTRAT-API.md](./CONTRAT-API.md)                 | Conventions HTTP : enveloppe de réponse, formes d'erreur, domaines backend, session, rôles, pièges de données.      |
+| [UI-PARTAGEE.md](./UI-PARTAGEE.md)                 | Catalogue de `shared/` et des motifs d'écran répétés (en-tête, onglets, modale, pagination, export).                |
+| [GUIDE-MODULE.md](./GUIDE-MODULE.md)               | Recette pas à pas pour créer un module **dans ce dépôt**.                                                           |
 
-- `01-presentation-generale.md` : présentation générale de la plateforme.
-- `02-architecture-fonctionnelle.md` : découpage métier et domaines fonctionnels.
-- `03-architecture-frontend-vue.md` : organisation Vue.js, routeur, stores, services.
-- `04-cartographie-des-menus.md` : cartographie des menus et des routes.
-- `05-roles-et-permissions.md` : rôles, permissions et état actuel du contrôle d'accès.
-- `06-modules-metier.md` : documentation détaillée par module.
-- `07-workflows-metier.md` : workflows métier observables.
-- `08-cas-utilisation.md` : cas d’utilisation structurés.
-- `09-api-et-integration-backend.md` : services API détectés et leurs endpoints.
-- `10-composants-ui.md` : composants principaux et leur rôle.
-- `11-regles-metier.md` : règles métier identifiées dans le code.
-- `12-parcours-utilisateurs.md` : parcours utilisateurs principaux.
-- `13-points-a-confirmer.md` : questions et zones à clarifier.
+### Reconstruction
 
-## Comment lire cette documentation
+| Fichier                                            | Contenu                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [RECONSTRUCTION.md](./RECONSTRUCTION.md)           | Reconstruire le front dans une autre pile : invariants à respecter, équivalences de patterns, ordre des modules.    |
+| [modules/](./modules/)                             | **Une fiche par module** — routes, écrans, onglets, endpoints, énumérations, règles, pièges, checklist.             |
 
-1. Commencez par `01-presentation-generale.md` pour comprendre le périmètre global de la plateforme.
-2. Lisez `02-architecture-fonctionnelle.md` puis `03-architecture-frontend-vue.md` pour comprendre l’organisation du code.
-3. Consultez `04-cartographie-des-menus.md` pour repérer les routes et menus disponibles.
-4. Explorez les modules métier dans `06-modules-metier.md`.
-5. Passez aux workflows et cas d’utilisation pour visualiser les scénarios métier.
-6. Vérifiez les points incomplets ou les écarts entre le menu et le routeur dans `13-points-a-confirmer.md`.
+### Suivi
 
-## Version du projet documenté
+| Fichier                                            | Contenu                                                                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [ETAT-REFACTORISATION.md](./ETAT-REFACTORISATION.md) | Journal de la refonte : ce qui a été fait module par module, et pourquoi. Long, chronologique, tenu à jour.        |
+| [DETTE-TECHNIQUE.md](./DETTE-TECHNIQUE.md)         | Ce qui reste à nettoyer, mesuré et daté.                                                                            |
 
-- Projet : `cficiraswebadmin`
-- Version npm : `0.0.0` (package.json)
-- Documentation basée sur l’analyse du code au 2026-07-07.
+## Le principe qui gouverne toute cette documentation
+
+> **Rien n'y est affirmé qui n'ait été lu dans le code, dans le schéma de la base, ou vérifié
+> contre le serveur.**
+
+Le dépôt documente ses pièges à l'endroit où ils mordent : un `api.js` explique pourquoi un
+chemin est doublé, un `constants.js` cite la contrainte `CHECK` dont il est le miroir. Les fiches
+de `modules/` rassemblent ces observations ; **le code reste la source**, et une fiche qui le
+contredit a tort.
+
+Lint, tests et build **ne parlent pas au backend** : ils passent au vert sur un module bâti sur
+des routes inexistantes — c'est arrivé. Avant d'écrire un écran, lire les routes réellement
+exposées et interroger la base. La méthode est en tête de [CONTRAT-API.md](./CONTRAT-API.md).
+
+## État mesuré
+
+Relevé le **31 août 2026**, sur la branche `refactor-main` :
+
+| Contrôle        | Résultat                                                    |
+| --------------- | ------------------------------------------------------------- |
+| `npm run lint`  | **0 erreur**, 234 avertissements (194 = ordre des attributs) |
+| `npm test`      | **494 tests**, 68 fichiers, 1 ignoré                         |
+| `npm run build` | OK                                                            |
+| Modules         | **20** sous `src/modules/`                                    |
+| Chemins déclarés | 55, dont 5 redirections d'anciennes URL                      |

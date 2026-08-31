@@ -102,14 +102,21 @@ filiere, niveau, classe, semestre). Le plus abouti pour un onglet statistique :
 
 ## Documentation du dépôt
 
-| Fichier                                 | Quand l'ouvrir                                                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/ETAT-REFACTORISATION.md`          | **point de reprise** : ce qui est fait, ce qui reste, les pièges par module. Peut être en retard sur le code — recouper avec `git log`. |
-| `docs/ARCHITECTURE.md`                  | structure et règle de dépendance                                                                                                        |
-| `docs/GUIDE-MODULE.md`                  | recette pas à pas pour créer ou migrer un module                                                                                        |
-| `docs/09-api-et-integration-backend.md` | ⚠️ reconstitué **depuis le frontend** : décrit ce que le front appelle, pas ce que le serveur offre                                     |
+`docs/README.md` est le point d'entrée : il oriente selon ce qu'on cherche.
 
-À tenir à jour : toute évolution notable se consigne dans `docs/ETAT-REFACTORISATION.md`.
+| Fichier                       | Quand l'ouvrir                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `docs/ARCHITECTURE.md`        | structure, règle de dépendance, contrats du noyau                                                                  |
+| `docs/CONTRAT-API.md`         | ce que le serveur expose réellement : enveloppe, erreurs, routes absentes, pièges de données                       |
+| `docs/modules/<module>.md`    | **une fiche par module** : routes, onglets, endpoints, énumérations, règles, pièges, checklist                     |
+| `docs/GUIDE-MODULE.md`        | recette pas à pas pour créer ou faire évoluer un module                                                            |
+| `docs/UI-PARTAGEE.md`         | catalogue de `shared/` et motifs d'écran (onglets, pagination, export, import, formulaire)                         |
+| `docs/RECONSTRUCTION.md`      | reconstruire le front dans une autre pile : invariants, équivalences, ordre des modules                            |
+| `docs/DETTE-TECHNIQUE.md`     | ce qui reste à nettoyer, recompté et daté                                                                          |
+| `docs/ETAT-REFACTORISATION.md`| journal chronologique de la refonte. Peut être en retard sur le code — recouper avec `git log`.                    |
+
+À tenir à jour : toute évolution notable se consigne dans `docs/ETAT-REFACTORISATION.md`, et un
+module nouveau ou modifié dans sa fiche `docs/modules/`.
 
 ## Méthode de travail attendue
 

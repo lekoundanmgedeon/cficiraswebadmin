@@ -7,7 +7,7 @@
  *
  * Cet écart existe dans l'API, pas dans le frontend : on le documente et on
  * l'isole ici plutôt que de le laisser se propager dans les composants sous
- * forme de `switch` dupliqués. Il est signalé dans docs/13-points-a-confirmer.md
+ * forme de `switch` dupliqués. Il est signalé dans docs/DETTE-TECHNIQUE.md §11
  * comme candidat à une harmonisation côté backend.
  */
 
