@@ -26,6 +26,18 @@ export const useNoteStore = defineStore('notes', {
     items: [],
     /** @type {string|null} */
     evaluationId: null,
+    /**
+     * Notes d'un **étudiant** sur un semestre — le relevé qui compose son
+     * bulletin.
+     *
+     * Rangées à part de `items`, et non dedans : `items` est la grille d'une
+     * *évaluation*, et c'est elle que lisent `saisies`, `moyenne`, `parStatut`
+     * et `statutGlobal`. Y écrire le relevé d'un étudiant ferait décrire à ces
+     * getters un objet qui n'est pas le leur — c'est le piège relevé ailleurs
+     * dans le dépôt sur `classeStore.fetchByFiliere`, où le contenu d'un store
+     * dépendait de qui l'avait appelé en dernier.
+     */
+    notesEtudiant: [],
     loading: false,
     /** @type {import('@/core/api/apiError').ApiError|null} */
     error: null,
@@ -121,12 +133,24 @@ export const useNoteStore = defineStore('notes', {
       });
     },
 
-    /** @param {string} etudiantId @param {string} semestreId */
+    /**
+     * Le relevé d'un étudiant pour un semestre : une ligne par évaluation, avec
+     * sa matière, sa pondération et ses crédits. C'est la matière du bulletin.
+     *
+     * `semestreId` est **obligatoire** : le serveur répond 400 sans lui.
+     *
+     * @param {string} etudiantId @param {string} semestreId
+     */
     async fetchByEtudiant(etudiantId, semestreId) {
+      if (!etudiantId || !semestreId) {
+        this.notesEtudiant = [];
+        return undefined;
+      }
+
       return this.run(() => getNotesByEtudiant(etudiantId, semestreId), {
         failure: 'Erreur lors du chargement des notes de l’étudiant.',
         onSuccess: (response) => {
-          this.items = response.data ?? [];
+          this.notesEtudiant = response.data ?? [];
         },
       });
     },

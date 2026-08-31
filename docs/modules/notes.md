@@ -32,10 +32,25 @@ Cascade de sélection, puis la grille de l'épreuve choisie : une ligne par étu
 commentaire. Enregistrement en lot. Changement de statut de la grille.
 
 ### Délibération
+Quatre onglets, qui reprennent l'enchaînement de l'écran d'origine — on délibère, on édite les
+relevés, on produit les livrables. Les trois premiers **partagent le même triplet** (classe,
+semestre, année) : le choisir une fois suffit.
+
 | Onglet | Contenu |
 | ------ | ------- |
-| Procès-verbal | les bulletins de la classe, la décision du jury, la publication |
-| Assistant IA | cadrage `examens` |
+| Délibérations | quatre indicateurs de jury (taux d'admission, moyenne de promotion, rattrapages, major) et le procès-verbal : palmarès, décision du jury bulletin par bulletin, publication |
+| Bulletins | la promotion à gauche, le **relevé officiel** de l'étudiant retenu à droite — en-tête de l'établissement, détail groupé par matière, synthèse, décision |
+| Rapports | trois documents exportables (PV, registre des admis, tableau d'honneur), la répartition des décisions et des mentions, et l'état réel de publication |
+| Assistant IA | cadrage `scolarite` |
+
+Le triplet vit dans `deliberation/composables/useContexteDeliberation.js` — un état à la portée du
+module, pas un store : c'est une **sélection d'écran**, pas de la donnée serveur. Le chargement est
+déclenché par la vue, **une seule fois** : un `watch` par onglet ferait trois requêtes pour un
+même clic.
+
+L'onglet « Bulletins » est le seul à appeler `GET /notes/etudiants/:id/notes`, et seulement **à la
+sélection d'un étudiant** : une classe de cent étudiants ferait sinon cent requêtes pour un seul
+document affiché.
 
 ## 3. Endpoints
 
@@ -124,6 +139,7 @@ réimplémente `run` avec le même contrat.
 | Membre | Rôle |
 | ------ | ---- |
 | `items`, `evaluationId` | la grille chargée et son épreuve |
+| `notesEtudiant` | le **relevé** d'un étudiant sur un semestre — rangé à part de `items`, voir §6.8 |
 | `saisies` | les notes réellement renseignées |
 | `moyenne` | dérivée des saisies |
 | `estPubliee`, `parStatut`, `statutGlobal` | l'état de la grille |
@@ -141,6 +157,18 @@ réimplémente `run` avec le même contrat.
 6. **`semestreId` obligatoire** sur les notes d'un étudiant.
 7. L'ancien store existait et fonctionnait — mais **aucune vue ne l'appelait**, et ses quatre
    appels répondaient 404 de toute façon.
+8. **Le relevé d'un étudiant ne se range pas dans `items`.** `items` est la grille d'une
+   *évaluation*, et c'est elle que lisent `saisies`, `moyenne`, `parStatut` et `statutGlobal` : y
+   écrire le relevé d'un étudiant ferait décrire à ces getters un objet qui n'est pas le leur —
+   le piège relevé ailleurs sur `classeStore.fetchByFiliere`, où le contenu d'un store dépendait
+   de qui l'avait appelé en dernier. D'où `notesEtudiant`, verrouillé par un test.
+9. **Un bulletin ne porte pas le détail des évaluations** : `bulletins_semestriels` est une
+   synthèse (moyenne, crédits, rang, mention, décision). Les colonnes « Matière 1 / Matière 2 » de
+   la maquette d'origine n'ont donc pas d'équivalent dans le palmarès ; ce détail se lit par
+   étudiant.
+10. **Rien n'est recalculé côté client.** La maquette recomposait la moyenne à partir de
+    coefficients écrits dans le composant : deux calculs concurrents finissent par diverger, et
+    c'est le serveur que l'étudiant verra.
 
 ## 7. Checklist de reconstruction
 
@@ -151,5 +179,9 @@ réimplémente `run` avec le même contrat.
 - [ ] Rapport de rejets paginé, matricule par matricule
 - [ ] Transitions de statut, avec le rôle qui les autorise et le 409 informatif
 - [ ] Bornes 0–20 appliquées à la saisie
-- [ ] Délibération : bulletins de la classe, décision du jury, publication
+- [ ] Délibération à quatre onglets, triplet partagé, chargement déclenché une seule fois
+- [ ] Onglet Bulletins : relevé officiel, en-tête d'établissement lu dans les **réglages**,
+      détail groupé par matière, synthèse non recalculée
+- [ ] Onglet Rapports : exports réels (PV, admis, tableau d'honneur), répartitions dérivées des
+      bulletins déjà en mémoire, **pas** de journal d'édition — il n'en existe aucun
 - [ ] Les constantes de bulletin importées depuis le module `examens`, pas dupliquées

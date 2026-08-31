@@ -45,6 +45,23 @@ const GRILLE_MIXTE = {
   ],
 };
 
+/** Charge utile réelle de `GET /notes/etudiants/:id/notes?semestreId=`. */
+const RELEVE = {
+  success: true,
+  data: [
+    {
+      note_id: 'n9',
+      valeur: '15.00',
+      statut: 'VALIDEE',
+      evaluation_designation: 'Examen final',
+      type_eval: 'EXAMEN',
+      ponderation: '60.00',
+      matiere_designation: 'Algorithmique',
+      credit: 4,
+    },
+  ],
+};
+
 describe('store des notes — saisie et flux de statut', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -141,5 +158,37 @@ describe('store des notes — saisie et flux de statut', () => {
     const store = useNoteStore();
     expect(store.statutGlobal).toBeNull();
     expect(store.parStatut).toEqual({ SAISIE: 0, VALIDEE: 0, PUBLIEE: 0 });
+  });
+
+  it('range le relevé d’un étudiant à part, sans écraser la grille consultée', async () => {
+    vi.spyOn(api, 'getNotesByEvaluation').mockResolvedValue(GRILLE);
+    vi.spyOn(api, 'getNotesByEtudiant').mockResolvedValue(RELEVE);
+
+    const store = useNoteStore();
+    await store.fetchByEvaluation('ev1');
+    await store.fetchByEtudiant('etu1', 'sem1');
+
+    // `items` décrit une **évaluation** : c'est lui que lisent `saisies`,
+    // `moyenne`, `parStatut` et `statutGlobal`. Y écrire le relevé d'un
+    // étudiant ferait décrire à ces getters un objet qui n'est pas le leur.
+    expect(store.items).toHaveLength(2);
+    expect(store.evaluationId).toBe('ev1');
+    expect(store.statutGlobal).toBe('SAISIE');
+
+    expect(store.notesEtudiant).toHaveLength(1);
+    expect(store.notesEtudiant[0].matiere_designation).toBe('Algorithmique');
+  });
+
+  it('ne demande pas le relevé sans semestre — le serveur répondrait 400', async () => {
+    const lecture = vi.spyOn(api, 'getNotesByEtudiant');
+
+    const store = useNoteStore();
+    store.notesEtudiant = [{ note_id: 'ancienne' }];
+    await store.fetchByEtudiant('etu1', '');
+
+    expect(lecture).not.toHaveBeenCalled();
+    // Le relevé est vidé : laisser celui de l'étudiant précédent l'attribuerait
+    // au suivant.
+    expect(store.notesEtudiant).toEqual([]);
   });
 });
